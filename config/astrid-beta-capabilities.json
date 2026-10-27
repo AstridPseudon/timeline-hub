@@ -874,6 +874,30 @@
    "required_packages": []
   },
   {
+   "id": "rendering.timeline_export_plan",
+   "disposition": "required",
+   "evidence_reason": "Timeline transfer N2/N4 acceptance covered by the generic host.",
+   "adapter_family": "cpu",
+   "resource_keys": [
+    "cpu"
+   ],
+   "required_env": [],
+   "required_binaries": [],
+   "required_packages": []
+  },
+  {
+   "id": "rendering.timeline_prepare_import",
+   "disposition": "required",
+   "evidence_reason": "Timeline transfer N2/N4 acceptance covered by the generic host.",
+   "adapter_family": "cpu",
+   "resource_keys": [
+    "cpu"
+   ],
+   "required_env": [],
+   "required_binaries": [],
+   "required_packages": []
+  },
+  {
    "id": "runpod.exec",
    "disposition": "optional",
    "evidence_reason": "Optional remote execution integration; excluded from local beta readiness.",

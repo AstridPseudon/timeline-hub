@@ -331,7 +331,7 @@ def _rgb_frame(path, frame):
 
 @pytest.mark.integration
 @pytest.mark.timeout(600)
-def test_real_render_scene_window_audio_and_overlay(tmp_path, remotion_launch_validation):
+def test_real_render_scene_window_audio_and_overlay(tmp_path, remotion_runtime_environment):
     package = _package(_three_html())
     timeline = tmp_path / 'timeline.json'
     timeline.write_text(json.dumps(_composition(package)))

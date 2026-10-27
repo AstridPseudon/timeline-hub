@@ -8,6 +8,7 @@ import subprocess
 import sys
 import venv
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 from runtime_protocol.door import DEFAULT_DOOR_PORT
@@ -16,6 +17,7 @@ from astrid.core.util import process as _process
 from astrid.installer.backend import Backend
 from astrid.installer.core import Installer, VerificationError, Version, write_json
 from astrid.installer.launcher import install
+from astrid.installer import launcher
 
 
 def test_absolute_launcher_works_with_clean_home_and_unchanged_path(tmp_path):
@@ -32,14 +34,16 @@ def test_absolute_launcher_works_with_clean_home_and_unchanged_path(tmp_path):
     (root / "current").write_text("v1\n", encoding="utf-8")
     launcher, runner = install(root)
     assert launcher.is_absolute() and runner.is_file()
+    launcher_text = launcher.read_text(encoding="utf-8")
+    assert "-X utf8 -I" in launcher_text
 
     source_root = str(Path(__file__).resolve().parents[1])
     fake_python = (
         f"#!{sys.executable}\n"
         "import json, os, runpy, sys\n"
-        "if len(sys.argv) > 2 and sys.argv[1] == '-I' and sys.argv[2].endswith('run_astrid.py'):\n"
+        "if len(sys.argv) > 4 and sys.argv[1:4] == ['-X', 'utf8', '-I'] and sys.argv[4].endswith('run_astrid.py'):\n"
         f"    sys.path.insert(0, {source_root!r})\n"
-        "    script = sys.argv[2]; sys.argv = [script, *sys.argv[3:]]; runpy.run_path(script, run_name='__main__')\n"
+        "    script = sys.argv[4]; sys.argv = [script, *sys.argv[5:]]; runpy.run_path(script, run_name='__main__')\n"
         "else:\n"
         "    print(json.dumps({'args': sys.argv[1:], 'path': os.environ['PATH'], 'home': os.environ['HOME'], 'managed': os.environ['ASTRID_TEST_MANAGED'], 'root': os.environ['ASTRID_INSTALL_PROGRAM_ROOT']}))\n"
     )
@@ -53,7 +57,7 @@ def test_absolute_launcher_works_with_clean_home_and_unchanged_path(tmp_path):
                             check=True, capture_output=True, text=True)
 
     assert json.loads(result.stdout) == {
-        "args": ["-I", "-m", "astrid.omp_agent"],
+        "args": ["-X", "utf8", "-I", "-m", "astrid.omp_agent"],
         "path": inherited_path,
         "home": str(home),
         "managed": "yes",
@@ -108,13 +112,22 @@ def test_generated_runner_windows_handoff_waits_and_keeps_argv_and_environment(t
     with pytest.raises(SystemExit) as exc:
         runpy.run_path(str(runner), run_name="__main__")
     assert exc.value.code == 41
-    assert captured["argv"] == [str(python), "-I", "-m", "astrid.omp_agent", *arguments]
+    assert captured["argv"] == [str(python), "-X", "utf8", "-I", "-m", "astrid.omp_agent", *arguments]
     assert captured["kwargs"] == {
         "env": {**os.environ, "MANAGED": "selected version", "ASTRID_INSTALL_PROGRAM_ROOT": str(root)},
         "check": False,
     }
     assert "MANAGED" not in os.environ
     assert signal.getsignal(signal.SIGINT) is previous_handler
+
+
+def test_generated_windows_launcher_sets_utf8_before_isolation(tmp_path, monkeypatch):
+    monkeypatch.setattr(launcher, "os", SimpleNamespace(name="nt"))
+    root = tmp_path / "Astrid Program"
+    root.mkdir()
+    generated, _runner = install(root)
+    text = generated.read_text(encoding="utf-8")
+    assert 'python.exe" -X utf8 -I "%ASTRID_PROGRAM_ROOT%run_astrid.py"' in text
 
 
 @pytest.mark.parametrize("platform", [None, "win32"], ids=["native", "windows-wait"])
@@ -137,7 +150,7 @@ def test_generated_runner_supports_selected_older_package_under_isolation(tmp_pa
     assert not (package / "core" / "util" / "process.py").exists()
     (package / "omp_agent.py").write_text(
         "import json, os, sys\n"
-        "print(json.dumps({'args': sys.argv[1:], 'isolated': sys.flags.isolated, "
+        "print(json.dumps({'args': sys.argv[1:], 'isolated': sys.flags.isolated, 'utf8_mode': sys.flags.utf8_mode, "
         "'managed': os.environ['MANAGED'], 'root': os.environ['ASTRID_INSTALL_PROGRAM_ROOT']}))\n"
         "sys.exit(37)\n",
         encoding="utf-8",
@@ -150,7 +163,7 @@ def test_generated_runner_supports_selected_older_package_under_isolation(tmp_pa
     (util / "credential_store.py").write_text(
         "import json, os, sys\n"
         "def main(args):\n"
-        "    print(json.dumps({'args': args, 'isolated': sys.flags.isolated, "
+        "    print(json.dumps({'args': args, 'isolated': sys.flags.isolated, 'utf8_mode': sys.flags.utf8_mode, "
         "'managed': os.environ['MANAGED'], 'root': os.environ['ASTRID_INSTALL_PROGRAM_ROOT']}))\n"
         "    return 37\n",
         encoding="utf-8",
@@ -173,16 +186,24 @@ def test_generated_runner_supports_selected_older_package_under_isolation(tmp_pa
     )
     request = ["credential", *arguments] if credential else arguments
     result = subprocess.run(
-        [str(python), "-I", "-c", bootstrap, str(runner), *request],
-        env={**os.environ, "PYTHONPATH": str(ambient)}, cwd=ambient,
+        [str(python), "-X", "utf8", "-I", "-c", bootstrap, str(runner), *request],
+        env={**os.environ, "PYTHONPATH": str(ambient), "PYTHONUTF8": "0"}, cwd=ambient,
         check=False, capture_output=True, text=True, timeout=30,
     )
     assert result.returncode == 37, result.stderr
     assert json.loads(result.stdout) == {
-        "args": arguments, "isolated": 1, "managed": "selected version", "root": str(root),
+        "args": arguments, "isolated": 1, "utf8_mode": 1, "managed": "selected version", "root": str(root),
     }
     assert not (package / "_process.py").exists()
     assert not (package / "core" / "util" / "process.py").exists()
+
+
+def test_generated_runner_utf8_flag_proves_windows_default_off_control(tmp_path):
+    result = subprocess.run(
+        [sys.executable, "-c", "import sys; print(sys.flags.utf8_mode)"],
+        env={**os.environ, "PYTHONUTF8": "0"}, check=True, capture_output=True, text=True,
+    )
+    assert result.stdout.strip() == "0"
 
 
 @pytest.mark.parametrize("service_state,raises", [("running", False), ("failed", True)])
@@ -196,8 +217,10 @@ def test_verification_rejects_failed_declared_service(tmp_path, monkeypatch, ser
     })
     status = {"discovery": {"runtime_instance_id": "instance"}, "support": {"pid_alive": True}}
     health = {"status": "ok", "runtime_instance_id": "instance", "services": [
+        {"name": "pack-host", "state": "running"},
         {"name": "chat", "state": service_state},
     ]}
+    (data / "runtime" / "generic-host.ready.json").write_text("{}")
     realm = {"realm_id": "realm"}
 
     class Response:
@@ -224,10 +247,62 @@ def test_verification_rejects_failed_declared_service(tmp_path, monkeypatch, ser
     monkeypatch.setattr("astrid.installer.backend.time.sleep", lambda _: None)
 
     if raises:
-        with pytest.raises(VerificationError, match="declared Astrid service is failed"):
+        with pytest.raises(VerificationError, match="An Astrid service stopped while starting"):
             backend.verify(version, data, "realm", timeout=0.01)
     else:
         backend.verify(version, data, "realm", timeout=0.01)
+
+
+@pytest.mark.parametrize("state", ["restarting", "running"])
+def test_verification_rejects_pack_host_without_ready_file_with_service_evidence(tmp_path, monkeypatch, state):
+    from astrid.installer import backend as backend_module
+
+    root, data = tmp_path / "program", tmp_path / "workspace"
+    version_root = root / "versions" / "v1"
+    version = Version(version_root, Path(sys.executable), version_root / "profile.json", {})
+    endpoint = f"http://127.0.0.1:{DEFAULT_DOOR_PORT}"
+    write_json(data / "runtime" / "discovery.json", {
+        "door_endpoint": endpoint, "active_realm": "realm", "runtime_instance_id": "instance",
+    })
+    status = {"discovery": {"runtime_instance_id": "instance"}, "support": {"pid_alive": True}}
+    health = {"status": "ok", "runtime_instance_id": "instance", "services": [
+        {"name": "pack-host", "state": state, "reason": "worker exited during startup",
+         "restart_count": 1, "last_exit": 7},
+    ]}
+    realm = {"realm_id": "realm"}
+
+    class Response:
+        def __init__(self, value): self.value = value
+        def __enter__(self): return self
+        def __exit__(self, *_): pass
+        def read(self): return json.dumps(self.value).encode()
+
+    class Opener:
+        def open(self, request, timeout):
+            path = request.full_url.removeprefix(endpoint)
+            return Response({"/api/runtime/v1/health": health, "/api/runtime/v1/realm": realm}[path])
+
+    logs = tmp_path / "runtime-logs"
+    logs.mkdir()
+    (logs / "service-pack-host.log").write_text("startup failed: missing adapter\nrestart scheduled\n")
+    monkeypatch.setattr(backend_module.platform, "log_dir", lambda: logs)
+    monkeypatch.setattr(backend_module.urllib.request, "build_opener", lambda *_: Opener())
+    monkeypatch.setattr(backend_module.time, "sleep", lambda _: None)
+    backend = Backend(root, tmp_path / "install.log", Path(sys.executable))
+    backend.runtime = lambda *_args, **_kwargs: status
+
+    with pytest.raises(VerificationError) as failure:
+        backend.verify(version, data, "realm", timeout=0.01)
+
+    message = str(failure.value)
+    assert f"state={state}" in message
+    assert "worker exited during startup" in message and "last_exit=7" in message
+    assert "missing adapter" in message and "service-pack-host.log" in message
+    assert f"state={state}" in failure.value.safe_message
+    assert "worker exited during startup" in failure.value.safe_message
+    assert "last_exit=7" in failure.value.safe_message
+    assert "missing adapter" not in failure.value.safe_message
+    assert "service-pack-host.log" in failure.value.safe_message
 
 
 class ProcessBackend:

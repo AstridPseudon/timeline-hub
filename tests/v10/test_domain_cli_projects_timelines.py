@@ -635,6 +635,8 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
     from astrid.packs.timeline.cli import COMMANDS, build_parser
 
     assert tuple(spec.name for spec in COMMANDS) == (
+        "import",
+        "export",
         "checkout",
         "commit",
         "edit",
@@ -673,6 +675,8 @@ def test_timelines_parser_has_visualize_and_no_aliases() -> None:
     # manifest-declared nested ``shots`` mount (task T29) and the nested
     # ``transcripts`` mount (narration transcript sync).
     assert _subparser_choices(build_parser(_FakeClient())) == {
+        "import",
+        "export",
         "checkout",
         "commit",
         "edit",
@@ -1367,9 +1371,13 @@ def test_timeline_editing_guidance_consumes_its_json(
     def run(command):
         argv = shlex.split(command)
         assert argv[:2] == ["python3", "-m"]
-        assert argv[2] == "astrid.packs.rendering.docs.scripts.timeline_document"
-        monkeypatch.setattr(sys, "argv", argv[2:])
-        helper.main()
+        if argv[2:4] == ["astrid", "timelines"]:
+            parsed = cli.build_parser(client).parse_args([*argv[4:], "--json"])
+            assert parsed.handler(parsed) == 0
+        else:
+            assert argv[2] == "astrid.packs.rendering.docs.scripts.timeline_document"
+            monkeypatch.setattr(sys, "argv", argv[2:])
+            helper.main()
         return json.loads(capsys.readouterr().out)
 
     if mode == "checkout":
@@ -1387,6 +1395,7 @@ def test_timeline_editing_guidance_consumes_its_json(
         commands = navigation["commands"]
     else:
         checkout = Checkout(bundle_from_document(original))
+        checkout.bundle["base_parent"]["publication_id"] = original_head["publication_id"]
         checkout.save(path, quiet=True)
         monkeypatch.setattr(cli, "_edit_checkout", lambda parsed: Checkout.load(path))
         monkeypatch.setattr("astrid.packs.timeline.cli_sweep.auto_sweep_after_edit", lambda *a, **kw: 0)
@@ -1401,7 +1410,10 @@ def test_timeline_editing_guidance_consumes_its_json(
         prepared = shlex.split(prepare)
         assert prepared[-2:] == [str(path), str(path) + ".commit.json"]
         subprocess.run([sys.executable, *prepared[1:]], check=True)
-        commands = dict(zip(("check", "commit"), [line[6:] for line in lines if line.startswith("next: python3 -m astrid.packs.rendering")]))
+        commands = {
+            "check": next(line[6:] for line in lines if line.startswith("next: python3 -m astrid.packs.rendering")),
+            "commit": next(line[6:] for line in lines if line.startswith("next: python3 -m astrid timelines commit ")),
+        }
         if mode == "draft":
             shown = shlex.split(next(line[6:].removesuffix(" (your change)") for line in lines if line.startswith("next: python3 -m astrid timelines show")))
             assert shown[5] == timeline_ref and shown[7] == project_ref
@@ -1409,13 +1421,13 @@ def test_timeline_editing_guidance_consumes_its_json(
     checked = run(commands["check"])
     assert checked["validation"]["valid"]
     committed = run(commands["commit"])
-    result = committed["publication"]
+    result = committed
     assert result["data"]["status"] == "accepted" and result["receipt"]
     body = bodies[-1]
     head = client.timelines.history(project, "t", limit=100).data
     assert body["base_revision_id"] == original["parent_revision"]["revision_id"]
     assert body["base_publication_id"] == original_head["publication_id"]
-    assert body["merge"] == "atomic" and body["label"] == "Publish document"
+    assert body["merge"] == "atomic" and body["label"] == "Timeline edit"
     assert body["steps"][0]["command_ordinals"] == [0]
     assert body["steps"][0]["patch"] == body["commands"][0]["args"]["changes"]
     assert body["commands"][0]["op"] == "doc.patch"
@@ -1425,7 +1437,7 @@ def test_timeline_editing_guidance_consumes_its_json(
     if mode == "checkout":
         assert landed["parent_revision"]["payload"]["config"]["opaque_guidance"] == [None, False, "kept"]
         assert landed["shot_revisions"][0]["payload"]["name"] == "Edited shot"
-    assert run(commands["commit"])["publication"] == result
+    assert run(commands["commit"]) == result
     assert client.timelines.history(project, "t", limit=100).data == head
     assert document("t") == landed
 
@@ -2558,3 +2570,51 @@ def test_timelines_visualize_forwards_filmstrip_options(capsys) -> None:
         'columns': 4, 'page_size': 40, 'range': '10..20',
     }
     capsys.readouterr()
+
+
+def test_timelines_import_non_zip_file_is_a_clean_failure_envelope(capsys, tmp_path) -> None:
+    junk = tmp_path / "not-a-zip.astrid"
+    junk.write_text("this is not a zip archive")
+    rc = _run("timelines", ["import", str(junk), "--project", "demo", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 1
+    error = json.loads(captured.out)["error"]
+    assert error["code"] == "validation_error"
+    assert "cannot read timeline archive" in error["message"]
+    assert "Traceback" not in captured.err
+
+
+def test_timelines_import_damaged_archive_midway_is_a_clean_failure_envelope(
+    capsys, monkeypatch, tmp_path
+) -> None:
+    import zipfile
+
+    def _damaged(*_args, **_kwargs):
+        raise zipfile.BadZipFile("Bad CRC-32 for file 'media/abc'")
+
+    monkeypatch.setattr("astrid.sdk.timeline_transfer.import_timeline", _damaged)
+    rc = _run("timelines", ["import", str(tmp_path / "x.astrid"), "--project", "demo", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 1
+    assert json.loads(captured.out)["error"]["code"] == "validation_error"
+
+
+@pytest.mark.parametrize("verb_args", [["import", "x.astrid"], ["export", "film", "--out", "x.astrid"]])
+def test_timelines_transfer_runtime_conflict_is_a_clean_failure_envelope(
+    capsys, monkeypatch, tmp_path, verb_args
+) -> None:
+    from astrid.sdk.workspace_client import WorkspaceClientError
+
+    def _conflict(*_args, **_kwargs):
+        raise WorkspaceClientError(409, "conflict", "timeline slug already exists", {"slug": "film"})
+
+    monkeypatch.setattr("astrid.sdk.timeline_transfer.import_timeline", _conflict)
+    monkeypatch.setattr("astrid.sdk.timeline_transfer.export_timeline", _conflict)
+    args = [str(tmp_path / a) if a.endswith(".astrid") else a for a in verb_args]
+    rc = _run("timelines", [*args, "--project", "demo", "--json"])
+    captured = capsys.readouterr()
+    assert rc == 1
+    error = json.loads(captured.out)["error"]
+    assert error["code"] == "conflict"
+    assert error["message"] == "timeline slug already exists"
+    assert "Traceback" not in captured.err

@@ -2,16 +2,20 @@
 
 import os
 import subprocess
+import sys
 from unittest.mock import Mock
 
 import pytest
 
 from astrid.installer import cli
 from astrid.installer.core import Version, current, write_json
-from astrid.installer.service import LABEL
+from astrid.installer.service import LABEL, default_program_root
 
 
-def test_partial_uninstall_can_finish_after_version_metadata_was_removed(tmp_path, monkeypatch):
+@pytest.mark.parametrize("explicit_root", [False, True])
+def test_partial_uninstall_can_finish_after_version_metadata_was_removed(
+    tmp_path, monkeypatch, explicit_root,
+):
     from runtime_protocol import platform
 
     monkeypatch.setenv("HOME", str(tmp_path / "home"))
@@ -19,7 +23,10 @@ def test_partial_uninstall_can_finish_after_version_metadata_was_removed(tmp_pat
     monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local-app-data"))
     monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "xdg-data"))
     monkeypatch.setattr(platform, "log_dir", lambda: tmp_path / "logs")
-    root, data = tmp_path / "program", tmp_path / "workspace"
+    home = tmp_path / "home"
+    root = tmp_path / "program"
+    default_root = default_program_root(home, sys.platform)
+    data = tmp_path / "workspace"
     write_json(root / "install.json", {"owner": LABEL, "data_root": str(data)})
     (root / "current").write_text("removed-version\n")
     backend = Mock()
@@ -31,7 +38,10 @@ def test_partial_uninstall_can_finish_after_version_metadata_was_removed(tmp_pat
     backend.remove.return_value = []
     monkeypatch.setattr(cli, "Backend", Mock(return_value=backend))
 
-    assert cli.main(["--root", str(root), "--uninstall"]) == 0
+    arguments = (["--root", str(root)] if explicit_root else []) + ["--uninstall"]
+    assert cli.main(arguments) == 0
+    assert cli.Backend.call_args_list[-1].args[0] == root
+    assert not (default_root / "install.json").exists()
     backend.stop.assert_called_once_with(None, data)
     backend.unregister.assert_called_once_with()
     backend.remove.assert_called_once_with(root, data, delete_data=False)

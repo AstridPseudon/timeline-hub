@@ -480,6 +480,8 @@ def _executor_cmd(
 ) -> str:
     parts = [
         shlex.quote(str(python_exec)),
+        "-X",
+        "utf8",
         "-m",
         "astrid",
         "executors",

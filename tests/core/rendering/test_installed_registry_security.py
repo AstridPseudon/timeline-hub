@@ -60,7 +60,7 @@ def test_installed_generator_must_preserve_isolation(tmp_path, monkeypatch):
     monkeypatch.setattr(runtime, '_registry_probe', lambda *_a, **_k: (observation, _completed_probe_receipt()))
 
     def inspect(argv, **kwargs):
-        assert argv[1] == '-I', f'installed generator lost isolation: {argv}'
+        assert '-I' in argv[1:argv.index('-c')], f'installed generator lost isolation: {argv}'
         raise RuntimeError('stop before executing any generator')
 
     monkeypatch.setattr(runtime, '_owned_registry_probe', inspect)
@@ -165,10 +165,10 @@ def test_installed_launch_binding_uses_selected_distribution_instead_of_sdk_call
     for generate in (False, True):
         argv = runtime._registry_origin.installed_argv('/selected/python', runtime.__file__,
             generate=generate, installed_source=(str(root), digest))
-        assert argv[:3] == ['/selected/python', '-I', '-c']
-        assert argv[4:] == [str(root), digest]
+        assert argv[:5] == ['/selected/python', '-X', 'utf8', '-I', '-c']
+        assert argv[argv.index('-c') + 2:] == [str(root), digest]
         assert str(runtime.REPO_ROOT) not in argv
-        assert 'sys.path.insert' not in argv[3] and 'sys.path[0]' not in argv[3]
+        assert 'sys.path.insert' not in argv[argv.index('-c') + 1] and 'sys.path[0]' not in argv[argv.index('-c') + 1]
     with pytest.raises(ValueError, match='launch source closure changed'):
         runtime._registry_origin.installed_argv('/selected/python', runtime.__file__,
             installed_source=(str(root), '0' * 64))

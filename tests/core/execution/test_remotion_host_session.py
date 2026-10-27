@@ -106,6 +106,83 @@ def test_two_task_leases_reuse_original_then_host_shutdown_waits_and_proves(tmp_
     assert events == [("track", processes[0]), ("untrack", processes[0])]
 
 
+def test_userprofile_supplies_worker_home_and_separates_warm_lease_identity(
+    tmp_path, monkeypatch
+):
+    monkeypatch.delenv("HOME", raising=False)
+    manager, _ = owner(tmp_path)
+    base_env = environment(tmp_path)
+    worker_envs = []
+    processes = fake_native(monkeypatch, manager)
+    original_start = host.popen_owned_group
+
+    def capture_start(argv, **kwargs):
+        worker_envs.append(dict(kwargs["env"]))
+        return original_start(argv, **kwargs)
+
+    monkeypatch.setattr(host, "popen_owned_group", capture_start)
+    first_env = {**base_env, "USERPROFILE": r"C:\Users\first"}
+    first = manager.lease(first_env, attempt=tmp_path)
+    first_identity = first.selected_identity
+    try:
+        manager.request(first, request(first_env))
+        assert worker_envs[0]["HOME"] == r"C:\Users\first"
+    finally:
+        first.close()
+    assert "HOME" not in first_env
+    assert ("HOME", r"C:\Users\first") in first_identity[-1]
+
+    second_env = {**base_env, "USERPROFILE": r"C:\Users\second"}
+    second = manager.lease(second_env, attempt=tmp_path)
+    try:
+        assert second.selected_identity != first_identity
+        manager.request(second, request(second_env))
+        assert worker_envs[1]["HOME"] == r"C:\Users\second"
+        assert len(processes) == 2
+        assert not processes[1].waited
+    finally:
+        second.close()
+
+    same_home = manager.lease(second_env, attempt=tmp_path)
+    try:
+        manager.request(same_home, request(second_env))
+        assert len(processes) == 2
+    finally:
+        same_home.close()
+        manager.close()
+
+
+def test_explicit_home_precedes_userprofile_without_mutating_caller_environment(
+    tmp_path, monkeypatch
+):
+    manager, _ = owner(tmp_path)
+    env = {
+        **environment(tmp_path),
+        "HOME": r"C:\Astrid\explicit",
+        "USERPROFILE": r"C:\Users\profile",
+    }
+    original_env = dict(env)
+    worker_envs = []
+    processes = fake_native(monkeypatch, manager)
+    original_start = host.popen_owned_group
+
+    def capture_start(argv, **kwargs):
+        worker_envs.append(dict(kwargs["env"]))
+        return original_start(argv, **kwargs)
+
+    monkeypatch.setattr(host, "popen_owned_group", capture_start)
+    lease = manager.lease(env, attempt=tmp_path)
+    try:
+        assert env == original_env
+        assert lease.environment["HOME"] == r"C:\Astrid\explicit"
+        manager.request(lease, request(env))
+        assert worker_envs[0]["HOME"] == r"C:\Astrid\explicit"
+        assert len(processes) == 1
+    finally:
+        lease.close()
+        manager.close()
+
+
 def test_original_census_failure_is_sticky_and_forbids_replacement(tmp_path, monkeypatch):
     manager, events = owner(tmp_path)
     env = environment(tmp_path)

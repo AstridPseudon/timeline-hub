@@ -94,6 +94,7 @@ def configured_vibecomfy_checkout(environ: Mapping[str, str] | None = None) -> P
     try:
         result = subprocess.run(
             ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+            stdin=subprocess.DEVNULL,
             check=False,
             capture_output=True,
             text=True,
@@ -112,6 +113,7 @@ def configured_vibecomfy_checkout(environ: Mapping[str, str] | None = None) -> P
     try:
         clean = subprocess.run(
             ["git", "-C", str(checkout), "status", "--porcelain", "--untracked-files=all"],
+            stdin=subprocess.DEVNULL,
             check=False,
             capture_output=True,
             text=True,

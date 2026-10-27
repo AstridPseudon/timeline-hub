@@ -116,12 +116,15 @@ def test_host_still_requires_explicit_project_configuration(
 
 @pytest.mark.parametrize("installed_node_modules", [False, True])
 def test_remotion_missing_dependencies_report_resolved_directory(
-    tmp_path: Path, installed_node_modules: bool
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, installed_node_modules: bool
 ) -> None:
     project_dir = tmp_path / "server-owned-bundle"
     project_dir.mkdir()
     (project_dir / "package.json").write_text("{}", encoding="utf-8")
+    monkeypatch.setenv(remotion_runtime.REMOTION_PROJECT_DIR_ENV, str(project_dir))
     if installed_node_modules:
         (project_dir / "node_modules").mkdir()
-    with pytest.raises(FileNotFoundError, match=str(project_dir / "node_modules")):
+    with pytest.raises(FileNotFoundError, match=str(project_dir)) as failure:
         remotion_backend._validate_project_dir(project_dir)
+    expected = "required Remotion package(s) missing" if installed_node_modules else "node_modules is missing"
+    assert expected in str(failure.value)

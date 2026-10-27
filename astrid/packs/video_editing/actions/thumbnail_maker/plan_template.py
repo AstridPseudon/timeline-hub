@@ -89,7 +89,7 @@ def _build_resolve_cmd(
     _ = (run_root, query)
     src = shlex.quote(str(Path(source).resolve())) if source else "''"
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"resolve-video --video {src} "
         f"--out {shlex.quote('{produces_root}/video-resolution.json')}"
     )
@@ -98,7 +98,7 @@ def _build_resolve_cmd(
 def _build_plan_cmd(python_exec: str, run_root: Path, query: str) -> str:
     _ = run_root
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"plan-evidence --query {shlex.quote(query)} "
         f"--out {shlex.quote('{produces_root}/evidence/evidence-plan.json')}"
     )
@@ -120,7 +120,7 @@ def _build_discover_cmd(
     if source is not None:
         video_flag = f"--video {shlex.quote(str(Path(source).resolve()))} "
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"discover-video-evidence {video_flag}"
         f"--out {shlex.quote('{produces_root}/evidence/candidates.json')} "
         f"--query {shlex.quote(query)} "
@@ -134,7 +134,7 @@ def _build_build_ref_cmd(python_exec: str, run_root: Path, query: str) -> str:
         "{step_dir}/../discover-video-evidence/v1/produces/evidence/candidates.json"
     )
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"build-reference-pack "
         f"--out {shlex.quote('{produces_root}/evidence/reference-pack.json')} "
         f"--query {shlex.quote(query)} "
@@ -148,7 +148,7 @@ def _build_generate_cmd(python_exec: str, run_root: Path, query: str) -> str:
         "{step_dir}/../build-reference-pack/v1/produces/evidence/reference-pack.json"
     )
     return (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"generate-thumbnails "
         f"--out {shlex.quote('{produces_root}/thumbnail-manifest.json')} "
         f"--query {shlex.quote(query)} "

@@ -268,17 +268,43 @@ def test_approve_regenerates_lock_and_keeps_quarantined_approvals(tmp_path):
     assert result["diff"]["source_labels"] == {"added": ["goodpack.echo"], "removed": []}
 
 
-def test_host_bootstrap_surfaces_child_exception_line(tmp_path):
+def test_host_bootstrap_surfaces_pack_host_bootstrap_error_line(tmp_path):
     from astrid.sdk.host_bootstrap import _host_failure_cause
 
     log = tmp_path / "generic-host.log"
     log.write_text(
         "starting\nTraceback (most recent call last):\n"
-        "astrid.core.execution.generic_host.HostError: capability matrix does not exactly cover\n",
+        "astrid.sdk.host_bootstrap.PackHostBootstrapError: capability matrix does not exactly cover\n",
         encoding="utf-8",
     )
 
     assert _host_failure_cause(log) == (
-        "astrid.core.execution.generic_host.HostError: capability matrix does not exactly cover"
+        "astrid.sdk.host_bootstrap.PackHostBootstrapError: capability matrix does not exactly cover"
     )
     assert _host_failure_cause(tmp_path / "missing.log") == ""
+
+
+def test_host_bootstrap_ignores_arbitrary_tracebacks_and_keeps_safe_startup_context(tmp_path):
+    from astrid.sdk.host_bootstrap import _host_failure_cause
+
+    log = tmp_path / "generic-host.log"
+    safe_context = f"field=capability_matrix path={tmp_path / 'matrix.json'}"
+    log.write_text(
+        f"generic host CLI exiting after failure: error_type=HostError safe_context={safe_context}\n"
+        "Traceback (most recent call last):\n"
+        "RuntimeError: private-token-should-not-appear\n"
+        "ValueError: RuntimeError: generic host CLI exiting after failure: safe_context=spoofed-secret\n",
+        encoding="utf-8",
+    )
+
+    assert _host_failure_cause(log) == safe_context
+    assert "private-token-should-not-appear" not in _host_failure_cause(log)
+    assert "spoofed-secret" not in _host_failure_cause(log)
+
+    log.write_text(
+        f"generic host CLI exiting after failure: error_type=HostError safe_context={safe_context}\n"
+        "generic host CLI exiting after failure: error_type=RuntimeError\n"
+        "RuntimeError: newest failure has no marked context\n",
+        encoding="utf-8",
+    )
+    assert _host_failure_cause(log) == ""

@@ -38,6 +38,7 @@ REPO = Path(__file__).resolve().parents[2]
 FIXTURES = Path(__file__).parent / 'fixtures'
 AUDIO = json.loads((FIXTURES / 'audio_compile_contract.json').read_text(encoding='utf-8'))
 VISUAL = json.loads((FIXTURES / 'visual_compile_contract.json').read_text(encoding='utf-8'))
+MEDIA_PROJECTION = json.loads((FIXTURES / 'occurrence_media_projection.json').read_text(encoding='utf-8'))
 
 
 def _graph(path):
@@ -198,6 +199,86 @@ def _source_clip(projection, occurrence_id, source_clip_id):
                 and c['app']['astrid_shot_composition']['source_clip_id'] == source_clip_id)
 
 
+def test_media_specific_occurrence_projection_matches_shared_vectors():
+    vectors = MEDIA_PROJECTION
+    parent_clip = deepcopy(vectors['parent_clip'])
+    parent_config = {
+        'output': {'resolution': '1280x720', 'fps': 30, 'file': 'canonical.mp4'},
+        'tracks': [{'id': 'parent-visual-lane', 'kind': 'visual', 'label': 'Shots'}],
+        'clips': [parent_clip],
+    }
+    child_assets = {
+        asset['asset_id']: {
+            'object_id': asset['object_id'], 'content_sha256': asset['digest'],
+            'type': asset['media_type'],
+        }
+        for asset in vectors['assets']
+    }
+    child_timeline = {
+        'tracks': deepcopy(vectors['tracks']),
+        'clips': deepcopy(vectors['clips']),
+        'registry': {'assets': child_assets},
+    }
+    parent_payload = {
+        'config': parent_config,
+        'clips': [deepcopy(parent_clip)],
+        'registry': {'assets': {'standalone-source': {'object_id': 'object-standalone-source', 'type': 'image/png'}}},
+        'occurrences': [
+            {
+                'occurrence_id': 'occ-1', 'shot_id': 'shot-alpha', 'shot_revision_id': 'rev-a',
+                'at_ms': vectors['occurrence']['at_ms'],
+                'duration_ms': vectors['occurrence']['duration_ms'],
+                'source_offset': vectors['occurrence']['source_offset'],
+                'speed': vectors['occurrence']['speed'], 'track': vectors['occurrence']['track'],
+            },
+            {
+                'occurrence_id': 'occ-2', 'shot_id': 'shot-alpha', 'shot_revision_id': 'rev-a',
+                'at_ms': vectors['next_occurrence']['at_ms'],
+                'duration_ms': vectors['next_occurrence']['duration_ms'],
+                'source_offset': 0, 'speed': 1, 'track': vectors['next_occurrence']['track'],
+            },
+        ],
+    }
+    parent = {
+        'project_id': 'project-001', 'timeline_id': 'document-primary',
+        'revision_id': 'parent-rev-media-projection', 'payload': parent_payload,
+    }
+    shot_revisions = [{
+        'shot_id': 'shot-alpha', 'revision_id': 'rev-a',
+        'internal_timeline_revision_id': 'internal-media-projection',
+    }]
+    internal_revisions = [{
+        'revision_id': 'internal-media-projection', 'payload': child_timeline,
+    }]
+
+    projected = project_runtime_parent_composition(
+        parent, shot_revisions=shot_revisions,
+        internal_timeline_revisions=internal_revisions,
+    )
+    clips = {
+        clip['app']['astrid_shot_composition']['source_clip_id']: clip
+        for clip in projected.config['clips']
+        if clip.get('shot_occurrence_id') == 'occ-1'
+    }
+    # Keep the shared fixture frozen; child declarations now win kind collisions.
+    expected_clips = {
+        **vectors['expected'],
+        'collision-parent-kind-wins': {'at': 0, 'from': 0.125, 'to': 2.125, 'timeline_duration': 2},
+    }
+    for clip_id, expected in expected_clips.items():
+        clip = clips[clip_id]
+        assert clip['at'] == pytest.approx(expected['at']), clip_id
+        assert clip['from'] == pytest.approx(expected['from']), clip_id
+        if 'to' in expected:
+            assert clip['to'] == pytest.approx(expected['to']), clip_id
+        if 'hold' in expected:
+            assert clip['hold'] == pytest.approx(expected['hold']), clip_id
+        assert clip.get('speed') == expected.get('speed'), clip_id
+        assert clip_timeline_duration(clip) == pytest.approx(expected['timeline_duration']), clip_id
+    assert projected.config['clips'][0] == parent_clip
+    assert projected.registry['assets']['occ-1:lane-audio-source']['object_id'] == 'object-lane-audio-source'
+
+
 def _clock():
     # The native fps is {numerator, denominator}; the frame helpers take a Real, so pass the Fraction built from it.
     # Passing the dict or the [num, den] list to clip_start_frame raises ValueError at _positive_fps (duration.py:45-49).
@@ -220,7 +301,8 @@ def test_closure_places_occurrences_at_eight_and_ten_seconds_on_the_picture_lane
     placed = {o['occurrence_id']: (o['at'], o['hold']) for o in projection.occurrences}
     expected = {row['occurrence_id']: (row['at_ms'] / 1000, row['duration_ms'] / 1000) for row in VISUAL['closure']['occurrences']}
     assert placed == expected
-    assert all(c['track'] == VISUAL['lane'] for c in projection.config['clips'] if 'shot_occurrence_id' in c)
+    assert all(c['track'] == f"{c['shot_occurrence_id']}~{VISUAL['lane']}"
+               for c in projection.config['clips'] if 'shot_occurrence_id' in c)
 
 
 def test_popup_closure_source_windows_are_half_open_on_the_shared_lane():
@@ -261,7 +343,8 @@ def test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source():
     before = deepcopy(graph)
     projection = project_shot_composition(graph)
     clip = _source_clip(projection, occurrence['occurrence_id'], vector['child']['id'])
-    editor = vector['editor_projection']
+    editor = {**vector['editor_projection'],
+              'track': f"{occurrence['occurrence_id']}~{vector['editor_projection']['track']}"}
     for field in ('id', 'at', 'track', 'clipType', 'asset', 'hold', 'effects'):
         assert clip[field] == editor[field]
     assert clip_end_frame(clip, vector['fps']) == vector['end_frame']
@@ -357,11 +440,21 @@ def test_single_occurrence_cap_through_normal_managed_projection(tmp_path, publi
         parent, shot_revisions=closure['shot_revisions'],
         internal_timeline_revisions=closure['internal_timeline_revisions'],
     )
-    assert snapshot.config == projected.config == vector['projected_config']
+    expected_config = deepcopy(vector['projected_config'])
+    expected_timeline = deepcopy(vector['serialized_timeline'])
+    # Layering changes only track identity/order; retain every timing, fade,
+    # source, and provenance assertion from the shared compile vectors.
+    for expected in (expected_config, expected_timeline):
+        expected['tracks'].insert(0, {
+            **expected['tracks'][0], 'id': 'image-occurrence~picture',
+            'app': {'group': {'id': 'image-occurrence', 'sourceTrack': 'picture'}},
+        })
+        expected['clips'][0]['track'] = 'image-occurrence~picture'
+    assert snapshot.config == projected.config == expected_config
     assert snapshot.registry == projected.registry == vector['registry']
     timeline_path, _, _ = materialize_managed_render_snapshot(tmp_path, snapshot)
     timeline = _serialize_timeline(timeline_path)
-    assert timeline == vector['serialized_timeline']
+    assert timeline == expected_timeline
     assert timeline['clips'][0]['hold'] == 4
     assert clip_end_frame(timeline['clips'][0], vector['fps']) == vector['end_frame']
     assert closure == before

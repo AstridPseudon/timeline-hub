@@ -25,4 +25,4 @@ def resolve_executor_runtime_module(executor_id: str) -> str:
 
 def executor_argv(executor_id: str, python_exec: str) -> list[str]:
     """Return argv tokens for a qualified executor's module entrypoint."""
-    return [python_exec, "-m", resolve_executor_runtime_module(executor_id)]
+    return [python_exec, "-X", "utf8", "-m", resolve_executor_runtime_module(executor_id)]

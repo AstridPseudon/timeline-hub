@@ -8,9 +8,9 @@ Reference for "audible today": `origin/main` e51595c6. The Python compiler is `a
 
 ## Decisions this contract applies
 
-1. **One compiler.** Agent owns the occurrence-to-clip rules. App and Viewing consume the compiled output and carry no second policy.
+1. **One export contract, three projections.** Agent owns the export projection rules. App and Runtime retain their own projection implementations; shared golden vectors assert that the three projections agree on the covered timing and media-kind behavior. The vectors establish conformance for those cases, not a single shared code path.
 2. **Gain is multiplicative**: `child x occurrence`. Examples: 0.8 x 0.5 = 0.4; 1.5 x 2 = 3.
-3. **`source_offset` and occurrence `speed` follow main's audible playback**, not App's adapter. Main ignores both on the playback path, so the compiler keeps them as metadata. Metadata-only is acceptable here only because main does not change what is heard.
+3. **For audio clips, `source_offset` and occurrence `speed` follow main's audible playback**, not App's former adapter. Main ignores both on the playback path, so the compiler keeps them as metadata. Metadata-only is acceptable here only because main does not change what is heard. Visual clips use the media-specific placement rule below.
 4. **Fades use one continuous, source-time envelope** for App preview and Agent export. The public Composition `applyAudioEnvelope` is the policy (03:20). The normal render route now crosses the trusted prepared-source boundary; pure projection still cannot invent `audio.render_source`, and an unprepared or mismatched source refuses `ENVELOPE_UNRENDERED`.
 5. **Fade `curve=` is HONOURED in the unified path** (orchestrator 04:24Z). The author's `curve=NAME` is kept as `params.fadeInCurve` / `params.fadeOutCurve` and the envelope applies it. Main's playback ignores it, so main's audible fades are always linear. This is a deliberate change for films that use `curve=`; they are listed in `docs/design/owner-film-differences.md`.
 
@@ -70,7 +70,17 @@ Vectors 1-9 and 12-14 pass on the current projection. Vectors 1-9 are main's beh
 
 The vector test now checks an absent dotted key with `_lookup(...) is None`. The old `key not in clip` check only looked at top-level keys and would have passed for `params.fadeInCurve` regardless of its value.
 
-The occurrence-offset and occurrence-speed rows (7-8) deliberately **do not** match App's current adapter, which applies both. App must drop that application; this is the narrow App repair the 03:17 decision asks for.
+The occurrence-offset and occurrence-speed rows (7-8) pin the audio-only metadata rule. App and Runtime apply the same media-specific split; their visual projections apply occurrence placement as described below.
+
+## Media-specific occurrence timing
+
+The occurrence timing fields have distinct playback rules by media kind:
+
+- **Visual clips:** add the occurrence's millisecond `source_offset` to the child's source window once. A child `speed` takes precedence; otherwise inherit the occurrence `speed`. Clip duration and the applicable occurrence cap are computed with that effective speed.
+- **Audio clips:** leave the occurrence `source_offset` and occurrence `speed` as metadata. Preserve child trims and child `speed`; an absent child speed keeps the normal playback default of 1.
+- A declared domain track kind (`audio` or `visual`) classifies the clip first, regardless of the track ID. Parent output-track definitions win an ID collision; otherwise the child's declared track kind is carried into the projection. When no usable track kind exists, an explicit audio clip type or the selected asset's audio media type can identify audio. Asset fallback requires an exact asset ID match, and track-name strings do not determine media kind.
+
+The byte-identical vector set in `tests/editing_conformance/fixtures/occurrence_media_projection.json` is exercised through the Agent's canonical and Runtime-parent projectors, and copied unchanged to the App and Runtime test fixtures. It covers a nonzero trim and offset, inherited and child-overridden rates, trim and hold caps at a two-second occurrence window aligned with the next same-lane occurrence, audio classification from a child-only track with no clip or asset hint, parent-kind precedence on a same-ID collision, a nonstandard audio track ID, audio-kind inference from asset and clip metadata, unchanged standalone parent media, and preserved source registry identity.
 
 ### Reconciliation with Viewing's authored 11 (2026-10-20)
 

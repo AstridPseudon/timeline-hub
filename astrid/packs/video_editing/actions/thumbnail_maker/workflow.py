@@ -88,13 +88,13 @@ def build_workflow(
     # ── Build step commands (mirror plan_template.py) ──────────────────────
     src_flag = shlex.quote(str(resolved_source)) if resolved_source else "''"
     cmd_resolve = (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"resolve-video --video {src_flag} "
         f"--out {shlex.quote('{produces_root}/video-resolution.json')}"
     )
 
     cmd_plan = (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"plan-evidence --query {shlex.quote(effective_query)} "
         f"--out {shlex.quote('{produces_root}/evidence/evidence-plan.json')}"
     )
@@ -108,7 +108,7 @@ def build_workflow(
     if resolved_source is not None:
         video_flag = f"--video {shlex.quote(str(resolved_source))} "
     cmd_discover = (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"discover-video-evidence {video_flag}"
         f"--out {shlex.quote('{produces_root}/evidence/candidates.json')} "
         f"--query {shlex.quote(effective_query)} "
@@ -119,7 +119,7 @@ def build_workflow(
         "{step_dir}/../discover-video-evidence/v1/produces/evidence/candidates.json"
     )
     cmd_build_ref = (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"build-reference-pack "
         f"--out {shlex.quote('{produces_root}/evidence/reference-pack.json')} "
         f"--query {shlex.quote(effective_query)} "
@@ -130,7 +130,7 @@ def build_workflow(
         "{step_dir}/../build-reference-pack/v1/produces/evidence/reference-pack.json"
     )
     cmd_generate = (
-        f"{shlex.quote(str(python_exec))} -m astrid.packs.video_editing.actions.thumbnail_maker.run "
+        f"{shlex.quote(str(python_exec))} -X utf8 -m astrid.packs.video_editing.actions.thumbnail_maker.run "
         f"generate-thumbnails "
         f"--out {shlex.quote('{produces_root}/thumbnail-manifest.json')} "
         f"--query {shlex.quote(effective_query)} "

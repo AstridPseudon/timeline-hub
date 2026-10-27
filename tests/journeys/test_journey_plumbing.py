@@ -35,32 +35,21 @@ POLLUTED = {
     "NODE_OPTIONS": "--require x", "NODE_PATH": "/n", "LD_PRELOAD": "/x.so", "LD_LIBRARY_PATH": "/l",
     "DYLD_INSERT_LIBRARIES": "/x", "DYLD_LIBRARY_PATH": "/d", "GIT_DIR": "/g", "GIT_CONFIG_GLOBAL": "/c",
     "GIT_WORK_TREE": "/w", "ASTRID_NODE_EXECUTABLE": "/node", "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": "/p",
-    "OTTO_HEAVY_LEASE": "lease", "ASTRID_REMOTION_VALIDATION_PATH": "/v", "ASTRID_RENDER_CACHE": "/r",
+    "OTTO_HEAVY_LEASE": "lease", "ASTRID_RENDER_CACHE": "/r",
     "PYTHONHOME": "/py", "PYTHONSTARTUP": "/s", "NODE_ICU_DATA": "/i", "OPENSSL_CONF": "/o",
 }
 KEPT = {"PATH": "/usr/bin", "HOME": "/home/x", "TMPDIR": "/tmp", "GIT_EDITOR": "vi", "GIT_TERMINAL_PROMPT": "0",
         "GIT_AUTHOR_NAME": "n", "ASTRID_PACKS_PATH": "/packs", "ASTRID_RUNTIME_DATA_ROOT": "/data"}
 
 
-def test_scrub_removes_what_remotion_refuses_and_keeps_the_rest() -> None:
+def test_scrub_removes_shell_overrides_and_keeps_the_rest() -> None:
     scrubbed = journey.scrub_child_env({**POLLUTED, **KEPT})
     assert scrubbed == KEPT
 
 
 @pytest.mark.parametrize("key", sorted(POLLUTED))
-def test_each_scrubbed_variable_is_one_remotion_refuses_or_the_journey_replaces(key: str) -> None:
-    from astrid.core.rendering.remotion_runtime import RemotionValidationError, _registry_context
-    env = {"HOME": "/home/x", "PATH": "/usr/bin", key: POLLUTED[key]}
-    if not key.startswith(("ASTRID_", "OTTO_")):
-        with pytest.raises(RemotionValidationError):  # the validation that fails closed on it ...
-            _registry_context(env, generator=True)
-    assert key not in journey.scrub_child_env(env)
-    _registry_context(journey.scrub_child_env(env), generator=True)  # ... passes once scrubbed
-
-
-def test_scrubbed_env_with_interactive_git_set_still_passes_validation() -> None:
-    from astrid.core.rendering.remotion_runtime import _registry_context
-    assert _registry_context(journey.scrub_child_env({**POLLUTED, **KEPT}), generator=True) is not None
+def test_each_shell_override_is_scrubbed(key: str) -> None:
+    assert key not in journey.scrub_child_env({**KEPT, key: POLLUTED[key]})
 
 
 def test_every_runner_child_gets_the_scrubbed_env(tmp_path: Path) -> None:
@@ -110,6 +99,46 @@ def test_journey_render_calls_use_the_backend_and_kill_render_drops_review_for_f
     assert argv[argv.index("--backend") + 1] == backend and ("--review" in argv) is review
 
 
+def test_full_journey_commits_the_checked_named_draft(tmp_path: Path, monkeypatch) -> None:
+    from astrid.packs.timeline import cli
+    from astrid.sdk import timeline_checkout
+
+    document = {"project_id": "p", "timeline_id": "main",
+                "base_parent": {"revision_id": "r", "publication_id": "receipt"},
+                "parent": {}, "placements": [], "shots": {}}
+    drafts = []
+    monkeypatch.setattr(timeline_checkout, "find_draft", lambda *args: drafts.append(args) or tmp_path / "draft.json")
+    monkeypatch.setattr(timeline_checkout.Checkout, "load", lambda path: SimpleNamespace(document=lambda: document))
+
+    class FullRunner(RecordingRunner):
+        def phase(self, name, operation):
+            return operation() if name == "edit" else name + "-run"
+
+        def command(self, phase, argv, env, **kwargs):
+            super().command(phase, argv, env, **kwargs)
+            if argv[1:2] == ["-c"]:
+                monkeypatch.setattr(sys, "argv", ["-c", *argv[3:]])
+                exec(argv[2], {})
+                return ""
+            parsed = cli.build_parser(SimpleNamespace()).parse_args(argv[argv.index("timelines") + 1:])
+            if parsed.command == "commit":
+                assert json.loads(parsed.file.read_text()) == document
+                assert parsed.idempotency_key == drafts[0][2]
+                assert parsed.message == "journey " + parsed.idempotency_key
+                assert kwargs.get("json_result", True) is True
+            else:
+                assert parsed.draft.startswith("v6-")
+                assert kwargs["json_result"] is False
+
+    runner = FullRunner()
+    j = journey.Journey(runner=runner, root=tmp_path, env={}, project="p", timeline="main", start=0, end=6,
+                        kill_start=0, checkout=tmp_path)
+    j.full("BUGNET", None)
+    assert [argv[argv.index("timelines") + 1] for argv in runner.calls if "timelines" in argv] == [
+        "checkout", "edit", "check", "commit"]
+    assert drafts == [("p", "main", drafts[0][2])]
+
+
 def test_renderer_install_problem_names_the_missing_install_and_the_fix(tmp_path: Path) -> None:
     from astrid.core.rendering import remotion_runtime
 
@@ -125,7 +154,7 @@ def test_renderer_install_problem_names_the_missing_install_and_the_fix(tmp_path
         (package / "dist" / f"{filename}.js").write_text("export {};\n")
     (package / "package.json").write_text(json.dumps({
         "name": "@banodoco/timeline-composition",
-        "version": "0.0.14",
+        "version": remotion_runtime._COMPOSITION_PACKAGE_VERSION,
         "exports": exports,
     }))
 

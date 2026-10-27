@@ -20,9 +20,9 @@ from astrid.core.theme import builtin_theme
 from astrid.core.timeline.resolution import AssetIntegrity, classify_asset
 from astrid.packs.rendering.actions.timeline_visualize.assets import verify_now
 from astrid.packs.rendering.actions.timeline_visualize.thumbnails import sample_filmstrip
-from tests.helpers.remotion_validation import (
+from tests.helpers.remotion_runtime import (
     REMOTION,
-    issue_remotion_launch_validation,
+    configure_remotion_runtime,
     remotion_install_problems,
 )
 from tests.packs.rendering._helpers import _execution_env
@@ -247,7 +247,7 @@ def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
             pytrace=False,
         )
     with _execution_env():
-        issue_remotion_launch_validation(tmp_path, monkeypatch)
+        configure_remotion_runtime(monkeypatch)
         yield REMOTION
 
 

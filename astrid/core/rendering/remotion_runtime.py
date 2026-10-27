@@ -121,6 +121,19 @@ class RemotionRuntimeTools:
 class RemotionValidationError(RuntimeError):
     """Validation failed; uncertain original child handles remain attached."""
 
+    probe_receipt: Mapping[str, Any]
+
+
+class RemotionProbeCleanupError(RemotionValidationError):
+    """A failed probe whose child process could not be proved settled."""
+
+    process: subprocess.Popen[str]
+    cleanup_error: BaseException
+    original_error: BaseException
+
+
+_UNRESOLVED_PROBE_CUSTODY: list[RemotionProbeCleanupError] = []
+
 
 @contextmanager
 def remotion_render_lock() -> Iterator[None]:
@@ -159,16 +172,26 @@ def _validation_timing(phase: str):
     return decorate
 
 
+def _probe_environment(environment: Mapping[str, str] | None = None) -> dict[str, str]:
+    from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
+
+    keys = _SAFE_BASE_ENV | (_WINDOWS_BASE_ENV if sys.platform == "win32" else frozenset())
+    source = os.environ if environment is None else environment
+    return {"PATH": os.defpath, **{key: value for key, value in source.items() if key in keys}}
+
+
 @_validation_timing("owned_probe")
 def _owned_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
                  timeout: float) -> tuple[subprocess.CompletedProcess, dict[str, Any]]:
     from astrid.core.execution.process_group import (
-        popen_owned_group, terminate_group, verify_tree_absent,
+        popen_owned_group,
+        terminate_group,
+        verify_tree_absent,
     )
 
     # The existing launch primitive treats an empty mapping as ambient env.
     if not env:
-        raise RemotionValidationError("owned probe needs an explicit nonempty environment")
+        raise ValueError("owned probe needs an explicit nonempty environment")
     process = None
     try:
         process = popen_owned_group(
@@ -189,7 +212,14 @@ def _owned_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
             except BaseException as cleanup:
                 primary.process = process
                 primary.cleanup_error = cleanup
-                raise primary from cleanup
+                fatal = RemotionProbeCleanupError(
+                    f"trusted Remotion probe cleanup is unproved: {primary}; cleanup failed: {cleanup}"
+                )
+                fatal.original_error = primary
+                fatal.process = process
+                fatal.cleanup_error = cleanup
+                _UNRESOLVED_PROBE_CUSTODY.append(fatal)
+                raise fatal from cleanup
         if process is not None:
             primary.probe_receipt = {
                 "original_child_pid": process.pid,
@@ -210,6 +240,7 @@ def _owned_probe(argv: list[str], *, cwd: Path, env: Mapping[str, str],
     }
     return subprocess.CompletedProcess(argv, code, stdout, stderr), receipt
 
+
 _VALIDATION_MAX_BYTES = 16 * 1024 * 1024
 _UNSUPPORTED_PYTHON_STARTUP = frozenset({'PYTHONUSERBASE', 'PYTHONNOUSERSITE', 'PYTHONSAFEPATH',
     'PYTHONPYCACHEPREFIX', 'PYTHONPLATLIBDIR', 'PYTHONCASEOK', 'PYTHONUTF8',
@@ -217,7 +248,13 @@ _UNSUPPORTED_PYTHON_STARTUP = frozenset({'PYTHONUSERBASE', 'PYTHONNOUSERSITE', '
 
 _VALIDATION_SCHEMA = "astrid.remotion-launch-validation/v1"
 _NODE_ENV_KEYS = ("HOME", "LANG", "LC_ALL", "LC_CTYPE", "PATH", "TMPDIR")
+if sys.platform == "win32":
+    from astrid.core.subprocess_env import _WINDOWS_BASE_ENV
+
+    _NODE_ENV_KEYS += tuple(sorted(_WINDOWS_BASE_ENV))
 _SCHEMA_ENV_KEYS = ("HOME", "LANG", "LC_ALL", "LC_CTYPE")
+if sys.platform == "win32":
+    _SCHEMA_ENV_KEYS += tuple(sorted(_WINDOWS_BASE_ENV))
 _REF_ENV_KEYS = (ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA256,
                  ASTRID_REMOTION_VALIDATION_LAUNCH, ASTRID_REMOTION_VALIDATION_ROLE)
 
@@ -225,15 +262,12 @@ _REF_ENV_KEYS = (ASTRID_REMOTION_VALIDATION_PATH, ASTRID_REMOTION_VALIDATION_SHA
 def probe_context(*, environment: Mapping[str, str], python_executable: str) -> dict[str, Any]:
     """Project the documented effective probes; never copy task secrets."""
     home = environment.get("HOME")
+    if sys.platform == "win32" and not home:
+        home = environment.get("USERPROFILE")
     if not isinstance(home, str) or not home or not Path(home).is_absolute():
         raise RemotionValidationError("runtime validation needs an explicit absolute HOME")
-    forbidden = {k for k in environment if k.startswith(("DYLD_", "LD_"))}
-    forbidden.update(k for k in ("PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME",
-                                "NODE_OPTIONS", "NODE_PATH", "NODE_ICU_DATA", "OPENSSL_CONF")
-                     if k in environment)
-    forbidden.update(k for k in _UNSUPPORTED_PYTHON_STARTUP if k in environment)
-    if forbidden:
-        raise RemotionValidationError("runtime validation refuses unsupported loader/interpreter overrides")
+    # Only these projections reach the owned Node/schema probes. Ambient
+    # loader and interpreter controls are neither child inputs nor key inputs.
     python = Path(python_executable)
     if not python.is_absolute():
         raise RemotionValidationError("runtime validation needs an absolute lexical interpreter")
@@ -256,8 +290,10 @@ def _file_binding(path: Path, *, digest_memo: dict | None = None) -> dict[str, A
         raise RemotionValidationError("runtime validation input is not a file")
     before = resolved.stat()
     def identity(facts):
-        return (facts.st_dev, facts.st_ino, facts.st_size, facts.st_mtime_ns,
-                facts.st_ctime_ns, facts.st_mode, facts.st_uid)
+        common = (facts.st_dev, facts.st_ino, facts.st_size, facts.st_mtime_ns, facts.st_ctime_ns)
+        # Windows stat/fstat synthesize different permission bits for paths
+        # and CRT descriptors. File identity and content timestamps still bind.
+        return common if sys.platform == "win32" else (*common, facts.st_mode, facts.st_uid)
     key = identity(before)
     cached = digest_memo.get(str(resolved)) if digest_memo is not None else None
     # Only reuse old, unchanged files within this held-lock launch. Recent
@@ -421,10 +457,10 @@ print(json.dumps({'origin': str(origin), 'module_files': files, 'package_roots':
                              'base_exec_prefix': sys.base_exec_prefix,
                              'version': sys.version, 'cache_tag': sys.implementation.cache_tag,
                              'platform': sys.platform, 'abi_flags': getattr(sys, 'abiflags', ''),
-                             'locale_env': {k: os.environ[k] for k in ('HOME','LANG','LC_ALL','LC_CTYPE') if k in os.environ},
+                             'locale_env': {k: os.environ[k] for k in __ASTRID_SCHEMA_ENV_KEYS__ if k in os.environ},
                              'filesystem_encoding': sys.getfilesystemencoding(),
                              'stdout_encoding': sys.stdout.encoding}}))
-""")
+""").replace("__ASTRID_SCHEMA_ENV_KEYS__", repr(_SCHEMA_ENV_KEYS))
 
 
 _REGISTRY_KINDS = ('effects', 'animations', 'transitions')
@@ -438,27 +474,41 @@ _INTERACTIVE_GIT_ENV = frozenset({
 })
 
 
+def _validate_remotion_worker_environment(environment: Mapping[str, str]) -> None:
+    """Check controls delivered to a worker, before its interpreter starts."""
+    forbidden = sorted(k for k in environment
+                       if k.startswith(('DYLD_', 'LD_'))
+                       or (k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV)
+                       or k in _UNSUPPORTED_PYTHON_STARTUP
+                       or k in {'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'PYTHONHOME',
+                                'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'})
+    if forbidden:
+        raise RemotionValidationError(
+            f"Remotion worker environment refuses {', '.join(forbidden)}; "
+            "remove these variables from command.env, required_env and env_passthrough")
+
+
 def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dict[str, str]:
     from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
     if _installed_registry_profile(environment) and any(environment.get(name) for name in ('PYTHONPATH', ASTRID_PACKS_PATH)):
         raise RemotionValidationError('installed registry discovery refuses explicit import or pack roots')
-    probe_context(environment=environment, python_executable=sys.executable)
-    if any((k.startswith('GIT_') and k not in _INTERACTIVE_GIT_ENV) or k in {'PYTHONSTARTUP'}
-           for k in environment):
-        # Git overrides that redirect what Git reads (GIT_DIR, GIT_CONFIG*, ...) and startup
-        # hooks are outside this selected launch contract.
-        raise RemotionValidationError('registry validation refuses unsupported startup/Git overrides')
-    for name in ('ASTRID_SOURCE_STATE', 'XDG_STATE_HOME', 'XDG_CONFIG_HOME'):
-        if environment.get(name) and not Path(environment[name]).is_absolute():
-            raise RemotionValidationError('registry selectors require absolute launch-known paths')
-    if environment.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in environment['PYTHONPATH'].split(os.pathsep)):
-        raise RemotionValidationError('registry import paths require absolute launch-known locations')
-    keys = set(_SAFE_BASE_ENV) | {'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
+    keys = set(_SAFE_BASE_ENV) | {'ASTRID_HOST_EXECUTION_PROFILE', 'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
     if sys.platform == 'win32':
         keys.update(_WINDOWS_BASE_ENV)
     if not generator:
         keys.update((*_REGISTRY_SELECTORS, 'PYTHONPATH', 'XDG_CONFIG_HOME'))
     context = {k: environment[k] for k in sorted(keys) if k in environment}
+    # This mapping is the registry child's complete environment. Ambient
+    # Git/startup controls omitted here cannot influence that child.
+    probe_context(environment=context, python_executable=sys.executable)
+    for name, value in context.items():
+        if not isinstance(value, str):
+            raise RemotionValidationError(f'{name} must be a string')
+    for name in ('ASTRID_SOURCE_STATE', 'XDG_STATE_HOME', 'XDG_CONFIG_HOME'):
+        if context.get(name) and not Path(context[name]).is_absolute():
+            raise RemotionValidationError(f'{name} must be an absolute launch-known path')
+    if context.get('PYTHONPATH') and any(not raw or not Path(raw).is_absolute() for raw in context['PYTHONPATH'].split(os.pathsep)):
+        raise RemotionValidationError('PYTHONPATH must contain absolute paths; remove empty or relative entries')
     return _normalize_registry_selectors(context)
 
 
@@ -512,7 +562,12 @@ def _normalize_registry_selectors(context: dict[str, str]) -> dict[str, str]:
 
 def _registry_config_files(environment: Mapping[str, str]) -> list[Path]:
     import shutil
-    home = Path(environment['HOME'])
+    home_raw = environment.get('HOME')
+    if sys.platform == 'win32' and not home_raw:
+        home_raw = environment.get('USERPROFILE')
+    if not home_raw:
+        raise RemotionValidationError('registry validation needs an explicit home directory')
+    home = Path(home_raw)
     paths = [home / '.gitconfig', Path(environment.get('XDG_CONFIG_HOME', str(home / '.config'))) / 'git/config',
              Path('/etc/gitconfig')]
     git = shutil.which('git', path=environment.get('PATH', os.defpath))
@@ -771,7 +826,7 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
                   'from astrid.core.rendering.remotion_runtime import _registry_observation; '
                   'print(json.dumps(_registry_observation(),sort_keys=True))')
         cwd = REPO_ROOT if generator else script_directory
-        argv = [python, '-c', source, str(REPO_ROOT), str(script_directory)]
+        argv = [python, '-X', 'utf8', '-c', source, str(REPO_ROOT), str(script_directory)]
     result, receipt = _owned_registry_probe(argv, cwd=cwd, env=environment, phase='registry_discovery')
     try:
         _require_completed_probe(receipt, phase='registry_discovery')
@@ -869,7 +924,7 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
             generator_env['ASTRID_HOST_EXECUTION_PROFILE'] = 'installed'
             generator_cwd = Path(tempfile.gettempdir()).resolve()
         else:
-            generator_argv = [python, str(REPO_ROOT / 'scripts/gen_effect_registry.py')]
+            generator_argv = [python, '-X', 'utf8', str(REPO_ROOT / 'scripts/gen_effect_registry.py')]
             generator_cwd = REPO_ROOT
         result, generator_wait = _owned_registry_probe(generator_argv,
                                                        cwd=generator_cwd, env=generator_env,
@@ -877,6 +932,13 @@ def _settle_registries(project: Path, contexts: Mapping[str, Any], python: str, 
         _require_completed_probe(generator_wait, phase='registry_generator')
         if result.returncode:
             error = RemotionValidationError('owned registry generator failed')
+            error.probe_receipt = generator_wait
+            raise error
+        expected_receipt = lock.REMOTION_LOCK_RECEIPT_PREFIX + generator_env[lock.REMOTION_LOCK_TOKEN_ENV]
+        receipts = [line for line in result.stdout.splitlines()
+                    if line.startswith(lock.REMOTION_LOCK_RECEIPT_PREFIX)]
+        if len(receipts) != 1 or not secrets.compare_digest(receipts[0], expected_receipt):
+            error = RemotionValidationError('owned registry generator did not return the lock receipt')
             error.probe_receipt = generator_wait
             raise error
         if run._registry_output_content_hashes(project) != expected['content_hashes']:
@@ -906,7 +968,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
                                 python_executable: str, launch_id: str,
                                 contexts: Mapping[str, Mapping[str, str] | list[Mapping[str, str]]],
                                 installed_source: tuple[str, str] | None = None) -> dict[str, str]:
-    """Explicit launch-owner transaction; ordinary resolver calls never spawn."""
+    """Launch-owner transaction for the content, schema and registry proof."""
     project_raw = host_environment.get(REMOTION_PROJECT_DIR_ENV, "")
     if not project_raw or not Path(project_raw).is_absolute():
         raise RemotionValidationError("launch validation requires the explicit Remotion project")
@@ -959,7 +1021,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
             error.probe_receipt = node_wait
             raise error
         schema_probe, schema_wait = _owned_probe(
-            [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root),
+            [python_executable, '-X', 'utf8', '-I', '-c', _schema_probe_source(), str(schema_root),
              str(REPO_ROOT), schema_profile],
             cwd=schema_root.parent, env=context['schema_env'], timeout=5)
         if schema_probe.returncode:
@@ -990,7 +1052,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
         # import: establish its complete closure binding before that import.
         complete_before = _runtime_inputs(project, environment, python_executable, closure, digest_memo=digest_memo)
         qualifying, qualifying_wait = _owned_probe(
-            [python_executable, '-I', '-c', _schema_probe_source(), str(schema_root),
+            [python_executable, '-X', 'utf8', '-I', '-c', _schema_probe_source(), str(schema_root),
              str(REPO_ROOT), schema_profile],
             cwd=schema_root.parent, env=context['schema_env'], timeout=5)
         try:
@@ -1032,7 +1094,7 @@ def _prepare_remotion_validation_locked(*, artifact_directory: Path, host_enviro
             observed = entry['closure']['startup']['locale_env']
             if observed != entry['context']['schema_env']:
                 if (not isinstance(observed, dict) or set(observed) - set(_SCHEMA_ENV_KEYS)
-                        or observed.get('HOME') != entry['context']['schema_env']['HOME']):
+                        or observed.get('HOME') != entry['context']['schema_env'].get('HOME')):
                     raise RemotionValidationError('schema startup reported an unsupported environment transition')
                 transitioned_env = dict(environment)
                 for name in _SCHEMA_ENV_KEYS:
@@ -1089,6 +1151,8 @@ _UNRESOLVED_VALIDATION_PROBES: list[BaseException] = []
 
 def prepare_remotion_validation(**kwargs: Any) -> dict[str, str]:
     """Explicit standalone/launch-owner validation, never an implicit fallback."""
+    if _UNRESOLVED_PROBE_CUSTODY:
+        raise _UNRESOLVED_PROBE_CUSTODY[0]
     if _UNRESOLVED_VALIDATION_PROBES:
         raise RemotionValidationError("prior runtime validation child custody is unresolved") from _UNRESOLVED_VALIDATION_PROBES[0]
     try:
@@ -1116,6 +1180,8 @@ def prepare_remotion_validation(**kwargs: Any) -> dict[str, str]:
 
 def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | None = None,
                        python_executable: str | None = None) -> dict[str, Any]:
+    if _UNRESOLVED_PROBE_CUSTODY:
+        raise _UNRESOLVED_PROBE_CUSTODY[0]
     env = os.environ if environment is None else environment
     python = sys.executable if python_executable is None else python_executable
     context = probe_context(environment=env, python_executable=python)
@@ -1176,8 +1242,9 @@ def _validated_runtime(project_dir: Path, *, environment: Mapping[str, str] | No
     except (OSError, KeyError, ValueError, TypeError) as exc:
         raise RemotionValidationError("missing or invalid launch validation; explicit owned validation required") from exc
 
-def _configured_node_executable() -> tuple[Path | None, str | None]:
-    raw = os.environ.get(NODE_EXECUTABLE_ENV, "").strip()
+def _configured_node_executable(environment: Mapping[str, str] | None = None) -> tuple[Path | None, str | None]:
+    source = os.environ if environment is None else environment
+    raw = source.get(NODE_EXECUTABLE_ENV, "").strip()
     if not raw:
         return None, f"{NODE_EXECUTABLE_ENV} must point to the server-owned Node executable"
     candidate = Path(raw).expanduser()
@@ -1194,20 +1261,18 @@ def _configured_node_executable() -> tuple[Path | None, str | None]:
     return resolved, None
 
 
-def _probe_node(node_executable: Path, *, cwd: Path) -> tuple[str | None, str | None]:
+def _probe_node(node_executable: Path, *, cwd: Path, environment: Mapping[str, str] | None = None) -> tuple[str | None, str | None]:
     """Bounded version probe for the trusted Node executable."""
 
-    probe_env = {
-        key: value
-        for key, value in os.environ.items()
-        if key in {"HOME", "LANG", "LC_ALL", "LC_CTYPE", "PATH", "TMPDIR"}
-    }
+    probe_env = _probe_environment(environment)
     try:
         probe, _receipt = _owned_probe(
             [str(node_executable), "--version"], cwd=cwd,
             env=probe_env, timeout=_NODE_PROBE_TIMEOUT_SECONDS,
         )
-    except (OSError, subprocess.SubprocessError, RemotionValidationError) as exc:
+    except RemotionProbeCleanupError:
+        raise
+    except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         return None, f"trusted Node version probe failed: {exc}"
     version = probe.stdout.strip().splitlines()[0] if probe.stdout.strip() else ""
     if probe.returncode != 0 or not re.fullmatch(r"v\d+\.\d+\.\d+(?:[-+].*)?", version):
@@ -1218,10 +1283,11 @@ def _probe_node(node_executable: Path, *, cwd: Path) -> tuple[str | None, str | 
 
 def resolve_remotion_runtime_tools(
     project_dir: Path,
+    *, environment: Mapping[str, str] | None = None,
 ) -> tuple[RemotionRuntimeTools | None, str | None]:
     """Resolve and validate the server-owned Node + locked local CLI pair."""
 
-    node_executable, reason = _configured_node_executable()
+    node_executable, reason = _configured_node_executable(environment)
     if reason:
         return None, reason
     assert node_executable is not None
@@ -1237,10 +1303,22 @@ def resolve_remotion_runtime_tools(
     except ValueError:
         return None, f"locked Remotion CLI escapes the server-owned project: {cli_path}"
     try:
-        validation = _validated_runtime(project_dir)
+        validation = _validated_runtime(project_dir, environment=environment)
+    except RemotionProbeCleanupError:
+        raise
     except (RemotionValidationError, OSError) as exc:
         return None, str(exc)
-    node_version = validation['node_version']
+    node_version, reason = _probe_node(node_executable, cwd=project_dir, environment=environment)
+    if reason:
+        return None, reason
+    if node_version != validation['node_version']:
+        return None, 'trusted Node version differs from launch validation'
+    assert node_version is not None
+    from astrid.core.rendering.node_pin import node_pin
+
+    pin = node_pin(project_dir)
+    if pin and node_version != pin:
+        return None, f"trusted Node version {node_version} does not match project pin {pin}"
     return RemotionRuntimeTools(node_executable, node_version, cli_resolved), None
 
 
@@ -1257,13 +1335,14 @@ def timeline_requires_remotion(config: Mapping[str, Any]) -> bool:
     )
 
 
-def resolve_remotion_project_dir() -> Path:
+def resolve_remotion_project_dir(*, environment: Mapping[str, str] | None = None) -> Path:
     """Resolve the server-owned project, with a source-checkout development fallback.
 
     Only process configuration is consulted; renderer requests cannot select a
     runtime. Invalid explicit configuration must never fall back to the checkout.
     """
-    raw = os.environ.get(REMOTION_PROJECT_DIR_ENV, "").strip()
+    source = os.environ if environment is None else environment
+    raw = source.get(REMOTION_PROJECT_DIR_ENV, "").strip()
     if raw:
         candidate = Path(raw).expanduser()
         if not candidate.is_absolute():
@@ -1297,7 +1376,7 @@ def remotion_install_problem(project: Path) -> str | None:
 
 
 def remotion_runtime_status(
-    *, require_explicit_project: bool = False
+    *, require_explicit_project: bool = False, environment: Mapping[str, str] | None = None
 ) -> RemotionRuntimeStatus:
     """Inspect the trusted runtime without mutating it or running npm.
 
@@ -1307,7 +1386,10 @@ def remotion_runtime_status(
     explicit without weakening the development parity lane.
     """
 
-    if require_explicit_project and not os.environ.get(REMOTION_PROJECT_DIR_ENV, "").strip():
+    source = os.environ if environment is None else environment
+    if _UNRESOLVED_PROBE_CUSTODY:
+        raise _UNRESOLVED_PROBE_CUSTODY[0]
+    if require_explicit_project and not source.get(REMOTION_PROJECT_DIR_ENV, "").strip():
         reason = f"{REMOTION_PROJECT_DIR_ENV} must point to the server-owned Remotion project"
         # The source launcher deliberately leaves an uninstalled project unbound.
         # Diagnose that checkout without admitting it as an execution runtime.
@@ -1323,7 +1405,7 @@ def remotion_runtime_status(
         )
 
     try:
-        project_dir = resolve_remotion_project_dir()
+        project_dir = resolve_remotion_project_dir(environment=environment)
     except ValueError as exc:
         return RemotionRuntimeStatus(False, None, str(exc))
     if not project_dir.is_dir():
@@ -1333,7 +1415,7 @@ def remotion_runtime_status(
     install_problem = remotion_install_problem(project_dir)
     if install_problem:
         return RemotionRuntimeStatus(False, project_dir, install_problem)
-    schema_root_raw = os.environ.get(TIMELINE_SCHEMA_PYTHONPATH_ENV, "").strip()
+    schema_root_raw = source.get(TIMELINE_SCHEMA_PYTHONPATH_ENV, "").strip()
     if not schema_root_raw:
         return RemotionRuntimeStatus(
             False,
@@ -1355,7 +1437,7 @@ def remotion_runtime_status(
             project_dir,
             f"installed timeline schema is incomplete or invalid: {exc}",
         )
-    runtime_tools, tools_error = resolve_remotion_runtime_tools(project_dir)
+    runtime_tools, tools_error = resolve_remotion_runtime_tools(project_dir, environment=environment)
     if tools_error:
         return RemotionRuntimeStatus(
             False,

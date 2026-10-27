@@ -87,16 +87,24 @@ def runtime(tmp_path, monkeypatch, request):
             world.reads.append(path)
         return response.status, dict(response.headers), data
 
-    monkeypatch.setattr(workspace_client, 'GeneratedWorkspaceClient',
-                        lambda endpoint, credential: WorkspaceClient(endpoint, credential, transport=transport))
+    monkeypatch.setattr(
+        workspace_client,
+        'GeneratedWorkspaceClient',
+        lambda endpoint, credential: (
+            WorkspaceClient(endpoint, credential, transport=transport)
+            if endpoint == 'http://127.0.0.1:1'
+            else WorkspaceClient(endpoint, credential)
+        ),
+    )
     monkeypatch.setenv('ASTRID_RUNTIME_DATA_ROOT', str(tmp_path / 'client'))
     restart()
     world.project = film if film else server.runtime.create_project({'slug': 'batch', 'name': 'Batch'})['id']
     if film is None:
         server.runtime.create_timeline(world.project, 'film', idempotency_key='bootstrap')
 
-    def client():
-        return AstridClient.open(endpoint='http://127.0.0.1:1', credential=token,
+    def client(*, real_http=False):
+        endpoint = daemon.endpoint if real_http else 'http://127.0.0.1:1'
+        return AstridClient.open(endpoint=endpoint, credential=token,
                                  realm_id=server.runtime.realm['id'], actor_id='owner',
                                  client_name='batch-proof', client_version='1', protocol_version='workspace.v1')
 

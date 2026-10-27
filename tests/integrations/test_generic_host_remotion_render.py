@@ -1,14 +1,12 @@
 """GenericPackHost acceptance for the real Remotion render capability.
 
 The test renders with the repository's own provisioned Remotion install
-(``npm ci --prefix remotion``, which the lanes workflow runs) and the launch-owned
-validation the host bootstrap normally issues (tests/helpers/remotion_validation.py).
+(``npm ci --prefix remotion``, which the lanes workflow runs).
 """
 
 from __future__ import annotations
 
 import hashlib
-import importlib.util
 import json
 import os
 import shutil
@@ -18,20 +16,38 @@ from pathlib import Path
 
 import pytest
 
-from astrid.core.env_vars import (
+from astrid.core.env_vars import (  # noqa: E402
     ASTRID_REMOTION_VALIDATION_LAUNCH,
     ASTRID_REMOTION_VALIDATION_PATH,
     ASTRID_REMOTION_VALIDATION_ROLE,
     ASTRID_REMOTION_VALIDATION_SHA256,
 )
-from astrid.sdk.host_bootstrap import _prepare_render_validation
-from tests.helpers.remotion_validation import remotion_install_problems
+from astrid.sdk.host_bootstrap import _prepare_render_validation  # noqa: E402
+from tests.helpers.remotion_runtime import remotion_install_problems
 from tests.packs.rendering._helpers import _execution_env
 
 ROOT = Path(__file__).resolve().parents[2]
-# The pinned timeline-schema dependency is installed with the dev extras; its install root is the schema root.
-SCHEMA_ROOT = Path(importlib.util.find_spec("banodoco_timeline_schema").origin).resolve().parent.parent
+# The canonical schema is vendored from the exact Runtime source pin.
+SCHEMA_ROOT = ROOT / "astrid/core/timeline/schema/timeline-config.schema.json"
 REMOTION = ROOT / "remotion"
+_REMOTION_UNSUPPORTED_OVERRIDES = (
+    "PYTHONEXECUTABLE",
+    "__PYVENV_LAUNCHER__",
+    "PYTHONHOME",
+    "NODE_OPTIONS",
+    "NODE_PATH",
+    "NODE_ICU_DATA",
+    "OPENSSL_CONF",
+    "PYTHONUSERBASE",
+    "PYTHONNOUSERSITE",
+    "PYTHONSAFEPATH",
+    "PYTHONPYCACHEPREFIX",
+    "PYTHONPLATLIBDIR",
+    "PYTHONCASEOK",
+    "PYTHONUTF8",
+    "PYTHONCOERCECLOCALE",
+    "PYTHONSTARTUP",
+)
 
 from astrid.core.execution.generic_host import (  # noqa: E402
     GenericPackHost,
@@ -165,9 +181,45 @@ def _make_media(root: Path) -> tuple[Path, Path]:
     return timeline_path, media / "assets.json"
 
 
+def _prepare_remotion_fixture(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> tuple[Path, Path, Path, Path]:
+    """Prepare the theme proof's temporary media fixture around the provisioned runtime."""
+
+    for name in list(os.environ):
+        if name.startswith(("DYLD_", "LD_")) or name in _REMOTION_UNSUPPORTED_OVERRIDES:
+            monkeypatch.delenv(name, raising=False)
+    workspace = tmp_path / "workspace"
+    workspace.mkdir()
+    source_root = workspace / "astrid"
+    source_root.mkdir()
+    pack_root = source_root / "packs"
+    pack_root.symlink_to(ROOT / "astrid" / "packs", target_is_directory=True)
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION.resolve()))
+    monkeypatch.setenv("ASTRID_PACKS_PATH", str(pack_root.resolve()))
+    env = dict(os.environ)
+    launch = _prepare_render_validation(
+        ROOT,
+        env,
+        tmp_path / "support",
+        sys.executable,
+        (pack_root,),
+    )
+    assert launch is not None
+    for name in (
+        ASTRID_REMOTION_VALIDATION_PATH,
+        ASTRID_REMOTION_VALIDATION_SHA256,
+        ASTRID_REMOTION_VALIDATION_LAUNCH,
+        ASTRID_REMOTION_VALIDATION_ROLE,
+    ):
+        monkeypatch.setenv(name, env[name])
+    timeline_path, assets_path = _make_media(workspace)
+    return workspace, REMOTION, timeline_path, assets_path
+
+
 @pytest.fixture
 def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    """The provisioned Remotion install plus the launch-owned validation its runtime requires."""
+    """Select the provisioned Remotion install and its owned host/worker validation."""
 
     problems = remotion_install_problems()
     if problems:
@@ -180,15 +232,26 @@ def remotion_launch(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", str(SCHEMA_ROOT))
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(REMOTION.resolve()))
     with _execution_env():
-        # The host bootstrap's own launch transaction: it validates the host and the worker contexts it spawns.
+        for name in list(os.environ):
+            if name.startswith(("DYLD_", "LD_")) or name in _REMOTION_UNSUPPORTED_OVERRIDES:
+                monkeypatch.delenv(name, raising=False)
+        # Use the same launch transaction as the real pack host.  It qualifies
+        # the host and the worker projection; a standalone-only artifact does
+        # not match GenericPackHost's worker readiness context.
         env = dict(os.environ)
         launch = _prepare_render_validation(
-            ROOT, env, tmp_path / "support", sys.executable, (ROOT / "astrid" / "packs" / "rendering",)
+            ROOT,
+            env,
+            tmp_path / "support",
+            sys.executable,
+            (ROOT / "astrid" / "packs" / "rendering",),
         )
         assert launch is not None
-        # This process stands in for the launched host: it carries exactly the environment the launch prepared,
-        # so the loader keys a CI shell exports (setup-python sets LD_LIBRARY_PATH) that the launch dropped go too.
-        for name in [key for key in os.environ if key not in env and key.startswith(("DYLD_", "LD_"))]:
+        for name in [
+            key
+            for key in os.environ
+            if key not in env and key.startswith(("DYLD_", "LD_"))
+        ]:
             monkeypatch.delenv(name)
         for name in (
             ASTRID_REMOTION_VALIDATION_PATH,

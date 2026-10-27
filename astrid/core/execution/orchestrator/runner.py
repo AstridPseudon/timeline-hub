@@ -301,7 +301,7 @@ def _run_python_orchestrator_subprocess(
         passthrough=orchestrator.isolation.env_passthrough,
         declared_passthrough=orchestrator.isolation.env_passthrough,
     )
-    argv = [sys.executable, "-m", "astrid.core.execution.python_runtime_worker", str(request_path)]
+    argv = [sys.executable, "-X", "utf8", "-m", "astrid.core.execution.python_runtime_worker", str(request_path)]
     source_channel = None
     launch_options: dict[str, Any] = {}
     try:
@@ -332,18 +332,27 @@ def _run_python_orchestrator_subprocess(
             # its import source changes, through the host's inherited byte loader.
             command = json.dumps(["-c", "from astrid.core.execution.python_runtime_worker import run; import sys; run(sys.argv[1])",
                                   str(request_path)])
-            argv = _captured_worker_argv([sys.executable, "-m", "astrid.core.execution.generic_host_worker",
+            argv = _captured_worker_argv([sys.executable, "-X", "utf8", "-m", "astrid.core.execution.generic_host_worker",
                 "--external-source-fd", str(source_channel.fileno()), "--captured-command", command])
             launch_options["pass_fds"] = (source_channel.fileno(),)
-        completed = subprocess.run(
-            argv,
-            cwd=str(root),
-            env=env,
-            capture_output=True,
-            text=True,
-            check=False,
-            **launch_options,
-        )
+        if source_channel is not None:
+            from runtime_protocol import platform
+
+            # The platform launcher translates inherited descriptors to an
+            # authenticated Windows handle handoff before Python starts.
+            with platform.spawn_tree(
+                argv, stdin=subprocess.DEVNULL, cwd=str(root), env=env,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                start_new_session=False,
+                **launch_options,
+            ) as process:
+                stdout, stderr = process.communicate()
+                completed = subprocess.CompletedProcess(argv, process.returncode, stdout, stderr)
+        else:
+            completed = subprocess.run(
+                argv, stdin=subprocess.DEVNULL, cwd=str(root), env=env,
+                capture_output=True, text=True, check=False,
+            )
         if completed.returncode != 0:
             detail = (completed.stderr or completed.stdout).strip()
             raise OrchestratorRunnerError(
@@ -419,6 +428,7 @@ def _run_command_orchestrator(
     else:
         completed = subprocess.run(
             list(command),
+            stdin=subprocess.DEVNULL,
             cwd=cwd,
             env=effective_env,
             check=False,

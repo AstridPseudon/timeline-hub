@@ -95,9 +95,10 @@ def discover_plugins(
     kind: ElementKind,
     *,
     include_local: bool = True,
+    registry: ElementRegistry | None = None,
 ) -> dict[str, PluginRecord]:
     _validate_kind(kind)
-    registry = _element_registry()
+    registry = registry if registry is not None else _element_registry()
     plugins: dict[str, PluginRecord] = {}
     if include_local:
         elements = registry.list(kind=kind)
@@ -116,6 +117,10 @@ def discover_plugins(
             plugins[element.id] = _plugin_from_element(element)
         elif element.id in _public_registry_ids()[element.kind]:
             plugins[element.id] = _plugin_from_element(element)
+    for element in registry.list(kind=kind, include_shadowed=True):
+        key = element.metadata.get("render_key")
+        if key:
+            plugins[key] = _plugin_from_element(element)
     return plugins
 
 
@@ -300,6 +305,8 @@ def _fingerprint_key(role: str, path: Path) -> str:
 
 
 def _import_scope_for_element(element: ElementDefinition) -> str:
+    if element.metadata.get("render_import_scope"):
+        return element.metadata["render_import_scope"]
     if element.source == "overrides":
         return "override-elements"
     if element.source == "managed":
@@ -339,7 +346,7 @@ def _write_generated_registry(path: Path, content: str) -> bool:
         raise ValueError(f"host registry output must be outside installed packages: {path}")
     path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        path.write_text(content, encoding="utf-8")
+        path.write_bytes(content.encode("utf-8"))
     except PermissionError:
         return False
     return True
@@ -348,10 +355,11 @@ def _write_generated_registry(path: Path, content: str) -> bool:
 def compute_generated_registry_state(
     *,
     include_local: bool = True,
+    registry: ElementRegistry | None = None,
 ) -> dict[str, Any]:
     """Return a deterministic fingerprint of the generated registry sources."""
     generated = {
-        kind: generate_element_registry(kind, include_local=include_local)
+        kind: generate_element_registry(kind, include_local=include_local, **({"registry": registry} if registry is not None else {}))
         for kind in sorted(OUTPUTS)
     }
     digest = hashlib.sha256()
@@ -379,14 +387,15 @@ def generate_element_registry(
     kind: ElementKind,
     *,
     include_local: bool = True,
+    registry: ElementRegistry | None = None,
 ) -> str:
     _validate_kind(kind)
     if kind == "effects":
-        return _generate_effect_registry(include_local=include_local)
+        return _generate_effect_registry(include_local=include_local, registry=registry)
 
     component_type = "AnimationComponent" if kind == "animations" else "TransitionComponent"
     meta_type = "AnimationMeta" if kind == "animations" else "Record<string, unknown>"
-    plugins = discover_plugins(kind, include_local=include_local)
+    plugins = discover_plugins(kind, include_local=include_local, registry=registry)
     plugin_ids = sorted(plugins)
     public_plugins = {
         plugin_id: plugin
@@ -413,9 +422,11 @@ def generate_element_registry(
         # moved to Composition. Omitting their imports must not drop defaults.
         defaults = {
             element.id: element.defaults
-            for element in _element_registry().list(kind=kind)
+            for element in (registry if registry is not None else _element_registry()).list(kind=kind)
             if include_local or element.source != "pack:local"
         }
+        defaults.update({key: plugin.defaults for key, plugin in plugins.items()
+                         if key not in defaults})
     defaults_entries = [
         f"  '{plugin_id}': {_ts_json(value)},"
         for plugin_id, value in sorted(defaults.items())
@@ -474,9 +485,10 @@ def generate_element_registry(
 def _generate_effect_registry(
     *,
     include_local: bool = True,
+    registry: ElementRegistry | None = None,
 ) -> str:
-    registry = _element_registry()
-    effects = discover_effects(include_local=include_local)
+    registry = registry if registry is not None else _element_registry()
+    effects = discover_plugins("effects", include_local=include_local, registry=registry)
     all_elements = registry.list(kind="effects", include_shadowed=True)
 
     # A source-less public winner is still the canonical registry entry.  If a
@@ -551,7 +563,9 @@ def _generate_effect_registry(
         else:
             symbol = f"OwnerElement{len(imports)}"
             imports.append(f"import {symbol} from '{_import_path(plugin)}';")
-        owners[element.id].setdefault(pack_id, symbol)
+        revision = element.metadata.get("render_revision")
+        owner_key = f"{pack_id}@{revision}" if revision else pack_id
+        owners[element.id].setdefault(owner_key, symbol)
     registry_entries = [
         f"  {_ts_string(effect_id)}: selectOwnedEffect({_ts_string(effect_id)}, "
         f"{winner_symbols[effect_id]}, {{{', '.join(_ts_string(owner) + ': ' + symbol for owner, symbol in sorted(owners[effect_id].items()))}}}),"
@@ -589,10 +603,13 @@ def _generate_effect_registry(
         ),
         "",
         "function selectOwnedEffect(id: string, winner: EffectComponent, owners: Record<string, EffectComponent>): EffectComponent {",
-        "  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string}}): EffectComponent & SceneCapableComponent => {",
+        "  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string; revision?: string}}): EffectComponent & SceneCapableComponent => {",
         "    const ref = clip.elementRef;",
         "    if (!ref || ref.kind !== 'effect' || ref.id !== id || !('packId' in ref)) return winner;",
-        "    const component = typeof ref.packId === 'string' && Object.prototype.hasOwnProperty.call(owners, ref.packId) ? owners[ref.packId] : undefined;",
+        "    const pinnedOwner = `${ref.packId}@${ref.revision}`;",
+        "    const pinned = Object.keys(owners).some((key) => key.startsWith(`${ref.packId}@`));",
+        "    const owner = pinned ? pinnedOwner : ref.packId;",
+        "    const component = typeof owner === 'string' && Object.prototype.hasOwnProperty.call(owners, owner) ? owners[owner] : undefined;",
         "    if (!component) throw new Error(`Unknown effect owner ${String(ref.packId)} for ${id}`);",
         "    return component;",
         "  };",
@@ -653,9 +670,15 @@ def _main_unlocked(argv: list[str] | None = None) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
-    from astrid.core.rendering.remotion_runtime import remotion_render_lock
+    from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
 
-    with remotion_render_lock():
+    if remotion_lock.remotion_render_lock_held():
+        result = _main_unlocked(argv)
+        token = os.environ.get(remotion_lock.REMOTION_LOCK_TOKEN_ENV)
+        if result == 0 and token is not None:
+            print(remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + token)
+        return result
+    with remotion_lock.remotion_render_lock():
         return _main_unlocked(argv)
 
 

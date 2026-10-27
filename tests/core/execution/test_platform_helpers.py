@@ -150,19 +150,53 @@ def test_windows_owned_launch_retains_job_and_bypasses_pidfd(monkeypatch, tmp_pa
         owner.signal(123, "replacement", platform.KILL)
 
 
-def test_windows_cleanup_requires_closed_job(monkeypatch):
+def test_windows_cleanup_accepts_exited_leader_and_drained_job(monkeypatch):
     monkeypatch.setattr(process_group, "sys", SimpleNamespace(platform="win32"))
     job = SimpleNamespace(handle=42)
     process = SimpleNamespace(pid=123, _runtime_job=job, poll=lambda: 0)
+    observed = []
+
+    def drain(child):
+        assert child is process
+        assert child._runtime_job.handle == 42
+        child._runtime_job.handle = None
+        observed.append(child)
+        return True
+
+    monkeypatch.setattr(platform, "tree_drained", drain, raising=False)
+
+    process_group.verify_tree_absent(process)
+
+    assert observed == [process]
+
+
+def test_windows_cleanup_rejects_live_job_descendants(monkeypatch):
+    monkeypatch.setattr(process_group, "sys", SimpleNamespace(platform="win32"))
+    process = SimpleNamespace(pid=123, poll=lambda: 0)
+    monkeypatch.setattr(platform, "tree_drained", lambda _child: False, raising=False)
     with pytest.raises(process_group.CleanupUncertainError, match="unproved"):
         process_group.verify_tree_absent(process)
-    del process._astrid_tree_uncertain
-    def stop(child, **kwargs):
-        assert child is process
-        job.handle = None
-    monkeypatch.setattr(platform, "stop_tree", stop)
-    process_group.terminate_group(process)
-    assert job.handle is None
+
+
+def test_windows_cleanup_requires_a_job(monkeypatch):
+    monkeypatch.setattr(process_group, "sys", SimpleNamespace(platform="win32"))
+    process = SimpleNamespace(pid=123, poll=lambda: 0)
+
+    def no_job(_child):
+        raise ProcessLookupError("process has no Windows Job Object")
+
+    monkeypatch.setattr(platform, "tree_drained", no_job, raising=False)
+    with pytest.raises(ProcessLookupError, match="no Windows Job Object"):
+        process_group.verify_tree_absent(process)
+
+
+def test_windows_cleanup_checks_leader_exit_before_job(monkeypatch):
+    monkeypatch.setattr(process_group, "sys", SimpleNamespace(platform="win32"))
+    process = SimpleNamespace(pid=123, poll=lambda: None)
+    monkeypatch.setattr(platform, "tree_drained", lambda _child: pytest.fail("queried Job before leader exit"), raising=False)
+
+    with pytest.raises(process_group.CleanupUncertainError, match="unproved"):
+        process_group.verify_tree_absent(process)
 
 
 @pytest.fixture

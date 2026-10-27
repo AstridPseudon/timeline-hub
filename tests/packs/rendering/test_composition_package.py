@@ -17,9 +17,20 @@ from scripts import gen_effect_registry
 
 ROOT = Path(__file__).resolve().parents[3]
 REMOTION = ROOT / "remotion"
-ARTIFACT = "banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
-SHA256 = "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"
-INTEGRITY = "sha512-Ajl7lyCbJqbbOpHKEr2xlhFw85hWyirlTU1Dq63BNNUdHYfqgzLXljmudP359uKH6yBxSBMPTDoHLxgiDt65oQ=="
+PACKAGE = json.loads((REMOTION / "package.json").read_text(encoding="utf-8"))
+LOCK = json.loads((REMOTION / "package-lock.json").read_text(encoding="utf-8"))
+COMPOSITION_NAME = "@banodoco/timeline-composition"
+COMPOSITION_LOCK = LOCK["packages"][f"node_modules/{COMPOSITION_NAME}"]
+ARTIFACT = (
+    PACKAGE["dependencies"][COMPOSITION_NAME]
+    .removeprefix("file:")
+    .removeprefix("artifacts/")
+)
+ARTIFACT_PATH = REMOTION / "artifacts" / ARTIFACT
+SHA256 = ARTIFACT_PATH.with_suffix(ARTIFACT_PATH.suffix + ".sha256").read_text(
+    encoding="utf-8"
+).split()[0]
+INTEGRITY = COMPOSITION_LOCK["integrity"]
 REQUIRED_EXPORTS = (".", "./evaluation", "./theme-api", "./registries", "./effects.generated",
                     "./animations.generated", "./transitions.generated", "./registry.generated")
 
@@ -40,14 +51,15 @@ def test_locked_release_is_built_and_requires_no_separate_schema_or_theme(tmp_pa
     artifact = REMOTION / "artifacts" / ARTIFACT
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == SHA256
     lock = json.loads((REMOTION / "package-lock.json").read_text())
-    package = lock["packages"]["node_modules/@banodoco/timeline-composition"]
-    assert package["version"] == "0.0.14"
+    package = lock["packages"][f"node_modules/{COMPOSITION_NAME}"]
+    assert package["version"] == COMPOSITION_LOCK["version"]
     assert package["resolved"] == f"file:artifacts/{ARTIFACT}"
     assert package["integrity"] == INTEGRITY
     with tarfile.open(artifact) as archive:
         manifest_file = archive.extractfile("package/package.json")
         assert manifest_file is not None
         manifest = json.load(manifest_file)
+        assert manifest["version"] == COMPOSITION_LOCK["version"]
         members = archive.getmembers()
         files = {member.name for member in members}
     assert len(members) == 80

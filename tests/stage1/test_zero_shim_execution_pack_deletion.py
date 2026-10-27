@@ -160,7 +160,13 @@ def test_python_orchestrator_always_uses_subprocess_worker(
         )
 
     assert calls
-    assert calls[0][0][0][0:3] == [runner.sys.executable, "-m", "astrid.core.execution.python_runtime_worker"]
+    assert calls[0][0][0][0:5] == [
+        runner.sys.executable,
+        "-X",
+        "utf8",
+        "-m",
+        "astrid.core.execution.python_runtime_worker",
+    ]
 
 
 def test_generic_host_runs_external_python_orchestrator_from_admitted_pack(

@@ -70,11 +70,26 @@ def test_app_golden_exact_capture_replay_inverse_and_redo():
                for key in ('theme', 'theme_overrides', 'generation_defaults'))
 
 
+def test_initialize_preserves_tracks_supplied_by_runtime_bootstrap():
+    document = empty_document()
+    tracks = [{'id': 'runtime-track', 'kind': 'visual', 'label': 'Runtime track'}]
+    payload = document['parent_revision']['payload']
+    payload['config']['tracks'] = tracks
+    document['parent_revision']['content_digest'] = _digest(payload)
+    original = bundle_from_document(document)
+    call = capture_initialize(original, name='Main', slug='main',
+                              output=GOLDEN['app_parent']['config']['output'])
+
+    initialized = execute(original, [call]).bundle
+
+    assert initialized['parent']['config']['tracks'] == tracks
+
+
 @pytest.mark.parametrize('path,value', [
     (['config', 'output'], None), (['name'], None), (['slug'], ''),
     (['registry', 'assets'], {}), (['registry', 'opaque'], [None, False]),
     (['config', 'opaque'], {'enabled': False}), (['opaque'], {'literal': 'V1'}),
-    (['config', 'tracks'], [{'id': 'later', 'kind': 'visual'}]),
+    (['config', 'tracks'], 'not-a-list'),
     (['config', 'clips'], [{'id': 'later'}]), (['clips'], [{'id': 'later'}]),
 ])
 def test_nonpristine_and_opaque_content_is_untouched(path, value):

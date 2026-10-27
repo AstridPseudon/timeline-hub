@@ -69,6 +69,8 @@
 | `rendering.html_canvas_effect` | Scaffold a local Remotion HTML-in-canvas effect element. |
 | `rendering.render` | Render a hype timeline to opaque MP4 or explicitly stamped alpha MOV through the selected backend. |
 | `rendering.sprite_sheet` | Generate, slice, and preview GPT Image sprite sheets for batch image work. |
+| `rendering.timeline_export_plan` | Build a read-only timeline export plan and staged artifact. |
+| `rendering.timeline_prepare_import` | Validate and prepare timeline import data without Runtime writes. |
 | `rendering.timeline_storyboard` | Build a static visual storyboard of image inputs associated with timeline shots. |
 | `rendering.timeline_visualize` | Private backend for composed timeline visualization. |
 | `runpod.exec` | Execute a script on an existing RunPod pod and download artifacts. |

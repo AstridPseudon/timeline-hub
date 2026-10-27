@@ -95,6 +95,40 @@ def test_commit_migration_preserves_message_contract(capsys) -> None:
     ]).message == "tighten c3"
 
 
+def test_place_element_cli_exposes_occurrence_target_and_forwards_arguments(capsys) -> None:
+    class Timelines:
+        def __init__(self):
+            self.calls = []
+
+        def place_element(self, project, ref, **kwargs):
+            self.calls.append((project, ref, kwargs))
+            return DomainResult.success({'target': kwargs['target']})
+
+    timelines = Timelines()
+    client = _Client()
+    client.timelines = timelines
+    parser = timeline_cli.build_parser(client)
+    help_text = parser._subparsers._group_actions[0].choices['place-element'].format_help()
+    assert '--target' in help_text
+    assert 'occurrence:<occurrence-' in help_text and 'id>/clip:<clip-id>' in help_text
+    parsed = parser.parse_args([
+        'place-element', 'film', '--project', 'p', '--realm', 'realm',
+        '--target', 'occurrence:shot-1/clip:discord', '--pack', 'project_pack',
+        '--element', 'smooth-zoom', '--revision', 'sha256:' + 'a' * 64,
+        '--expected-head', 'head-1', '--idempotency-key', 'place-key',
+    ])
+    assert parsed.handler(parsed) == 0
+    assert timelines.calls == [(
+        'p', 'film', {
+            'realm': 'realm', 'target': 'occurrence:shot-1/clip:discord',
+            'element': {'packId': 'project_pack', 'id': 'smooth-zoom',
+                        'kind': 'effect', 'revision': 'sha256:' + 'a' * 64},
+            'expected_head': 'head-1', 'idempotency_key': 'place-key',
+        },
+    )]
+    assert capsys.readouterr().out
+
+
 class _CreateTimelines:
     def __init__(self):
         self.calls = []
@@ -114,6 +148,10 @@ def _create(argv, capsys):
 def test_create_slug_names_the_new_timeline(capsys) -> None:
     rc, calls, _ = _create(["create", "--project", "p", "--slug", "intro"], capsys)
     assert rc == 0 and calls[0]["timeline_id"] == "intro" and calls[0]["project"] == "p"
+    assert "tracks" not in calls[0]["config"]
+    assert calls[0]["config"]["theme_overrides"]["visual"]["canvas"] == {
+        "width": 1920, "height": 1080, "fps": 30,
+    }
 
 
 def test_create_slug_matching_the_positional_id_is_fine_a_different_one_is_refused(capsys) -> None:

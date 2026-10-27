@@ -112,7 +112,7 @@ class _BaseUnderstandingCaptionProvider:
         )
 
     def _base_command(self, config: Mapping[str, Any], sidecar: Path) -> list[str]:
-        command = [sys.executable, "-m", self.module_name, "--query", ""]
+        command = [sys.executable, "-X", "utf8", "-m", self.module_name, "--query", ""]
         mode = config.get("mode")
         model = config.get("model")
         if mode:

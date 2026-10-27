@@ -153,6 +153,26 @@ def test_portable_golden():
                       'records': plan.records, 'output': document_from_bundle(plan.bundle)}
 
 
+@pytest.mark.parametrize('existing', ['absent', 'without-duration', 'with-duration'])
+def test_video_birth_retains_verified_intrinsic_duration_and_exact_inverse(existing):
+    _, bundle, command, verified = captured('video')
+    if existing != 'absent':
+        pin = command['args']['media']
+        entry = {'media_id': pin['object_id'], 'type': 'video',
+                 'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
+        if existing == 'with-duration':
+            entry['duration'] = 6
+        State(bundle).registry('parent')['assets'][pin['asset']] = entry
+        command = capture(bundle, command['args'], verified)
+    before = copy.deepcopy(bundle)
+    plan = execute(bundle, [command], verified_media=verified)
+    row = State(plan.bundle).entity(CHILD)
+    assert row['hold'] == 4
+    assert State(plan.bundle).registry('parent')['assets'][row['asset']]['duration'] == 6
+    assert replay(plan, bundle, verified_media=verified).records == plan.records
+    assert inverse(plan.bundle, plan.records).bundle == before
+
+
 def test_existing_binding_is_required_exactly_without_birth():
     _, bundle, command, verified = captured()
     assets = State(bundle).registry('parent')['assets']

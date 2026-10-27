@@ -78,9 +78,11 @@ def _render_process_probe(
     )
 
 
+@pytest.mark.parametrize("receipt", ["current", "wrong", "missing", "replayed"])
 def test_lock_is_held_during_registry_generation_and_remotion_render(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
+    receipt: str,
 ) -> None:
     lock_path = tmp_path / "remotion" / ".astrid-registry.lock"
     monkeypatch.setattr(remotion_lock, "REMOTION_LOCK_PATH", lock_path)
@@ -97,6 +99,8 @@ def test_lock_is_held_during_registry_generation_and_remotion_render(
                 events.append("lock-exit")
 
     monkeypatch.setattr(remotion_lock, "remotion_render_lock", observed_lock)
+    with real_lock():
+        stale_token = remotion_lock.remotion_render_lock_child_env()[remotion_lock.REMOTION_LOCK_TOKEN_ENV]
     monkeypatch.setattr(
         remotion,
         "_validate_project_dir",
@@ -108,6 +112,7 @@ def test_lock_is_held_during_registry_generation_and_remotion_render(
     )
     monkeypatch.setattr(remotion, "_effective_registry_state", lambda theme: {"hash": "state"})
     monkeypatch.setattr(remotion, "_read_registry_state", lambda project_dir: None)
+    monkeypatch.setattr(remotion, "_registry_outputs_match_state", lambda project_dir, state: True)
 
     def write_state(project_dir: Path, state: dict[str, object]) -> None:
         assert remotion_lock.remotion_render_lock_held()
@@ -131,9 +136,21 @@ def test_lock_is_held_during_registry_generation_and_remotion_render(
     def fake_run(command: list[object], **kwargs: object) -> subprocess.CompletedProcess[str]:
         assert remotion_lock.remotion_render_lock_held()
         normalized = [str(part) for part in command]
-        if len(normalized) > 1 and Path(normalized[1]).name == "gen_effect_registry.py":
-            assert remotion_lock.REMOTION_LOCK_OWNER_ENV in kwargs["env"]
+        if any(Path(part).name == "gen_effect_registry.py" for part in normalized):
+            assert remotion_lock.REMOTION_LOCK_TOKEN_ENV in kwargs["env"]
+            assert kwargs["env"][remotion_lock.REMOTION_LOCK_PATH_ENV] == str(lock_path.resolve())
+            token = kwargs["env"][remotion_lock.REMOTION_LOCK_TOKEN_ENV]
+            assert token != stale_token
             events.append("generation")
+            if receipt == "current":
+                stdout = remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + token
+            elif receipt == "replayed":
+                stdout = remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + stale_token
+            elif receipt == "wrong":
+                stdout = remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + ("0" * 64)
+            else:
+                stdout = ""
+            return subprocess.CompletedProcess(normalized, 0, stdout=stdout, stderr="")
         else:
             assert Path(normalized[0]).name == "node"
             assert normalized[1].endswith(
@@ -158,9 +175,70 @@ def test_lock_is_held_during_registry_generation_and_remotion_render(
     )
     timeline.save_registry({"assets": {}}, tmp_path / "assets.json")
 
-    remotion._execute_remotion(*args, **kwargs)
+    if receipt == "current":
+        remotion._execute_remotion(*args, **kwargs)
+        assert events == ["lock-enter", "generation", "state-write", "render", "lock-exit"]
+    else:
+        with pytest.raises(RuntimeError, match="lock receipt"):
+            remotion._execute_remotion(*args, **kwargs)
+        assert events == ["lock-enter", "generation", "lock-exit"]
 
-    assert events == ["lock-enter", "generation", "state-write", "render", "lock-exit"]
+
+def test_render_lock_child_token_is_fresh_path_bound_and_not_parent_pid_bound(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    lock_path = tmp_path / "remotion" / ".astrid-registry.lock"
+    monkeypatch.setattr(remotion_lock, "REMOTION_LOCK_PATH", lock_path)
+    with remotion_lock.remotion_render_lock():
+        first = remotion_lock.remotion_render_lock_child_env()
+        second = remotion_lock.remotion_render_lock_child_env()
+
+    assert first[remotion_lock.REMOTION_LOCK_TOKEN_ENV] != second[remotion_lock.REMOTION_LOCK_TOKEN_ENV]
+    assert first[remotion_lock.REMOTION_LOCK_PATH_ENV] == str(lock_path.resolve())
+    monkeypatch.setenv(remotion_lock.REMOTION_LOCK_TOKEN_ENV, first[remotion_lock.REMOTION_LOCK_TOKEN_ENV])
+    monkeypatch.setenv(remotion_lock.REMOTION_LOCK_PATH_ENV, first[remotion_lock.REMOTION_LOCK_PATH_ENV])
+    monkeypatch.setattr(remotion_lock.os, "getppid", lambda: 987654)
+    assert remotion_lock.remotion_render_lock_held()
+    generator_calls: list[list[str]] = []
+    monkeypatch.setattr(
+        gen_effect_registry,
+        "_main_unlocked",
+        lambda argv: generator_calls.append(argv or []) or 0,
+    )
+    assert gen_effect_registry.main([]) == 0
+    assert generator_calls == [[]]
+    assert capsys.readouterr().out == (
+        remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX
+        + first[remotion_lock.REMOTION_LOCK_TOKEN_ENV]
+        + "\n"
+    )
+
+    monkeypatch.setenv(remotion_lock.REMOTION_LOCK_TOKEN_ENV, "wrong")
+    assert not remotion_lock.remotion_render_lock_held()
+    monkeypatch.delenv(remotion_lock.REMOTION_LOCK_TOKEN_ENV)
+    assert not remotion_lock.remotion_render_lock_held()
+    monkeypatch.setenv(remotion_lock.REMOTION_LOCK_TOKEN_ENV, second[remotion_lock.REMOTION_LOCK_TOKEN_ENV])
+    monkeypatch.setenv(remotion_lock.REMOTION_LOCK_PATH_ENV, str(lock_path.with_name("other.lock")))
+    assert not remotion_lock.remotion_render_lock_held()
+
+
+def test_registry_generator_standalone_keeps_its_lock_without_receipt(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    monkeypatch.setattr(remotion_lock, "REMOTION_LOCK_PATH", tmp_path / "registry.lock")
+    monkeypatch.delenv(remotion_lock.REMOTION_LOCK_TOKEN_ENV, raising=False)
+    monkeypatch.delenv(remotion_lock.REMOTION_LOCK_PATH_ENV, raising=False)
+    calls: list[list[str]] = []
+    monkeypatch.setattr(gen_effect_registry, "_main_unlocked", lambda argv: calls.append(argv or []) or 0)
+
+    assert gen_effect_registry.main([]) == 0
+
+    assert calls == [[]]
+    assert capsys.readouterr().out == ""
 
 
 def test_two_concurrent_remotion_renders_serialize(

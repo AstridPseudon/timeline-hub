@@ -1019,10 +1019,17 @@ def _admitted_timeline_element_resources(config: Mapping[str, Any], *, registry=
     if packs is None:
         packs = [row.pack for row in discover_pack_metadata(project_root=Path(REPO_ROOT))]
     bound = {}
+    from astrid.core.rendering.project_elements import selection_key, selections
+
+    project_selections = {selection_key(row["reference"]) for row in selections(config)}
     for clip in candidates:
         ref = clip.get("elementRef")
         explicit = isinstance(ref, Mapping)
         ref = ref if explicit else {"kind": "effects", "id": clip.get("clipType")}
+        if explicit and all(key in ref for key in ("packId", "kind", "id", "revision")) and selection_key(ref) in project_selections:
+            # Project source is staged by the Remotion renderer. It does not
+            # nominate checkout-local native motion modules for review tools.
+            continue
         clip_id, element_id, kind = clip.get("id"), ref.get("id"), ref.get("kind")
         if not all(isinstance(value, str) and value for value in (clip_id, element_id, kind)):
             raise CapabilityValidationError("element resource binding requires exact clip/element/kind identities")
@@ -1324,6 +1331,19 @@ def _prepare_managed_render_inputs(
             snapshot = candidate_preview_snapshot(
                 authoring_preview, snapshot=snapshot, client=_client
             )
+        # `resolve_managed_render_snapshot` returned this graph only after
+        # reading and validating the exact typed parent -> shot -> internal
+        # revision closure. Preserve that producer proof across the ordinary
+        # managed-render snapshot boundary. Unpublished candidate exports are
+        # not certified by this saved-revision path.
+        host_transition_contract = (
+            "runtime-parent-closure/v1"
+            if authoring_preview is None
+            and isinstance(snapshot.composition_graph, Mapping)
+            and isinstance(snapshot.expansion, Mapping)
+            and snapshot.expansion.get("canonical") is True
+            else None
+        )
         child_records: list[dict[str, Any]] = []
         review_shots: list[dict[str, Any]] = []
         review_phrases: list[dict[str, Any]] = []
@@ -1461,6 +1481,11 @@ def _prepare_managed_render_inputs(
                 "expanded_config_hash": _expanded_config_hash(expanded_config),
             },
         )
+        if authoring_preview is not None:
+            from astrid.core.rendering.project_elements import resolve_project_elements
+
+            config = resolve_project_elements(snapshot.config, project=snapshot.project_id, client=_client)
+            snapshot = replace(snapshot, config=config, config_hash=_expanded_config_hash(config))
         validate_managed_render_snapshot(snapshot)
     except ManagedRenderValidationError as exc:
         raise CapabilityValidationError(str(exc), details=exc.details) from exc
@@ -1525,15 +1550,20 @@ def _prepare_managed_render_inputs(
         "element_resources": _admitted_timeline_element_resources(snapshot.config),
     }
     authority = snapshot.authority()
+    timeline_snapshot = {
+        "config": dict(snapshot.config),
+        "registry": dict(snapshot.registry),
+    }
+    if host_transition_contract == "runtime-parent-closure/v1":
+        timeline_snapshot["metadata"] = {
+            "host_transition_contract": host_transition_contract,
+        }
     values.update(
         {
             # The generic host materializes this immutable snapshot below the
             # assigned attempt.  The SDK never writes a project-side render
             # snapshot or hands a project-root locator to a renderer.
-            "timeline_snapshot": {
-                "config": dict(snapshot.config),
-                "registry": dict(snapshot.registry),
-            },
+            "timeline_snapshot": timeline_snapshot,
             "timeline_authority": authority,
         }
     )

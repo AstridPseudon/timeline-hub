@@ -294,7 +294,8 @@ def ensure_imported_source_thumbnail(
     *,
     project_id: str,
     source_object_id: str,
-    source_bytes: bytes,
+    source_bytes: bytes | None = None,
+    source_path: str | Path | None = None,
     media_type: str,
     idempotency_key: str,
     source_time_seconds: float = 0.001,
@@ -318,10 +319,17 @@ def ensure_imported_source_thumbnail(
     identity = _stable_key(project_id, source_object_id, f"{source_time_seconds:.6f}", str(THUMBNAIL_RECIPE_VERSION))
     with tempfile.TemporaryDirectory(prefix="astrid-import-thumbnail-") as workdir:
         root = Path(workdir)
-        source_path = root / "source"
+        thumbnail_source = root / "source"
         thumbnail_path = root / THUMBNAIL_OUTPUT_FILENAME
-        source_path.write_bytes(source_bytes)
-        extract_thumbnail(source_path, thumbnail_path, media_type, source_time_seconds=source_time_seconds)
+        if source_path is not None:
+            thumbnail_source = Path(source_path)
+            if not thumbnail_source.is_file():
+                raise ThumbnailBackfillError("Imported source file is unavailable for thumbnail extraction")
+        elif isinstance(source_bytes, bytes):
+            thumbnail_source.write_bytes(source_bytes)
+        else:
+            raise ThumbnailBackfillError("Imported source bytes or path are required for thumbnail extraction")
+        extract_thumbnail(thumbnail_source, thumbnail_path, media_type, source_time_seconds=source_time_seconds)
         uploaded = _unwrap_mutation(runtime.ingest_project_object(
             project_id,
             thumbnail_path.read_bytes(),

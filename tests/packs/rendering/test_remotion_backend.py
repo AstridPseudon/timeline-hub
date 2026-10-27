@@ -32,9 +32,9 @@ from astrid.core.rendering.contracts import (
     SupportReport,
 )
 from astrid.core.rendering.transport import CommandTransport
-from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
 from astrid.packs.rendering.actions.render import run as facade
 from astrid.packs.rendering.actions.render.run import render
+from astrid.packs.rendering.rendering.renderers.remotion import run as remotion
 from tests.packs.rendering._helpers import _execution_env, _probe
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -56,7 +56,9 @@ def _selected_composition_package() -> Path:
     )
     manifest = package / "package.json"
     assert manifest.is_file(), manifest
-    assert json.loads(manifest.read_text(encoding="utf-8"))["version"] == "0.0.14"
+    assert json.loads(manifest.read_text(encoding="utf-8"))["version"] == (
+        remotion_runtime._COMPOSITION_PACKAGE_VERSION
+    )
     return package
 
 
@@ -71,6 +73,16 @@ def _is_remotion_render_command(command: list[str]) -> bool:
     )
 
 
+def _lock_receipt(kwargs: dict[str, object]) -> str:
+    env = kwargs.get("env", {})
+    if not isinstance(env, dict):
+        return ""
+    token = env.get(render_remotion.remotion_lock.REMOTION_LOCK_TOKEN_ENV)
+    if not isinstance(token, str):
+        return ""
+    return render_remotion.remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + token
+
+
 @pytest.fixture(autouse=True)
 def _remotion_exec_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Ensure protocol children use the schema-bearing test interpreter."""
@@ -82,25 +94,16 @@ def _remotion_exec_env(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(
         remotion_runtime,
         "_probe_node",
-        lambda node_executable, *, cwd: ("v20.19.4", None),
+        lambda node_executable, *, cwd, environment=None: ("v20.19.4", None),
     )
+    monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", _available_runtime_status)
+    # Register the original value before helpers change it directly. Teardown
+    # must restore it after the test's own monkeypatch entries are unwound.
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR",
+                       os.environ.get("ASTRID_REMOTION_PROJECT_DIR") or str(ROOT / "remotion"))
     with _execution_env():
         yield
 
-
-@pytest.fixture
-def qualified_launch_validation(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Supply the launch-bound validation that support() requires.
-
-    support() fails closed unless the server-owned launch validation artifact
-    verifies (remotion_runtime._validated_runtime). These units exercise timeline
-    support, not that attestation, so provide its already-qualified result.
-    """
-    monkeypatch.setattr(
-        remotion_runtime,
-        "_validated_runtime",
-        lambda project_dir, **_: {"node_version": "v20.19.4"},
-    )
 
 
 def _write_fake_remotion_output(command: list[str]) -> Path:
@@ -136,7 +139,22 @@ def _write_project(tmp_path: Path) -> Path:
     cli = project / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
     cli.parent.mkdir(parents=True)
     cli.write_text("// locked test CLI\n", encoding="utf-8")
+    os.environ["ASTRID_REMOTION_PROJECT_DIR"] = str(project)
     return project
+
+
+def _available_runtime_status():
+    project = Path(os.environ["ASTRID_REMOTION_PROJECT_DIR"]).resolve()
+    node, reason = remotion_runtime._configured_node_executable()
+    if reason or node is None:
+        return remotion_runtime.RemotionRuntimeStatus(False, project, reason)
+    return remotion_runtime.RemotionRuntimeStatus(
+        True,
+        project,
+        node_executable=node,
+        node_version="v20.19.4",
+        remotion_cli=(project / remotion_runtime.REMOTION_CLI_RELATIVE_PATH).resolve(),
+    )
 
 
 def _request(
@@ -223,7 +241,6 @@ def test_manifest_registers_static_raw_command_backend() -> None:
     assert (manifest_path.parent / manifest.command[1]).is_file()
 
 
-@pytest.mark.usefixtures("qualified_launch_validation")
 def test_support_is_request_sensitive_and_accepts_complete_timeline(
     tmp_path: Path,
 ) -> None:
@@ -373,11 +390,6 @@ def test_remotion_review_uses_native_scale_flag(tmp_path: Path) -> None:
         return subprocess.CompletedProcess(command, 0, stdout="", stderr="")
 
     with (
-        # This unit exercises CLI construction, not the separately attested
-            # launch validator. Supply its already-qualified dependency.
-            mock.patch.object(remotion, "resolve_remotion_runtime_tools", return_value=(
-                remotion_runtime.RemotionRuntimeTools(Path(shutil.which("node")), "v20.19.4",
-                    project / "node_modules/@remotion/cli/remotion-cli.js"), None)),
             mock.patch.object(remotion, "_regenerate_element_registries"),
         mock.patch.object(
             remotion,
@@ -404,7 +416,6 @@ def test_remotion_review_uses_native_scale_flag(tmp_path: Path) -> None:
     assert "--scale=0.333333333333333" in commands[0]
 
 
-@pytest.mark.usefixtures("qualified_launch_validation")
 def test_support_treats_timeline_output_hint_as_informational_without_profile(
     tmp_path: Path,
 ) -> None:
@@ -429,7 +440,6 @@ def test_support_treats_timeline_output_hint_as_informational_without_profile(
     assert report.reasons == []
 
 
-@pytest.mark.usefixtures("qualified_launch_validation")
 @pytest.mark.parametrize("clip_type", ["video", "image", "audio", "hold"])
 def test_support_accepts_builtin_media_clip_type_aliases(
     tmp_path: Path,
@@ -637,7 +647,6 @@ def test_support_fails_closed_for_unregistered_animation_reference(tmp_path: Pat
     assert any("unregistered animation 'missing-external-animation'" in reason for reason in report.reasons)
 
 
-@pytest.mark.usefixtures("qualified_launch_validation")
 def test_raw_support_adapter_writes_authoritative_support_report(
     tmp_path: Path,
 ) -> None:
@@ -669,9 +678,23 @@ def test_raw_support_adapter_writes_authoritative_support_report(
     assert report.backend == remotion.BACKEND_ID
 
 
-def test_manifest_command_runs_from_owning_pack_root(tmp_path: Path) -> None:
+def test_manifest_command_runs_from_owning_pack_root(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     timeline_path, assets_path = _write_inputs(tmp_path)
     project = _write_project(tmp_path)
+    from astrid.core.subprocess_env import build_child_subprocess_env
+    from tests.packs.rendering.test_render_export_task_adapter import _install_composition_package
+
+    # The subprocess performs real admission, so provision the selected package
+    # and an authentic launch proof rather than relying on in-process mocks.
+    shutil.rmtree(project / "node_modules/@banodoco/timeline-composition")
+    _install_composition_package(project)
+    for output in remotion._registry_output_paths(project):
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text("// provisioned registry\n", encoding="utf-8")
+    (project / "package-lock.json").write_text("{}\n", encoding="utf-8")
+    monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", str(project))
+    monkeypatch.setenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
+                       str(ROOT / "astrid/core/timeline/schema/timeline-config.schema.json"))
     request_path = tmp_path / "transport-request.json"
     result_path = tmp_path / "transport-result.json"
     request_path.write_text(
@@ -681,6 +704,17 @@ def test_manifest_command_runs_from_owning_pack_root(tmp_path: Path) -> None:
     pack_root = ROOT / "astrid" / "packs" / "rendering"
 
     with _execution_env():
+        environment = build_child_subprocess_env()
+        with mock.patch.object(remotion, "gen_effect_registry", None):
+            reference = remotion_runtime.prepare_remotion_validation(
+                artifact_directory=tmp_path / "launch-validation",
+                host_environment=environment,
+                python_executable=sys.executable,
+                launch_id="a" * 32,
+                contexts={"standalone": environment},
+            )
+        for name, value in reference.items():
+            monkeypatch.setenv(name, value)
         report = CommandTransport(remotion.BACKEND_ID).run(
             "support",
             ("python3", "run.py"),
@@ -690,14 +724,10 @@ def test_manifest_command_runs_from_owning_pack_root(tmp_path: Path) -> None:
         )
 
     assert isinstance(report, SupportReport)
-    # The child process has no owned launch validation, so support fails closed
-    # (the in-process tests supply the qualified validation instead). The point here is
-    # that the manifest command resolves from the pack root and reports over the transport.
-    assert report.supported is False
+    assert report.supported is True
     assert report.backend == remotion.BACKEND_ID
-    assert report.reasons == [
-        "missing or invalid launch validation; explicit owned validation required"
-    ]
+    assert report.reasons == []
+
 
 
 def test_protocol_render_returns_valid_namespaced_artifact_shape(tmp_path: Path) -> None:
@@ -814,16 +844,9 @@ def test_audio_ownership_enum_remains_protocol_value() -> None:
 
 class RemotionBackendRegistryGenerationTest(unittest.TestCase):
     def setUp(self) -> None:
-        # These tests mock Remotion itself and exercise standalone registry
-        # generation/provenance. Supply an explicit fake validated tool tuple;
-        # they do not claim an owned launch-readiness transaction.
-        def fake_tools(project: Path):
-            node, error = remotion_runtime._configured_node_executable()
-            if error:
-                return None, error
-            return remotion_runtime.RemotionRuntimeTools(
-                node, 'v20.19.4', project / remotion_runtime.REMOTION_CLI_RELATIVE_PATH), None
-        patch = mock.patch.object(render_remotion, 'resolve_remotion_runtime_tools', side_effect=fake_tools)
+        patch = mock.patch.object(
+            remotion_runtime, "remotion_runtime_status", _available_runtime_status
+        )
         patch.start()
         self.addCleanup(patch.stop)
 
@@ -842,6 +865,21 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         timeline.save_registry({"assets": {}}, assets_path)
         return timeline_path, assets_path, out_path
 
+    def setUp(self) -> None:
+        digest = hashlib.sha256(b"// generated test fixture\n").hexdigest()
+        patcher = mock.patch.object(render_remotion, "_effective_registry_state", return_value={
+            "version": 1, "hash": "fixture-registry", "content_hashes": {
+                kind: digest for kind in ("effects", "animations", "transitions")},
+        })
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @staticmethod
+    def _generate_fixture(project_dir: Path) -> None:
+        for path in render_remotion._registry_output_paths(project_dir):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("// generated test fixture\n", encoding="utf-8")
+
     def _write_fake_remotion_project(self, tmp: Path) -> tuple[Path, Path]:
         project_dir = tmp / "remotion"
         banodoco_root = project_dir / "node_modules" / "@banodoco"
@@ -855,6 +893,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         cli = project_dir / "node_modules" / "@remotion" / "cli" / "remotion-cli.js"
         cli.parent.mkdir(parents=True)
         cli.write_text("// locked test CLI\n", encoding="utf-8")
+        os.environ["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir)
         return project_dir, composition_src
 
     def _write_effect_definition(self, tmp: Path, effect_id: str, asset_text: str) -> ElementDefinition:
@@ -917,7 +956,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 if "--input-type=module" in command:
                     return real_run(cmd, **kwargs)
                 calls.append(([str(part) for part in cmd], kwargs))
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                self._generate_fixture(project_dir)
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.dict(
@@ -938,10 +978,10 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         self.assertEqual(len(calls), 1)
         cmd, kwargs = calls[0]
         self.assertEqual(cmd[0], sys.executable)
-        self.assertEqual(Path(cmd[1]), ROOT / "scripts" / "gen_effect_registry.py")
+        self.assertEqual(Path(cmd[3]), ROOT / "scripts" / "gen_effect_registry.py")
         # Theme is resolved into render props; registry codegen receives no
         # retired checkout theme override.
-        self.assertEqual(cmd[2:], [])
+        self.assertEqual(cmd[4:], [])
         self.assertEqual(kwargs["cwd"], str(ROOT))
         env = kwargs["env"]
         self.assertIsInstance(env, dict)
@@ -965,7 +1005,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
 
             def fake_run(cmd, **kwargs):
                 calls.append([str(part) for part in cmd])
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                self._generate_fixture(project_dir)
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run):
                 render_remotion._regenerate_element_registries(project_dir, None)
@@ -995,7 +1036,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
 
             def fake_run(cmd, **kwargs):
                 calls.append([str(part) for part in cmd])
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                self._generate_fixture(project_dir)
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run):
                 render_remotion._regenerate_element_registries(project_dir, None)
@@ -1035,7 +1077,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
             def fake_run(cmd, **kwargs):
                 nonlocal remotion_runs
                 command = [str(part) for part in cmd]
-                if len(command) > 1 and Path(command[1]).name == "gen_effect_registry.py":
+                if any(Path(part).name == "gen_effect_registry.py" for part in command):
                     registry_hashes_seen.append(state_from_component(None)["hash"])
                     for generated_output in generated_outputs:
                         generated_output.parent.mkdir(parents=True, exist_ok=True)
@@ -1043,7 +1085,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 elif _is_remotion_render_command(command):
                     remotion_runs += 1
                     _write_fake_remotion_output(command)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                self._generate_fixture(project_dir)
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.object(render_remotion, "_effective_registry_state", side_effect=state_from_component),
@@ -1131,13 +1174,15 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     props_paths.append(props_path)
                     props_payloads.append(json.loads(props_path.read_text(encoding="utf-8")))
                     _write_fake_remotion_output(command)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                self._generate_fixture(project_dir)
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.dict(
                     render_remotion.os.environ,
                     {
                         "HOME": str(tmp / "home"),
+                        "ASTRID_REMOTION_PROJECT_DIR": str(project_dir),
                         "ASTRID_NODE_EXECUTABLE": os.environ[
                             "ASTRID_NODE_EXECUTABLE"
                         ],
@@ -1162,7 +1207,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
         registry_cmd, registry_kwargs = calls[0]
         remotion_cmd, remotion_kwargs = calls[1]
 
-        self.assertEqual(Path(registry_cmd[1]), ROOT / "scripts" / "gen_effect_registry.py")
+        self.assertEqual(Path(registry_cmd[3]), ROOT / "scripts" / "gen_effect_registry.py")
         self.assertNotIn("--theme", registry_cmd)
         self.assertEqual(registry_kwargs["cwd"], str(ROOT))
 
@@ -1251,7 +1296,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     self.assertEqual(staged_asset.read_text(encoding="utf-8"), "used asset")
                     self.assertFalse((staged_asset.parents[2] / "unused" / "assets" / "badge.txt").exists())
                     _write_fake_remotion_output(command)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                self._generate_fixture(project_dir)
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),
@@ -1327,7 +1373,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                     staged_roots_seen.append(staged_asset.parents[2])
                     self.assertTrue(staged_asset.exists())
                     return subprocess.CompletedProcess(cmd, 2, stdout="", stderr="boom\n")
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                self._generate_fixture(project_dir)
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.object(render_remotion.subprocess, "run", side_effect=fake_run),
@@ -1378,7 +1425,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 command = [str(part) for part in cmd]
                 if _is_remotion_render_command(command):
                     _write_fake_remotion_output(command)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                self._generate_fixture(project_dir)
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             with (
                 mock.patch.object(render_remotion, "REPO_ROOT", project_root),
@@ -1424,7 +1472,8 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 if _is_remotion_render_command(command):
                     remotion_envs.append(dict(kwargs["env"]))
                     _write_fake_remotion_output(command)
-                return subprocess.CompletedProcess(cmd, 0, stdout="", stderr="")
+                self._generate_fixture(project_dir)
+                return subprocess.CompletedProcess(cmd, 0, stdout=_lock_receipt(kwargs), stderr="")
 
             host_env = {
                 "HOME": str(tmp / "home"),
@@ -1434,6 +1483,7 @@ class RemotionBackendRegistryGenerationTest(unittest.TestCase):
                 "PATH": "/usr/bin:/bin",
                 "ASTRID_TASK_RUN_ID": "task-run-9",
                 "ASTRID_ACTOR": "human:peter",
+                "ASTRID_REMOTION_PROJECT_DIR": str(project_dir),
                 "ASTRID_NODE_EXECUTABLE": render_remotion.os.environ[
                     "ASTRID_NODE_EXECUTABLE"
                 ],
@@ -1509,7 +1559,7 @@ def _remotion_text_timeline(tmp_path: Path) -> Path:
 @pytest.mark.timeout(600)
 def test_remotion_real_render_under_global_angle_keeps_identity(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     """A real rendering.remotion render (full timeline, no planner) succeeds
     with the global ANGLE Chromium renderer on and its provenance says
@@ -1574,7 +1624,7 @@ def test_remotion_real_render_under_global_angle_keeps_identity(
 @pytest.mark.timeout(600)
 def test_remotion_real_two_second_window_keeps_video_and_audio_duration(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     """A real service window slices both the rendered frames and muxed audio."""
     timeline_path = tmp_path / "range.timeline.json"
@@ -1695,11 +1745,6 @@ def test_pcm_aac_capture_is_invocation_scoped_and_keeps_alpha_and_default_paths(
 
     with (
         mock.patch.dict(os.environ, {"ASTRID_REMOTION_PCM_AAC_OUTPUT": "/ambient/unrelated.mov"}),
-        # This unit exercises CLI construction, not the separately attested
-            # launch validator. Supply its already-qualified dependency.
-            mock.patch.object(remotion, "resolve_remotion_runtime_tools", return_value=(
-                remotion_runtime.RemotionRuntimeTools(Path(shutil.which("node")), "v20.19.4",
-                    project / "node_modules/@remotion/cli/remotion-cli.js"), None)),
             mock.patch.object(remotion, "_regenerate_element_registries"),
         mock.patch.object(remotion, "_effective_registry_state", return_value={"version": 1, "hash": "test"}),
         mock.patch.object(remotion, "_active_pack_order_for_provenance", return_value=[]),
@@ -1759,11 +1804,6 @@ def test_alpha_stamp_appends_transparent_flags_to_remotion_cli(
         suffix = ".mov" if timeline_path == alpha_timeline else ".mp4"
         output_path = tmp_path / f"{Path(timeline_path).stem}{suffix}"
         with (
-            # This unit exercises CLI construction, not the separately attested
-            # launch validator. Supply its already-qualified dependency.
-            mock.patch.object(remotion, "resolve_remotion_runtime_tools", return_value=(
-                remotion_runtime.RemotionRuntimeTools(Path(shutil.which("node")), "v20.19.4",
-                    project / "node_modules/@remotion/cli/remotion-cli.js"), None)),
             mock.patch.object(remotion, "_active_pack_order_for_provenance", return_value=[]),
             mock.patch.object(remotion, "_regenerate_element_registries"),
             mock.patch.object(
@@ -1826,7 +1866,7 @@ def test_alpha_stamp_appends_transparent_flags_to_remotion_cli(
 @pytest.mark.timeout(600)
 def test_alpha_stamped_real_render_is_mov_prores_and_declared_profile_matches(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     """A REAL alpha render through _protocol_render: strict validation
     passes and the probed artifact is the recorded batch-4-rework truth --
@@ -1871,7 +1911,7 @@ def test_alpha_stamped_real_render_is_mov_prores_and_declared_profile_matches(
 @pytest.mark.timeout(600)
 def test_stamped_top_layer_via_real_service_is_mov_prores_with_alpha(
     tmp_path: Path,
-    remotion_launch_validation: None,
+    remotion_runtime_environment: None,
 ) -> None:
     """Stamped top layer via the REAL service path -> .mov/prores with alpha;
     unstamped via the same path -> .mp4/h264 opaque (frozen no-regression)."""
@@ -1917,45 +1957,12 @@ def test_stamped_top_layer_via_real_service_is_mov_prores_with_alpha(
             assert max(corner[:3]) <= 24, corner
 
 
-@pytest.mark.parametrize('mismatch', ['fresh_state', 'cache_state', 'output'])
-def test_launch_bound_registry_drift_refuses_without_write_or_generator(tmp_path, monkeypatch, mismatch):
-    from astrid.core.element import registry
-    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
-    state = {'version': 1, 'hash': 'a' * 64, 'content_hashes': {kind: kind for kind in ('effects', 'animations', 'transitions')}}
-    monkeypatch.setenv(ASTRID_REMOTION_VALIDATION_LAUNCH, 'a' * 32)
-    monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project: {'registry': {'mode': 'source_settled', 'expected_state': state}})
-    cleared = []
-    monkeypatch.setattr(registry, 'clear_default_registry_cache', lambda: cleared.append(True))
-    monkeypatch.setattr(remotion, '_effective_registry_state', lambda theme: ({**state, 'hash': 'b' * 64} if mismatch == 'fresh_state' else state))
-    monkeypatch.setattr(remotion, '_read_registry_state', lambda project: ({} if mismatch == 'cache_state' else state))
-    monkeypatch.setattr(remotion, '_registry_output_content_hashes', lambda project: ({} if mismatch == 'output' else state['content_hashes']))
-    def forbidden(*args, **kwargs):
-        pytest.fail('launch-bound mismatch must not regenerate or write state')
-    monkeypatch.setattr(remotion.subprocess, 'run', forbidden)
-    monkeypatch.setattr(remotion, '_write_registry_state', forbidden)
-    with pytest.raises(RuntimeError, match='drift refuses regeneration'):
-        remotion._regenerate_element_registries_locked(tmp_path, None)
-    assert cleared == [True]
-
-
-def test_launch_bound_unchanged_registry_refreshes_lru_then_skips_all_writes(tmp_path, monkeypatch):
-    from astrid.core.element import registry
-    from astrid.core.env_vars import ASTRID_REMOTION_VALIDATION_LAUNCH
-    state = {'version': 1, 'hash': 'a' * 64, 'content_hashes': {kind: kind for kind in ('effects', 'animations', 'transitions')}}
-    monkeypatch.setenv(ASTRID_REMOTION_VALIDATION_LAUNCH, 'a' * 32)
-    monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project: {'registry': {'mode': 'source_settled', 'expected_state': state}})
-    current = {'state': {'hash': 'stale LRU'}}
-    monkeypatch.setattr(registry, 'clear_default_registry_cache', lambda: current.update(state=state))
-    monkeypatch.setattr(remotion, '_effective_registry_state', lambda theme: current['state'])
-    monkeypatch.setattr(remotion, '_read_registry_state', lambda project: state)
-    monkeypatch.setattr(remotion, '_registry_output_content_hashes', lambda project: state['content_hashes'])
-    monkeypatch.setattr(remotion.subprocess, 'run', lambda *a, **kw: pytest.fail('unchanged launch must not regenerate'))
-    monkeypatch.setattr(remotion, '_write_registry_state', lambda *a, **kw: pytest.fail('unchanged launch must not rewrite'))
-    remotion._regenerate_element_registries_locked(tmp_path, None)
-
 
 def test_frame_progress_relay_publishes_bound_attempt_and_keeps_codec_stages(tmp_path):
-    from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay, parse_progress_line
+    from astrid.packs.rendering.rendering.renderers.remotion.progress import (
+        RemotionProgressRelay,
+        parse_progress_line,
+    )
     log = tmp_path / "frames.log"; progress = tmp_path / ".astrid-progress.json"
     log.write_text("Rendered 2/4, time remaining: 2s\nEncoded 1/4\n")
     relay = RemotionProgressRelay(log, progress_path=progress)

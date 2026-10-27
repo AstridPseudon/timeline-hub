@@ -16,6 +16,10 @@ def test_interactive_git_variables_are_accepted_and_never_reach_the_probe(tmp_pa
 
 
 @pytest.mark.parametrize('name', ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_CONFIG_GLOBAL', 'GIT_INDEX_FILE', 'PYTHONSTARTUP'])
-def test_git_redirection_and_startup_hooks_are_still_refused(tmp_path, name):
-    with pytest.raises(runtime.RemotionValidationError, match='overrides'):
-        runtime._registry_context(_env(tmp_path, **{name: str(tmp_path / 'x')}), generator=False)
+def test_ambient_git_redirection_and_startup_hooks_are_projected_out(tmp_path, name):
+    clean = _env(tmp_path)
+    ambient = {**clean, name: str(tmp_path / 'x')}
+    for generator in (False, True):
+        assert runtime._registry_context(ambient, generator=generator) == runtime._registry_context(clean, generator=generator)
+    with pytest.raises(runtime.RemotionValidationError, match=name):
+        runtime._validate_remotion_worker_environment(ambient)

@@ -131,3 +131,16 @@ def test_cli_exit_failure_log_omits_exception_text(caplog):
 
     assert "RuntimeError" in caplog.text
     assert "private-token-should-not-appear" not in caplog.text
+
+
+def test_cli_exit_failure_log_includes_only_explicit_safe_host_context(caplog, tmp_path):
+    error = generic_host.HostError(
+        "private-token-should-not-appear",
+        safe_message=f"field=capability_matrix path={tmp_path / 'matrix.json'}",
+    )
+    with caplog.at_level(logging.ERROR, logger=generic_host.__name__):
+        generic_host._log_cli_exit_failure(error)
+
+    assert "field=capability_matrix" in caplog.text
+    assert str(tmp_path / "matrix.json") in caplog.text
+    assert "private-token-should-not-appear" not in caplog.text

@@ -17,6 +17,10 @@ from .support import HELP_MESSAGE
 class VerificationError(RuntimeError):
     """The installed Runtime's browser door did not pass its readiness check."""
 
+    def __init__(self, message: str, *, safe_message: str | None = None) -> None:
+        super().__init__(message)
+        self.safe_message = safe_message
+
 
 class BackupSpaceError(RuntimeError):
     """The update cannot fit its workspace backup on the program disk."""
@@ -123,8 +127,24 @@ def switch(root: Path, version: Version) -> None:
 
 
 class Installer:
-    def __init__(self, root: Path, data: Path, backend, *, say=print):
+    def __init__(self, root: Path, data: Path, backend, *, say=print, managed_by: str | None = None):
         self.root, self.data, self.backend, self.say = root, data, backend, say
+        self.managed_by = managed_by
+
+    def _activate(self, version: Version, realm_id: str) -> None:
+        self.backend.register(version, self.data)
+        if self.managed_by != "pinokio":
+            self.backend.start(version, self.data)
+            self.backend.verify(version, self.data, realm_id)
+        elif self.backend.workspace(version, self.data)["realm_id"] != realm_id:
+            raise VerificationError("The installed workspace identity changed.")
+
+    def _ready(self) -> None:
+        if self.managed_by == "pinokio":
+            self.say("Astrid is installed. Choose Start in Pinokio.")
+        else:
+            self.say("Open https://astrid.haus")
+            self.backend.open()
 
     def _save_update(self, transaction: dict, step: str, **details) -> None:
         transaction.update(step=step, **details)
@@ -159,9 +179,7 @@ class Installer:
             switch(self.root, old)
         else:
             (self.root / "current").unlink(missing_ok=True)
-        self.backend.register(old, self.data)
-        self.backend.start(old, self.data)
-        self.backend.verify(old, self.data, realm["realm_id"])
+        self._activate(old, realm["realm_id"])
         self._save_update(transaction, "rolled_back")
 
     def run(self, mode: str, manifest: dict, *, delete_data: bool = False,
@@ -196,6 +214,14 @@ class Installer:
         # Repair never provisions tools, installs code, migrates or rewrites data.
         if old and mode != "update":
             realm = self.backend.workspace(old, self.data)
+            if self.managed_by == "pinokio":
+                self.backend.register(old, self.data)
+                try:
+                    self.backend.sync_skills(old)
+                except Exception:  # noqa: BLE001 - skill setup is best effort
+                    self.say("Couldn't add Astrid's skill to your agents; see the log.")
+                self._ready()
+                return
             try:
                 # The browser health endpoint refuses a changed Runtime identity
                 # with runtime_identity_mismatch, which requires this restart.
@@ -261,14 +287,21 @@ class Installer:
             install_launcher(self.root)
             if transaction is not None:
                 self._save_update(transaction, "switched")
-            self.say("Starting Astrid at sign-in.")
+            self.say("Finishing up." if self.managed_by == "pinokio" else "Starting Astrid at sign-in.")
             self.backend.register(candidate, self.data)
             if transaction is not None:
                 self._save_update(transaction, "registered")
-            self.backend.start(candidate, self.data)
+            if self.managed_by != "pinokio":
+                self.backend.start(candidate, self.data)
             if transaction is not None:
-                self._save_update(transaction, "started")
-            self.backend.verify(candidate, self.data, realm["realm_id"])
+                self._save_update(transaction, "selected" if self.managed_by == "pinokio" else "started")
+            if self.managed_by != "pinokio":
+                self.backend.verify(candidate, self.data, realm["realm_id"])
+            else:
+                # Creation/adoption/migration is verified through Runtime's
+                # workspace API; Pinokio starts and checks the browser door.
+                if self.backend.workspace(candidate, self.data)["realm_id"] != realm["realm_id"]:
+                    raise VerificationError("The installed workspace identity changed.")
             if transaction is not None:
                 self._save_update(transaction, "verified")
             try:
@@ -289,9 +322,7 @@ class Installer:
                         switch(self.root, old)
                     elif pointer_changed:
                         (self.root / "current").unlink(missing_ok=True)
-                    self.backend.register(old, self.data)
-                    self.backend.start(old, self.data)
-                    self.backend.verify(old, self.data, realm["realm_id"])
+                    self._activate(old, realm["realm_id"])
                     if transaction is not None:
                         self._save_update(transaction, "rolled_back")
                 except (Exception, KeyboardInterrupt) as recovery:
@@ -304,8 +335,7 @@ class Installer:
             raise
         if backup:
             self.say(f"A backup of your workspace is kept at {backup['root']}.")
-        self.say("Open https://astrid.haus")
-        self.backend.open()
+        self._ready()
 
 
 def new_version_id(manifest: dict) -> str:

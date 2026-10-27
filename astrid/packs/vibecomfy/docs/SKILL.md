@@ -40,7 +40,18 @@ It reads `/system_stats`, `/internal/folder_paths` (model folders and
 and prints one JSON object: `servers[]` with `url`, `base_dir`, `output_dir`
 (`--output-directory` if set, else `<base>/output`), `workflows` (saved
 names), `manager_present` and `python` (their ComfyUI's interpreter, if
-found); `errors[]` per port and endpoint.
+found); `errors[]` per port and endpoint; and `pinokio.available` plus
+`pinokio.home` when Pinokio's optional scan completes within its short budget.
+It probes up to eight extra loopback HTTP ports from running scripts'
+`local.url` values; extra-port matches must have a ComfyUI-shaped
+`/system_stats` response. A matching server includes its `pinokio_apps`.
+
+If no ComfyUI is found and `pinokio.available` is true, ask the person to
+start ComfyUI in Pinokio, then rescan. Its ComfyUI tree is
+`<pinokio.home>/api/comfy.git/app`, Python is `<tree>/env/bin/python` (on
+Windows, `<tree>\env\Scripts\python.exe`), and output is `<tree>/output`.
+These paths come from `/pinokio/info`'s `home`, so save them in preferences
+after a successful scan as usual.
 
 - Saved setup and scan agree: carry on. They disagree (other folder, workflow
   gone, nothing on that port): rediscover, use what's true now, and update

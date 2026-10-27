@@ -8,6 +8,12 @@ import pytest
 from astrid.core.rendering import remotion_runtime as runtime
 
 
+@pytest.fixture(autouse=True)
+def _reset_process_local_remotion_custody(monkeypatch):
+    monkeypatch.setattr(runtime, '_UNRESOLVED_PROBE_CUSTODY', [])
+    monkeypatch.setattr(runtime, '_UNRESOLVED_VALIDATION_PROBES', [])
+
+
 SENTINEL = 'private-argv-environment-output-must-not-cross-diagnostic'
 
 

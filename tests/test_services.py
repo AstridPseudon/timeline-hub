@@ -27,6 +27,7 @@ def test_declaration_matches_runtime_contract_with_space_containing_paths(tmp_pa
     assert host["argv"][host["argv"].index("--support-root") + 1] == str(root / "runtime")
     assert chat["argv"] == [bun, str(Path(__file__).parents[1] / "astrid/chat/service.mjs")]
     assert chat["env"]["ASTRID_WORKSPACE_DISCOVERY"] == str(root / "runtime/discovery.json")
+    assert host["argv"][1:4] == ["-X", "utf8", "-m"]
     assert chat["env"]["ASTRID_SUPPORT_ROOT"] == str(root)
     assert chat["env"]["ASTRID_ACP_CWD"] == str(root / "chat")
     assert chat["env"]["ASTRID_ACP_LOCAL_MEDIA_ONLY"] == "1"

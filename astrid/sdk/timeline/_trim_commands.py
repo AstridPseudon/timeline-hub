@@ -59,6 +59,9 @@ def clip_trim(ctx, command):
     source = {key: ctx.read('parent/registry', ['assets', asset, key]) for key in
               ('media_id', 'object_id', 'digest', 'content_digest', 'type', 'duration',
                'duration_ms', 'duration_seconds', 'source', 'source_window', 'time_map', 'timeMap')}
+    if source['type'] == 'image':
+        raise CommandError('cannot source-trim an image: images have no source window',
+                           kind='unsupported_media', ref=ref)
     if any(source[key] is not None for key in ('source', 'source_window', 'time_map', 'timeMap')):
         raise CommandError('clip.trim v1 does not support a mapped media source', kind='unsupported_map', ref=ref)
     limit = source['duration']

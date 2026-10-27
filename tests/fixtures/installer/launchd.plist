@@ -18,6 +18,8 @@
 	<key>ProgramArguments</key>
 	<array>
 		<string>/astrid/versions/v1/py/bin/python</string>
+		<string>-X</string>
+		<string>utf8</string>
 		<string>-I</string>
 		<string>-m</string>
 		<string>astrid_runtime</string>

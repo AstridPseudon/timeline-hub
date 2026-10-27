@@ -34,6 +34,19 @@ export type AcpProcessSpawnOptions = {
 
 export type AcpProcessSpawner = (options: AcpProcessSpawnOptions) => JsonRpcProcessLike;
 
+export function commandForPlatform(command: string, args: readonly string[], platform: NodeJS.Platform): { command: string; args: string[]; windowsVerbatimArguments?: boolean } {
+  if (platform !== 'win32' || !/\.(?:cmd|bat)$/i.test(command)) return { command, args: [...args] };
+  const quote = (value: string) => {
+    if (/[\r\n"%]/.test(value)) throw new Error('Windows command paths and arguments cannot contain quotes, %, or newlines.');
+    return `"${value}"`;
+  };
+  return {
+    command: 'cmd.exe',
+    args: ['/d', '/s', '/c', `"${quote(command)}${args.length ? ` ${args.map(quote).join(' ')}` : ''}"`],
+    windowsVerbatimArguments: true,
+  };
+}
+
 export type AcpProcessHostOptions = {
   /** Injected only by host fixtures; production uses the explicit Node spawner. */
   readonly process?: JsonRpcProcessLike;
@@ -144,10 +157,12 @@ function defaultSpawnProcess(options: AcpProcessSpawnOptions): JsonRpcProcessLik
   }
 
   const runtime = (globalThis as { readonly process?: NodeProcessRuntime }).process;
-  const child = childProcess.spawn(options.command, [...options.args], {
+  const invocation = commandForPlatform(options.command, options.args, process.platform);
+  const child = childProcess.spawn(invocation.command, invocation.args, {
     cwd: options.cwd,
     env: { ...(runtime?.env ?? {}), ...(options.env ?? {}) },
     shell: false,
+    windowsVerbatimArguments: invocation.windowsVerbatimArguments,
     stdio: 'pipe',
   });
   return child;

@@ -1,4 +1,4 @@
-import type {ReactElement} from 'react';
+import {useMemo, type ReactElement} from 'react';
 import {Composition, Sequence, useVideoConfig} from 'remotion';
 import {Video} from '@remotion/media';
 import {
@@ -81,24 +81,35 @@ const RenderClockTail = ({props}: {props: TimelineCompositionProps}): ReactEleme
   );
 };
 
-const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => <>
-  <TimelineComposition {...props} registries={resolveHostRegistries(props.theme ?? DEFAULT_THEME)} />
-  <RenderClockTail props={props} />
-  <ReviewOverlay review={props.review} />
-  {props.astridFrameDiagnostics && <FrameDiagnostics />}
-  {boundsRequested(props) && <BoundsProbe />}
-</>;
-
-// Remotion's lazyComponent waits on Suspense with a delayRender handle. Keep
-// the Three.js scene out of the 2D film's page load and JS parse path.
-const loadReviewedThree = () => import('./ThreeTimelineComposition').then(({ThreeTimelineComposition}) => ({
-  default: (props: ReviewProps): ReactElement => <>
-    <ThreeTimelineComposition {...props} registries={resolveHostRegistries(props.theme ?? DEFAULT_THEME)} />
+const ReviewedTimelineWithRenderTail = (props: ReviewProps): ReactElement => {
+  const theme = props.theme ?? DEFAULT_THEME;
+  // This host-owned map contains static generated registries. Reuse it while
+  // the selected theme is unchanged so package scene preparation can memoize
+  // against the registry identity across Remotion frame renders.
+  const registries = useMemo(() => resolveHostRegistries(theme), [theme.id]);
+  return <>
+    <TimelineComposition {...props} registries={registries} />
     <RenderClockTail props={props} />
     <ReviewOverlay review={props.review} />
     {props.astridFrameDiagnostics && <FrameDiagnostics />}
     {boundsRequested(props) && <BoundsProbe />}
-  </>,
+  </>;
+};
+
+// Remotion's lazyComponent waits on Suspense with a delayRender handle. Keep
+// the Three.js scene out of the 2D film's page load and JS parse path.
+const loadReviewedThree = () => import('./ThreeTimelineComposition').then(({ThreeTimelineComposition}) => ({
+  default: (props: ReviewProps): ReactElement => {
+    const theme = props.theme ?? DEFAULT_THEME;
+    const registries = useMemo(() => resolveHostRegistries(theme), [theme.id]);
+    return <>
+      <ThreeTimelineComposition {...props} registries={registries} />
+      <RenderClockTail props={props} />
+      <ReviewOverlay review={props.review} />
+      {props.astridFrameDiagnostics && <FrameDiagnostics />}
+      {boundsRequested(props) && <BoundsProbe />}
+    </>;
+  },
 }));
 
 const DEFAULT_PROPS: TimelineCompositionProps = {

@@ -274,11 +274,13 @@ def test_command_orchestrator_default_mode_remains_subprocess_first(
         *,
         cwd: str | None,
         env: dict[str, str],
+        stdin: int,
         check: bool,
     ) -> types.SimpleNamespace:
         seen["argv"] = tuple(argv)
         seen["cwd"] = cwd
         seen["env"] = env
+        seen["stdin"] = stdin
         seen["check"] = check
         return types.SimpleNamespace(returncode=0)
 
@@ -291,6 +293,7 @@ def test_command_orchestrator_default_mode_remains_subprocess_first(
     assert seen["argv"] == orch.runtime.command.argv
     assert seen["cwd"] is None
     assert seen["check"] is False
+    assert seen["stdin"] == runner_mod.subprocess.DEVNULL
     assert result.returncode == 0
     assert result.ok is True
 

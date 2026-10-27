@@ -17,7 +17,6 @@ from typing import Any
 
 import pytest
 
-
 from astrid.core.foundation.hash import sha256_file
 from astrid.core.rendering import _local_schema, remotion_runtime
 from astrid.core.rendering.remotion_runtime import (
@@ -27,7 +26,6 @@ from astrid.core.rendering.remotion_runtime import (
     remotion_runtime_status,
     resolve_remotion_runtime_tools,
 )
-from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_run
 from astrid.packs.rendering.actions.render import task_adapter as task_adapter_module
 from astrid.packs.rendering.actions.render.task_adapter import (
     RenderExportExecutionContext,
@@ -35,6 +33,7 @@ from astrid.packs.rendering.actions.render.task_adapter import (
     RenderExportTaskAdapter,
     execute_render_export_task,
 )
+from astrid.packs.rendering.rendering.renderers.remotion import run as remotion_run
 from astrid.sdk import workspace_client
 from astrid.sdk.workspace_client import WorkspaceClient
 
@@ -46,6 +45,14 @@ COMPOSITION_ARTIFACT = REMOTION_ROOT / json.loads(
 )["dependencies"]["@banodoco/timeline-composition"].removeprefix("file:")
 
 
+@pytest.fixture(autouse=True)
+def _reset_process_local_remotion_custody(monkeypatch):
+    # Fatal retained-child custody is process-wide. Keep independent test cases
+    # isolated while allowing each case to assert that it blocks later work.
+    monkeypatch.setattr(remotion_runtime, "_UNRESOLVED_PROBE_CUSTODY", [])
+    monkeypatch.setattr(remotion_runtime, "_UNRESOLVED_VALIDATION_PROBES", [])
+
+
 def _stage_schema(source: Path, *, missing: str | None = None) -> Path:
     for relative in (_local_schema.SCHEMA_RELATIVE_PATH, Path('runtime.lock.json'),
                      *_local_schema.READER_INPUTS):
@@ -54,6 +61,12 @@ def _stage_schema(source: Path, *, missing: str | None = None) -> Path:
         if relative.as_posix() == missing:
             continue
         target.write_bytes((REMOTION_ROOT.parent / relative).read_bytes())
+    if sys.platform == "win32":
+        from runtime_protocol import platform
+
+        # Admission checks every selected source ancestor's native DACL.
+        for path in (source, *source.rglob("*")):
+            platform.owner_only(path)
     return source / _local_schema.SCHEMA_RELATIVE_PATH
 
 
@@ -272,6 +285,19 @@ def test_theme_outside_materialization_root_is_refused(tmp_path: Path) -> None:
         RenderExportTaskAdapter().execute(task=task, staging_dir=tmp_path / "staging")
 
 
+@pytest.mark.parametrize("name", ["project_dir", "backend_config"])
+def test_task_cannot_select_remotion_project_or_backend(
+    tmp_path: Path, name: str
+) -> None:
+    task = _task(root=tmp_path)
+    params = dict(task.spec["params"])
+    params[name] = "/caller/selected/remotion"
+    task.spec = {**task.spec, "params": params}
+
+    with pytest.raises(RenderExportRefused, match=f"server-owned parameter.*{name}"):
+        execute_render_export_task(task=task, staging_dir=tmp_path / "staging")
+
+
 def test_renderer_inputs_are_inode_isolated_and_cleaned(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -437,11 +463,6 @@ def test_forced_caption_uses_server_owned_executable_routing_and_isolation(
     assert not ambient_origin.is_relative_to(schema.parent.resolve())
     (runtime / "package-lock.json").write_text('{"lockfileVersion":3}\n')
     monkeypatch.setattr(remotion_run, "gen_effect_registry", None)
-    for control in remotion_runtime._UNSUPPORTED_PYTHON_STARTUP:
-        monkeypatch.delenv(control, raising=False)
-    for control in tuple(os.environ):
-        if control.startswith(('GIT_', 'DYLD_', 'LD_')):
-            monkeypatch.delenv(control, raising=False)
     reference = remotion_runtime.prepare_remotion_validation(
         artifact_directory=tmp_path / "owned-readiness", host_environment=dict(os.environ),
         python_executable=sys.executable, launch_id="b" * 32,
@@ -591,29 +612,18 @@ def test_remotion_readiness_requires_exact_locked_local_cli(
     assert "locked Remotion CLI is missing" in (status.reason or "")
 
 
-def test_remotion_runtime_uses_absolute_node_not_hostile_path(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    marker = tmp_path / "fake-node-used"
-    _version_node(tmp_path / "fake-node", marker=marker)
-    runtime, _, trusted_node, env, reference, calls = _owned_validation_fixture(
-        tmp_path, monkeypatch, environment_overrides={'PATH': str(tmp_path)})
-    cli = runtime / REMOTION_CLI_RELATIVE_PATH
-    from astrid.core.subprocess_env import _SAFE_BASE_ENV
-    for key in (*_SAFE_BASE_ENV, *remotion_runtime._REGISTRY_SELECTORS, *remotion_runtime._UNSUPPORTED_PYTHON_STARTUP, 'PYTHONPATH', 'XDG_CONFIG_HOME',
-                'NODE_OPTIONS', 'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'):
-        monkeypatch.delenv(key, raising=False)
-    for key in tuple(os.environ):
-        if key.startswith(('GIT_', 'DYLD_', 'LD_')):
-            monkeypatch.delenv(key, raising=False)
-    for key, value in {**env, **reference}.items():
-        monkeypatch.setenv(key, value)
-    tools, error = resolve_remotion_runtime_tools(runtime)
+def test_remotion_runtime_uses_absolute_node_not_hostile_path(tmp_path, monkeypatch):
+    project, _, trusted_node, environment, reference, calls = _owned_validation_fixture(
+        tmp_path, monkeypatch, environment_overrides={"PATH": str(tmp_path / "hostile")}
+    )
+    tools, error = resolve_remotion_runtime_tools(
+        project, environment={**environment, **reference}
+    )
     assert error is None
     assert tools is not None
     assert tools.node_executable == trusted_node.resolve()
-    assert tools.remotion_cli == cli.resolve()
-    assert not marker.exists()
+    assert tools.remotion_cli == (project / REMOTION_CLI_RELATIVE_PATH).resolve()
+    assert calls[0][0] == [str(trusted_node), "--version"]
 
 
 def test_remotion_node_version_probe_is_bounded(
@@ -758,7 +768,8 @@ def _owned_validation_fixture(tmp_path, monkeypatch, *, environment_overrides=No
     (dep / 'resources.json').write_text('{}')
     calls = []
     def owned(argv, *, cwd, env, timeout):
-        assert not list((tmp_path / 'artifacts').glob('remotion-validation-*.json'))
+        if argv[-1] != '--version':
+            assert not list((tmp_path / 'artifacts').glob('remotion-validation-*.json'))
         calls.append((argv, dict(env)))
         receipt = {'original_wait_exit_code': 0, 'retained_set_final_census_complete': True,
                    'custody_admitted': True, 'original_child_pid': 500 + len(calls)}
@@ -884,10 +895,13 @@ def test_clean_probe_home_refuses_before_launch(home):
 @pytest.mark.parametrize('name', ['DYLD_INSERT_LIBRARIES', 'LD_PRELOAD', 'PYTHONHOME',
                                  'PYTHONEXECUTABLE', '__PYVENV_LAUNCHER__', 'NODE_OPTIONS',
                                  'NODE_PATH', 'NODE_ICU_DATA', 'OPENSSL_CONF'])
-def test_clean_probe_rejects_unsupported_consuming_overrides(tmp_path, name):
-    with pytest.raises(remotion_runtime.RemotionValidationError, match='unsupported'):
-        remotion_runtime.probe_context(environment={'HOME': str(tmp_path), name: 'override'},
-                                      python_executable=sys.executable)
+def test_clean_probe_ignores_ambient_but_rejects_consuming_overrides(tmp_path, name):
+    clean = {'HOME': str(tmp_path)}
+    ambient = {**clean, name: 'override'}
+    assert remotion_runtime.probe_context(environment=ambient, python_executable=sys.executable) == remotion_runtime.probe_context(
+        environment=clean, python_executable=sys.executable)
+    with pytest.raises(remotion_runtime.RemotionValidationError, match=name):
+        remotion_runtime._validate_remotion_worker_environment(ambient)
 
 
 def test_clean_probe_projection_preserves_values_absence_and_excludes_task_metadata(tmp_path):
@@ -927,12 +941,12 @@ def test_owned_probe_positive_original_wait_precedes_final_census(monkeypatch, t
     result, receipt = remotion_runtime._owned_probe(['/exact/node', '--version'], cwd=tmp_path,
                                                    env={'HOME': str(tmp_path)}, timeout=5)
     assert result.returncode == 0
-    assert events == [('communicate', 5), ('original_wait', 0), ('final_census', 812)]
     assert receipt['original_wait_exit_code'] == 0 and receipt['custody_admitted']
-
+    assert events == [('communicate', 5), ('original_wait', 0), ('final_census', 812)]
 
 def test_owned_probe_timeout_preserves_primary_when_cleanup_refuses(monkeypatch, tmp_path):
     from astrid.core.execution import process_group
+    monkeypatch.setattr(remotion_runtime, "_UNRESOLVED_PROBE_CUSTODY", [])
     original = subprocess.TimeoutExpired(['/exact/node', '--version'], 5)
     class Process:
         pid = 813
@@ -944,17 +958,20 @@ def test_owned_probe_timeout_preserves_primary_when_cleanup_refuses(monkeypatch,
     def refuse(*a, **kw):
         raise RuntimeError('strict retained cleanup refusal')
     monkeypatch.setattr(process_group, 'terminate_group', refuse)
-    with pytest.raises(subprocess.TimeoutExpired) as error:
+    with pytest.raises(remotion_runtime.RemotionProbeCleanupError, match="timed out") as error:
         remotion_runtime._owned_probe(['/exact/node', '--version'], cwd=tmp_path,
                                       env={'HOME': str(tmp_path)}, timeout=5)
-    assert error.value is original and original.process is process
+    assert error.value.process is process
+    assert str(error.value.cleanup_error) == 'strict retained cleanup refusal'
+    assert error.value.original_error is original
+    assert error.value.__cause__ is error.value.cleanup_error
+    assert original.process is process
     assert isinstance(original.cleanup_error, RuntimeError)
-
 
 def test_owned_probe_empty_env_refuses_before_launch(monkeypatch, tmp_path):
     from astrid.core.execution import process_group
     monkeypatch.setattr(process_group, 'popen_owned_group', lambda *a, **kw: pytest.fail('ambient fallback'))
-    with pytest.raises(remotion_runtime.RemotionValidationError, match='nonempty'):
+    with pytest.raises(ValueError, match='nonempty'):
         remotion_runtime._owned_probe(['/exact/node'], cwd=tmp_path, env={}, timeout=5)
 
 
@@ -1077,11 +1094,13 @@ def test_validation_acquisition_failure_retains_handle_and_blocks_replacement(tm
                      launch_id='c' * 32, contexts={'host': environment})
     with pytest.raises(RuntimeError) as failure:
         remotion_runtime.prepare_remotion_validation(**arguments)
-    assert failure.value is primary
+    assert isinstance(failure.value, remotion_runtime.RemotionProbeCleanupError)
+    assert failure.value.original_error is primary
+    assert failure.value.__cause__ is cleanup
     assert primary.process is process and primary.cleanup_error is cleanup
-    assert primary.__cause__ is cleanup
-    with pytest.raises(remotion_runtime.RemotionValidationError, match='custody is unresolved'):
+    with pytest.raises(remotion_runtime.RemotionProbeCleanupError) as blocked:
         remotion_runtime.prepare_remotion_validation(**{**arguments, 'launch_id': 'd' * 32})
+    assert blocked.value is failure.value
     assert acquisitions == [process]
     assert not list((tmp_path / 'failed-acquisition').glob('remotion-validation-*.json'))
 
@@ -1123,12 +1142,14 @@ def _registry_settling_fixture(tmp_path, monkeypatch):
     generation = []
     def owned(argv, *, cwd, env, timeout):
         assert lock.remotion_render_lock_held()
-        assert env['ASTRID_REMOTION_LOCK_OWNER'].startswith(str(os.getpid()) + ':')
+        token = env[run.remotion_lock.REMOTION_LOCK_TOKEN_ENV]
+        assert token
         assert timeout == 90
         generation.append(dict(env))
         for kind, raw in content.items():
             (src / (kind + '.generated.ts')).write_text(raw)
-        return subprocess.CompletedProcess(argv, 0, '', ''), {'original_wait_exit_code': 0,
+        receipt = run.remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + token + "\n"
+        return subprocess.CompletedProcess(argv, 0, receipt, ''), {'original_wait_exit_code': 0,
             'retained_set_final_census_complete': True, 'custody_admitted': True}
     monkeypatch.setattr(run, 'gen_effect_registry', SimpleNamespace())
     monkeypatch.setattr(remotion_runtime, '_registry_probe', probe)
@@ -1225,9 +1246,13 @@ def test_registry_generator_custody_refusal_preserves_primary_and_no_state_publi
 
 
 @pytest.mark.parametrize('control', sorted(remotion_runtime._UNSUPPORTED_PYTHON_STARTUP))
-def test_launch_validation_refuses_unqualified_ordinary_python_startup(tmp_path, control):
-    with pytest.raises(remotion_runtime.RemotionValidationError, match='unsupported loader/interpreter'):
-        remotion_runtime.probe_context(environment={'HOME': str(tmp_path), control: ''}, python_executable=sys.executable)
+def test_launch_validation_projects_out_ambient_python_startup(tmp_path, control):
+    clean = {'HOME': str(tmp_path)}
+    ambient = {**clean, control: ''}
+    assert remotion_runtime.probe_context(environment=ambient, python_executable=sys.executable) == remotion_runtime.probe_context(
+        environment=clean, python_executable=sys.executable)
+    with pytest.raises(remotion_runtime.RemotionValidationError, match=control):
+        remotion_runtime._validate_remotion_worker_environment(ambient)
 
 
 @pytest.mark.parametrize('section', ['include', 'includeIf "gitdir:/any/"'])
@@ -1321,9 +1346,10 @@ def test_registry_probe_preserves_distinct_renderer_and_generator_startup(tmp_pa
     assert captured[1][1] == remotion_runtime.REPO_ROOT
     assert captured[1][0][-1] == str(remotion_runtime.REPO_ROOT / 'scripts')
     for argv, cwd in captured:
-        prefix = argv[2].split('from astrid.core.rendering', 1)[0]
+        command_index = argv.index('-c')
+        prefix = argv[command_index + 1].split('from astrid.core.rendering', 1)[0]
         for already_present in (False, True):
-            root, script_dir = argv[3:]
+            root, script_dir = argv[command_index + 2:]
             original = ['', 'other'] + ([root] if already_present else [])
             monkeypatch.setattr(sys, 'path', list(original))
             monkeypatch.setattr(sys, 'argv', ['-c', root, script_dir])
@@ -1630,19 +1656,22 @@ def test_registry_probe90_timeout_is_not_proven_and_preserves_original_cleanup(m
         if cleanup_refuses:raise cleanup
     monkeypatch.setattr(process_group, "terminate_group", terminate)
     monkeypatch.setattr(process_group, "verify_tree_absent", lambda original: events.append(("final_census", original.pid)))
-    with pytest.raises(remotion_runtime.RemotionValidationError, match="registry validation not proven") as caught:
-        remotion_runtime._owned_registry_probe(["/fixture/python", "registry"], cwd=tmp_path,
-            env={"HOME":str(tmp_path)}, phase=phase)
-    assert caught.value.__cause__ is primary
-    receipt = caught.value.probe_receipt
-    assert receipt["outcome"] == "REGISTRY_TIMEOUT_NOT_PROVEN" and receipt["timeout_seconds"] == 90
-    assert receipt["phase"] == phase and events[0] == ("communicate", 90)
     if cleanup_refuses:
+        with pytest.raises(remotion_runtime.RemotionProbeCleanupError) as caught:
+            remotion_runtime._owned_registry_probe(["/fixture/python", "registry"], cwd=tmp_path,
+                env={"HOME":str(tmp_path)}, phase=phase)
+        assert caught.value.original_error is primary
         assert caught.value.process is process and caught.value.cleanup_error is cleanup
-        assert primary.__cause__ is cleanup
-        assert "original_wait_exit_code" not in receipt
+        assert caught.value.__cause__ is cleanup
         assert events == [("communicate", 90), ("terminate_original", 0.2)]
     else:
+        with pytest.raises(remotion_runtime.RemotionValidationError, match="registry validation not proven") as caught:
+            remotion_runtime._owned_registry_probe(["/fixture/python", "registry"], cwd=tmp_path,
+                env={"HOME":str(tmp_path)}, phase=phase)
+        assert caught.value.__cause__ is primary
+        receipt = caught.value.probe_receipt
+        assert receipt["outcome"] == "REGISTRY_TIMEOUT_NOT_PROVEN" and receipt["timeout_seconds"] == 90
+        assert receipt["phase"] == phase and events[0] == ("communicate", 90)
         assert receipt["original_wait_exit_code"] == -15
         assert receipt["retained_set_final_census_complete"] is True
         assert events == [("communicate", 90), ("terminate_original", 0.2), ("original_wait", 1), ("final_census", 913)]

@@ -67,7 +67,7 @@ def probe_version(node: Path | str) -> str | None:
     if not path.is_file() or not os.access(path, os.X_OK):
         return None
     try:
-        done = subprocess.run([str(path), "--version"], capture_output=True, text=True, timeout=_PROBE_TIMEOUT_S,
+        done = subprocess.run([str(path), "--version"], stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=_PROBE_TIMEOUT_S,
                               check=False, env={k: v for k, v in os.environ.items() if k.upper() in _NODE_PROBE_ENV})
     except (OSError, subprocess.SubprocessError):
         return None
@@ -149,7 +149,7 @@ def process_env(pid: int | None, names: Sequence[str]) -> dict[str, str]:
         return {}
     try:
         if sys.platform == "darwin":
-            text = subprocess.run(["ps", "-E", "-ww", "-p", str(int(pid)), "-o", "command="], capture_output=True,
+            text = subprocess.run(["ps", "-E", "-ww", "-p", str(int(pid)), "-o", "command="], stdin=subprocess.DEVNULL, capture_output=True,
                                   text=True, timeout=5, check=False).stdout
         else:
             text = Path(f"/proc/{int(pid)}/environ").read_text(encoding="utf-8", errors="replace").replace("\0", " ")

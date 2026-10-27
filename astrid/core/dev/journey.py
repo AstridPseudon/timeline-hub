@@ -23,8 +23,8 @@ import json
 import logging
 import os
 import shutil
-import socket
 import signal
+import socket
 import subprocess
 import sys
 import tempfile
@@ -39,7 +39,6 @@ from typing import Any, Iterable, Mapping, Sequence
 from runtime_protocol import platform
 
 from astrid.core.dev import reference_realm
-from astrid.core.rendering.remotion_runtime import _INTERACTIVE_GIT_ENV, _UNSUPPORTED_PYTHON_STARTUP
 
 # No phase is judged by how long it takes: durations and machine load are recorded for information.
 # A command is stopped only when it is genuinely hung, with no exit within a ceiling many times its
@@ -213,9 +212,15 @@ def machine_load() -> dict[str, Any]:
 
 
 # -- child environment ------------------------------------------------------------------------
-# Variables the journey must not hand to any child: the ones it replaces itself, plus the loader and
-# interpreter overrides Remotion validation refuses (remotion_runtime.probe_context lists them inline;
-# the Python-startup set and the interactive-Git allowlist are imported from there).
+# Keep journey children independent of shell loader, interpreter and Git overrides.
+_UNSUPPORTED_PYTHON_STARTUP = frozenset({'PYTHONUSERBASE', 'PYTHONNOUSERSITE', 'PYTHONSAFEPATH',
+    'PYTHONPYCACHEPREFIX', 'PYTHONPLATLIBDIR', 'PYTHONCASEOK', 'PYTHONUTF8',
+    'PYTHONCOERCECLOCALE', 'PYTHONSTARTUP'})
+_INTERACTIVE_GIT_ENV = frozenset({
+    'GIT_EDITOR', 'GIT_SEQUENCE_EDITOR', 'GIT_PAGER', 'GIT_TERMINAL_PROMPT', 'GIT_ASKPASS',
+    'GIT_SSH', 'GIT_SSH_COMMAND', 'GIT_SSH_VARIANT', 'GIT_MERGE_AUTOEDIT',
+    'GIT_AUTHOR_NAME', 'GIT_AUTHOR_EMAIL', 'GIT_COMMITTER_NAME', 'GIT_COMMITTER_EMAIL',
+})
 _STRIPPED_ENV = frozenset({"ASTRID_NODE_EXECUTABLE", "ASTRID_TIMELINE_SCHEMA_PYTHONPATH", "OTTO_HEAVY_LEASE"})
 _PRIVATE_REALM_ONLY_ENV = frozenset({"BANODOCO_LOCAL_DATA_ROOT", "BANODOCO_LOCAL_SOURCE_MANIFEST",
                                     "ASTRID_LOCAL_DATA_ROOT",
@@ -227,7 +232,7 @@ _STRIPPED_PREFIXES = ("ASTRID_REMOTION_", "ASTRID_RENDER_", "LD_", "DYLD_")
 
 
 def scrub_child_env(environ: Mapping[str, str]) -> dict[str, str]:
-    """``environ`` without anything Remotion validation would fail closed on (used for every child)."""
+    """Remove shell overrides before launching each journey child."""
     def keep(key: str) -> bool:
         if key in _STRIPPED_ENV or key in _PRIVATE_REALM_ONLY_ENV or key in _OVERRIDE_ENV or key.startswith(_STRIPPED_PREFIXES):
             return False
@@ -1092,11 +1097,20 @@ class Journey:
         key = f"v6-{uuid.uuid4().hex[:8]}"
         def edit():
             base = self.astrid + ["timelines"]
-            tl = ["--project", self.project]
-            r.command("edit", base + ["checkout", self.timeline, *tl, "--draft", key, "--fresh", "--json"], self.env)
-            r.command("edit", base + ["edit", self.timeline, *tl, "--replace-asset", f"{replace_slot}=run:{sprites}/sprites#0", "--json"], self.env)
-            r.command("edit", base + ["check", self.timeline, *tl, "--no-sweep", "--json"], self.env)
-            r.command("edit", base + ["publish", self.timeline, *tl, "-m", f"journey {key}", "--idempotency-key", key, "--json"], self.env)
+            tl = ["--project", self.project, "--draft", key]
+            r.command("edit", base + ["checkout", self.timeline, *tl, "--fresh"], self.env, json_result=False)
+            r.command("edit", base + ["edit", self.timeline, *tl, "--replace-asset", f"{replace_slot}=run:{sprites}/sprites#0"], self.env, json_result=False)
+            r.command("edit", base + ["check", self.timeline, *tl, "--no-sweep"], self.env, json_result=False)
+            candidate = self.root / f"{key}.commit.json"
+            export = (
+                "import json, sys; from pathlib import Path; "
+                "from astrid.sdk.timeline_checkout import Checkout, find_draft; "
+                "checkout = Checkout.load(find_draft(sys.argv[1], sys.argv[2], sys.argv[3])); "
+                "Path(sys.argv[4]).write_text(json.dumps(checkout.document()) + '\\n', encoding='utf-8')"
+            )
+            r.command("edit", [sys.executable, "-c", export, self.project, self.timeline, key, str(candidate)], self.env, json_result=False)
+            r.command("edit", base + ["commit", self.timeline, "--project", self.project, "--file", str(candidate),
+                                       "-m", f"journey {key}", "--idempotency-key", key, "--json"], self.env)
         r.phase("edit", edit)
         def full_render():
             name = f"v6-full-{key}.mp4"

@@ -380,6 +380,7 @@ class _RemoteFamily:
             elif operation == "get_project_shot_revision": value = self._client.get_project_shot_revision(*args, **kwargs)
             elif operation == "get_project_timeline_revision": value = self._client.get_project_timeline_revision(*args, **kwargs)
             elif operation == "get_project_parent_composition_revision": value = self._client.get_project_parent_composition_revision(*args, **kwargs)
+            elif operation == "import_timeline": value = self._client.import_timeline(*args, **kwargs)
             elif operation == "get_source_frame_thumbnail":
                 value = self._client.get_source_frame_thumbnail(*args, **kwargs)
             elif operation == "get_project_shot_text_binding": value = self._client.get_project_shot_text_binding(*args, **kwargs)
@@ -395,6 +396,7 @@ class _RemoteFamily:
             elif operation == "ensure_source_frame_thumbnail":
                 value = self._client.ensure_source_frame_thumbnail(*args, **kwargs)
             elif operation == "ingest_project_object": value = self._client.ingest_project_object(*args, **kwargs)
+            elif operation == "ingest_project_object_stream": value = self._client.ingest_project_object_stream(*args, **kwargs)
             elif operation == "link_references": value = self._client.link_references(*args, **kwargs)
             elif operation == "list_events": value = self._client.list_events(*args, **kwargs)
             elif operation == "list_generations": value = self._client.list_generations(*args, **kwargs)
@@ -530,7 +532,7 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         try:
             from .timeline._common import TimelineEditError
             from .timeline.commands import execute
-            from .timeline.emitter import emit_document_commands
+            from .timeline._command_state import equal, present
             from .timeline.native_initialize import capture_initialize
             from .timeline.sync import CommitConflict, TimelineSession
 
@@ -566,7 +568,14 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                 before, name=canonical_name, slug=slug, output=default_output,
             )]
             initialized = execute(before, commands).bundle
-            authored_config = copy.deepcopy(dict(config)) if config is not None else {"tracks": []}
+            authored_config = copy.deepcopy(dict(config)) if config is not None else {}
+            # Runtime owns the canonical bootstrap tracks. Preserve them when
+            # the caller has no track preference; an explicit tracks array,
+            # including [], remains authoritative.
+            bootstrap_config = initialized["parent"].get("config")
+            if "tracks" not in authored_config and isinstance(bootstrap_config, Mapping):
+                if "tracks" in bootstrap_config:
+                    authored_config["tracks"] = copy.deepcopy(bootstrap_config["tracks"])
             canvas = authored_config.get("theme_overrides")
             for field in ("visual", "canvas"):
                 canvas = canvas.get(field) if isinstance(canvas, Mapping) else None
@@ -578,9 +587,18 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                 }
             authored_config.setdefault("output", default_output)
             authored_config.setdefault("clips", [])
-            after = copy.deepcopy(initialized)
-            after["parent"]["config"] = authored_config
-            commands.extend(emit_document_commands(initialized, after))
+            # Creation already guards the entire pristine timeline atomically.
+            # Install its initial config as one observed value, including any
+            # explicit track choice, rather than emitting member removals.
+            initial_config = initialized["parent"]["config"]
+            if not equal(initial_config, authored_config):
+                commands.append({
+                    "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                    "args": {"changes": [{
+                        "op": "set", "ref": "parent", "path": ["config"],
+                        "before": present(copy.deepcopy(initial_config)), "value": authored_config,
+                    }]},
+                })
             label = "Create empty timeline"
             timeline_scope_read = [{"kind": "scope", "ref": "timeline", "path": []}]
             steps = [{
@@ -1327,6 +1345,13 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         from .timeline_elements import update_parent_element
         return update_parent_element(self, project, ref, realm=realm, clip_id=clip_id, element=element, expected_head=expected_head, duration=duration, params=params, idempotency_key=idempotency_key, session=session, clear_params=clear_params)
 
+    def place_element(self, project, ref, *, realm, target, element, expected_head,
+                      idempotency_key=None, session=None):
+        from .timeline_elements import place_element
+        return place_element(self, project, ref, realm=realm, target=target, element=element,
+                             expected_head=expected_head, idempotency_key=idempotency_key,
+                             session=session)
+
     def save(self, project, ref, *, config: Mapping[str, Any], registry: Mapping[str, Any], expected_version=1, slug=None, name=None, idempotency_key=None):
         return self._retired_document_route("save", idempotency_key=idempotency_key)
     def replace_clip(
@@ -1664,6 +1689,10 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
             return DomainResult.failure(ErrorObject(exc.code, exc.message, exc.details), idempotency_key=key)
         return self._typed("archive_timeline", ref, key=key, expected_version=version, idempotency_key=key)
 
+    def import_timeline(self, project_id: str, prepared: Mapping[str, Any], *, idempotency_key: str):
+        return self._typed("import_timeline", project_id, prepared, key=idempotency_key,
+                           idempotency_key=idempotency_key)
+
 
 class RemoteMedia(_RemoteFamily):
     def open(
@@ -1712,12 +1741,20 @@ class RemoteMedia(_RemoteFamily):
         realm_error = self._managed_realm_error(realm, idempotency_key=idempotency_key)
         if realm_error is not None:
             return realm_error
-        try: data = path.read_bytes()
-        except OSError: return DomainResult.failure(ErrorObject("not_found", "media source is unavailable", {}), idempotency_key=idempotency_key or "")
-        if project is None: return DomainResult.failure(ErrorObject("validation_error", "media import requires a project", {"field": "project"}), idempotency_key=idempotency_key or "")
+        if project is None:
+            return DomainResult.failure(ErrorObject("validation_error", "media import requires a project", {"field": "project"}), idempotency_key=idempotency_key or "")
+        try:
+            size = path.stat().st_size
+            source = path.open("rb")
+        except OSError:
+            return DomainResult.failure(ErrorObject("not_found", "media source is unavailable", {}), idempotency_key=idempotency_key or "")
         key = idempotency_key or uuid.uuid4().hex
         media_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
-        result = self._typed("ingest_project_object", project, data, key=key, media_type=media_type, idempotency_key=key, filename=path.name)
+        with source:
+            result = self._typed(
+                "ingest_project_object_stream", project, source, key=key, size=size,
+                media_type=media_type, idempotency_key=key, filename=path.name,
+            )
         if not result.ok or not isinstance(result.data, Mapping):
             return result
         object_id = result.data.get("object_id")
@@ -1735,7 +1772,7 @@ class RemoteMedia(_RemoteFamily):
                 self._client,
                 project_id=str(project),
                 source_object_id=object_id,
-                source_bytes=data,
+                source_path=path,
                 media_type=media_type,
                 idempotency_key=key,
             )
@@ -1755,6 +1792,23 @@ class RemoteMedia(_RemoteFamily):
         if thumbnail_error:
             payload["thumbnail_diagnostics"] = [{"code": "thumbnail_extraction_failed", "message": thumbnail_error[:240]}]
         return DomainResult.success(payload, receipt=result.receipt, idempotency_key=result.idempotency_key)
+
+    def import_stream(
+        self, *, project: str, stream: Any, size: int, filename: str,
+        media_type: str = "application/octet-stream", expected_digest: str | None = None,
+        idempotency_key: str | None = None, realm: str = "managed_local",
+    ) -> DomainResult[Any]:
+        realm_error = self._managed_realm_error(realm, idempotency_key=idempotency_key)
+        if realm_error is not None:
+            return realm_error
+        if project is None:
+            return DomainResult.failure(ErrorObject("validation_error", "media import requires a project", {"field": "project"}), idempotency_key=idempotency_key or "")
+        key = idempotency_key or uuid.uuid4().hex
+        return self._typed(
+            "ingest_project_object_stream", project, stream, key=key, size=size,
+            media_type=media_type, idempotency_key=key, filename=Path(filename).name,
+            expected_digest=expected_digest,
+        )
     def import_bytes(self, *, project: str, data: bytes, filename: str, media_type: str = "application/octet-stream", idempotency_key=None):
         """Import in-memory bytes (an SDK-built document) as one managed project object."""
         if project is None:

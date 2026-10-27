@@ -33,6 +33,39 @@ def pidfd_probe(monkeypatch: Any) -> dict[str, Any]:
 EVIDENCE = "sha256:" + "e" * 64
 
 
+@pytest.mark.parametrize("acl_allows", [True, False])
+def test_private_dir_uses_acl_and_only_secures_new_directories(tmp_path, monkeypatch, acl_allows):
+    path = tmp_path / "owner-root"
+    created_acl = []
+    checked_acl = []
+    real_stat = Path.stat
+
+    def windows_stat(candidate, *args, **kwargs):
+        result = real_stat(candidate, *args, **kwargs)
+        if candidate == path:
+            return os.stat_result((stat.S_IFDIR | 0o777, *result[1:]))
+        return result
+
+    monkeypatch.setattr(Path, "stat", windows_stat)
+    monkeypatch.setattr(subject, "owned_by_current_user", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(subject.platform, "owner_only", lambda candidate: created_acl.append(candidate))
+    monkeypatch.setattr(subject.platform, "is_owner_only", lambda candidate: checked_acl.append(candidate) or acl_allows)
+    if acl_allows:
+        subject._private_dir(path)
+    else:
+        with pytest.raises(subject.WorkerProcessError, match="owner-only"):
+            subject._private_dir(path)
+    assert created_acl == [path]
+    assert checked_acl == [path]
+
+    # A public existing directory is refused without an attempted repair.
+    created_acl.clear()
+    monkeypatch.setattr(subject.platform, "is_owner_only", lambda _candidate: False)
+    with pytest.raises(subject.WorkerProcessError, match="owner-only"):
+        subject._private_dir(path)
+    assert created_acl == []
+
+
 def binding(**changes: Any) -> subject.WorkerBinding:
     return subject.WorkerBinding(
         **{
@@ -650,7 +683,8 @@ def test_pod_adapter_uses_command_metadata_and_private_preexisting_sftp_file(
         async def exec_ssh(self, command: str, timeout: int) -> tuple[int, str, str]:
             self.commands.append(command)
             args = shlex.split(command)
-            compile(args[2], "<remote-wrapper>", "exec")
+            wrapper_index = args.index("-c") + 1
+            compile(args[wrapper_index], "<remote-wrapper>", "exec")
             request = json.loads(base64.b64decode(args[-1]))
             value = subject.remote_dispatch(args[-2], request)
             return 0, json.dumps(value), ""

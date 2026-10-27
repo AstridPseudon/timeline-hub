@@ -23,6 +23,7 @@ def test_returns_stdout_on_success() -> None:
             ["echo", "hello"],
             capture_output=True,
             text=True,
+            stdin=subprocess.DEVNULL,
         )
 
 
@@ -101,9 +102,21 @@ def test_extra_kwargs_forwarded_to_subprocess_run() -> None:
             ["ls"],
             capture_output=True,
             text=True,
+            stdin=subprocess.DEVNULL,
             env={"HOME": "/tmp"},
             cwd="/tmp",
             timeout=30,
+        )
+
+
+def test_explicit_input_remains_supported_without_default_stdin() -> None:
+    with patch("astrid.core.runtime.subprocess.subprocess.run") as mock_run:
+        mock_run.return_value = subprocess.CompletedProcess(
+            args=["python"], returncode=0, stdout="ok", stderr=""
+        )
+        run_subprocess(["python"], label="input-test", input="payload")
+        mock_run.assert_called_once_with(
+            ["python"], capture_output=True, text=True, input="payload"
         )
 
 

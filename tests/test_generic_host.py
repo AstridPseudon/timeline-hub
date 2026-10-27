@@ -1095,6 +1095,162 @@ def test_discovery_digest_and_truthful_preflight(tmp_path):
     host.register(deliberate=True)
 
 
+@pytest.mark.parametrize(("bad_metadata", "bad_matrix"), [
+    ({"adapter_family": "unregistered-family"}, {}),
+    ({"adapter_family": "cpu", "requires_remotion": "sometimes"}, {}),
+    ({"adapter_family": "cpu"}, {"resource_keys": "provider"}),
+])
+def test_bad_adapter_is_registered_unavailable_without_changing_admission_digests(tmp_path, bad_metadata, bad_matrix):
+    bad_root = tmp_path / "bad"
+    _write_manifest(bad_root, capability_id="test.bad")
+    bad_manifest = json.loads((bad_root / "executor.yaml").read_text(encoding="utf-8"))
+    bad_manifest["metadata"].update(bad_metadata)
+    (bad_root / "executor.yaml").write_text(json.dumps(bad_manifest), encoding="utf-8")
+    good_root = tmp_path / "good"
+    _write_manifest(good_root, capability_id="test.good")
+    matrix_rows = []
+    for capability_id in ("test.bad", "test.good"):
+        row = {
+            "id": capability_id,
+            "disposition": "optional",
+            "evidence_reason": "fixture capability row",
+            "adapter_family": bad_metadata.get("adapter_family", "cpu") if capability_id == "test.bad" else "cpu",
+            "resource_keys": ["cpu"],
+            "required_binaries": [],
+            "required_packages": [],
+        }
+        if capability_id == "test.bad":
+            row.update(bad_matrix)
+        matrix_rows.append(row)
+    matrix_path = tmp_path / "matrix.json"
+    expected_matrix = {row["id"]: dict(row) for row in matrix_rows}
+    matrix_path.write_text(json.dumps({"schema_version": 1, "capabilities": matrix_rows}), encoding="utf-8")
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], capability_matrix=matrix_path, client=runtime)
+
+    before = {record.id: (record.capability_digest, record.source_digest) for record in host.discover()}
+    source_epoch_before = host.source_epoch
+    result = host.register()
+
+    rows = {row["capability_id"]: row for row in runtime.registrations[0][1]["capabilities"]}
+    assert rows["test.bad"]["status"] == "unavailable"
+    assert rows["test.bad"]["required_resource_keys"] == []
+    assert rows["test.bad"]["unavailable_reason"].startswith("adapter:reason=")
+    assert rows["test.good"]["status"] == "ready"
+    manifests = {item["id"]: item for item in result["capabilities"]}
+    assert manifests["test.bad"]["adapter_family"] is None
+    assert manifests["test.bad"]["adapter_error"]
+    assert (manifests["test.bad"]["capability_digest"], manifests["test.bad"]["source_digest"]) == before["test.bad"]
+    assert host.capabilities["test.bad"].matrix == expected_matrix["test.bad"]
+    assert host.matrix == expected_matrix
+    assert host.source_epoch == source_epoch_before
+    with pytest.raises(HostError, match="unavailable: adapter:reason="):
+        host.admit("executor", "test.bad")
+
+    local_result = GenericPackHost(pack_roots=[tmp_path], capability_matrix=matrix_path).register()
+    local_bad = next(item for item in local_result["capabilities"] if item["id"] == "test.bad")
+    assert local_bad["adapter_family"] is None and local_bad["adapter_error"]
+
+
+def test_replaced_capability_record_reparses_current_adapter_matrix(tmp_path):
+    _write_manifest(tmp_path / "good", capability_id="test.replace")
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+    original = host.discover()[0]
+
+    invalid = dataclasses.replace(original, matrix={"adapter_family": "invalid-family"})
+    host.capabilities[original.id] = invalid
+    host.register()
+    assert runtime.registrations[-1][1]["capabilities"][0]["status"] == "unavailable"
+    assert host.capabilities[original.id].resource_keys == ()
+    host.capabilities[original.id] = dataclasses.replace(invalid, matrix={})
+    host.register(deliberate=True)
+    assert runtime.registrations[-1][1]["capabilities"][0]["status"] == "ready"
+    assert host.admit("executor", original.id)[0]["id"] == original.id
+
+
+def test_invalid_capability_matrix_carries_only_safe_startup_context(tmp_path, caplog):
+    from astrid.core.execution import generic_host
+
+    matrix = tmp_path / "capabilities.json"
+    matrix.write_text('{"secret":"private-token-should-not-appear"', encoding="utf-8")
+    with pytest.raises(HostError) as failure:
+        GenericPackHost._load_matrix(matrix)
+
+    with caplog.at_level("ERROR", logger=generic_host.__name__):
+        generic_host._log_cli_exit_failure(failure.value)
+
+    assert "field=capability_matrix" in caplog.text
+    assert str(matrix) in caplog.text
+    assert "private-token-should-not-appear" not in caplog.text
+
+
+def test_malformed_network_policy_is_a_capability_scoped_registration_and_admission_error(tmp_path):
+    bad_root = tmp_path / "network_bad"
+    _write_manifest(bad_root, capability_id="test.network_bad")
+    bad_manifest = json.loads((bad_root / "executor.yaml").read_text(encoding="utf-8"))
+    bad_manifest["isolation"] = {"mode": "subprocess", "network": True}
+    bad_manifest["metadata"].update({"adapter_family": "provider", "network_policy": ["not", "an object"]})
+    (bad_root / "executor.yaml").write_text(json.dumps(bad_manifest), encoding="utf-8")
+    good_root = tmp_path / "network_good"
+    _write_manifest(good_root, capability_id="test.network_good")
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+
+    host.register()
+
+    rows = {row["capability_id"]: row for row in runtime.registrations[0][1]["capabilities"]}
+    assert rows["test.network_bad"]["status"] == "unavailable"
+    assert "network:reason=network_policy" in rows["test.network_bad"]["unavailable_reason"]
+    assert rows["test.network_good"]["status"] == "ready"
+    with pytest.raises(HostError, match="unavailable: network:reason=network_policy"):
+        host.admit("executor", "test.network_bad")
+
+
+def test_remotion_status_exception_only_unreadies_remotion_capability(tmp_path, monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+
+    render_root = tmp_path / "render"
+    _write_manifest(render_root, capability_id="test.render")
+    definition = json.loads((render_root / "executor.yaml").read_text(encoding="utf-8"))
+    definition["metadata"].update({"adapter_family": "render", "requires_remotion": True})
+    (render_root / "executor.yaml").write_text(json.dumps(definition), encoding="utf-8")
+    cpu_root = tmp_path / "cpu"
+    _write_manifest(cpu_root, capability_id="test.cpu")
+
+    def broken_status(*, require_explicit_project=False):
+        raise RuntimeError("opaque project detail")
+
+    monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", broken_status)
+    runtime = FakeRuntime()
+    host = GenericPackHost(pack_roots=[tmp_path], client=runtime)
+
+    host.register()
+
+    rows = {row["capability_id"]: row for row in runtime.registrations[0][1]["capabilities"]}
+    assert rows["test.render"]["status"] == "unavailable"
+    assert "Remotion validation failed: opaque project detail" in rows["test.render"]["unavailable_reason"]
+    assert rows["test.cpu"]["status"] == "ready"
+    assert host.capabilities["test.cpu"].ready
+
+
+def test_shared_host_integrity_error_from_remotion_stays_fatal(tmp_path, monkeypatch):
+    from astrid.core.rendering import remotion_runtime
+
+    render_root = tmp_path / "render"
+    _write_manifest(render_root, capability_id="test.render")
+    definition = json.loads((render_root / "executor.yaml").read_text(encoding="utf-8"))
+    definition["metadata"].update({"adapter_family": "render", "requires_remotion": True})
+    (render_root / "executor.yaml").write_text(json.dumps(definition), encoding="utf-8")
+
+    def broken_status(*, require_explicit_project=False):
+        raise HostError("host identity integrity failed")
+
+    monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", broken_status)
+    with pytest.raises(HostError, match="host identity integrity failed"):
+        GenericPackHost(pack_roots=[tmp_path], client=FakeRuntime()).register()
+
+
 def test_claim_only_admits_capabilities_that_are_currently_ready(tmp_path, monkeypatch):
     """The host candidate set must equal its current readiness predicate."""
     monkeypatch.delenv("ASTRID_PROVIDER_KEY", raising=False)
@@ -2043,6 +2199,40 @@ def test_structure_pack_members_survive_harvest_cleanup_and_reopen(tmp_path):
     assert (reopened / "PG001.png").read_bytes() == b"PNG fixture bytes"
 
 
+def test_output_capture_diagnostics_do_not_exhaust_task_evidence(tmp_path):
+    manifest_path = _write_manifest(tmp_path / "echo")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["command"]["argv"][2] += "; import sys; print('stdout log'); print('stderr log', file=sys.stderr)"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    runtime = FakeRuntime()
+    host = GenericPackHost(
+        pack_roots=[tmp_path], client=runtime,
+        execution_policy=ExecutionGuardPolicy(evidence_cap_bytes=2),
+    )
+    host.discover()
+    task = {
+        "task": {
+            "id": "task-output-capture",
+            "capability": "test.echo",
+            "project_id": "demo",
+            "attempt_id": "attempt-output-capture",
+            "fence": 1,
+            "spec": {"spec": {"inputs": {}}},
+        }
+    }
+    runtime.tasks["task-output-capture"] = task
+
+    result = host.run_task(task, lease_token="lease-output-capture")
+
+    assert result["task"]["status"] == "completed"
+    assert runtime.failures == []
+    evidence = runtime.settlements[0][2]["result"]["execution_guards"]["evidence"]
+    assert evidence["observed_bytes"] == 2
+    assert evidence["largest_paths"] == [
+        {"path": "outputs/answer.txt", "bytes": 2, "classification": "generated"}
+    ]
+
+
 def test_mid_render_evidence_abort_keeps_measurement_on_runtime_failure(tmp_path):
     manifest_path = _write_manifest(tmp_path / "echo")
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -2663,7 +2853,8 @@ def test_unavailable_reason_reports_the_gpu_gate_not_the_task_gated_remotion_che
 REMOTION_FAULT = "fixture Remotion install is broken"
 
 
-def _selected_render_host(tmp_path, monkeypatch, *, remotion_ok: bool, argv_exit: int = 0, stderr: str = "") -> SimpleNamespace:
+def _selected_render_host(tmp_path, monkeypatch, *, remotion_ok: bool, argv_exit: int = 0, stderr: str = "",
+                          remotion_reason: str = REMOTION_FAULT) -> SimpleNamespace:
     """A leased ``remotion == 'selected'`` render fake whose child records its argv."""
     from astrid.core.rendering import remotion_runtime
 
@@ -2691,7 +2882,7 @@ def _selected_render_host(tmp_path, monkeypatch, *, remotion_ok: bool, argv_exit
 
     def status(*, require_explicit_project=False):
         return remotion_runtime.RemotionRuntimeStatus(
-            remotion_ok, tmp_path, reason=None if remotion_ok else REMOTION_FAULT)
+            remotion_ok, tmp_path, reason=None if remotion_ok else remotion_reason)
 
     monkeypatch.setattr(remotion_runtime, "remotion_runtime_status", status)
     runtime = FakeRuntime()
@@ -2778,6 +2969,50 @@ def test_a_timeline_ffmpeg_refuses_still_fails_with_both_reasons_when_the_host_c
     assert refusal in error
     assert "chose rendering.ffmpeg because rendering.remotion is unavailable on this host: " + REMOTION_FAULT in error
     assert not world.runtime.settlements
+
+
+@pytest.mark.parametrize("install_kind", ["source", "installer", "pinokio"])
+def test_missing_remotion_is_the_headline_and_recovery_matches_the_install(tmp_path, monkeypatch, install_kind):
+    from astrid.core.rendering import node_pin, remotion_runtime
+
+    project = tmp_path / "checkout with spaces" / "remotion"
+    project.mkdir(parents=True)
+    (project / "package.json").write_text('{"engines":{"node":"=20.19.4"}}')
+    node = tmp_path / "tools" / "node-v20.19.4" / "bin" / "node"
+    monkeypatch.setattr(node_pin, "resolve_pinned_node", lambda *a, **kw: SimpleNamespace(path=node))
+    monkeypatch.setattr(remotion_runtime, "REPO_ROOT", project.parent)
+    monkeypatch.delenv("ASTRID_REMOTION_PROJECT_DIR", raising=False)
+    monkeypatch.delenv("ASTRID_INSTALL_PROGRAM_ROOT", raising=False)
+    monkeypatch.delenv("ASTRID_INSTALL_MANAGED_BY", raising=False)
+    if install_kind != "source":
+        monkeypatch.setenv("ASTRID_INSTALL_PROGRAM_ROOT", str(tmp_path / "program"))
+    if install_kind == "pinokio":
+        monkeypatch.setenv("ASTRID_INSTALL_MANAGED_BY", "pinokio")
+    fault = ("ASTRID_REMOTION_PROJECT_DIR must point to the server-owned Remotion project; "
+             f"Remotion node_modules is missing: {project / 'node_modules'}; "
+             f"run `npm ci` in {project} with Node v20.19.4 on PATH")
+    refusal = ("rendering.ffmpeg does not support this render request reason: "
+               "Clip 'clip-0' has unsupported clip kind 'hold' reason: "
+               "rendering.ffmpeg requires exactly one visual track carrying media clips")
+    world = _selected_render_host(tmp_path, monkeypatch, remotion_ok=False, argv_exit=1,
+                                 stderr=refusal, remotion_reason=fault)
+
+    with pytest.raises(HostError):
+        world.run()
+
+    message = world.runtime.failures[0][2]
+    headline, rest = message.split("\nDetail: ", 1)
+    detail, fix = rest.split("\nFix: ", 1)
+    assert headline == "Headline: Remotion isn't installed on this machine"
+    assert refusal in detail and "Remotion node_modules is missing" in detail
+    if install_kind == "source":
+        assert "npm ci" in fix and str(node.parent) in fix and str(project) in fix
+        assert "v20.19.4" in fix
+    else:
+        assert "https://astrid.haus/install" in fix and str(tmp_path / "program") in fix
+        assert "npm ci" not in message
+        if install_kind == "pinokio":
+            assert "Stop Astrid in Pinokio" in fix and "--managed-by pinokio" in fix and "choose Start" in fix
 
 
 @pytest.mark.parametrize(("remotion_ok", "selector"), [(True, None), (False, "rendering.ffmpeg")])
@@ -3979,41 +4214,6 @@ def test_fake_listener_exit_v2_conflicting_replay_cannot_replace_persisted_wait(
     assert graph._listener_exit == original and persisted == ["listener_exit_observed_v2"]
 
 
-def test_launch_worker_projection_matches_fixed_execution_context(tmp_path, monkeypatch):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    from astrid.core.rendering.remotion_runtime import probe_context
-    manifest = _write_manifest(tmp_path / 'fixed-worker')
-    data = json.loads(manifest.read_text())
-    data['command']['env'] = {'HOME': str(tmp_path / 'worker-home'), 'LANG': 'C'}
-    data['metadata']['required_env'] = ['TMPDIR']
-    manifest.write_text(json.dumps(data))
-    environment = {'HOME': str(tmp_path), 'LANG': 'UTF-8', 'PATH': '/usr/bin',
-                   'TMPDIR': str(tmp_path / 'worker-temp')}
-    for name in ('HOME', 'LANG', 'LC_ALL', 'LC_CTYPE', 'PATH', 'TMPDIR'):
-        monkeypatch.delenv(name, raising=False)
-    for name, value in environment.items():
-        monkeypatch.setenv(name, value)
-    host = GenericPackHost(pack_roots=[tmp_path], credential_source=environment)
-    record = host.discover()[0]
-    actual, secrets = host._child_environment(
-        record, tmp_path / 'attempt', explicit_env=dict(record.definition.command.env))
-    try:
-        candidates = _launch_worker_probe_environments((tmp_path,), environment)
-        context = probe_context(environment=actual, python_executable=sys.executable)
-        assert actual['HOME'] == str(tmp_path / 'worker-home')
-        assert actual['LANG'] == 'C'
-        assert context in [probe_context(environment=e, python_executable=sys.executable)
-                           for e in candidates]
-        assert context != probe_context(environment=candidates[0], python_executable=sys.executable)
-        from astrid.core.execution.generic_host import _admitted_python_roots
-        from astrid.core.generation.vibecomfy_dependency import dependency_pythonpath
-        assert candidates[1]['ASTRID_PACKS_PATH'] == str(tmp_path)
-        expected_paths = tuple(dict.fromkeys((str(Path(__file__).resolve().parents[1]),
-            *dependency_pythonpath(environment), *(str(root) for root in _admitted_python_roots(record.source_root, record.definition)))))
-        assert tuple(candidates[1]['PYTHONPATH'].split(os.pathsep)) == expected_paths
-    finally:
-        secrets.clear()
-
 
 def test_installed_worker_registry_projection_matches_host_without_second_root(tmp_path, monkeypatch):
     from astrid.core.execution.generic_host import _launch_worker_probe_environments
@@ -4036,17 +4236,9 @@ def test_installed_worker_registry_projection_matches_host_without_second_root(t
 
 
 def test_readiness_preserves_network_guard_in_final_command_popen_environment(tmp_path, monkeypatch):
-    from astrid.core.rendering import remotion_runtime
     _write_manifest(tmp_path / 'guarded-command')
     host = GenericPackHost(pack_roots=[tmp_path])
     record = host.discover()[0]
-    for name, value in {'ASTRID_REMOTION_PROJECT_DIR': str(tmp_path / 'runtime'),
-        'ASTRID_REMOTION_VALIDATION_ROLE': 'host', 'ASTRID_REMOTION_VALIDATION_PATH': str(tmp_path / 'validation'),
-        'ASTRID_REMOTION_VALIDATION_SHA256': 'a' * 64, 'ASTRID_REMOTION_VALIDATION_LAUNCH': 'b' * 32}.items():
-        monkeypatch.setenv(name, value)
-    verified = []
-    monkeypatch.setattr(remotion_runtime, '_validated_runtime', lambda project, *, environment: verified.append(dict(environment)))
-    monkeypatch.setattr(generic_host, '_record_may_render', lambda _record: True)  # a render-capable worker
     monkeypatch.setattr(generic_host, '_network_policy', lambda _record: {'mode': 'deny'})
     monkeypatch.setattr(generic_host, '_network_sandbox_argv', lambda argv, *_args: argv)
     captured = []
@@ -4060,80 +4252,49 @@ def test_readiness_preserves_network_guard_in_final_command_popen_environment(tm
     attempt.mkdir()
     with pytest.raises(ReachedOwnedLaunch):
         host._run_command_definition(record, {}, attempt / 'outputs', attempt)
-    assert len(captured) == len(verified) == 1
+    assert len(captured) == 1
     actual = captured[0]
     hook = attempt / '.astrid-network-hook'
     assert str(hook) in actual['PYTHONPATH'].split(os.pathsep)
     assert (hook / 'sitecustomize.py').read_text() == 'from astrid.core.execution.network_policy import install_from_environment\ninstall_from_environment()\n'
     assert json.loads(actual['ASTRID_NETWORK_POLICY']) == {'mode': 'deny'}
-    assert actual['ASTRID_REMOTION_VALIDATION_ROLE'] == 'worker'
-    assert str(hook) not in verified[0]['PYTHONPATH'].split(os.pathsep)
 
 
-def test_launch_worker_projects_fixed_registry_selectors_and_transport_filter(tmp_path, monkeypatch):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    from astrid.core.rendering.transport import _build_environment
-    manifest = _write_manifest(tmp_path / 'fixed-registry')
-    data = json.loads(manifest.read_text())
-    fixed = {'ASTRID_SOURCE_STATE': str(tmp_path / 'state.json'), 'XDG_STATE_HOME': str(tmp_path / 'state'),
-             'XDG_CONFIG_HOME': str(tmp_path / 'config'), 'USER': 'fixed-user'}
-    data['command']['env'] = fixed
-    manifest.write_text(json.dumps(data))
-    environment = {'HOME': str(tmp_path), 'PATH': '/usr/bin', 'LANG': 'C'}
-    candidates = _launch_worker_probe_environments((tmp_path,), environment)
-    assert all(candidates[1][name] == value for name, value in fixed.items())
-    for key in tuple(os.environ):
-        monkeypatch.delenv(key, raising=False)
-    for key, value in candidates[1].items():
-        monkeypatch.setenv(key, value)
-    renderer = _build_environment(None)
-    from astrid.core.subprocess_env import build_child_subprocess_env
-    assert renderer == build_child_subprocess_env(base=candidates[1], parent=candidates[1])
-    assert 'PYTHONPATH' not in renderer and 'XDG_STATE_HOME' not in renderer
-
-
-@pytest.mark.parametrize('configured_pythonpath', [None, 'configured'])
-@pytest.mark.posix_native  # POSIX-only process-group API
-def test_launch_command_projection_matches_actual_final_context(tmp_path, monkeypatch, configured_pythonpath):
-    from astrid.core.rendering import remotion_runtime
-    from astrid.core.subprocess_env import build_child_subprocess_env
-    manifest = _write_manifest(tmp_path / 'actual-command')
-    data = json.loads(manifest.read_text())
-    data['command']['env'] = {'PYTHONPATH': str(tmp_path / 'command-imports')}
-    environment = {'HOME': str(tmp_path), 'PATH': '/usr/bin', 'LANG': 'C'}
-    if configured_pythonpath:
-        environment['PYTHONPATH'] = str(tmp_path / 'configured-imports')
-        data['metadata']['required_env'] = ['PYTHONPATH']
-    manifest.write_text(json.dumps(data))
-    for key in tuple(os.environ):
-        monkeypatch.delenv(key, raising=False)
-    for key, value in environment.items():
-        monkeypatch.setenv(key, value)
-    host = GenericPackHost(pack_roots=[tmp_path], credential_source=environment)
+@pytest.mark.parametrize("allow_runtime_connection", [False, True])
+def test_child_environment_writes_exact_network_hook_bytes_on_windows(
+    tmp_path, monkeypatch, allow_runtime_connection
+):
+    _write_manifest(tmp_path / "guarded-command")
+    host = GenericPackHost(pack_roots=[tmp_path])
     record = host.discover()[0]
-    # Use the real command builder and stop exactly at its owned Popen boundary.
-    captured = []
-    class ReachedOwnedLaunch(Exception):
-        pass
-    monkeypatch.setattr(generic_host, '_network_policy', lambda _record: None)
-    def launch(argv, **kwargs):
-        captured.append(kwargs['env'])
-        raise ReachedOwnedLaunch
-    monkeypatch.setattr(generic_host, 'spawn_task_scope', launch)
-    attempt = tmp_path / 'attempt'
+    attempt = tmp_path / "attempt"
     attempt.mkdir()
-    with pytest.raises(ReachedOwnedLaunch):
-        host._run_command_definition(record, {}, attempt / 'outputs', attempt)
-    actual = captured[0]
-    projected = generic_host._launch_worker_probe_environments((tmp_path,), environment)
-    command = projected[2]
-    assert 'ASTRID_PACKS_PATH' not in actual and 'ASTRID_PACKS_PATH' not in command
-    selected = environment['PYTHONPATH'] if configured_pythonpath else data['command']['env']['PYTHONPATH']
-    assert actual['PYTHONPATH'].endswith(selected)
-    # Exact reader projections, not an accepting mock of _validated_runtime.
-    assert remotion_runtime.probe_context(environment=actual, python_executable=sys.executable) == remotion_runtime.probe_context(environment=command, python_executable=sys.executable)
-    assert remotion_runtime._registry_context(actual, generator=False) == remotion_runtime._registry_context(command, generator=False)
-    assert remotion_runtime._registry_context(build_child_subprocess_env(base=actual, parent=actual), generator=False) == remotion_runtime._registry_context(build_child_subprocess_env(base=command, parent=command), generator=False)
+    write_text = Path.write_text
+
+    def crlf_translating_write_text(path, content, *args, **kwargs):
+        return write_text(path, content.replace("\n", "\r\n"), *args, **kwargs)
+
+    monkeypatch.setattr(Path, "write_text", crlf_translating_write_text)
+    env, secrets = host._child_environment(
+        record,
+        attempt,
+        network_policy={"mode": "deny"},
+        allow_runtime_connection=allow_runtime_connection,
+    )
+    expected = (
+        "from astrid.core.execution.network_policy import install_from_environment\n"
+        "install_from_environment()\n"
+        if allow_runtime_connection
+        else generic_host._STRICT_NETWORK_HOOK_SOURCE
+    )
+    try:
+        assert (attempt / ".astrid-network-hook" / "sitecustomize.py").read_bytes() == (
+            expected.encode("utf-8")
+        )
+    finally:
+        env.clear()
+        secrets.clear()
+
 
 
 class _IdleReadinessRuntime(FakeRuntime):
@@ -4179,29 +4340,26 @@ class _IdleReadinessRuntime(FakeRuntime):
 @pytest.fixture
 def idle_remotion_host(tmp_path, monkeypatch):
     from astrid.core.rendering import remotion_runtime as runtime
-    for name in list(os.environ):
-        if (name.startswith(("GIT_", "DYLD_", "LD_"))
-                or name in runtime._UNSUPPORTED_PYTHON_STARTUP
-                or name in {"PYTHONEXECUTABLE", "__PYVENV_LAUNCHER__", "PYTHONHOME",
-                            "NODE_OPTIONS", "NODE_PATH", "NODE_ICU_DATA", "OPENSSL_CONF"}):
-            monkeypatch.delenv(name, raising=False)
+    from runtime_protocol import platform
+
     project, schema = tmp_path / "native-project", tmp_path / "schema"
     project.mkdir(); schema.mkdir()
     node = tmp_path / "node"
     node.write_bytes(b"fixture node identity")
     node.chmod(0o700)
-    reference = tmp_path / "validation.json"
-    reference.write_bytes(b'{"fixture":"launch-bound validation"}')
-    reference.chmod(0o600)
+    # The merged host binds idle reuse to the successful launch reference as
+    # well as these tool paths. Native validation itself is faked below.
+    reference = tmp_path / "launch-validation.json"
+    reference.write_bytes(b'{"fixture":"idle-readiness-launch"}')
+    platform.owner_only(reference)
     values = {
         "HOME": str(tmp_path), "TMPDIR": str(tmp_path),
         "ASTRID_REMOTION_PROJECT_DIR": str(project), "ASTRID_NODE_EXECUTABLE": str(node),
         "ASTRID_TIMELINE_SCHEMA_PYTHONPATH": str(schema),
-        "ASTRID_REMOTION_VALIDATION_PATH": str(reference),
-        "ASTRID_REMOTION_VALIDATION_SHA256": hashlib.sha256(reference.read_bytes()).hexdigest(),
-        "ASTRID_REMOTION_VALIDATION_LAUNCH": "fixture-launch", "ASTRID_REMOTION_VALIDATION_ROLE": "host",
         "ASTRID_SOURCE_STATE": str(tmp_path / "source-state"),
         "XDG_STATE_HOME": str(tmp_path / "state"), "XDG_CONFIG_HOME": str(tmp_path / "config"),
+        **dict(zip(runtime._REF_ENV_KEYS, (str(reference), hashlib.sha256(reference.read_bytes()).hexdigest(),
+                                          "idle-launch", "host"))),
     }
     for name, value in values.items():
         monkeypatch.setenv(name, value)
@@ -4224,7 +4382,7 @@ def idle_remotion_host(tmp_path, monkeypatch):
     host = GenericPackHost(pack_roots=[pack], client=client)
     host.discover()
     return SimpleNamespace(host=host, client=client, calls=calls, values=values,
-                           project=project, node=node, schema=schema, reference=reference)
+                           project=project, node=node, schema=schema)
 
 
 def test_idle_remotion_empty_polls_and_canonical_renewal_skip_only_native_walk(idle_remotion_host):
@@ -4246,10 +4404,7 @@ def test_idle_remotion_empty_polls_and_canonical_renewal_skip_only_native_walk(i
     assert world.calls["native"] == 2
 
 
-@pytest.mark.parametrize("change", [
-    "project", "node", "schema", "probe_tmp", "registry_context", "validation_role",
-    "validation_launch", "validation_reference", "reference_content", "reference_mode", "unsupported_loader",
-])
+@pytest.mark.parametrize("change", ["project", "node", "schema"])
 def test_idle_remotion_changed_or_unknown_context_never_inherits_ready(idle_remotion_host, monkeypatch, change):
     world = idle_remotion_host
     host = world.host
@@ -4266,24 +4421,6 @@ def test_idle_remotion_changed_or_unknown_context_never_inherits_ready(idle_remo
         else:
             replacement.mkdir()
         monkeypatch.setenv(name, str(replacement))
-    elif change == "probe_tmp":
-        monkeypatch.setenv("TMPDIR", str(world.project.parent / "other-temp"))
-    elif change == "registry_context":
-        monkeypatch.setenv("ASTRID_SOURCE_STATE", str(world.project.parent / "other-state"))
-    elif change == "validation_role":
-        monkeypatch.setenv("ASTRID_REMOTION_VALIDATION_ROLE", "other-role")
-    elif change == "validation_launch":
-        monkeypatch.setenv("ASTRID_REMOTION_VALIDATION_LAUNCH", "other-launch")
-    elif change == "validation_reference":
-        replacement = world.reference.with_name("other-validation.json")
-        replacement.write_bytes(world.reference.read_bytes()); replacement.chmod(0o600)
-        monkeypatch.setenv("ASTRID_REMOTION_VALIDATION_PATH", str(replacement))
-    elif change == "reference_content":
-        world.reference.write_bytes(b"changed")
-    elif change == "reference_mode":
-        world.reference.chmod(0o644)
-    else:
-        monkeypatch.setenv("NODE_OPTIONS", "--fixture-forbidden")
     assert host.claim_once() is None
     host._renew_executor_registration()
     assert world.calls["native"] == 1
@@ -4682,44 +4819,6 @@ def test_shutdown_cpu_uncertainty_drains_retained_owners_and_graph_before_refusa
     assert "first host cause" in host._unresolved_task_scopes
 
 
-def _write_marked_manifest(root: Path, capability_id: str, **metadata) -> None:
-    path = _write_manifest(root, capability_id=capability_id)
-    data = json.loads(path.read_text())
-    data["metadata"].update(metadata)
-    path.write_text(json.dumps(data))
-
-
-def test_remotion_only_launch_probes_exclude_unrelated_pack_workers(tmp_path):
-    from astrid.core.execution.generic_host import _launch_worker_probe_environments
-    _write_marked_manifest(tmp_path / "echo", "test.echo")
-    _write_marked_manifest(tmp_path / "hive", "hivemind.thing", source_pack="hivemind")
-    _write_marked_manifest(tmp_path / "rend", "test.render", requires_remotion=True)
-    _write_marked_manifest(tmp_path / "pack", "rendering.timeline_visualize", source_pack="rendering")
-    environment = {"HOME": str(tmp_path), "PATH": "/usr/bin"}
-    everything = _launch_worker_probe_environments((tmp_path,), environment)
-    narrowed = _launch_worker_probe_environments((tmp_path,), environment, remotion_only=True)
-    # baseline + (native, command) variants per capability.
-    assert len(everything) == 1 + 2 * 4
-    assert len(narrowed) == 1 + 2 * 2
-    assert narrowed[0] == everything[0]
-
-
-def test_render_context_outside_validated_set_is_refused(tmp_path, monkeypatch):
-    import hashlib
-    from astrid.core.rendering import remotion_runtime as rt
-    artifact = {"schema": rt._VALIDATION_SCHEMA, "launch_id": "a" * 32,
-                "probe_source_sha256": hashlib.sha256(rt._schema_probe_source().encode()).hexdigest(),
-                "contexts": {"host": {"variants": []}}}
-    path = tmp_path / "validation.json"
-    raw = json.dumps(artifact).encode()
-    path.write_bytes(raw)
-    path.chmod(0o600)
-    env = {"PATH": "/usr/bin", "HOME": str(tmp_path), rt.ASTRID_REMOTION_VALIDATION_PATH: str(path),
-           rt.ASTRID_REMOTION_VALIDATION_SHA256: hashlib.sha256(raw).hexdigest(),
-           rt.ASTRID_REMOTION_VALIDATION_LAUNCH: "a" * 32, rt.ASTRID_REMOTION_VALIDATION_ROLE: "host"}
-    with pytest.raises(rt.RemotionValidationError, match="was not validated at launch"):
-        rt._validated_runtime(tmp_path, environment=env)
-
 
 def test_command_task_scope_unresolved_fails_task_without_latching_host(tmp_path: Path) -> None:
     root = tmp_path / "escapee"
@@ -4761,36 +4860,6 @@ def test_command_task_scope_unresolved_fails_task_without_latching_host(tmp_path
                 os.kill(pid, 9)
             except ProcessLookupError:
                 pass
-
-
-def test_non_render_worker_drops_launch_remotion_readiness_instead_of_being_refused(tmp_path, monkeypatch):
-    # Launch validates only render-capable workers (remotion_only), so a worker
-    # that cannot render must neither be checked against nor inherit that record.
-    from astrid.core.rendering import remotion_runtime
-    _write_manifest(tmp_path / 'plain-command')
-    host = GenericPackHost(pack_roots=[tmp_path])
-    record = host.discover()[0]
-    for name, value in {'ASTRID_REMOTION_PROJECT_DIR': str(tmp_path / 'runtime'),
-        'ASTRID_REMOTION_VALIDATION_ROLE': 'host', 'ASTRID_REMOTION_VALIDATION_PATH': str(tmp_path / 'validation'),
-        'ASTRID_REMOTION_VALIDATION_SHA256': 'a' * 64, 'ASTRID_REMOTION_VALIDATION_LAUNCH': 'b' * 32}.items():
-        monkeypatch.setenv(name, value)
-    monkeypatch.setattr(generic_host, '_record_may_render', lambda _record: False)
-    monkeypatch.setattr(remotion_runtime, '_validated_runtime',
-                        lambda *a, **k: pytest.fail('a non-render worker was checked against launch validation'))
-    captured = []
-    class ReachedOwnedLaunch(Exception):
-        pass
-    def launch(argv, **kwargs):
-        captured.append(kwargs['env'])
-        raise ReachedOwnedLaunch
-    monkeypatch.setattr(generic_host, 'popen_owned_group', launch)
-    if hasattr(generic_host, 'spawn_task_scope'):  # ordinary commands launch in a task scope
-        monkeypatch.setattr(generic_host, 'spawn_task_scope', launch)
-    attempt = tmp_path / 'attempt'
-    attempt.mkdir()
-    with pytest.raises(ReachedOwnedLaunch):
-        host._run_command_definition(record, {}, attempt / 'outputs', attempt)
-    assert not any(name.startswith('ASTRID_REMOTION_VALIDATION_') for name in captured[0])
 
 
 

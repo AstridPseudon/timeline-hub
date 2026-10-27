@@ -118,6 +118,31 @@ def test_default_source_policy_accepts_only_a_configured_full_immutable_pin(
         default_source_declarations()
 
 
+@pytest.mark.parametrize("subpath", ["C:relative", "C:/absolute"])
+def test_source_declaration_rejects_windows_drive_subpaths(subpath: str) -> None:
+    with pytest.raises(SourceSetupError):
+        SourceDeclaration.from_mapping(
+            {
+                "pack_id": "demo",
+                "repository": "https://example.test/demo.git",
+                "revision": "a" * 40,
+                "pack_subpath": subpath,
+            }
+        )
+
+
+def test_source_declaration_preserves_relative_posix_subpath() -> None:
+    declaration = SourceDeclaration.from_mapping(
+        {
+            "pack_id": "demo",
+            "repository": "https://example.test/demo.git",
+            "revision": "a" * 40,
+            "pack_subpath": "packs/demo",
+        }
+    )
+    assert declaration.pack_subpath == "packs/demo"
+
+
 def test_local_git_v2_source_is_staged_once_and_shared(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     repository = tmp_path / "repository"
     revision = _fixture_repo(repository)

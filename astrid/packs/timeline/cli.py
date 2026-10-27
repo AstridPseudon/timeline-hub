@@ -18,7 +18,7 @@ There is **no top-level shots family**.
 
 Verbs (the product routes plus the nested ``shots`` mount; reads resolve the
 Runtime-owned canonical current head. The detached working-copy verbs use the
-existing timeline SDK checkout and publish semantics; they do not write a
+existing timeline SDK checkout and commit semantics; they do not write a
 parallel product store):
 
 - ``create`` via ``client.timelines.create_empty`` creates the runtime identity
@@ -62,6 +62,7 @@ import json
 import re
 import shlex
 import sys
+import zipfile
 from functools import wraps
 from collections.abc import Mapping
 from fractions import Fraction
@@ -72,6 +73,7 @@ from astrid.core.cli.domain_output import DomainResult, envelope_dict, print_res
 from astrid.core.cli.registration import CommandSpec, register_product_commands
 from astrid.core.cli.task_progress import task_handoff
 from astrid.core.timeline.clip_names import clip_media_name
+from astrid.sdk.workspace_client import WorkspaceClientError
 from astrid.packs.timeline.cli_visualize import (  # noqa: F401  (re-exported: the verb's helpers live beside it)
     _changed_cuts_line,
     _clips_changed,
@@ -175,7 +177,6 @@ def _positive_int(value: str) -> int:
 def _cmd_create(parsed: argparse.Namespace) -> int:
     width, height = parsed.canvas
     config = {
-        "tracks": [],
         "theme_overrides": {
             "visual": {"canvas": {"width": width, "height": height, "fps": parsed.fps}}
         },
@@ -191,6 +192,63 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
         idempotency_key=parsed.idempotency_key,
     )
     return print_result(result, as_json=parsed.json)
+
+
+# What a transfer can raise: its own ValueError/OSError, a damaged archive, and a
+# Runtime refusal (conflict, validation, not found) carried by WorkspaceClientError.
+_TRANSFER_ERRORS = (ValueError, OSError, zipfile.BadZipFile, zipfile.LargeZipFile, WorkspaceClientError)
+
+
+def _transfer_error_code(exc: Exception) -> str:
+    return exc.code if isinstance(exc, WorkspaceClientError) else "validation_error"
+
+
+def _cmd_export(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.contracts import DomainResult, ErrorObject
+    from astrid.sdk.timeline_transfer import export_timeline
+
+    try:
+        receipt = export_timeline(parsed.client, parsed.project, parsed.ref, parsed.out)
+        return print_result(DomainResult.success(receipt), as_json=parsed.json)
+    except _TRANSFER_ERRORS as exc:
+        return print_result(DomainResult.failure(ErrorObject(
+            _transfer_error_code(exc), str(exc), {"timeline": parsed.ref, "out": str(parsed.out)}
+        )), as_json=parsed.json)
+
+
+def _configure_export(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("ref", help="Saved timeline UUID, ULID, or slug.")
+    subparser.add_argument("--out", required=True, type=Path, help="Destination .astrid archive.")
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_export)
+
+
+def _cmd_import(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.contracts import DomainResult, ErrorObject
+    from astrid.sdk.timeline_transfer import import_timeline
+
+    try:
+        from astrid.core.receipts.contract import CommandReceipt
+
+        data = dict(import_timeline(parsed.client, parsed.file, parsed.project, name=parsed.name))
+        receipt = data.pop("receipt", None)
+        committed = CommandReceipt.from_dict(receipt) if receipt is not None else None
+        return print_result(DomainResult.success(
+            data, receipt=committed, idempotency_key=committed.idempotency_key if committed else "",
+        ), as_json=parsed.json)
+    except _TRANSFER_ERRORS as exc:
+        return print_result(DomainResult.failure(ErrorObject(
+            _transfer_error_code(exc), str(exc), {"file": str(parsed.file), "project": parsed.project}
+        )), as_json=parsed.json)
+
+
+def _configure_import(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser, required=False)
+    subparser.add_argument("file", type=Path, help=".astrid timeline archive to import.")
+    subparser.add_argument("--name", help="Display name for the imported timeline.")
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_import)
 
 
 def _cmd_list(parsed: argparse.Namespace) -> int:
@@ -1206,11 +1264,12 @@ def _timeline_editing_resources() -> dict[str, Any]:
     }
 
 
-def _document_edit_commands(file_path: str) -> dict[str, str]:
+def _document_edit_commands(file_path: str, ref: str | None = None, project: str | None = None) -> dict[str, str]:
     argv = ["python3", "-m", "astrid.packs.rendering.docs.scripts.timeline_document"]
     return {
         "check": shlex.join([*argv, "check", "--file", file_path]),
-        "commit": shlex.join([*argv, "commit", "--file", file_path,
+        "commit": shlex.join(["python3", "-m", "astrid", "timelines", "commit", ref or "<timeline>",
+                              "--project", project or "<project>", "--file", file_path, "-m", "Timeline edit",
                               "--idempotency-key", "timeline-edit-1"]),
     }
 
@@ -1225,7 +1284,10 @@ def _editing_navigation(
         "checkout", "--project", project or "<project>", "--timeline", timeline or "<timeline>",
         "--file", file_path,
     ])
-    resources["commands"] = {"checkout": checkout, **_document_edit_commands(file_path)}
+    resources["commands"] = {
+        "checkout": checkout,
+        **_document_edit_commands(file_path, timeline or "<timeline>", project or "<project>"),
+    }
     resources["retry"] = "Use a fresh idempotency key for new intent; reuse the same file and key for a retry. The file pins the project, timeline and exact base."
     return resources
 
@@ -1281,6 +1343,20 @@ def _cmd_update_element(parsed: argparse.Namespace) -> int:
         expected_head=parsed.expected_head,duration=parsed.duration,params=parsed.params_json,
         idempotency_key=parsed.idempotency_key)
     return print_result(result,as_json=parsed.json)
+
+
+def _cmd_place_element(parsed: argparse.Namespace) -> int:
+    result = parsed.client.timelines.place_element(
+        parsed.project,
+        parsed.ref,
+        realm=parsed.realm,
+        target=parsed.target,
+        element={'packId': parsed.pack, 'id': parsed.element,
+                 'kind': parsed.kind, 'revision': parsed.revision},
+        expected_head=parsed.expected_head,
+        idempotency_key=parsed.idempotency_key,
+    )
+    return print_result(result, as_json=parsed.json)
 
 
 def _cmd_replace_parent_media(parsed: argparse.Namespace) -> int:
@@ -2310,7 +2386,7 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
                                 "and built-in literal params in canvas units; replaces the previous export.")
     subparser.epilog = (
         "Next: use `timelines visualize` for composed pixels. For edits, use the "
-        "timeline_editing document-checkout recipe (checkout → edit → check → commit). "
+        "timeline_editing guide. Literal numeric moves/trims use `timelines edit`. "
         "Use `timelines visualize --help` for the visual controls."
     )
     _add_project_arg(subparser, required=False)
@@ -2415,6 +2491,24 @@ def _configure_update_element(subparser: argparse.ArgumentParser) -> None:
     subparser.set_defaults(handler=_cmd_update_element)
 
 
+def _configure_place_element(subparser: argparse.ArgumentParser) -> None:
+    _add_project_arg(subparser)
+    subparser.add_argument('ref', help='Exact target timeline ID or slug.')
+    subparser.add_argument('--realm', required=True,
+                           help='Canonical realm used by the configured project-pack admission.')
+    subparser.add_argument('--target', required=True,
+                           help='Exact occurrence shot clip: occurrence:<occurrence-id>/clip:<clip-id>.')
+    subparser.add_argument('--pack', required=True, help='Admitted project-pack owner (packId).')
+    subparser.add_argument('--element', required=True, help='Admitted element id.')
+    subparser.add_argument('--kind', choices=['effect'], default='effect')
+    subparser.add_argument('--revision', required=True, help='Exact admitted element revision.')
+    subparser.add_argument('--expected-head', required=True,
+                           help='Exact parent-composition revision; stale heads fail closed.')
+    _add_idempotency_key(subparser)
+    _add_json_flag(subparser)
+    subparser.set_defaults(handler=_cmd_place_element)
+
+
 def _configure_replace_parent_media(subparser: argparse.ArgumentParser) -> None:
     _add_project_arg(subparser)
     subparser.add_argument("ref", help="Timeline UUID, ULID, or slug.")
@@ -2489,7 +2583,7 @@ def _configure_diff(subparser: argparse.ArgumentParser) -> None:
 def _configure_visualize(subparser: argparse.ArgumentParser) -> None:
     subparser.epilog = (
         "Next: use `timelines show` for authored rows and timing. For edits, use the "
-        "timeline_editing document-checkout recipe (checkout → edit → check → commit). "
+        "timeline_editing guide. Literal numeric moves/trims use `timelines edit`. "
         "Use this help page for component, sampling, frame, and resolution controls."
     )
     _add_project_arg(subparser, required=False)
@@ -3182,8 +3276,10 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
     if result is not NotImplemented:
         return result
     if parsed.dry_run or parsed.idempotency_key or parsed.json:
-        raise _VerbError("--dry-run, --idempotency-key and --json require a supported native move or trim; "
-                         "other edit families still use the detached working copy", 2)
+        raise _VerbError("these commit options require a media layer add, literal move or trim; "
+                         "other edits use a detached working copy. For a first clip: "
+                         "timelines edit TL --project P --add-layer media --layer-asset image.png "
+                         "--on 0 --for 3 --track V1 --idempotency-key KEY --json", 2)
 
     if parsed.file:
         tl, target = Checkout.load(parsed.file), parsed.file
@@ -3247,7 +3343,8 @@ def _cmd_edit(parsed: argparse.Namespace) -> int:
         source, candidate,
     ])
     print("next: export the complete JSON candidate (project, timeline and base stay pinned): " + prepare)
-    for command in _document_edit_commands(candidate).values():
+    for command in _document_edit_commands(candidate, parsed.ref or tl.bundle.get("timeline_id"),
+                                            parsed.project or tl.bundle.get("project_id")).values():
         print("next: " + command)
     print("Use a fresh idempotency key for new intent; reuse the same candidate and key for a retry.")
     if target is not None:
@@ -3259,7 +3356,6 @@ def _apply_edit(tl: Any, parsed: argparse.Namespace) -> None:
     """Apply the operations in order: timeline-level ops first, then the selected clip (move, length, set, look, swap)."""
     from astrid.sdk.timeline_editing import TimelineEditError
 
-    line_operation = bool(parsed.replace_line or parsed.insert_line or parsed.from_script)
     line_only_args = bool(
         parsed.take or parsed.words or parsed.after or parsed.insert_gap_after is not None
         or parsed.line_text or parsed.takes or parsed.script_gaps
@@ -3634,7 +3730,9 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
                            help="Add an audio media clip; audio tracks stay independent of picture cuts "
                                 "(needs --track and --on; --for/--until/--trim-in/--trim-out/--gain-db/--id optional).")
     subparser.add_argument("--add-layer", dest="add_layer", default=None, metavar="ELEMENT",
-                           help="Add a layer (type, sprite, snap-plate ...) to the cut on screen at --on MOMENT "
+                           help="Add media directly through the commit door, including the first clip "
+                                "(--layer-asset FILE|HANDLE|KEY --on SECONDS --for SECONDS --track V1). "
+                                "Other layers (type, sprite, snap-plate ...) edit the cut on screen at --on MOMENT "
                                 "(--layer NAME, --layer-asset ASSET, --for/--until, --set k=v, --track optional).")
     subparser.add_argument("--layer", default=None, metavar="NAME", help="Layer name for --add-layer (default: its asset or element name).")
     subparser.add_argument("--layer-asset", dest="layer_asset", default=None, metavar="ASSET",
@@ -3689,7 +3787,7 @@ def _configure_edit(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--retime", action="store_true", help="Move every anchored clip back onto its word.")
     subparser.add_argument("--insert", type=_parse_insert, default=None, metavar="TIME:SECONDS",
                            help="Insert silence/time at TIME (e.g. 1:02:0.5), moving everything after it later.")
-    subparser.add_argument("--keep", action="store_true", help="Accept an orphaned clip where it is (a fixed time, no moment); it stops blocking publish.")
+    subparser.add_argument("--keep", action="store_true", help="Accept an orphaned clip where it is (a fixed time, no moment); it stops blocking commit.")
     subparser.add_argument("--clear-asset", dest="clear_asset", action="store_true",
                            help="Empty the clip's asset (it stays on the timeline).")
     subparser.add_argument("--allow-new-params", dest="allow_new_params", action="store_true",
@@ -3829,12 +3927,14 @@ def _configure_history_edit(subparser: argparse.ArgumentParser, handler) -> None
 
 
 COMMANDS: tuple[CommandSpec, ...] = (
+    CommandSpec("import", help="Import a validated .astrid timeline archive into a project.", configure=_configure_import),
+    CommandSpec("export", help="Export the saved head and its media into a .astrid archive.", configure=_configure_export),
     CommandSpec("checkout", help="Create or open a detached editable working copy.", configure=_configure_checkout),
     CommandSpec("commit", help="Commit a detached timeline document through Runtime.", configure=_configure_commit),
     CommandSpec("edit", help="Commit a clip move or trim, or edit a legacy detached working copy.", configure=_configure_edit),
     CommandSpec("assets", help="List timeline asset keys, media details, and every clip using each key.", configure=_configure_assets),
     CommandSpec("find", help="Find what you hear or see: addresses and times.", configure=_configure_find),
-    CommandSpec("apply", help="Apply a cut sheet to a detached working copy.", configure=_configure_apply),
+    CommandSpec("apply", help="Apply supported cut-sheet rows through Runtime, or edit a detached working copy.", configure=_configure_apply),
     CommandSpec("undo", help="Undo local edits, or an accepted Runtime commit with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_undo)),
     CommandSpec("redo", help="Redo local edits, or reverse an accepted undo with --commit.", configure=lambda p: _configure_history_edit(p, _cmd_redo)),
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
@@ -3867,6 +3967,7 @@ COMMANDS: tuple[CommandSpec, ...] = (
     ),
     CommandSpec("elements",help="Inspect exact saved effect refs, editable pack files and admission/publication commands.",configure=_configure_elements),
     CommandSpec("update-element",help="Update the same parent effect from an admitted file pack using exact-head CAS.",configure=_configure_update_element),
+    CommandSpec("place-element",help="Place an admitted project-pack element on an occurrence shot clip using exact-head CAS.",configure=_configure_place_element),
     CommandSpec(
         "replace-parent-media",
         help="Atomically replace one clip in an exact canonical parent-composition closure.",

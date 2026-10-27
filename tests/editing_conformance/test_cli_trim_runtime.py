@@ -88,19 +88,13 @@ def film(runtime):  # noqa: F811
     bundle = bundle_from_document(added['data']['canonical_document'])
     child_timing = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
                     'args': {'changes': [{
-                        'op': 'set', 'ref': 'parent/clip:literal', 'path': ['app', 'astrid', 'for'],
+                        'op': 'set', 'ref': 'parent',
+                        'path': ['clips', 'id:literal', 'app', 'astrid', 'for'],
                         'before': {'state': 'absent'}, 'value': 2.5,
                     }]}}
     timed = session.commit(child_timing, idempotency_key='trim-clip-timing')
     bundle = bundle_from_document(timed['data']['canonical_document'])
-    duration = {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
-                'args': {'changes': [{
-                    'op': 'set', 'ref': 'parent',
-                    'path': ['registry', 'assets', selection['asset'], 'duration'],
-                    'before': {'state': 'absent'}, 'value': 10,
-                }]}}
-    patched = session.commit(duration, idempotency_key='trim-duration')
-    bundle = bundle_from_document(patched['data']['canonical_document'])
+    assert State(bundle).registry('parent')['assets'][selection['asset']]['duration'] == 42
     title = {'id': 'title', 'track': 'picture', 'clipType': 'text', 'at': 5, 'hold': 1,
              'params': {'text': 'Keep me'}}
     session.commit(capture_clip_add(bundle, 'parent', title), idempotency_key='trim-title')
@@ -169,12 +163,12 @@ def test_cli_trim_exact_retry_restart_dependent_suffix_and_peer(film, tmp_path, 
         assert refused['pending'] == [b] and refused['conflict']['details']['status'] == 'conflict'
         assert world.history() == history_before
     else:
-        assert code == 0 and result['data']['status'] == 'rebased'
+        assert code == 0 and result['data']['status'] == 'merged'
         bundle_b = bundle_from_document(result['data']['canonical_document'])
         assert State(bundle_b).entity(REF)['to'] == 4
         assert State(bundle_b).entity('parent/track:picture')['label'] == 'Peer'
         assert State(bundle_b).entity('parent/clip:title') == State(original).entity('parent/clip:title')
-        code, undone = run(world, capsys, 'undo', 'trim-film', '--publication', result['receipt']['receipt_id'])
+        code, undone = run(world, capsys, 'undo', 'trim-film', '--commit', result['receipt']['receipt_id'])
         assert code == 0
         undone_bundle = bundle_from_document(undone['data']['canonical_document'])
         assert State(undone_bundle).entity(REF) == actual_a
@@ -206,7 +200,7 @@ def test_cli_move_exact_retry_restart_and_undo_over_real_http(film, capsys):
     assert world.history() == history_after_accept
 
     code, undone = run(world, capsys, 'undo', 'trim-film',
-                       '--publication', accepted['receipt']['receipt_id'])
+                       '--commit', accepted['receipt']['receipt_id'])
     assert code == 0
     restored = bundle_from_document(undone['data']['canonical_document'])
     assert State(restored).entity(REF) == State(original).entity(REF)

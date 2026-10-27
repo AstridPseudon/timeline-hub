@@ -15,6 +15,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import asdict, is_dataclass
 from pathlib import Path
 from typing import Any
+from runtime_protocol import platform
 
 from astrid.core.foundation.hash import canonical_json_digest
 
@@ -398,7 +399,7 @@ def stamp_boot_manifest(
         handle.flush()
         os.fsync(handle.fileno())
         handle.close()
-        os.replace(handle.name, path)
+        platform.replace_path(handle.name, path)
     except BaseException:
         try:
             handle.close()

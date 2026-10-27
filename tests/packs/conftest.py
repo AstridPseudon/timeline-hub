@@ -1,20 +1,12 @@
-"""Fixtures shared by the pack tests that run a real Remotion or Three.js render.
-
-A real render needs the provisioned ``remotion/`` install (``make remotion-install``) and, because the
-Remotion runtime refuses an unvalidated launch (``remotion_runtime._validated_runtime``), the launch-owned
-validation that the host bootstrap normally issues. Tests that call ``RenderService`` or a backend directly
-bypass the host, so they request ``remotion_launch_validation`` and are marked ``integration`` (testing plan
-R-2). A missing install is a broken integration lane and fails; it is never a skip (R-6).
-"""
+"""Configure the provisioned runtime for integration renders."""
 
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 
-from tests.helpers.remotion_validation import issue_remotion_launch_validation, remotion_install_problems
+from tests.helpers.remotion_runtime import configure_remotion_runtime, remotion_install_problems
 from tests.packs.rendering._helpers import _execution_env
+
 
 @pytest.fixture
 def renderer_execution_environment():
@@ -29,17 +21,12 @@ def renderer_execution_environment():
 
 
 @pytest.fixture
-def remotion_launch_validation(
-    tmp_path: Path,
+def remotion_runtime_environment(
+    tmp_path,
     monkeypatch: pytest.MonkeyPatch,
     renderer_execution_environment: None,
 ) -> None:
-    """Issue the launch proof a provisioned Remotion worker needs, for this test's exact environment.
-
-    There is no GenericPackHost bootstrap here to issue its normal launch artifact. Qualify the canonical
-    child environment with the production transaction; the backend child inherits these parent-owned
-    references through ``CommandTransport``, and an in-process render reads them from this process.
-    """
+    """Configure the runtime normally selected by host bootstrap."""
 
     problems = remotion_install_problems()
     if problems:
@@ -47,4 +34,7 @@ def remotion_launch_validation(
             "a real render needs the provisioned Remotion install (run `make remotion-install`): " + "; ".join(problems),
             pytrace=False,
         )
+    configure_remotion_runtime(monkeypatch)
+    from tests.helpers.remotion_validation import issue_remotion_launch_validation
+
     issue_remotion_launch_validation(tmp_path, monkeypatch)

@@ -41,7 +41,7 @@ def service_declaration(
     if program_root := os.environ.get("ASTRID_INSTALL_PROGRAM_ROOT"):
         env["ASTRID_INSTALL_PROGRAM_ROOT"] = program_root
     return {"version": 1, "services": [
-        {"name": "pack-host", "argv": [python, "-m", "astrid.core.execution.generic_host", "--service",
+        {"name": "pack-host", "argv": [python, "-X", "utf8", "-m", "astrid.core.execution.generic_host", "--service",
             "--source-checkout", str(source_checkout), "--support-root", str(discovery.parent)],
             "env": {**env, "ASTRID_PACK_HOST_PYTHON": python}, "restart": "always",
             "ready": {"file": "generic-host.ready.json", "timeout_seconds": 300}},

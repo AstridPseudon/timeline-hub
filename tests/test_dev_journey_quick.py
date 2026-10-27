@@ -12,7 +12,6 @@ from astrid.core.dev.journey import (
     _keep_failure_logs,
 )
 from astrid.core.pack.source_setup import source_data_root, source_state_path
-from astrid.core.rendering.remotion_runtime import probe_context
 
 
 def test_quick_pack_home_keeps_mutable_pack_paths_under_disposable_data(tmp_path: Path, monkeypatch) -> None:
@@ -38,7 +37,6 @@ def test_quick_pack_home_keeps_mutable_pack_paths_under_disposable_data(tmp_path
     for key in ("ASTRID_ENV_FILE", "ASTRID_PACKS_PATH", "ASTRID_SOURCE_DECLARATIONS",
                 "ASTRID_HIVEMIND_REPOSITORY", "ASTRID_HIVEMIND_REVISION"):
         assert key not in env
-    assert probe_context(environment=env, python_executable=sys.executable)["schema_env"]["HOME"] == str(packhome)
     for path in (data_root, state_path, user_root):
         path.relative_to(root / "data")
 

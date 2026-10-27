@@ -1,6 +1,7 @@
 """The bounded owner/capture seam; native public queries, no renderer or sockets."""
 from __future__ import annotations
 
+import base64
 import copy
 import hashlib
 import json
@@ -52,13 +53,15 @@ def host(tmp_path_factory):
         str(runtime_project / json.loads((runtime_project / "package.json").read_text())["dependencies"][
             "@banodoco/timeline-composition"].removeprefix("file:")),
     )).resolve()
-    expected = {"0.0.10": "cd83b77f72ce436e25eef697b289d33adae2087d92035aa37a27a308975ddea7",
-                "0.0.12": "0a7b61529099ce994f807c6d7b1078303a09e7c0219144cc4b07467977f0f1a3",
-                "0.0.13": "9412ae25c306d5118241f4d631e8eecc6eef9b2fb5a98302d40938e9f6d54738",
-                "0.0.14": "819acf6b3815d6eeabe772a9569581fedbe4f9c9cce35946efca9454e2040234"}
+    lock = json.loads((runtime_project / "package-lock.json").read_text(encoding="utf-8"))
+    integrity = lock["packages"]["node_modules/@banodoco/timeline-composition"]["integrity"]
+    expected_digest = base64.b64decode(integrity.removeprefix("sha512-"))
     with tarfile.open(artifact) as archive:
-        version = json.load(archive.extractfile("package/package.json"))["version"]
-        assert hashlib.sha256(artifact.read_bytes()).hexdigest() == expected[version]
+        manifest = json.load(archive.extractfile("package/package.json"))
+        assert manifest["version"] == lock["packages"][
+            "node_modules/@banodoco/timeline-composition"
+        ]["version"]
+        assert hashlib.sha512(artifact.read_bytes()).digest() == expected_digest
         archive.extractall(project, filter="data")
     package = modules / "@banodoco/timeline-composition"
     package.parent.mkdir()

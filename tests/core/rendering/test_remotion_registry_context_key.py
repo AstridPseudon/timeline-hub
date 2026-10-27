@@ -11,6 +11,12 @@ from astrid.core.foundation.paths import REPO_ROOT
 from astrid.core.rendering import remotion_runtime as runtime
 
 
+@pytest.fixture(autouse=True)
+def _reset_process_local_remotion_custody(monkeypatch):
+    monkeypatch.setattr(runtime, '_UNRESOLVED_PROBE_CUSTODY', [])
+    monkeypatch.setattr(runtime, '_UNRESOLVED_VALIDATION_PROBES', [])
+
+
 def _env(tmp_path, **extra):
     return {'HOME': str(tmp_path), 'PATH': '/usr/bin:/bin', **extra}
 
@@ -80,7 +86,8 @@ def test_installed_registry_probe_uses_selected_interpreter_and_neutral_context(
     result, _ = runtime._registry_probe(environment, python)
 
     assert result == observation
-    assert captured['argv'][:2] == [python, '-I']
+    assert captured['argv'][0] == python
+    assert '-I' in captured['argv']
     assert REPO_ROOT.as_posix() not in captured['argv']
     assert captured['kwargs']['cwd'] == tmp_path
     assert 'PYTHONPATH' not in captured['kwargs']['env']

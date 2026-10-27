@@ -53,6 +53,7 @@ def detect_nvidia() -> dict[str, Any]:
     try:
         result = subprocess.run(
             [executable, "--query-gpu=name", "--format=csv,noheader"],
+            stdin=subprocess.DEVNULL,
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             check=False, timeout=5,
         )
@@ -160,10 +161,10 @@ def environment_plan(
         commands.append([uv, "--no-config", "pip", "install", "--python", str(python), "--no-deps", "--no-build-isolation", str(vibecomfy_checkout)])
     commands.extend([
         [uv, "--no-config", "pip", "check", "--python", str(python)],
-        [str(python), "-I", "-c", _TORCH_PROBE, json.dumps(description["torch"], sort_keys=True)],
+        [str(python), "-X", "utf8", "-I", "-c", _TORCH_PROBE, json.dumps(description["torch"], sort_keys=True)],
     ])
     if pack == "vibecomfy":
-        commands.append([str(python), "-I", "-c", "import cv2"])
+        commands.append([str(python), "-X", "utf8", "-I", "-c", "import cv2"])
     return {"pack": pack, "platform": platform, "managed": True, "qualified": False,
             "status": "not qualified yet", "root": str(root), "python": str(python),
             "checkout": str(checkout), "sources": sources, "requirements": list(map(str, requirements)),

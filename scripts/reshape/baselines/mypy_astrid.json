@@ -5,7 +5,7 @@
     "scripts/reshape"
   ],
   "command": [
-    "/home/user/work/venv-agent-typecheck-v2/bin/python",
+    "/Users/hannahomalley/Developer/astrid-video/astrid-local/labs/tl-merge-agent/.venv/bin/python",
     "-m",
     "mypy",
     "astrid",
@@ -15,15 +15,16 @@
     "--no-pretty",
     "--show-error-codes"
   ],
-  "finding_count": 1902,
+  "finding_count": 1911,
   "code_counts": {
-    "arg-type": 434,
-    "assignment": 161,
-    "attr-defined": 521,
+    "arg-type": 433,
+    "assignment": 156,
+    "attr-defined": 507,
     "call-arg": 1,
     "call-overload": 37,
     "dict-item": 34,
     "func-returns-value": 1,
+    "import-untyped": 23,
     "index": 149,
     "list-item": 5,
     "method-assign": 2,
@@ -37,7 +38,7 @@
     "str-bytes-safe": 1,
     "type-var": 2,
     "typeddict-item": 6,
-    "union-attr": 336,
+    "union-attr": 342,
     "valid-type": 17,
     "var-annotated": 60
   }

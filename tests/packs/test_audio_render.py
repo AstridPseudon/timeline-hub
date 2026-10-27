@@ -16,7 +16,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 @pytest.mark.remotion
-@pytest.mark.usefixtures("remotion_launch_validation")  # no host here to issue the launch proof a real render requires
+@pytest.mark.usefixtures("remotion_runtime_environment")
 class AudioRenderTest(unittest.TestCase):
     def test_rendered_mp4_contains_audio_stream(self) -> None:
         tmp_dir = Path(tempfile.mkdtemp(prefix="audio-render-"))

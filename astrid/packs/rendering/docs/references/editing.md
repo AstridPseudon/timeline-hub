@@ -1,7 +1,9 @@
 # Edit a timeline: the front door
 
-A narrated film runs on its words. You edit a **working copy** (a draft of the published timeline),
-look at it, then publish it. Times are timeline seconds; **positions are canvas px** for every element.
+A narrated film runs on its words. Read the Runtime head, then use literal
+numeric moves and source trims for guarded edits or edit a detached working
+copy for the remaining authoring operations. Times are timeline seconds;
+**positions are canvas px** for every element.
 *When* things happen is written as **moments** (`on "viral"`), so a new take moves everything with its words.
 
 Every `timelines` below is short for **`python -m astrid timelines`** (venv active, from the `Astrid` install dir,
@@ -12,8 +14,9 @@ Every `timelines` below is short for **`python -m astrid timelines`** (venv acti
 timelines show TL c41.mink --project P                 # ONE thing's whole record: every param (typed, canvas px,
                                                        #   formula, default, allowed keys), its moments in seconds
 timelines show TL --project P --as sheet --range c30..c31 > cut.sheet   # several cuts as an editable sheet
-timelines edit move TL --project P --clip parent/clip:ID --on 33.9       # native guarded command
-timelines edit TL --project P --clip c30.cover --until Astrid --verify    # legacy detached draft edit
+timelines edit TL --project P --clip parent/clip:ID --on 33.9 --idempotency-key move-42  # literal guarded move
+timelines edit TL --project P --clip parent/clip:ID --trim-out 3.0 --idempotency-key trim-42 # literal guarded trim
+timelines edit TL --project P --clip c30.cover --until Astrid --verify    # detached draft edit
 timelines check TL --project P --at '"Astrid" in n21'                      # look at any moment (fast; no queue)
 timelines check TL --project P --at 33.9 --zoom c08.loras   # + both sides cropped around a layer, full resolution
 timelines status TL --project P   ·   timelines undo TL --project P
@@ -77,29 +80,42 @@ Units are the element's own declaration (element.yaml `metadata.units`): positio
 `am-callout`: `x`,`y` are the card's TOP-LEFT (not its centre) and `width` its width, all canvas px; `anchor` (x,y) is
 where the connector ends. The connector leaves the card's left or right edge, whichever faces the anchor.
 
-The native command is the supported write path for covered operations. The
-cut-sheet and broad Checkout edit surface below are retained for legacy drafts
-only; their three-way merge and whole-candidate publication are held.
+Literal numeric moves and source trims through the CLI above, registered
+commands through `timeline.open(...).commit(...)`, and supported cut-sheet rows
+through `timelines apply` are the Runtime write paths. Other edit forms retain
+the detached draft workflow. They change the local copy until an explicit
+document commit accepts them.
 
 ## The same edit as a legacy verb or in Python
 ```bash
-timelines edit TL --project P --clip c30.cover --until Astrid   # --on, --for, --set k=v, --swap-asset, --clear-asset, --remove
+timelines edit TL --project P --clip c30.cover --until Astrid   # symbolic moments edit a detached working copy
 ```
 ```python
-from astrid.sdk.timeline.sync import TimelineSession
-session = TimelineSession.open("P", "TL", client=client)
-result = session.move("parent/clip:c30-cover", 33.9, idempotency_key="move-42")
+from astrid.sdk import timeline
+tl = timeline.open("P", "TL", client=client)
+tl.move("parent/clip:c30-cover", 33.9)
+result = tl.commit("Move clip", idempotency_key="move-42")
 ```
 
-The detached `Checkout` surface below is held for capabilities that have not
-migrated. It is not a general writer:
+The detached `Checkout` surface below edits the local copy. Save an explicit
+candidate, then commit it through Runtime:
 
 ```python
 from astrid.sdk.timeline_checkout import Checkout
-tl = Checkout.draft("P", "TL")                 # held legacy working copy
+tl = Checkout.draft("P", "TL")
 tl.clip("c30.cover").until("Astrid"); tl.clip("c41.tool-16").set(x=1200)   # canvas px
 print("\n".join(tl.changes() + tl.check().brief())); tl.save()
+tl.save("candidate.json", quiet=True)
 ```
+
+```bash
+timelines commit TL --project P --file candidate.json -m "Edit timeline" --idempotency-key edit-42
+```
+
+The CLI's detached `edit` forms print the same candidate export/commit steps.
+Keep the candidate's original revision/publication pair. Unsupported changes
+are refused by the emitter; use a new key for new intent and the exact same
+file/key for a retry.
 
 ## Python: the method table
 ```
@@ -116,8 +132,8 @@ tl.check().brief()  tl.changes()
 ```
 `on`/`until` a word mean its START (`after "word"` = its end); `until c30b` = when c30b STARTS; `until end of c30`
 ends with that cut. Clip methods return the clip, so they chain: `tl.clip("c30.cover").on('"x"').hold_for(1.2)`.
-`Checkout.draft(P, TL)` opens the held detached working copy if one exists;
-its mutation/save methods are not the native write path. `--verify`/`check --at`
+`Checkout.draft(P, TL)` opens the detached working copy if one exists;
+its mutation/save methods stay local until an explicit commit. `--verify`/`check --at`
 write only their page and frames, in the fast lane's cache in the temp dir. In check,
 "intent" (was "app") is a clip's moments, cut and words; "shot" is the film's one authoring shot; a layer that
 carries over later cuts counts as a change in each of them. A moment
@@ -134,6 +150,8 @@ A cut's `why`/`hold` belong to the cut (they stay when its picture changes). `di
 ## The narration (re-flow)
 `timelines edit TL --project P --from-script vo.json --takes DIR` (DIR has `<id>.wav` + `<id>.words.json`;
 `--script-gaps` uses the script's gaps) · `--line ID --take … --words …` · `--insert-line` · `--remove-line`.
+These forms edit the detached draft; check it, save `candidate.json`, and use
+the explicit `timelines commit` command above to accept supported changes.
 Everything after a change moves; clips on words follow them; the music bed stays whole. A removed line's
 clips are kept as **orphans** (status, sheet and check list them; publish waits): `--cut c07 --on '"word" in w05'`
 moves an orphaned cut's picture to a new moment, `--clip X --on …` one layer, `--keep` accepts it in place,
@@ -145,9 +163,9 @@ is one clip and does NOT follow a ripple: after a removal it can end before the 
 
 The native session never overwrites a change published after its original
 capture: Runtime rebases disjoint commands and refuses real clashes. Its outbox
-keeps the original request and identity across retries. The legacy draft
-publisher's merge/force behavior is held; do not use two writers on one draft
-as a substitute for native commands.
+keeps the original request and identity across retries. Commit an explicit
+candidate for detached edits; do not use two writers on one draft as a
+substitute for Runtime's guarded commands.
 `edit`/`apply` exit 0 once saved; what still blocks publishing is check's (printed) state: `timelines check TL`
 shows only lint that is new since checkout (`--all` for everything).
 

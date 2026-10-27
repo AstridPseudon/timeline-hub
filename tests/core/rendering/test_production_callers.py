@@ -72,6 +72,16 @@ _BACKEND_IMPL_PREFIX = "astrid/packs/rendering/rendering/renderers/"
 # launcher is the raw-command entrypoint that backend renderer manifests
 # execute (it dispatches by the transport-selected qualified backend id).
 _ALLOWED_FILES: dict[str, str] = {
+    "astrid/core/rendering/remotion_runtime.py": (
+        "Remotion runtime owner: lazily imports the concrete remotion "
+        "renderer's lock and run modules because it IS the server-owned "
+        "Remotion runtime (project discovery, render lock, frame capture), "
+        "not a backend-neutral caller"
+    ),
+    "astrid/core/rendering/_effect_registry.py": (
+        "product-owned registry generator: settles outputs under the shared Remotion lock "
+        "and returns the inherited lock receipt"
+    ),
     "astrid/packs/rendering/run.py": (
         "pack raw-command launcher: entrypoint that backend renderer "
         "manifests execute; dispatches to the transport-selected backend"
@@ -91,12 +101,6 @@ _ALLOWED_FILES: dict[str, str] = {
         "host bootstrap probe: names the render action module as a string in "
         "the importlib.util.find_spec probe table; it only locates the module "
         "to bind the installed product root and never imports or spawns it"
-    ),
-    "astrid/core/rendering/remotion_runtime.py": (
-        "Remotion runtime owner: lazily imports the concrete remotion "
-        "renderer's lock and run modules because it IS the server-owned "
-        "Remotion runtime (project discovery, render lock, frame capture), "
-        "not a backend-neutral caller"
     ),
     "astrid/packs/rendering/actions/timeline_visualize/composed_frame.py": (
         "timeline_visualize composed-frame capture: lazily imports the "

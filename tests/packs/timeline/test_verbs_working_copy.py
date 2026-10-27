@@ -185,8 +185,8 @@ def test_draft_flow_checkout_edit_status_discard(tmp_path, monkeypatch, capsys):
     assert out[0].startswith('working copy "main" of t · from published rev-0 · ')
     draft_path = tc.draft_path('p', 't', 'main')
     commit_command = (
-        'python3 -m astrid.packs.rendering.docs.scripts.timeline_document commit '
-        f'--file {shlex.quote(str(draft_path))} --idempotency-key timeline-edit-1'
+        'python3 -m astrid timelines commit t --project P '
+        f'--file {shlex.quote(str(draft_path))} -m \'Timeline edit\' --idempotency-key timeline-edit-1'
     )
     assert "next:" in out and f"  commit   {commit_command}" in out
 

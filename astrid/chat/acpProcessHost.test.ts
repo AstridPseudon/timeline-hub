@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test';
 import type { JsonRpcProcessLike } from './process-types.ts';
 import {
   AcpProcessHost,
+  commandForPlatform,
   type AcpProcessSpawnOptions,
 } from './acpProcessHost.ts';
 import {
@@ -79,6 +80,20 @@ async function flush(): Promise<void> {
 }
 
 describe('AcpProcessHost', () => {
+  it('runs Windows command shims through cmd.exe with a quoted entry and arguments', () => {
+    expect(commandForPlatform('C:\\Program Files\\Hermes.CMD', ['acp', 'two words & more'], 'win32')).toEqual({
+      command: 'cmd.exe',
+      args: ['/d', '/s', '/c', '""C:\\Program Files\\Hermes.CMD" "acp" "two words & more""'],
+      windowsVerbatimArguments: true,
+    });
+    expect(commandForPlatform('C:\\Tools\\agent.BAT', [], 'win32').args).toEqual([
+      '/d', '/s', '/c', '""C:\\Tools\\agent.BAT""',
+    ]);
+    expect(commandForPlatform('/usr/bin/agent', ['acp'], 'linux')).toEqual({ command: '/usr/bin/agent', args: ['acp'] });
+    expect(() => commandForPlatform('C:\\Tools\\bad%name.CMD', [], 'win32')).toThrow(/cannot contain quotes, %, or newlines/);
+    expect(() => commandForPlatform('C:\\Tools\\agent.CMD', ['bad\narg'], 'win32')).toThrow(/cannot contain quotes, %, or newlines/);
+  });
+
   it('forwards initialize/new/close and preserves the opaque OMP session id', async () => {
     const process = new FakeProcess();
     const host = new AcpProcessHost({ process: process.asProcess(), requestTimeoutMs: 1_000 });

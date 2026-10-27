@@ -10,10 +10,10 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import hmac
 import json
 import os
 import re
-import signal
 import shutil
 import socket
 import subprocess
@@ -26,14 +26,13 @@ from tempfile import TemporaryDirectory, gettempdir
 from typing import Any, Callable, Mapping, Sequence
 
 from astrid.core import timeline
-from astrid.core.audit import AuditContext
 from astrid.core.element.registry import load_default_registry
 from astrid.core.element.schema import ElementDefinition
 from astrid.core.foundation.atomic_io import write_json_atomic
 from astrid.core.foundation.paths import REPO_ROOT
 from astrid.core.rendering import assets as _rendering_assets
+from astrid.core.rendering import remotion_runtime
 from astrid.core.rendering.artifacts import validate_render_result
-from astrid.core.rendering.storage import remotion_frame_format
 from astrid.core.rendering.assets import (
     AssetMaterializer,
     InvocationAssetServer as InvocationAssetServer,
@@ -42,8 +41,8 @@ from astrid.core.rendering.contracts import (
     SCHEMA_VERSION,
     AudioOwnership,
     FrameWindow,
-    RenderRequest,
     RenderProfile,
+    RenderRequest,
     RenderResult,
     SupportReport,
     VideoArtifact,
@@ -53,19 +52,18 @@ from astrid.core.rendering.errors import (
     make_renderer_error,
     raise_unsupported_error,
 )
-from astrid.core.rendering.publication import publish_render_result
 from astrid.core.rendering.remotion_runtime import (
     TIMELINE_SCHEMA_PYTHONPATH_ENV,
     RemotionRuntimeTools,
-    resolve_remotion_runtime_tools,
 )
-from astrid.core.rendering.storage import h264_encoder_bitrates
+from astrid.core.rendering.storage import h264_encoder_bitrates, remotion_frame_format
 from astrid.packs.rendering.rendering.renderers.remotion.root_preparation import _prepared_remotion_root
-from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay
 from astrid.packs.rendering.rendering.renderers.remotion.normal_audio import (
     prepare_normal_audio_sources as prepare_normal_audio_sources,
 )
 from astrid.core.subprocess_env import build_child_subprocess_env
+from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
+from astrid.packs.rendering.rendering.renderers.remotion.progress import RemotionProgressRelay
 from astrid.packs.rendering.shared import rendering_backend as _shared
 from astrid.packs.rendering.shared.rendering_backend import (
     _alpha_output_name,
@@ -76,15 +74,14 @@ from astrid.packs.rendering.shared.rendering_backend import (
     _parse_min_free_gb,
     _profile_mismatches,
     _reject_unknown_config,
-    _remotion_scaled_dimensions,
     _remotion_mux_profile,
-    _review_output_profile,
+    _remotion_scaled_dimensions,
     _render_provenance_payload,
+    _review_output_profile,
     _resolved_theme_for_render as _resolved_theme_for_render,
     _serialize_timeline,
     _timeline_alpha,
 )
-from astrid.packs.rendering.rendering.renderers.remotion import lock as remotion_lock
 try:
     import astrid.core.rendering._effect_registry as gen_effect_registry
 except ModuleNotFoundError as exc:
@@ -262,38 +259,20 @@ class PersistentRemotionFrameSession:
 
 
 def _validate_project_dir(project_dir: Path) -> RemotionRuntimeTools:
-    if not project_dir.exists():
-        raise FileNotFoundError(f"Remotion project directory not found: {project_dir}")
-    package_json = project_dir / "package.json"
-    if not package_json.exists():
-        raise FileNotFoundError(f"Remotion project is missing package.json: {package_json}")
-    node_modules = project_dir / "node_modules"
-    if not node_modules.exists():
+    status = remotion_runtime.remotion_runtime_status()
+    if not status.available:
+        raise FileNotFoundError(status.reason or "trusted Remotion runtime is unavailable")
+    selected_project = status.project_dir
+    if selected_project is None or project_dir.resolve() != selected_project.resolve():
         raise FileNotFoundError(
-            f"Remotion project is missing node_modules: {node_modules}; "
-            "see docs/setup/release-recipe.md and docs/reference/render-adapter.md for the selected installed Remotion source and adapter package instructions"
+            f"Remotion project is not the server-owned runtime selected for this process: {project_dir}"
         )
-
-    banodoco_root = node_modules / "@banodoco"
-    required_packages = (
-        "timeline-composition",
+    assert status.node_executable is not None
+    assert status.node_version is not None
+    assert status.remotion_cli is not None
+    return RemotionRuntimeTools(
+        status.node_executable, status.node_version, status.remotion_cli
     )
-    missing = [
-        f"@banodoco/{package}"
-        for package in required_packages
-        if not (banodoco_root / package).is_dir()
-    ]
-    if missing:
-        raise FileNotFoundError(
-            f"Missing @banodoco render package(s) in {node_modules}: {', '.join(missing)}. "
-            "These packages are adapter-required and not published to a public npm registry. "
-            "See docs/setup/release-recipe.md and docs/reference/render-adapter.md for the selected installed source and adapter instructions."
-        )
-    runtime_tools, tools_error = resolve_remotion_runtime_tools(project_dir)
-    if tools_error:
-        raise FileNotFoundError(tools_error)
-    assert runtime_tools is not None
-    return runtime_tools
 
 
 def _resize_frame_outputs(
@@ -388,7 +367,10 @@ def _registry_outputs_match_state(
 def _effective_registry_state(theme_path: Path | None) -> dict[str, Any]:
     if gen_effect_registry is None:
         return {"version": 1, "hash": "server-provisioned"}
+    from astrid.core.element.registry import clear_default_registry_cache
+
     del theme_path
+    clear_default_registry_cache()
     return gen_effect_registry.compute_generated_registry_state()
 
 
@@ -407,6 +389,22 @@ def _write_registry_state(project_dir: Path, state: dict[str, Any]) -> None:
         json.dumps(state, sort_keys=True, indent=2) + "\n",
         encoding="utf-8",
     )
+
+
+def _write_selected_element_registries(project_dir: Path, registry: Any) -> dict[str, Any]:
+    """Rebundle selected source while retaining the existing global lock."""
+    if not remotion_lock.remotion_render_lock_held():
+        raise RuntimeError("project element registry generation requires the render lock")
+    if gen_effect_registry is None:
+        raise RuntimeError("project element registry generator is unavailable")
+    state = gen_effect_registry.compute_generated_registry_state(registry=registry)
+    for kind in ("effects", "animations", "transitions"):
+        output = project_dir / "src" / f"{kind}.generated.ts"
+        content = gen_effect_registry.generate_element_registry(kind, registry=registry)
+        if not gen_effect_registry._write_generated_registry(output, content):
+            raise RuntimeError(f"cannot write selected project element registry: {output}")
+    _write_registry_state(project_dir, state)
+    return state
 
 
 def _regenerate_element_registries(
@@ -434,10 +432,11 @@ def _regenerate_element_registries_locked(
         registry = validated['registry']
         if registry['mode'] == 'source_settled':
             clear_default_registry_cache()
-            fresh = _effective_registry_state(theme_path)
-            if (fresh != registry['expected_state']
-                    or _read_registry_state(project_dir) != fresh
-                    or _registry_output_content_hashes(project_dir) != fresh['content_hashes']):
+            # Validation rechecked the complete corpus and output bindings.
+            # Recomputing here would run Git under the caller's ambient env.
+            expected = registry['expected_state']
+            if (_read_registry_state(project_dir) != expected
+                    or _registry_output_content_hashes(project_dir) != expected['content_hashes']):
                 raise RuntimeError('launch-bound registry drift refuses regeneration')
         # Launch-bound consumers never rewrite settled outputs.
         return
@@ -449,6 +448,9 @@ def _regenerate_element_registries_locked(
             raise RemotionValidationError('installed registry generator carrier is unavailable')
         if not _registry_outputs_exist(project_dir):
             raise RuntimeError("installed Remotion bundle is missing generated element registries")
+        state = _read_registry_state(project_dir)
+        if state is not None and not _registry_outputs_match_state(project_dir, state):
+            raise RuntimeError("installed Remotion bundle has stale generated element registries")
         return
 
     state = _effective_registry_state(theme_path)
@@ -461,23 +463,38 @@ def _regenerate_element_registries_locked(
         return
 
     generator = REPO_ROOT / "scripts" / "gen_effect_registry.py"
-    cmd = [sys.executable, str(generator)]
+    cmd = [sys.executable, "-X", "utf8", str(generator)]
     cwd = REPO_ROOT
     if installed:
-        from astrid.core.rendering import _registry_origin, remotion_runtime
+        from astrid.core.rendering import _registry_origin
         cmd = _registry_origin.installed_argv(sys.executable, remotion_runtime.__file__, generate=True)
         cwd = Path(gettempdir()).resolve()
     env: dict[str, str] = {}
     env["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())
-    env.update(remotion_lock.remotion_render_lock_child_env())
-    subprocess.run(
+    child_lock_env = remotion_lock.remotion_render_lock_child_env()
+    lock_token = child_lock_env[remotion_lock.REMOTION_LOCK_TOKEN_ENV]
+    env[remotion_lock.REMOTION_LOCK_PATH_ENV] = child_lock_env[remotion_lock.REMOTION_LOCK_PATH_ENV]
+    completed = subprocess.run(
         cmd,
         cwd=str(cwd),
-        env=build_child_subprocess_env(explicit_env=env),
+        env=build_child_subprocess_env(
+            explicit_env=env,
+            secret_values={remotion_lock.REMOTION_LOCK_TOKEN_ENV: lock_token},
+            declared_secrets={remotion_lock.REMOTION_LOCK_TOKEN_ENV},
+        ),
         capture_output=True,
         check=True,
         text=True,
     )
+    expected_receipt = remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX + lock_token
+    receipts = [
+        line for line in completed.stdout.splitlines()
+        if line.startswith(remotion_lock.REMOTION_LOCK_RECEIPT_PREFIX)
+    ]
+    if len(receipts) != 1 or not hmac.compare_digest(receipts[0], expected_receipt):
+        raise RuntimeError("generated element registry did not return the lock receipt")
+    if not _registry_outputs_match_state(project_dir, state):
+        raise RuntimeError("generated element registries are missing or stale after regeneration")
     _write_registry_state(project_dir, state)
 
 
@@ -630,7 +647,7 @@ def _resolve_timeline_element_references(
     if not isinstance(clips, list):
         return {"animations": [], "transitions": []}
     resolved: dict[str, list[dict[str, Any]]] = {"animations": [], "transitions": []}
-    seen: set[tuple[str, str, str | None]] = set()
+    seen: set[tuple[str, str, str | None, str | None]] = set()
     for clip in clips:
         if not isinstance(clip, Mapping):
             continue
@@ -641,7 +658,8 @@ def _resolve_timeline_element_references(
             if not isinstance(owner, str) or not owner:
                 raise ValueError("elementRef.packId must be a nonempty string")
             try:
-                registry.get(str(ref.get("kind")), str(ref.get("id")), pack_id=owner)
+                registry.get(str(ref.get("kind")), str(ref.get("id")), pack_id=owner,
+                             revision=ref.get("revision"))
             except (KeyError, ValueError) as exc:
                 raise ValueError(f"timeline uses unregistered owned element {dict(ref)!r}") from exc
         for slot_name, kind in (
@@ -657,17 +675,20 @@ def _resolve_timeline_element_references(
                     and ref.get("id") == element_id
                     and str(ref.get("kind")) == kind[:-1] else None
                 )
-                key = (kind, element_id, owner)
+                revision = ref.get("revision") if owner is not None else None
+                key = (kind, element_id, owner, revision)
                 if key in seen:
                     for item in resolved[kind]:
-                        if item.get("element_id") == element_id and (owner is None or item.get("source_pack_id") == owner):
+                        if item.get("element_id") == element_id and (owner is None or (
+                            item.get("source_pack_id") == owner and item.get("revision") == revision
+                        )):
                             if clip_id and clip_id not in item["clip_ids"]:
                                 item["clip_ids"].append(clip_id)
                             break
                     continue
                 seen.add(key)
                 try:
-                    element = registry.get(kind, element_id, pack_id=owner) if owner is not None else registry.get(kind, element_id)
+                    element = registry.get(kind, element_id, pack_id=owner, revision=revision) if owner is not None else registry.get(kind, element_id)
                 except (KeyError, ValueError) as exc:
                     raise ValueError(
                         f"timeline uses unregistered {kind[:-1]} {element_id!r}"
@@ -676,6 +697,7 @@ def _resolve_timeline_element_references(
                     {
                         "element_id": element_id,
                         "source_pack_id": _source_pack_id(element),
+                        **({"revision": revision} if revision else {}),
                         "source": element.source,
                         "element_root": str(element.root),
                         "clip_ids": [clip_id] if clip_id else [],
@@ -748,13 +770,15 @@ def _stage_effect_assets_for_timeline(
     render_hash: str,
     composition_clip_types: frozenset[str] = frozenset(),
     asset_registry: Mapping[str, Any] | None = None,
+    registry: Any | None = None,
 ) -> dict[str, Any]:
     # Resolve one immutable element registry for this render. Effects and
     # animation/transition references must agree even if the filesystem pack
     # inventory changes between support probing and execution; loading the
     # registry twice here also made the combined render path needlessly
     # discover every local pack twice.
-    registry = load_default_registry(project_root=REPO_ROOT)
+    if registry is None:
+        registry = load_default_registry(project_root=REPO_ROOT)
     effects, aliases = _effect_registry_for_assets(theme_path, registry=registry)
     resolved_elements = _resolve_timeline_element_references(
         timeline_data,
@@ -783,23 +807,32 @@ def _stage_effect_assets_for_timeline(
             "timeline uses unregistered effect clip type(s): " + ", ".join(unknown_clip_types)
         )
 
-    used_effects: dict[tuple[str, str], ElementDefinition] = {}
-    clip_effects: dict[int, tuple[str, str]] = {}
-    clip_ids_by_effect: dict[tuple[str, str], list[str]] = {}
+    used_effects: dict[tuple[str, str, str], ElementDefinition] = {}
+    clip_effects: dict[int, tuple[str, str, str]] = {}
+    clip_ids_by_effect: dict[tuple[str, str, str], list[str]] = {}
     for index, clip in enumerate(clips):
         if not isinstance(clip, dict):
             continue
         effect_id = _effect_id_for_clip(clip, effects, aliases)
         ref = clip.get("elementRef")
-        if isinstance(ref, Mapping) and ref.get("kind") == "effect":
+        pinned_kind = ref.get("kind") if isinstance(ref, Mapping) else None
+        if pinned_kind in {"animation", "transition"}:
+            element = registry.get(pinned_kind, ref["id"], pack_id=ref.get("packId"),
+                                   revision=ref.get("revision"))
+            if not element.metadata.get("render_revision"):
+                continue
+            effect_id = element.id
+        elif pinned_kind == "effect":
             effect_id = ref.get("id")
         if effect_id is None:
             continue
         try:
-            element = registry.get("effects", effect_id, pack_id=ref.get("packId")) if isinstance(ref, Mapping) and "packId" in ref else registry.get("effects", effect_id)
+            if pinned_kind not in {"animation", "transition"}:
+                element = registry.get("effects", effect_id, pack_id=ref.get("packId"),
+                                       revision=ref.get("revision")) if isinstance(ref, Mapping) and "packId" in ref else registry.get("effects", effect_id)
         except (KeyError, ValueError) as exc:
             raise ValueError(f"timeline uses unregistered effect {effect_id!r}") from exc
-        key = (_source_pack_id(element), element.id)
+        key = (_source_pack_id(element), element.id, element.metadata.get("render_revision", ""))
         used_effects[key] = element
         clip_effects[index] = key
         clip_id = clip.get("id")
@@ -810,13 +843,15 @@ def _stage_effect_assets_for_timeline(
         return {"root": None, "effects": [], **resolved_elements}
 
     public_root = project_dir / "public" / "astrid-effects" / render_hash
-    staged_by_effect: dict[tuple[str, str], dict[str, str]] = {}
+    staged_by_effect: dict[tuple[str, str, str], dict[str, str]] = {}
     for key, element in sorted(used_effects.items()):
         staged_assets: dict[str, str] = {}
         for asset in element.assets:
             source = (element.root / asset.path).resolve()
             # Different owners of the same ID must never share asset targets.
             relative_target = Path(key[0]) / element.id / asset.path
+            if key[2]:
+                relative_target = Path(element.metadata["render_key"]) / asset.path
             target = public_root / relative_target
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(source, target)
@@ -827,16 +862,25 @@ def _stage_effect_assets_for_timeline(
         clip = clips[index]
         if isinstance(clip, dict):
             staged_assets = dict(staged_by_effect[key])
-            if key == ("local", "end-spanning-layer"):
+            if key[:2] == ("local", "end-spanning-layer"):
                 staged_assets.update(_resolve_end_spanning_card_assets(clip, asset_registry))
             if staged_assets:
                 _inject_clip_asset_params(clip, staged_assets)
+            element = used_effects[key]
+            if element.kind != "effects":
+                _bind_pinned_element_slots(clip, element, staged_assets)
+    for kind, items in resolved_elements.items():
+        for item in items:
+            key = (item["source_pack_id"], item["element_id"], item.get("revision", ""))
+            if key in staged_by_effect:
+                item["staged_assets"] = staged_by_effect[key]
     return {
         "root": str(public_root),
         "effects": [
             {
                 "effect_id": key[1],
                 "source_pack_id": key[0],
+                **({"revision": key[2]} if key[2] else {}),
                 "source": element.source,
                 "element_root": str(element.root),
                 "clip_ids": sorted(clip_ids_by_effect.get(key, ())),
@@ -844,9 +888,37 @@ def _stage_effect_assets_for_timeline(
                 "staged_assets": dict(sorted(staged_by_effect[key].items())),
             }
             for key, element in sorted(used_effects.items())
+            if element.kind == "effects"
         ],
         **resolved_elements,
     }
+
+
+def _bind_pinned_element_slots(
+    clip: dict[str, Any], element: ElementDefinition, assets: dict[str, str],
+) -> None:
+    """Select revision aliases for the non-effect registry's explicit slots."""
+    slots = ("entrance", "exit", "continuous", "animations") if element.kind == "animations" else ("transition",)
+
+    def bind(value: Any) -> Any:
+        if isinstance(value, list):
+            return [bind(item) for item in value]
+        if isinstance(value, str):
+            if value == element.id:
+                alias = element.metadata["render_key"]
+                return {"id": alias, "params": {"__astridAssets": assets}} if assets else alias
+            return value
+        if isinstance(value, Mapping):
+            field = next((key for key in ("id", "type", "kind") if key in value), None)
+            if field is not None and value[field] == element.id:
+                value = {**value, field: element.metadata["render_key"]}
+                if assets:
+                    value["params"] = {**value.get("params", {}), "__astridAssets": assets}
+        return value
+
+    for slot in slots:
+        if slot in clip:
+            clip[slot] = bind(clip[slot])
 
 
 def _assert_outside_public(path: Path, project_dir: Path) -> None:
@@ -1142,6 +1214,11 @@ def _execute_remotion_locked(
             # worktrees and must never be inherited by the render child.
             remotion_env_additions["PYTHONPATH"] = schema_pythonpath
         remotion_env_additions["ASTRID_REMOTION_PROJECT_DIR"] = str(project_dir.resolve())
+        if stage_summary.get("project_pack_roots"):
+            from astrid.core.rendering.project_elements import PACK_ROOTS_ENV, REGISTRY_ROOT_ENV
+
+            remotion_env_additions[PACK_ROOTS_ENV] = json.dumps(stage_summary["project_pack_roots"])
+            remotion_env_additions[REGISTRY_ROOT_ENV] = stage_summary["project_registry_root"]
         remotion_args = [
             str(runtime_tools.node_executable),
             str(runtime_tools.remotion_cli),
@@ -1501,29 +1578,60 @@ def support(request: RenderRequest, *, workspace: Path) -> SupportReport:
                 and clip.get("clipType", "media") not in _BUILTIN_MEDIA_CLIP_TYPES
             }
         )
-        if dynamic_clip_types:
+        from astrid.core.rendering.project_elements import (
+            require_project_snapshots,
+            selections,
+            stage_project_elements,
+        )
+
+        with ExitStack() as selected_lifecycle:
+            registry_options = {}
             try:
-                effects, aliases = _effect_registry_for_assets(settings.theme_path)
-            except Exception as exc:  # noqa: BLE001 - support report normalizes registry failures
-                reasons.append(f"Remotion element registry cannot be resolved: {exc}")
-            else:
-                unknown_clip_types = [
-                    clip_type
-                    for clip_type in dynamic_clip_types
-                    if clip_type not in effects and clip_type not in aliases
-                ]
-                if unknown_clip_types:
-                    reasons.append(
-                        "timeline uses unregistered Remotion clip types: "
-                        + ", ".join(unknown_clip_types)
+                require_project_snapshots(timeline_data)
+            except ValueError as exc:
+                return SupportReport(
+                    schema_version=SCHEMA_VERSION, supported=False, reasons=[*reasons, str(exc)],
+                    features=features, alternatives=[], backend=BACKEND_ID,
+                    backend_version=BACKEND_VERSION,
+                )
+            if selections(timeline_data):
+                try:
+                    temporary = selected_lifecycle.enter_context(TemporaryDirectory(prefix="project-elements-support-"))
+                    selected_registry, _ = stage_project_elements(
+                        timeline_data, Path(temporary), registry=load_default_registry(project_root=REPO_ROOT),
                     )
-        try:
-            _resolve_timeline_element_references(
-                timeline_data,
-                theme_path=settings.theme_path,
-            )
-        except Exception as exc:  # noqa: BLE001 - support report normalizes render failures
-            reasons.append(str(exc))
+                    registry_options["registry"] = selected_registry
+                except ValueError as exc:
+                    reasons.append(f"Project element snapshot cannot be staged: {exc}")
+                    return SupportReport(
+                        schema_version=SCHEMA_VERSION, supported=False, reasons=reasons,
+                        features=features, alternatives=[], backend=BACKEND_ID,
+                        backend_version=BACKEND_VERSION,
+                    )
+            if dynamic_clip_types:
+                try:
+                    effects, aliases = _effect_registry_for_assets(settings.theme_path, **registry_options)
+                except Exception as exc:  # noqa: BLE001 - support report normalizes registry failures
+                    reasons.append(f"Remotion element registry cannot be resolved: {exc}")
+                else:
+                    unknown_clip_types = [
+                        clip_type
+                        for clip_type in dynamic_clip_types
+                        if clip_type not in effects and clip_type not in aliases
+                    ]
+                    if unknown_clip_types:
+                        reasons.append(
+                            "timeline uses unregistered Remotion clip types: "
+                            + ", ".join(unknown_clip_types)
+                        )
+            try:
+                _resolve_timeline_element_references(
+                    timeline_data,
+                    theme_path=settings.theme_path,
+                    **registry_options,
+                )
+            except Exception as exc:  # noqa: BLE001 - support report normalizes render failures
+                reasons.append(str(exc))
         try:
             canonical = _canonical_profile(timeline_path, assets_data, settings.theme_path)
         except Exception as exc:  # noqa: BLE001 - support report normalizes profile failures
@@ -1798,6 +1906,5 @@ __all__ = [
     "BACKEND_VERSION",
     "DEFAULT_COMPOSITION_ID",
     "main",
-    "render",
     "support",
 ]

@@ -16,7 +16,6 @@ from astrid.sdk import storage_root
 
 
 def test_runtime_commands_do_not_inject_rejected_render_startup_overrides(tmp_path, monkeypatch):
-    from astrid.core.rendering.remotion_runtime import probe_context
     from astrid.installer.backend import Backend
 
     monkeypatch.delenv("PYTHONUTF8", raising=False)
@@ -29,7 +28,7 @@ def test_runtime_commands_do_not_inject_rejected_render_startup_overrides(tmp_pa
     ]))
 
     assert environment["PYTHONIOENCODING"] == "utf-8"
-    probe_context(environment=environment, python_executable=sys.executable)
+    assert environment["HOME"] == str(tmp_path)
 
 
 class LifecycleBackend:
@@ -249,7 +248,7 @@ def test_backend_skill_sync_logs_output_and_failure_result(tmp_path, monkeypatch
     version = Version(tmp_path / "version", Path(sys.executable), tmp_path / "profile.json", {})
     backend.sync_skills(version)
 
-    assert calls[0][0] == [Path(sys.executable), "-I", "-m", "astrid.skills", "sync"]
+    assert calls[0][0] == [Path(sys.executable), "-X", "utf8", "-I", "-m", "astrid.skills", "sync"]
     assert calls[0][2] == 60
     assert "sync diagnostic output" in log.read_text(encoding="utf-8")
     assert "Astrid skills sync failed (CalledProcessError)." in log.read_text(encoding="utf-8")
@@ -434,6 +433,29 @@ def test_cli_explains_backup_space_failure_with_one_sentence(tmp_path, monkeypat
     assert cli.main(["--root", str(tmp_path / "program")]) == 1
     assert capsys.readouterr().out.splitlines() == [FAILURE_MESSAGE, message, f"Details: {tmp_path / 'logs/install.log'}"]
     assert message in (tmp_path / "logs/install.log").read_text()
+
+
+def test_cli_shows_safe_verification_context_but_not_raw_diagnostics(tmp_path, monkeypatch, capsys):
+    from runtime_protocol import platform
+
+    from astrid.installer import cli
+    from astrid.installer.core import VerificationError
+
+    monkeypatch.setattr(platform, "log_dir", lambda: tmp_path / "logs")
+    safe = f"pack-host state=restarting reason=worker exited during startup last_exit=7; log={tmp_path / 'service-pack-host.log'}"
+
+    def verification_failed(*_args, **_kwargs):
+        raise VerificationError(
+            "raw private-token-should-not-appear",
+            safe_message=safe,
+        )
+
+    monkeypatch.setattr(cli, "Backend", verification_failed)
+
+    assert cli.main(["--root", str(tmp_path / "program")]) == 1
+    output = capsys.readouterr().out
+    assert safe in output
+    assert "private-token-should-not-appear" not in output
 
 
 @pytest.mark.parametrize(("sandbox_flag", "expected_control"), [(None, "strict"), ("--sandbox", "sandbox")])

@@ -1580,6 +1580,7 @@ def default_process_identity(pid: int, *, timeout: float = 1.0) -> dict[str, obj
     try:
         result = subprocess.run(
             ["/bin/ps", "-ww", "-o", "uid=", "-o", "ppid=", "-o", "lstart=", "-p", str(pid)],
+            stdin=subprocess.DEVNULL,
             text=True, capture_output=True, check=False, timeout=timeout,
         )
     except (OSError, subprocess.TimeoutExpired) as exc:
@@ -2304,7 +2305,7 @@ def custody_wrapper_argv(executable: str) -> list[str]:
              str(Path(runtime_protocol.__file__).resolve().parent.parent)]
     bootstrap = (f"import sys,runpy; sys.path[:0]={roots!r}; "
                  "runpy.run_module('astrid.core.execution.custody_broker', run_name='__main__')")
-    return [executable, "-I", "-S", "-u", "-c", bootstrap, "--custody-exec"]
+    return [executable, "-X", "utf8", "-I", "-S", "-u", "-c", bootstrap, "--custody-exec"]
 
 def child_exec_from_environment() -> int:
     encoded = os.environ.get("ASTRID_RUNTIME_CUSTODY_TARGET_B64", "")

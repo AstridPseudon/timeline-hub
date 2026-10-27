@@ -448,7 +448,7 @@ def _execute_steps_directly(args: argparse.Namespace) -> int:
     steps.append((
         "ados-sunday-template",
         [
-            args.python_exec, "-m", run_module, "ados-sunday-template",
+            args.python_exec, "-X", "utf8", "-m", run_module, "ados-sunday-template",
             "--out", str(args.out / "ados-sunday-template.json"),
         ],
     ))
@@ -458,7 +458,7 @@ def _execute_steps_directly(args: argparse.Namespace) -> int:
         steps.append((
             "search-transcript",
             [
-                args.python_exec, "-m", run_module, "search-transcript",
+                args.python_exec, "-X", "utf8", "-m", run_module, "search-transcript",
                 "--transcript", str(transcript),
                 "--out", str(args.out / "search-results.txt"),
             ],
@@ -471,7 +471,7 @@ def _execute_steps_directly(args: argparse.Namespace) -> int:
         steps.append((
             "find-holding-screens",
             [
-                args.python_exec, "-m", run_module, "find-holding-screens",
+                args.python_exec, "-X", "utf8", "-m", run_module, "find-holding-screens",
                 "--video", str(source),
                 "--out", str(args.out / "holding-screens.json"),
             ],
@@ -482,7 +482,7 @@ def _execute_steps_directly(args: argparse.Namespace) -> int:
     steps.append((
         "render",
         [
-            args.python_exec, "-m", run_module, "render",
+            args.python_exec, "-X", "utf8", "-m", run_module, "render",
             "--manifest", str(args.out / "ados-sunday-template.json"),
             "--out-dir", str(args.out / "render"),
         ],

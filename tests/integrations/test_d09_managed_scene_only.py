@@ -134,9 +134,7 @@ def _public13_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
     assert private_profile.is_dir()
     assert NODE.is_file() and os.access(NODE, os.X_OK)
     package = json.loads((private_profile / "package.json").read_text(encoding="utf-8"))
-    assert _APPROVED_COMPOSITION_DEPENDENCY == (
-        "file:artifacts/banodoco-timeline-composition-635f4de06fda22a85fc2e4cfc764d0153a4c9f40.tgz"
-    )
+    assert _APPROVED_COMPOSITION_DEPENDENCY == _APPROVED_COMPOSITION_LOCK["resolved"]
     assert package["dependencies"]["@banodoco/timeline-composition"] == (
         _APPROVED_COMPOSITION_DEPENDENCY
     )
@@ -147,7 +145,9 @@ def _public13_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
     artifact = private_profile / _APPROVED_COMPOSITION_ARTIFACT
     assert artifact.is_file()
     assert hashlib.sha256(artifact.read_bytes()).hexdigest() == _APPROVED_COMPOSITION_SHA256
-    assert artifact.stat().st_size == 73451
+    assert artifact.stat().st_size == (
+        ROOT / "remotion" / _APPROVED_COMPOSITION_ARTIFACT
+    ).stat().st_size
     installed_package = private_profile / "node_modules/@banodoco/timeline-composition"
     with tarfile.open(artifact) as archive:
         regular_members = [member for member in archive.getmembers() if member.isfile()]
@@ -155,7 +155,7 @@ def _public13_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> No
         manifest_file = archive.extractfile("package/package.json")
         assert manifest_file is not None
         manifest = json.load(manifest_file)
-        assert manifest["version"] == "0.0.14"
+        assert manifest["version"] == _APPROVED_COMPOSITION_LOCK["version"]
         expected_files = {member.name.removeprefix("package/") for member in regular_members}
         actual_files = {
             path.relative_to(installed_package).as_posix()

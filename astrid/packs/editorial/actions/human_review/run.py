@@ -697,7 +697,8 @@ def _inherited_bridge() -> Any | None:
 
 
 _RECEIVER_SESSION_NAME = ".astrid-human-review-session.json"
-_RECEIVER_SESSION_SCHEMA = "astrid.human-review-session/v1"
+_RECEIVER_SESSION_SCHEMA = "astrid.human-review-session/v2"
+_REVIEW_LAUNCH_NONCE_ENV = "ASTRID_HUMAN_REVIEW_LAUNCH_NONCE"
 
 
 def _managed_receiver_path(out_path: Path) -> Path | None:
@@ -736,11 +737,15 @@ def _publish_receiver_session(path: Path, url: str) -> tuple[Path, int, int, byt
             or parsed.path != "/" or parsed.fragment or parsed.username or parsed.password
             or re.fullmatch(r"token=[0-9a-f]{32}", parsed.query) is None):
         raise HumanReviewInputError("review receiver must be the selected loopback session")
+    launch_nonce = os.environ.get(_REVIEW_LAUNCH_NONCE_ENV, "")
+    if re.fullmatch(r"[0-9a-f]{64}", launch_nonce) is None:
+        raise HumanReviewInputError("managed review launch observation is unavailable")
     birth = process_birth_identity()
     if not birth:
         raise HumanReviewInputError("review receiver process birth is unavailable")
     payload = json.dumps({"schema": _RECEIVER_SESSION_SCHEMA, "receiver_url": url,
-                          "process_pid": os.getpid(), "process_birth_id": birth},
+                          "process_pid": os.getpid(), "process_birth_id": birth,
+                          "launch_nonce": launch_nonce},
                          sort_keys=True, separators=(",", ":")).encode("utf-8")
     fd, temporary = tempfile.mkstemp(prefix=".review-session-", dir=path.parent)
     try:
@@ -754,11 +759,12 @@ def _publish_receiver_session(path: Path, url: str) -> tuple[Path, int, int, byt
         os.link(temporary, path, follow_symlinks=False)
         os.unlink(temporary)
         info = os.lstat(path)
-        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
-        try:
-            os.fsync(directory)
-        finally:
-            os.close(directory)
+        if os.name != "nt":
+            directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
         return path, info.st_dev, info.st_ino, payload
     finally:
         if os.path.exists(temporary):

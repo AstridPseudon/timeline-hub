@@ -265,8 +265,8 @@ def _element_revision(definition: Any, *, files=None) -> str:
             if path.suffix in {".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs", ".css"}
             and path.resolve() != definition.component
         )
-        helpers = [(os.path.relpath(path, definition.root), path.read_bytes())
-                   for path in sorted(helper_paths)]
+        helpers = [(Path(os.path.relpath(path, definition.root)).as_posix(), path.read_bytes())
+                   for path in sorted(helper_paths, key=lambda path: path.parts)]
         assets = {asset.name: (definition.root / asset.path).read_bytes()
                   for asset in definition.assets if (definition.root / asset.path).is_file()}
     else:

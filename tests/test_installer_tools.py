@@ -124,21 +124,10 @@ def test_qualified_path_media_tools_are_selected_and_recorded(tmp_path, monkeypa
     assert not (root / "ffmpeg").exists()
 
 
-def test_generated_service_environment_satisfies_the_rendering_probe(tmp_path, monkeypatch):
-    from astrid.core.rendering.remotion_runtime import RemotionValidationError, probe_context
-
+def test_generated_service_environment_uses_utf8_stdio(tmp_path, monkeypatch):
     root, *_unused, run = harness(tmp_path, monkeypatch)
     env = tools.install_tools(manifest(), root, TARGET, run)
-    environment = {"HOME": str(tmp_path), **env}
-
-    context = probe_context(environment=environment, python_executable=sys.executable)
-
     assert env["PYTHONIOENCODING"] == "utf-8"
-    assert context["policy"] == "clean-schema-env/v1"
-    assert context["node_env"]["HOME"] == str(tmp_path)
-    # The producer must comply with the unchanged startup-override contract.
-    with pytest.raises(RemotionValidationError, match="unsupported loader/interpreter overrides"):
-        probe_context(environment={**environment, "PYTHONUTF8": "1"}, python_executable=sys.executable)
 
 
 @pytest.mark.parametrize("availability", ["missing", "missing_ffprobe", "missing_encoder", "missing_filter",

@@ -32,8 +32,6 @@ _LOADER_INTERPRETER_OVERRIDES = (
 REQUIRED_BINARIES = ("node", "npx", "ffmpeg", "ffprobe")
 REQUIRED_PACKAGES = (
     "@banodoco/timeline-composition",
-    "@banodoco/timeline-schema",
-    "@banodoco/timeline-theme-2rp",
     "@remotion/cli",
     "@remotion/three",
     "@react-three/fiber",
@@ -79,6 +77,9 @@ def issue_remotion_launch_validation(tmp_path: Path, monkeypatch: pytest.MonkeyP
     node = Path(node_value).expanduser().resolve(strict=True)
     monkeypatch.setenv(ASTRID_NODE_EXECUTABLE, str(node))
 
+    from tests.helpers.remotion_runtime import configure_remotion_runtime
+
+    configure_remotion_runtime(monkeypatch)
     # The transaction qualifies this process's environment (what an in-process render validates) and its
     # allowlist projection (what the transport hands the backend child). The process must therefore carry no
     # loader, interpreter-startup or Git-redirect overrides: the runtime refuses those and so does this fixture.

@@ -523,7 +523,7 @@ def _schedule_ttl_teardown(pod_id: str, ttl_seconds: int) -> None:
     mod = "astrid.packs.blender.deploy"
     cmd = (
         f"sleep {int(ttl_seconds)} && "
-        f"{shlex.quote(sys.executable)} -m {mod} teardown-runpod --pod-id {pod_id}"
+        f"{shlex.quote(sys.executable)} -X utf8 -m {mod} teardown-runpod --pod-id {pod_id}"
     )
     log = "/tmp/astrid-blender-runpod-ttl.log"
     platform.spawn_tree(

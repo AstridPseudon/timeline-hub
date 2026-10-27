@@ -69,6 +69,9 @@ class VerifiedTimelineSource:
         if (_canonical(snapshot.get("metadata", {}).get("capture_authority"))
                 != _canonical(original.get("metadata", {}).get("capture_authority"))):
             raise ValueError("verified source capture authority differs")
+        if (_canonical(snapshot.get("metadata", {}).get("host_transition_contract"))
+                != _canonical(original.get("metadata", {}).get("host_transition_contract"))):
+            raise ValueError("verified source host transition contract differs")
 
 
 class PreparedTimelineInputs(dict[str, Any]):
@@ -174,12 +177,71 @@ def mint_prepared_source(
             raise ValueError("verified source working copy differs")
     if authority.get("snapshot_digest") is not None and authority["snapshot_digest"] != ref.get("digest"):
         raise ValueError("verified source snapshot digest differs from Runtime authority")
+    # The transition contract is minted by capture producers only after they
+    # have projected the exact typed parent/shot/internal closure (saved head
+    # or frozen authoring candidate). Source kind alone is not enough: native
+    # TimelineConfig revisions and working copies also arrive through refs.
+    expansion = authority.get("expansion")
+    transition_contract = None
+    host_contract = snapshot.get("metadata", {}).get("host_transition_contract")
+    # The ordinary managed-render producer has already validated the exact
+    # typed closure, but its renderer-facing authority intentionally carries a
+    # compact expansion summary. Its host-only marker is bound to the immutable
+    # saved revision here. This branch never accepts working-copy refs; those
+    # require the stronger candidate/base digest contract below.
+    managed_saved_closure = (
+        host_contract == "runtime-parent-closure/v1"
+        and ref.get("source_kind") == "revision"
+        and authority.get("parent_revision_id") == ref.get("revision_id")
+        and authority.get("parent_content_digest") == revision_digest
+        and isinstance(expansion, Mapping)
+        and all(isinstance(expansion.get(key), list) for key in ("children", "shots", "occurrences"))
+        and isinstance(snapshot.get("config"), Mapping)
+        and isinstance(snapshot.get("registry"), Mapping)
+    )
+    if managed_saved_closure:
+        transition_contract = "runtime-parent-closure/v1"
+    if isinstance(expansion, Mapping) and host_contract is not None:
+        common_typed_closure = (
+            host_contract == "runtime-parent-closure/v1"
+            and expansion.get("parent_revision_id") == ref.get("revision_id")
+            and authority.get("parent_revision_id") == ref.get("revision_id")
+            and expansion.get("parent_content_digest") == authority.get("parent_content_digest")
+            and isinstance(expansion.get("occurrences"), list)
+            and isinstance(expansion.get("shots"), list)
+            and isinstance(expansion.get("children"), list)
+        )
+        saved_typed_closure = (
+            ref.get("source_kind") == "revision"
+            and expansion.get("parent_content_digest") == revision_digest
+        )
+        working_marker = expansion.get("working_copy")
+        base_parent = working_marker.get("base_parent") if isinstance(working_marker, Mapping) else None
+        ref_working_copy = ref.get("working_copy")
+        snapshot_working_copy = snapshot.get("metadata", {}).get("working_copy")
+        typed_working_copy = (
+            ref.get("source_kind") == "working_copy"
+            and isinstance(working_marker, Mapping)
+            and working_marker == snapshot_working_copy
+            and isinstance(base_parent, Mapping)
+            and isinstance(ref_working_copy, Mapping)
+            and working_marker.get("candidate_parent_revision_id") == ref.get("revision_id")
+            and working_marker.get("candidate_digest") == revision_digest
+            and ref_working_copy.get("candidate_digest") == working_marker.get("candidate_digest")
+            and ref_working_copy.get("publication_digest") == working_marker.get("publication_digest")
+            and ref_working_copy.get("base_revision_id") == base_parent.get("revision_id")
+            and ref_working_copy.get("base_revision_digest") == base_parent.get("content_digest")
+        )
+        if common_typed_closure and (saved_typed_closure or typed_working_copy):
+            transition_contract = "runtime-parent-closure/v1"
     prepared = {}
     for key, path in (("timeline", timeline_path), ("registry", assets_path)):
         resolved = Path(path).resolve(strict=True)
         resolved.relative_to(attempt.resolve())
         prepared[key] = {"path": str(resolved), "digest": _digest(resolved.read_bytes())}
     binding = {"ref": dict(ref), "authority": dict(authority), "snapshot": dict(snapshot), "prepared": prepared}
+    if transition_contract is not None:
+        binding["transition_contract"] = transition_contract
     data = json.dumps(binding, sort_keys=True, separators=(",", ":"), allow_nan=False).encode()
     path = attempt.resolve() / "inputs" / "verified-timeline-source.json"
     path.write_bytes(data)

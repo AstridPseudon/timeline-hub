@@ -117,7 +117,7 @@ def installed_argv(python: str, runtime_file: str, *, generate: bool = False,
         'import json\nfrom astrid.core.rendering.remotion_runtime import _registry_observation\n'
         'print(json.dumps(_registry_observation(), sort_keys=True))'
     )
-    return [python, '-I', '-c', _PREFLIGHT + operation, str(root), digest]
+    return [python, '-X', 'utf8', '-I', '-c', _PREFLIGHT + operation, str(root), digest]
 
 
 def validate_observation(observation: dict, runtime_file: str, cwd: Path,

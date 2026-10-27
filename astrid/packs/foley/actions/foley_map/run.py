@@ -54,7 +54,7 @@ def _tile_query(global_context: str, row: int, col: int, rows: int, cols: int) -
 
 def step_tile(args: argparse.Namespace, out: Path) -> Path:
     cmd = [
-        sys.executable, "-m", "astrid.packs.foley.actions.tile_video.run",
+        sys.executable, "-X", "utf8", "-m", "astrid.packs.foley.actions.tile_video.run",
         "--video", str(args.video),
         "--out", str(out),
         "--grid", f"{args.grid[0]}x{args.grid[1]}",
@@ -277,7 +277,7 @@ def step_review(out: Path, enriched: dict[str, Any]) -> Path:
     manifest_path.write_text(json.dumps(enriched, indent=2) + "\n", encoding="utf-8")
     review_path = out / "review.html"
     cmd = [
-        sys.executable, "-m", "astrid.packs.foley.actions.foley_review.run",
+        sys.executable, "-X", "utf8", "-m", "astrid.packs.foley.actions.foley_review.run",
         "--manifest", str(manifest_path),
         "--out", str(review_path),
     ]
