@@ -1,0 +1,7 @@
+Ask: consume the new independent C browser FAIL and preserve sole C lead ownership of the next correction / Owner: C lead r11 for correction and review; Main for acceptance / By: next normal source pass
+
+Independent C-review-C2-browser-finalize-11 ended 2026-10-27T07:00:59Z with worker exit 0 and substantive FAIL. Its actual central test C-review-C2-browser-finalize-11-c2-e2e-three-products-1027065750-28159 is status fail, exit 1: 2 passed and 1 failed. The new-track case fails because targetedNewTrack is false. The hosted build and harness completed without OOM or identity_collision. Original reviewer report and evidence/review.md are controlling; worker exit 0 is not behavior PASS.
+
+Reviewer found the diff limited to the C2 browser spec, with no production change or weakening of baseline assertions. The removed clip-action count originated in the prior correction and canonical state assertions remain. ESLint and git diff --check PASS. Existing lead-C-r11 is still running; Runtime dispatches no competing repair, review or browser body. Keep C acceptance and H START closed until the owning lead resolves and independently qualifies the remaining correction purpose. Original15487 and earlier environment-blocked outcomes remain unchanged.
+
+A independent25125 remains actual PASS and its earlier normal-round handoff is unchanged. Runtime has no ready task. This note reports a changed gate, not a new acceptance or source claim.
