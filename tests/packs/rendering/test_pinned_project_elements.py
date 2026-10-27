@@ -161,15 +161,44 @@ def test_exact_catalog_identity_collision_missing_admission_is_fail_closed(
     runtime, refs, reads = admitted
     ref = refs[0]
     runtime.timeline["config"]["clips"] = runtime.timeline["config"]["clips"][:1]
-    runtime.documents.rows.clear()
+    row = next(iter(runtime.documents.rows.values()))
+    row["content"]["admissions"] = [
+        admission for admission in row["content"]["admissions"]
+        if admission["revision"] != ref["revision"]
+    ]
     with monkeypatch.context() as patch:
         _patch_colliding_installed_owner(patch, ref, source_kind, exact=True)
         with pytest.raises(ValueError, match="snapshot missing") as error:
             _snapshot(runtime)
     assert ref["revision"] in str(error.value)
     assert "$.clips[0]" in str(error.value)
-    assert reads["documents"] == []
+    assert len(reads["documents"]) == 1
     assert reads["objects"] == []
+
+
+@pytest.mark.parametrize("source_kind", ["source", "local"])
+def test_exact_catalog_identity_collision_owner_document_fails_closed(
+    admitted, monkeypatch, source_kind,
+):
+    runtime, refs, reads = admitted
+    ref = refs[0]
+    runtime.timeline["config"]["clips"] = runtime.timeline["config"]["clips"][:1]
+    row = next(iter(runtime.documents.rows.values()))
+    original = runtime.get_project_verified_document_object
+
+    def corrupt_snapshot(*args):
+        snapshot = original(*args)
+        return {**snapshot, "bytes_base64": base64.b64encode(b"corrupt").decode()}
+
+    runtime.get_project_verified_document_object = corrupt_snapshot
+    with monkeypatch.context() as patch:
+        _patch_colliding_installed_owner(patch, ref, source_kind, exact=True)
+        with pytest.raises(ValueError, match="snapshot (missing|digest mismatch)") as error:
+            _snapshot(runtime)
+    assert ref["revision"] in str(error.value)
+    assert "$.clips[0]" in str(error.value)
+    assert len(reads["documents"]) == 1
+    assert reads["objects"] == [row["content"]["admissions"][0]["snapshot_object"]["object_id"]]
 
 
 def test_two_revisions_keep_source_dispatch_aliases_and_assets(admitted, tmp_path):
@@ -330,15 +359,18 @@ def test_frozen_source_is_rechecked_before_staging(admitted, tmp_path):
 
 def test_builtin_pin_does_not_fetch_project_snapshot():
     runtime = _Runtime()
-    runtime.documents = SimpleNamespace(_identity=lambda: {"realm_id": "realm"})
+    runtime.documents = SimpleNamespace(
+        _identity=lambda: {"realm_id": "realm"},
+        show=lambda *_args, **_kwargs: SimpleNamespace(
+            ok=False, data=None, error=SimpleNamespace(code="not_found"),
+        ),
+    )
     descriptor = catalog.list_element_descriptors("effects")[0]
-    # packId is the project-pack provenance marker; built-in refs are complete
-    # without it and must stay on the installed registry path.
     runtime.timeline["config"] = {
         "tracks": [{"id": "v1", "kind": "visual", "label": "V1"}],
         "clips": [{"id": "builtin", "track": "v1", "at": 0, "hold": 1,
                    "clipType": descriptor["id"], "elementRef": {
-                       key: descriptor[key] for key in ("kind", "id", "revision")}}],
+                       key: descriptor[key] for key in ("packId", "kind", "id", "revision")}}],
         "app": {CARRIER: [{"untrusted": "authored carrier"}]},
     }
     snapshot = _snapshot(runtime)  # The fake intentionally has no project snapshot ports.
@@ -346,7 +378,7 @@ def test_builtin_pin_does_not_fetch_project_snapshot():
     assert selections(snapshot.config) == []
     registry = catalog._registry()
     ref = snapshot.config["clips"][0]["elementRef"]
-    assert registry.get("effect", ref["id"], revision=ref["revision"]) == registry.get("effect", ref["id"])
+    assert registry.get("effect", ref["id"], pack_id=ref["packId"], revision=ref["revision"]) == registry.get("effect", ref["id"])
 
 
 def test_render_uses_private_registries_under_global_lock(admitted, tmp_path, monkeypatch):
