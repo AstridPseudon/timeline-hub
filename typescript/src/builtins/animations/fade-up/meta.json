@@ -1,1 +1,1 @@
-{"id":"fade-up","name":"Fade Up","kind":"wrapper","phase":"entrance","defaultDurationFrames":18,"supportsEasing":true}
+{"id":"fade-up","name":"Fade Up","kind":"wrapper","phase":"entrance","defaultDurationFrames":18,"supportsEasing":true,"parameters":{"easing":{"type":"string"}}}

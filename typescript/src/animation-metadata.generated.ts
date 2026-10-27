@@ -39,7 +39,12 @@ export const ANIMATION_META: Readonly<Record<string, AnimationMeta>> = {
       "exit"
     ],
     "defaultDurationFrames": 12,
-    "supportsEasing": true
+    "supportsEasing": true,
+    "parameters": {
+      "easing": {
+        "type": "string"
+      }
+    }
   },
   "fade-up": {
     "id": "fade-up",
@@ -47,7 +52,12 @@ export const ANIMATION_META: Readonly<Record<string, AnimationMeta>> = {
     "kind": "wrapper",
     "phase": "entrance",
     "defaultDurationFrames": 18,
-    "supportsEasing": true
+    "supportsEasing": true,
+    "parameters": {
+      "easing": {
+        "type": "string"
+      }
+    }
   },
   "scale-in": {
     "id": "scale-in",
@@ -55,7 +65,12 @@ export const ANIMATION_META: Readonly<Record<string, AnimationMeta>> = {
     "kind": "wrapper",
     "phase": "entrance",
     "defaultDurationFrames": 18,
-    "supportsEasing": true
+    "supportsEasing": true,
+    "parameters": {
+      "easing": {
+        "type": "string"
+      }
+    }
   },
   "slide-left": {
     "id": "slide-left",
@@ -63,7 +78,12 @@ export const ANIMATION_META: Readonly<Record<string, AnimationMeta>> = {
     "kind": "wrapper",
     "phase": "entrance",
     "defaultDurationFrames": 18,
-    "supportsEasing": true
+    "supportsEasing": true,
+    "parameters": {
+      "easing": {
+        "type": "string"
+      }
+    }
   },
   "slide-up": {
     "id": "slide-up",
@@ -71,7 +91,12 @@ export const ANIMATION_META: Readonly<Record<string, AnimationMeta>> = {
     "kind": "wrapper",
     "phase": "exit",
     "defaultDurationFrames": 12,
-    "supportsEasing": true
+    "supportsEasing": true,
+    "parameters": {
+      "easing": {
+        "type": "string"
+      }
+    }
   },
   "type-on": {
     "id": "type-on",
@@ -79,6 +104,23 @@ export const ANIMATION_META: Readonly<Record<string, AnimationMeta>> = {
     "kind": "hook",
     "phase": "entrance",
     "defaultDurationFrames": 120,
-    "supportsEasing": true
+    "supportsEasing": true,
+    "parameters": {
+      "easing": {
+        "type": "string"
+      },
+      "startFrame": {
+        "type": "number",
+        "minimum": 0
+      },
+      "durationFraction": {
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+      },
+      "showCaret": {
+        "type": "boolean"
+      }
+    }
   }
 };

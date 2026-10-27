@@ -113,25 +113,48 @@ const normalizeOneAnimationRef = (ref: unknown, fps: number): AnimationReference
   if (typeof ref !== 'object' || ref === null) {
     return undefined;
   }
-  const record = ref as {id?: unknown; type?: unknown; duration?: unknown; params?: unknown; easing?: unknown};
-  if (typeof record.id === 'string') {
-    return ref as AnimationReferenceItem;
+  const record = ref as {id?: unknown; type?: unknown; duration?: unknown; durationFrames?: unknown; params?: unknown; easing?: unknown};
+  const id = record.id ?? record.type;
+  if (typeof id !== 'string' || id.length === 0 || (record.id !== undefined && typeof record.id !== 'string')
+      || (record.type !== undefined && typeof record.type !== 'string')) {
+    throw new Error('Animation reference must include a non-empty id or type');
   }
-  if (typeof record.type !== 'string') {
-    return undefined;
+  if (record.id !== undefined && record.type !== undefined && record.id !== record.type) {
+    throw new Error('Conflicting animation id and type');
   }
   if (record.easing !== undefined && typeof record.easing !== 'string') {
     throw new Error('Animation easing must be a declared curve name');
   }
+  if (record.params !== undefined && (typeof record.params !== 'object' || record.params === null || Array.isArray(record.params))) {
+    throw new Error('Animation params must be an object');
+  }
   if (record.duration !== undefined && (typeof record.duration !== 'number' || !Number.isFinite(record.duration) || record.duration < 0)) {
     throw new Error('Animation duration must be a finite non-negative number of seconds');
   }
-  const duration = typeof record.duration === 'number' && Number.isFinite(record.duration)
-    ? record.duration
-    : undefined;
+  if (record.durationFrames !== undefined && (typeof record.durationFrames !== 'number'
+      || !Number.isSafeInteger(record.durationFrames) || record.durationFrames < 0)) {
+    throw new Error('Animation durationFrames must be a non-negative safe integer number of frames');
+  }
+  if (record.duration !== undefined && (!Number.isFinite(fps) || fps <= 0)) {
+    throw new Error('Animation duration in seconds requires a finite positive fps');
+  }
+  const secondsFrames = record.duration === undefined ? undefined : Math.round((record.duration as number) * fps);
+  if (secondsFrames !== undefined && !Number.isSafeInteger(secondsFrames)) {
+    throw new Error('Animation duration converts to an invalid frame count');
+  }
+  if (secondsFrames !== undefined && record.durationFrames !== undefined && secondsFrames !== record.durationFrames) {
+    throw new Error('Conflicting animation duration and durationFrames');
+  }
+  if (record.duration !== undefined && record.durationFrames === undefined && record.type === undefined) {
+    throw new Error('Animation duration in seconds requires the public type field');
+  }
+  if (record.durationFrames !== undefined && record.duration === undefined && record.type !== undefined) {
+    throw new Error('Animation durationFrames requires the package id field');
+  }
+  const durationFrames = record.durationFrames ?? secondsFrames;
   return {
-    id: record.type,
-    durationFrames: duration === undefined ? undefined : Math.round(duration * fps),
+    id,
+    ...(durationFrames === undefined ? {} : {durationFrames}),
     ...(record.easing === undefined ? {} : {easing: record.easing}),
     params: record.params as Record<string, unknown> | undefined,
   };
@@ -148,9 +171,7 @@ export const normalizeAnimationRefs = (
     return undefined;
   }
   if (Array.isArray(refs)) {
-    return refs
-      .map((ref) => normalizeOneAnimationRef(ref, fps))
-      .filter((ref): ref is AnimationReferenceItem => ref !== undefined);
+    return refs.map((ref) => normalizeOneAnimationRef(ref, fps) as AnimationReferenceItem);
   }
   return normalizeOneAnimationRef(refs, fps);
 };

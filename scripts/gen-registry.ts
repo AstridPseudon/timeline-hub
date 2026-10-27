@@ -3,6 +3,7 @@
 // their own resolved maps and pass them in; installed packages are immutable.
 import {readFileSync, writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {MOTION_CURVES} from '../typescript/src/lib/motion-curves.generated';
 
 const root = new URL('../typescript/src/', import.meta.url);
 const inputs = JSON.parse(readFileSync(new URL('./builtin-inputs.json', import.meta.url), 'utf8')) as {
@@ -58,11 +59,53 @@ outputs['registry.generated.ts'] = header
   + `export const BUNDLED_THEME_VERSIONS = ${JSON.stringify(Object.fromEntries(inputs.themes.map(theme => [theme.id, theme.version])))} as const;\n`
   + `export const BUNDLED_THEMES = ${JSON.stringify(Object.fromEntries(inputs.themes.map(theme => {const data = json(`builtins/themes/${theme.id}/theme.json`); return [theme.id, {id: data.id, visual: data.visual}];})), null, 2)};\n`;
 
+const easing = Object.fromEntries(Object.entries(MOTION_CURVES).map(([canonical, spec]) => [canonical, [...spec.aliases]]));
+const easingNames = Object.entries(easing).flatMap(([canonical, aliases]) => [canonical, ...aliases]);
+const animations = Object.fromEntries(inputs.animations.map(id => {
+  const meta = json(`builtins/animations/${id}/meta.json`);
+  const defaults = json(`builtins/animations/${id}/defaults.json`);
+  const parameters = {...(meta.parameters ?? {})} as Record<string, Record<string, unknown>>;
+  if (parameters.easing) parameters.easing = {...parameters.easing, enum: easingNames};
+  return [id, {
+    phases: Array.isArray(meta.phase) ? meta.phase : [meta.phase ?? 'any'],
+    defaultDurationFrames: defaults.durationFrames ?? meta.defaultDurationFrames,
+    parameters,
+  }];
+}));
+const transitions = Object.fromEntries(inputs.transitions.map(id => {
+  const meta = json(`builtins/transitions/${id}/meta.json`);
+  const defaults = json(`builtins/transitions/${id}/defaults.json`);
+  return [id, {defaultDurationFrames: defaults.durationFrames ?? meta.defaultDurationFrames,
+    parameters: meta.parameters ?? {}}];
+}));
+const visualCatalog = {
+  animations,
+  transitions,
+  easing,
+  fields: {
+    animation: {
+      public: {id: 'type', duration: {unit: 'seconds'}, params: 'object'},
+      package: {id: 'id', duration: 'durationFrames', durationUnit: 'frames', easing: 'canonical-or-alias', params: 'object'},
+    },
+    transition: {
+      canonical: {id: 'id', duration: 'durationFrames', durationUnit: 'frames', ownership: 'incoming'},
+      public: {id: 'type', duration: {unit: 'seconds'}, params: 'object'},
+    },
+    effects: {collection: 'array', legacyFadeObjects: 'normalize-only'},
+  },
+};
+outputs['visual-catalog.generated.ts'] = header
+  + `export const VISUAL_CATALOG = ${JSON.stringify(visualCatalog, null, 2)} as const;\n`
+  + 'export type VisualCatalog = typeof VISUAL_CATALOG;\n';
+outputs['visual-catalog.generated.json'] = `${JSON.stringify(visualCatalog, null, 2)}\n`;
+
 let stale = false;
 for (const [file, content] of Object.entries(outputs)) {
   const path = new URL(file, root);
   if (process.argv.includes('--check')) {
-    if (readFileSync(path, 'utf8') !== content) {
+    let current = '';
+    try { current = readFileSync(path, 'utf8'); } catch { /* Missing generated output is stale. */ }
+    if (current !== content) {
       console.error(`${file} is stale. Run npm run gen-registry.`);
       stale = true;
     }

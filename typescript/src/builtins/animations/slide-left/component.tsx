@@ -7,6 +7,7 @@ export const SlideLeft = ({
   fps,
   durationFrames,
   elapsedFrames,
+  phase,
   progress: explicitProgress,
 }: WrapperAnimationProps): ReactElement => {
   const progress = explicitProgress ?? spring({
@@ -25,8 +26,10 @@ export const SlideLeft = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        opacity: progress,
-        transform: `translateX(${explicitProgress === undefined ? interpolate(progress, [0, 1], [80, 0]) : 80 * (1 - progress)}px)`,
+        opacity: phase === 'exit' ? 1 - progress : progress,
+        transform: `translateX(${phase === 'exit'
+          ? (explicitProgress === undefined ? interpolate(progress, [0, 1], [0, -80]) : -80 * progress)
+          : (explicitProgress === undefined ? interpolate(progress, [0, 1], [80, 0]) : 80 * (1 - progress))}px)`,
       }}
     >
       {children}

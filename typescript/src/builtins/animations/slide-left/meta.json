@@ -1,1 +1,1 @@
-{"id":"slide-left","name":"Slide Left","kind":"wrapper","phase":"entrance","defaultDurationFrames":18,"supportsEasing":true}
+{"id":"slide-left","name":"Slide Left","kind":"wrapper","phase":"exit","defaultDurationFrames":18,"supportsEasing":true,"parameters":{"easing":{"type":"string"}}}

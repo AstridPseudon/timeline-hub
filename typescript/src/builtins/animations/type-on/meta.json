@@ -1,1 +1,1 @@
-{"id":"type-on","name":"Type On","kind":"hook","phase":"entrance","defaultDurationFrames":120,"supportsEasing":true}
+{"id":"type-on","name":"Type On","kind":"hook","phase":"entrance","defaultDurationFrames":120,"supportsEasing":true,"parameters":{"easing":{"type":"string"},"startFrame":{"type":"number","minimum":0},"durationFraction":{"type":"number","minimum":0,"maximum":1},"showCaret":{"type":"boolean"}}}

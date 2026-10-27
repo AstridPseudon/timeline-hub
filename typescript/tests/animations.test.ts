@@ -10,6 +10,9 @@ import type {AnimationRegistries} from '../src/registries';
 import type {BaseAnimationProps, HookAnimationProps, WrapperAnimationProps} from '../src/effects-types';
 import {composeAnimations, resolveAnimationReferences} from '../src/lib/animations';
 import {animationProgress, normalizeAnimationEasing} from '../src/lib/animation-easing';
+import {normalizeAnimationRefs} from '../src/lib/clip-look';
+import {VISUAL_CATALOG} from '../src/visual-catalog.generated';
+import {composeClipAnimationPhase} from '../src/ClipAnimationPhase';
 import type {TimelineClip} from '../src/types';
 
 const clip: TimelineClip = {id: 'title', track: 'v', at: 0, hold: 4, clipType: 'text-card'};
@@ -20,6 +23,51 @@ const markup = (content: ReactNode) => renderToStaticMarkup(createElement('secti
 test('pure animation metadata is the normal generated registry metadata', () => {
   assert.strictEqual(PURE_ANIMATION_DEFAULTS, ANIMATION_DEFAULTS);
   assert.strictEqual(PURE_ANIMATION_META, ANIMATION_META);
+});
+
+test('generated visual catalog exposes supported animation phases, units and parameters', () => {
+  assert.deepEqual(VISUAL_CATALOG.animations.fade.phases, ['entrance', 'exit']);
+  assert.deepEqual(VISUAL_CATALOG.animations['slide-left'].phases, ['exit']);
+  assert.deepEqual(VISUAL_CATALOG.animations['type-on'].phases, ['entrance']);
+  assert.deepEqual(VISUAL_CATALOG.easing['in-out'], ['inOut', 'inout', 'in_out', 'ease-in-out']);
+  assert.deepEqual(VISUAL_CATALOG.animations['type-on'].parameters, {
+    easing: {type: 'string', enum: ['linear', 'in', 'ease-in', 'out', 'ease-out', 'in-out', 'inOut', 'inout', 'in_out', 'ease-in-out', 'step']},
+    startFrame: {type: 'number', minimum: 0},
+    durationFraction: {type: 'number', minimum: 0, maximum: 1},
+    showCaret: {type: 'boolean'},
+  });
+});
+
+test('public seconds animation references normalize without dropping malformed or conflicting entries', () => {
+  assert.deepEqual(normalizeAnimationRefs({type: 'fade', duration: 0.4, params: {easing: 'ease-in'}}, 30),
+    {id: 'fade', durationFrames: 12, params: {easing: 'ease-in'}});
+  assert.deepEqual(normalizeAnimationRefs({id: 'fade', type: 'fade', duration: 0.4, durationFrames: 12}, 30),
+    {id: 'fade', durationFrames: 12, params: undefined});
+  assert.throws(() => normalizeAnimationRefs([{type: 'fade', duration: 0.4}, null], 30), /id or type/);
+  assert.throws(() => normalizeAnimationRefs({id: 'fade', type: 'fade-up'}, 30), /Conflicting/);
+  assert.throws(() => normalizeAnimationRefs({type: 'fade', duration: 0.4, durationFrames: 11}, 30), /Conflicting/);
+  assert.throws(() => normalizeAnimationRefs({type: 'fade', duration: Number.POSITIVE_INFINITY}, 30), /finite/);
+  assert.throws(() => normalizeAnimationRefs({id: 'fade', durationFrames: 1.5}, 30), /safe integer/);
+  assert.throws(() => normalizeAnimationRefs({id: 'fade', duration: 1}, 30), /requires the public type/);
+});
+
+test('built-in phase and declared parameter validation refuses unsupported references', () => {
+  assert.equal(resolveAnimationReferences({id: 'slide-left'}, 'exit').length, 1);
+  assert.throws(() => resolveAnimationReferences({id: 'slide-left'}, 'entrance'), /phase 'exit'/);
+  for (const easing of ['linear', 'in', 'ease-in', 'out', 'ease-out', 'in-out', 'inOut', 'inout', 'in_out', 'ease-in-out', 'step']) {
+    assert.equal(resolveAnimationReferences({id: 'fade', easing}, 'exit')[0].easing, normalizeAnimationEasing(easing));
+  }
+  assert.throws(() => resolveAnimationReferences({id: 'fade', params: {unknown: 1}}, 'exit'), /does not support parameter/);
+  assert.throws(() => resolveAnimationReferences({id: 'type-on', params: {startFrame: -1}}, 'entrance'), /declared range/);
+  assert.throws(() => resolveAnimationReferences({id: 'type-on', params: {durationFraction: 1.1}}, 'entrance'), /declared range/);
+  assert.throws(() => resolveAnimationReferences({id: 'type-on', params: {showCaret: 'yes'}}, 'entrance'), /must be boolean/);
+});
+
+test('clip animation phase supplies clip text to type-on hooks', () => {
+  const output = composeClipAnimationPhase({clip: {...clip, params: {content: 'abcdefgh'}}, fps: 30,
+    theme: toRuntimeTheme(DEFAULT_THEME), phase: 'entrance', reference: {type: 'type-on', duration: 4},
+    clipFrames: 100, children: 'abcdefgh'}, 20);
+  assert.match(markup(output), /<span><span>a<\/span>/);
 });
 
 test('registration declares easing for new and overridden IDs, for hooks and wrappers', () => {
@@ -105,13 +153,13 @@ test('two mounted registry scopes keep custom support, params and progress isola
 
 test('bundled wrappers preserve normal motion and consume explicit progress themselves', () => {
   const style = (id: string, elapsedFrames: number, easing?: string): CSSProperties => {
-    const phase = id === 'slide-up' || id === 'fade' ? 'exit' : 'entrance';
+    const phase = id === 'slide-up' || id === 'slide-left' || id === 'fade' ? 'exit' : 'entrance';
     const node = composeAnimations({...input, phase, elapsedFrames, refs: {id, durationFrames: 12, easing}}) as ReactElement;
     assert.strictEqual(node.type, ANIMATION_REGISTRY[id]);
     return ((node.type as (props: unknown) => ReactElement)(node.props).props as {style: CSSProperties}).style;
   };
   for (const id of ['fade', 'fade-up', 'scale-in', 'slide-left', 'slide-up']) {
-    const exit = id === 'fade' || id === 'slide-up';
+    const exit = id === 'fade' || id === 'slide-up' || id === 'slide-left';
     assert.equal(style(id, 0).opacity, exit ? 1 : 0);
     assert.equal(style(id, 12).opacity, exit ? 0 : 1.002956228407837);
     assert.equal(style(id, 6, 'linear').opacity, 0.5);
@@ -120,7 +168,7 @@ test('bundled wrappers preserve normal motion and consume explicit progress them
   assert.equal(style('fade', 6).opacity, 0.5);
   assert.equal(style('slide-up', 6).transform, 'translateY(-15px)');
   assert.equal(style('fade-up', 6, 'linear').transform, 'translateY(20px)');
-  assert.equal(style('slide-left', 6, 'linear').transform, 'translateX(40px)');
+  assert.equal(style('slide-left', 6, 'linear').transform, 'translateX(-40px)');
   assert.equal(style('scale-in', 6, 'linear').transform, 'scale(0.9249999999999999)');
   // Omitted easing still selects the spring, rather than implicit linear.
   assert.notEqual(style('fade-up', 6).opacity, 0.5);

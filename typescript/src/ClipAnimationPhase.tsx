@@ -37,6 +37,9 @@ export const composeClipAnimationPhase = ({clip, fps, theme, phase, reference, c
     refs,
     phase,
     content: children,
+    text: typeof clip.text === 'string' ? clip.text
+      : typeof clip.params?.content === 'string' ? clip.params.content
+        : typeof clip.params?.text === 'string' ? clip.params.text : undefined,
     theme,
     fps,
     elapsedFrames,

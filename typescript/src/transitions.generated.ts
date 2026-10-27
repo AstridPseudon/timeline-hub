@@ -24,14 +24,30 @@ export const TRANSITION_META: Readonly<Record<string, Record<string, unknown>>> 
   "cross-fade": {
     "id": "cross-fade",
     "name": "Cross Fade",
-    "defaultDurationFrames": 12
+    "defaultDurationFrames": 12,
+    "parameters": {
+      "easing": {
+        "type": "string",
+        "enum": [
+          "linear"
+        ]
+      }
+    }
   },
   "fade": {
     "id": "fade",
     "name": "Fade Transition",
     "defaultDurationFrames": 12,
     "aliases": [
-      "cross-fade"
-    ]
+      "crossfade"
+    ],
+    "parameters": {
+      "easing": {
+        "type": "string",
+        "enum": [
+          "linear"
+        ]
+      }
+    }
   }
 };

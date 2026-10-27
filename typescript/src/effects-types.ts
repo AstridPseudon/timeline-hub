@@ -49,6 +49,7 @@ export type AnimationMeta = {
   defaultDurationFrames?: number;
   /** Component consumes explicit progress/easing; omitted support refuses authored easing. */
   supportsEasing?: boolean;
+  parameters?: Readonly<Record<string, {type: 'boolean' | 'number' | 'string'; minimum?: number; maximum?: number; enum?: readonly unknown[]}>>;
   [key: string]: unknown;
 };
 

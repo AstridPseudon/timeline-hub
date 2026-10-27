@@ -1,6 +1,6 @@
 {
   "name": "@banodoco/timeline-composition",
-  "version": "0.0.14",
+  "version": "0.0.16",
   "private": true,
   "description": "Portable timeline evaluator and Remotion composition with scoped element registries.",
   "type": "module",
@@ -49,6 +49,13 @@
       "remotion": "./dist/transitions.generated.js",
       "default": "./dist/transitions.generated.js"
     },
+    "./visual-catalog": {
+      "types": "./dist/visual-catalog.generated.d.ts",
+      "import": "./dist/visual-catalog.generated.js",
+      "remotion": "./dist/visual-catalog.generated.js",
+      "default": "./dist/visual-catalog.generated.js"
+    },
+    "./visual-catalog.json": "./dist/visual-catalog.generated.json",
     "./registries": {
       "types": "./dist/registries.d.ts",
       "import": "./dist/registries.js",

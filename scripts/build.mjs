@@ -19,7 +19,7 @@ fixDeclarations('dist');
 
 await build({
   entryPoints: ['index', 'evaluation', 'theme-api', 'registries', 'registry.generated',
-    'effects.generated', 'animations.generated', 'transitions.generated']
+    'effects.generated', 'animations.generated', 'transitions.generated', 'visual-catalog.generated']
     .map(name => `typescript/src/${name}.ts`),
   outdir: 'dist',
   bundle: true,
@@ -30,3 +30,4 @@ await build({
   jsx: 'automatic',
   external: ['react', 'react/*', 'react-dom', 'react-dom/*', 'remotion', '@remotion/media', '@remotion/layout-utils'],
 });
+cpSync('typescript/src/visual-catalog.generated.json', 'dist/visual-catalog.generated.json');

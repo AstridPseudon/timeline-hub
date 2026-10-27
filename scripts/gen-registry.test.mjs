@@ -13,8 +13,10 @@ test('package generation ignores installed host themes and checks all local regi
   for (const path of ['scripts', 'typescript/src', 'package.json']) {
     cpSync(join(sourceRoot, path), join(packageRoot, path), {recursive: true});
   }
-  const generated = ['registry', 'effects', 'animations', 'animation-metadata', 'transitions']
+  const generated = ['registry', 'effects', 'animations', 'animation-metadata', 'transitions', 'visual-catalog']
     .map(name => join(packageRoot, 'typescript', 'src', `${name}.generated.ts`));
+  const generatedJson = join(packageRoot, 'typescript', 'src', 'visual-catalog.generated.json');
+  const originalJson = readFileSync(generatedJson, 'utf8');
   const themeDir = join(packageRoot, 'node_modules', '@banodoco', `timeline-theme-test-${process.pid}`);
   const originals = generated.map(path => readFileSync(path, 'utf8'));
   mkdirSync(join(themeDir, 'src', 'effects', 'host-only'), {recursive: true});
@@ -33,6 +35,10 @@ test('package generation ignores installed host themes and checks all local regi
     assert.match(pureMetadata, /export const ANIMATION_META/);
     assert.doesNotMatch(pureMetadata, /builtins\/animations\/.*\/component/);
     assert.doesNotMatch(pureMetadata, /from ['"].*(?:react|remotion)/);
+    const catalog = readFileSync(generated.at(-1), 'utf8');
+    assert.match(catalog, /VISUAL_CATALOG/);
+    assert.doesNotMatch(catalog, /from ['"].*(?:react|remotion)/);
+    assert.deepEqual(JSON.parse(originalJson).animations['slide-left'].phases, ['exit']);
     for (const path of generated) {
       writeFileSync(path, readFileSync(path, 'utf8') + '// drift\n');
       const stale = run('--check');
@@ -40,6 +46,11 @@ test('package generation ignores installed host themes and checks all local regi
       assert.match(stale.stderr, /is stale/);
       writeFileSync(path, originals[generated.indexOf(path)]);
     }
+    writeFileSync(generatedJson, `${originalJson.trim()}\n// drift\n`);
+    const staleJson = run('--check');
+    assert.equal(staleJson.status, 1);
+    assert.match(staleJson.stderr, /visual-catalog\.generated\.json is stale/);
+    writeFileSync(generatedJson, originalJson);
     assert.equal(run('--check').status, 0);
   } finally {
     rmSync(packageRoot, {recursive: true, force: true});
