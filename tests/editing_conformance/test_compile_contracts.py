@@ -260,7 +260,12 @@ def test_media_specific_occurrence_projection_matches_shared_vectors():
         for clip in projected.config['clips']
         if clip.get('shot_occurrence_id') == 'occ-1'
     }
-    for clip_id, expected in vectors['expected'].items():
+    # Keep the shared fixture frozen; child declarations now win kind collisions.
+    expected_clips = {
+        **vectors['expected'],
+        'collision-parent-kind-wins': {'at': 0, 'from': 0.125, 'to': 2.125, 'timeline_duration': 2},
+    }
+    for clip_id, expected in expected_clips.items():
         clip = clips[clip_id]
         assert clip['at'] == pytest.approx(expected['at']), clip_id
         assert clip['from'] == pytest.approx(expected['from']), clip_id
