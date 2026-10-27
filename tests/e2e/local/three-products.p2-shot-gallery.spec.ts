@@ -161,6 +161,7 @@ appTest('C2 gallery drag into shot saves exactly one shot-local clip, reloads, a
 
   const dialog = await openEmbeddedCanonicalShot(page, seed.occurrenceId, 'F2 agent shot');
   await expect(page.locator('[data-dialog-backdrop]')).toHaveCount(0);
+  await expect(page.locator('[data-video-editor-instance]').first()).toHaveAttribute('inert', '');
   await expect(galleryImage).toBeVisible();
   await expect(dialog.locator('.timeline-wrapper').first()).toBeVisible();
 

@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { shallow } from 'zustand/shallow';
 import type { Shot } from '@/domains/generation/types/index.ts';
 import { Dialog, DialogContent, DialogTitle } from '@/shared/components/ui/dialog.tsx';
@@ -96,6 +96,7 @@ export function shouldKeepPublishedCanonicalCompositionOverride(
 }
 
 function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCreationPrompt, onOpenExtensionManager }: AstridTimelineEditorProps) {
+  const editorContentRef = useRef<HTMLDivElement>(null);
   const [videoModalShot, setVideoModalShot] = useState<Shot | null>(null);
   const [videoModalShowImages, setVideoModalShowImages] = useState(false);
   const [canonicalShotEditor, setCanonicalShotEditor] = useState<CanonicalShotOccurrence | null>(null);
@@ -135,6 +136,18 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
     error: runtime.shots?.canonicalCompositionError ?? runtime.shots?.error,
   });
   const [publishedCanonicalComposition, setPublishedCanonicalComposition] = useState<PublishedCanonicalCompositionOverride | null>(null);
+  useEffect(() => {
+    const shellRoot = editorContentRef.current?.closest<HTMLElement>('[data-video-editor-instance]');
+    if (!shellRoot) return undefined;
+    const previousInert = shellRoot.inert;
+    const hadInertAttribute = shellRoot.hasAttribute('inert');
+    shellRoot.inert = Boolean(canonicalShotEditor);
+    shellRoot.toggleAttribute('inert', Boolean(canonicalShotEditor));
+    return () => {
+      shellRoot.inert = previousInert;
+      shellRoot.toggleAttribute('inert', hadInertAttribute);
+    };
+  }, [canonicalShotEditor]);
   useEffect(() => {
     setPublishedCanonicalComposition(null);
   }, [runtime.timelineId]);
@@ -549,7 +562,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
   }, [commands, dataRef, selectedProjectId]);
 
   return (
-    <>
+    <div ref={editorContentRef} className="contents">
       {!hosted && !tourRunning && isDocumentShotMode && !isCanonicalEditor ? (
         <div role="status" data-canonical-load-state="legacy" className="border-b px-3 py-1.5 text-center text-xs">
           Canonical shot composition is unavailable; showing the explicit legacy shot view.
@@ -672,7 +685,7 @@ function AstridTimelineEditorComponent({ onOpenSequenceCreator, onOpenElementCre
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
 
