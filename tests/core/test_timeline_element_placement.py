@@ -12,7 +12,7 @@ import pytest
 from astrid.core.element import project_packs as packs
 from astrid.core.receipts.contract import CommandReceipt
 from astrid.sdk.contracts import DomainResult
-from astrid.sdk.timeline._command_state import State
+from astrid.sdk.timeline._command_state import CommandError, State
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document, document_from_bundle
 from astrid.sdk.timeline_elements import place_element
@@ -120,6 +120,29 @@ def test_wrong_admitted_revision_refuses_before_commit(monkeypatch, tmp_path, co
     result = _place(owner, {**ref, 'revision': 'sha256:' + '0' * 64})
     assert not result.ok and result.error.code == 'validation_error'
     owner.commit.assert_not_called()
+
+
+@pytest.mark.parametrize('kind', ['animation', 'transition'])
+def test_sdk_first_placement_rejects_unsupported_element_kinds(monkeypatch, tmp_path, configured, kind):
+    owner, ref, _, _ = _setup(monkeypatch, tmp_path, configured)
+    result = _place(owner, {**ref, 'kind': kind})
+    assert not result.ok and result.error.code == 'validation_error'
+    assert 'effect elements only' in result.error.message
+    owner.commit.assert_not_called()
+
+
+@pytest.mark.parametrize('kind', ['animation', 'transition'])
+def test_native_first_placement_rejects_unsupported_element_kinds(monkeypatch, tmp_path, configured, kind):
+    owner, ref, _, bundle = _setup(monkeypatch, tmp_path, configured)
+    command = {
+        'schema_version': 1,
+        'op': 'clip.set-element',
+        'version': '1',
+        'select': TARGET,
+        'args': {'elementRef': {**ref, 'kind': kind}},
+    }
+    with pytest.raises(CommandError, match='effect elements on am-discord clips only'):
+        execute(bundle, [command], schema_inputs=owner.schema_inputs, realm_id='realm')
 
 
 def test_stale_expected_head_refuses_before_commit(monkeypatch, tmp_path, configured):

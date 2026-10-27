@@ -130,6 +130,8 @@ def _clip_element(ctx, command, *, allow_initial=False):
         and 'elementRef' not in row
         and 'element_ref' not in row
     )
+    if initial_discord and element.get('kind') != 'effect':
+        raise CommandError('clip.place-element supports effect elements on am-discord clips only', ref=ref)
     if not isinstance(before, dict) and not initial_discord:
         raise CommandError('clip.set-element requires an existing element ref', ref=ref)
     if isinstance(before, dict) and (any(before.get(key) != element[key] for key in ('id', 'kind'))
