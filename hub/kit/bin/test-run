@@ -73,11 +73,12 @@ if [ -z "$RUN" ]; then
   [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
   [ $HV = heavy ] && [ $(alive heavy) -ge 1 ] && { echo "a full suite is already running" | tee $D/why; exit 3; }
   [ $HV = light ] && [ $(alive light) -ge 3 ] && { echo "3 targeted/named runs already running" | tee $D/why; exit 3; }
-  FLOOR_BYTES=5000000000; if [ "$HV" = heavy ]; then FLOOR_BYTES=5200000000; [ "$suite" = agent-core-full ] && FLOOR_BYTES=4700000000; fi
+  # 27 Oct 00:00Z (owner: "let it go right to the wire"): floors cut to what a run physically needs to finish; light 1.0 GB, heavy 2.0 GB (an App verify peaks at ~1.8 GB)
+  FLOOR_BYTES=1000000000; if [ "$HV" = heavy ]; then FLOOR_BYTES=2000000000; [ "$suite" = agent-core-full ] && FLOOR_BYTES=2000000000; fi
   [ -n "$MEASURED_FLOOR" ] && FLOOR_BYTES=$MEASURED_FLOOR
   DF_OUTPUT=$(df -B1 --output=avail /home/user 2>/dev/null) || { echo "disk availability unreadable; refusing admission" | tee "$D/why"; exit 3; }
   AVAILABLE_BYTES=$(printf '%s\n' "$DF_OUTPUT" | awk '$1 ~ /^[0-9]+$/ { if (++n == 1) value=$1 } END { if (n != 1) exit 1; print value }') || { echo "disk availability invalid; refusing admission" | tee "$D/why"; exit 3; }
-  [ "$AVAILABLE_BYTES" -le 4500000000 ] && { echo "low disk (available=${AVAILABLE_BYTES} bytes; no new runs below or at 4500000000 bytes)" | tee "$D/why"; exit 3; }
+  [ "$AVAILABLE_BYTES" -le 800000000 ] && { echo "low disk (available=${AVAILABLE_BYTES} bytes; no new runs below or at 800000000 bytes)" | tee "$D/why"; exit 3; }
   { [ "$AVAILABLE_BYTES" -lt "$FLOOR_BYTES" ] || { [ "$HV" = heavy ] && [ "$suite" != agent-core-full ] && [ -z "$MEASURED_FLOOR" ] && [ "$AVAILABLE_BYTES" -eq "$FLOOR_BYTES" ]; }; } && { echo "low disk (available=${AVAILABLE_BYTES} bytes; floor=${FLOOR_BYTES}, named agent-core-full inclusive, light inclusive, default heavy strictly above; measured receipt inclusive)" | tee "$D/why"; exit 3; }
   [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
   DEFER_RECREATED=1; setsid nohup "$0" --run "$ID" > "$D/runner.log" 2>&1 < /dev/null & echo $! > "$D/running"; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
