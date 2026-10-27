@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T03:47:51Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# runtime board, 2026-10-27T03:44:41.285236+00:00
+<!-- main | 2026-10-27T03:52:04Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T03:49:22.256567+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -96,7 +96,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | F-final README | Retain delivered prose pending owner choice | Owner decision | Main19:40 question | gated:owner | No Runtime worker authorized | Main asks whether to correct historical PENDING prose. Delivered archive and bounded independent review unchanged; no rebuild or review request. | Delivered ZIP unchanged |
 
-| Follow-up agenda | Receive stand-in proof progress | Main and Luna leads | Owner02:20 stand-in decision | doing | Existing A/B proof and C browser owners | B audit corrections now merged. A actual render tests fail; B21469 pixel parity fails. Main render worker active; no overall acceptance. | Delivered ZIP unchanged |
+| Follow-up agenda | Receive stand-in proof progress | Main and Luna leads | Owner02:20 stand-in decision | doing | Existing A/B proof and C browser owners | B audit corrections merged. Main kit terminal03:30; A host tests, B21469 parity and C30992 gallery interception fail. No overall acceptance. | Delivered ZIP unchanged |
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
@@ -126,7 +126,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: Main receives terminal diag-renderlane-0310; A host tests, B pixel parity and C Open Gallery interception remain with existing owners. C App B-parent ancestry remains open. B audit blocker clear. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 6256545792 bytes. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded sweep removed0; compact packed0 dirs and compressed3 old logs. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 6255112192 bytes. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. This pass sweep removed0; compact packed0 directories and is finishing old log compression. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -137,4 +137,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T03:44:41.285236+00:00. Inbox, HEADER, pipeline and A/B/C boards unchanged since03:33. Census2717 rows; no running Runtime worker, new assignment or ready task. Every blocked row rechecked against its existing owner board. Main terminal03:30 kit report exposes A21155 host-test failures, B21469 pixel parity and C30992 Open Gallery interception; peer0332 supplies the handoff. H/D/P START absent. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded maintenance earlier this round compressed3 old logs and removed0 directories, no refusal. No duplicate worker, body or review. [Pass evidence](rounds/20261027T034441Z-pass.json).
+Current pass: 2026-10-27T03:49:22.256567+00:00. Inbox, HEADER, pipeline and A/B/C boards unchanged. Census2717 rows; no running Runtime worker, new assignment or ready task. Every blocked row rechecked against its existing owner board. Main kit terminal03:30 exposes A21155 host-test failures, B21469 pixel parity and C30992 Open Gallery interception; peer0332 already supplies the handoff. H/D/P START absent. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded sweep completed and removed0 directories; compact packed0 directories and is finishing old log compression. No refusal, duplicate worker, body or review. [Pass evidence](rounds/20261027T034922Z-pass.json).
