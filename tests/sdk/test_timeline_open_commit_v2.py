@@ -276,6 +276,45 @@ def test_unknown_outcome_retries_exact_request_without_reevaluation(connected, m
     assert not any(word in replay["summary"].lower() for word in ("again", "redo", "re-appl"))
 
 
+def test_key_alias_replays_function_before_evaluation(connected):
+    tl = opened(connected)
+    _, generated, _ = connected
+    evaluations = []
+
+    def edit(working):
+        evaluations.append(True)
+        working.move("parent/clip:a", 7)
+
+    first = tl.commit(edit, key="public-key")
+    replay = opened(connected).commit(edit, key="public-key")
+    assert first["receipt"] == replay["receipt"]
+    assert replay["replayed"] is True
+    assert evaluations == [True]
+    assert len(generated.calls) == 2 and generated.calls[0] == generated.calls[1]
+
+
+def test_key_alias_conflict_refuses_before_state_mutation(connected):
+    tl = opened(connected)
+    _, generated, path = connected
+    before = path.read_bytes()
+    with pytest.raises(TimelineEditError, match="only one of key or idempotency_key"):
+        tl.commit(lambda working: working.move("parent/clip:a", 7),
+                  key="new", idempotency_key="legacy")
+    assert path.read_bytes() == before
+    assert generated.calls == []
+
+
+def test_key_alias_submits_fixed_command_list_with_exact_key(connected):
+    tl = opened(connected)
+    _, generated, _ = connected
+    preview = tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True)
+    commands = copy.deepcopy(preview["data"]["commands"])
+    accepted = tl.commit(commands, label="Fixed list", key="list-key")
+    assert accepted["receipt"]["idempotency_key"] == "list-key"
+    assert generated.calls[-1][1] == "list-key"
+    assert json.loads(generated.calls[-1][0])["commands"] == commands
+
+
 def test_failed_ack_persistence_reconciles_without_running_function(connected, monkeypatch):
     tl = opened(connected)
     _, generated, _ = connected
@@ -301,7 +340,7 @@ def test_dry_run_has_no_history_or_key_reservation_and_returns_commands_and_diff
     before = copy.deepcopy(tl.bundle)
     initial_head = tl.head
     preview = tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True,
-                        idempotency_key="caller-key")
+                        key="caller-key")
     assert preview["receipt"] is None and preview["data"]["status"] == "preview"
     assert "nothing committed or reserved" in preview["summary"]
     assert preview["undo"] is None
@@ -314,7 +353,7 @@ def test_dry_run_has_no_history_or_key_reservation_and_returns_commands_and_diff
     assert state["base"] == initial_head and state["pending"] == [] and state["flight"] is None
     assert "preview_key" not in state
     assert "commit_options" not in state and "evaluation" not in state and "acknowledged" not in state
-    accepted = tl.commit(preview["data"]["commands"], label="Accept preview", idempotency_key="caller-key")
+    accepted = tl.commit(preview["data"]["commands"], label="Accept preview", key="caller-key")
     assert accepted["receipt"] is not None
     assert accepted["undo"] == {"publications": [accepted["receipt"]["receipt_id"]]}
     assert accepted["summary"].startswith('Committed "Accept preview" as ')

@@ -293,7 +293,7 @@ class Timeline(Checkout):
         return result
 
     def commit(self, label_or_fn="Timeline edit", *, label=None, merge="fields", dry_run=False,
-               reads=None, idempotency_key=None):
+               reads=None, key=None, idempotency_key=None):
         """Accept staged edits, a fixed command list, or evaluate ``fn`` up to three times.
 
         Only an explicit conflict permits reevaluation. Calling again after a
@@ -305,6 +305,10 @@ class Timeline(Checkout):
         """
         if self._evaluating:
             raise TimelineEditError("a commit function cannot commit its own evaluation")
+        if key is not None and idempotency_key is not None:
+            raise TimelineEditError("pass only one of key or idempotency_key")
+        if key is not None:
+            idempotency_key = key
         if merge not in {"fields", "atomic"}:
             raise TimelineEditError("merge must be fields or atomic")
         if dry_run:
