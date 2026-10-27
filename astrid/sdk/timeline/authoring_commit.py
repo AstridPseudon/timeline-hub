@@ -85,7 +85,7 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
                              compilation: CandidateCompilation | None = None) -> dict[str, Any]:
     from ._command_state import equal
     from .commands import execute
-    from .emitter import _diff, emit_document_commands
+    from .emitter import emit_document_commands
     from .native_media_admission import registry_selections
 
     if compilation is None:
@@ -125,19 +125,10 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
     semantic_count = len(commands)
     placements = work['placements']
     # List guards use published physical edges, not local independent-shot IDs.
-    from ._doc_patch import Closure
-
-    physical = Closure(base).document['parent_revision']['payload']['occurrences']
-    physical_by_id = {row['occurrence_id']: row for row in physical}
-    target = [{**row, **{key: physical_by_id[row['occurrence_id']][key]
-                        for key in ('shot_id', 'shot_revision_id')}} for row in placements]
-    placement_changes: list[dict[str, Any]] = []
-    _diff(physical, target, 'parent', ('occurrences',), placement_changes)
+    placement_commands = physical_occurrence_commands(base, placements)
     work['placements'] = copy.deepcopy(base['placements'])
     payload_commands = emit_document_commands(base, work)
-    if placement_changes:
-        commands.append({'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
-                         'args': {'changes': placement_changes}})
+    commands.extend(placement_commands)
     commands.extend(payload_commands)
     if not commands:
         # Reaffirm the authored track collection with an ordinary previous-value
@@ -185,6 +176,70 @@ def authoring_commit_request(candidate: Mapping[str, Any], writer: Any, *,
         'base_publication_id': publication_id, 'commands': commands,
         'label': 'Publish authoring candidate', 'steps': steps, 'merge': 'atomic', 'source': {'via': 'python'},
         'rationale': 'Publish authoring candidate ' + compilation.candidate_digest}
+
+
+def physical_occurrence_commands(bundle: Mapping[str, Any],
+                                 placements: list[Mapping[str, Any]] | None = None
+                                 ) -> list[dict[str, Any]]:
+    """Lower occurrence order and placement edits to guarded physical patches.
+
+    Authoring bundles use local shot aliases. Runtime occurrences instead name
+    exact physical shot revisions, so carry those two identity fields forward
+    from the current authenticated closure while diffing the caller's ordered
+    placement rows. This lets a function stage occurrence edits without
+    weakening the emitter's closure ownership guard.
+
+    ``bundle`` must be the current command bundle before the placement change;
+    callers should capture preceding free edits before invoking this helper.
+    Membership changes remain semantic commands and are rejected here. Field
+    changes and collection order changes are separate sequential commands so
+    the inverse records each exact boundary.
+    """
+    from ._doc_patch import Closure
+    from .emitter import _diff
+
+    current = Closure(bundle).document['parent_revision']['payload']['occurrences']
+    desired = list(bundle['placements'] if placements is None else placements)
+    current_by_id = {row['occurrence_id']: row for row in current}
+    local_by_id = {row['occurrence_id']: row for row in bundle['placements']}
+    desired_ids = [row.get('occurrence_id') for row in desired]
+    if (len(current_by_id) != len(current)
+            or any(not isinstance(identity, str) or not identity for identity in desired_ids)
+            or len(set(desired_ids)) != len(desired_ids)
+            or set(desired_ids) != set(current_by_id)):
+        raise AuthoringBundleError('occurrence placement edits cannot change closure membership')
+    if any(row.get('shot_id') != local_by_id[row['occurrence_id']].get('shot_id') for row in desired):
+        raise AuthoringBundleError('occurrence placement edits cannot change shot ownership')
+    target = [{**dict(row), **{key: current_by_id[row['occurrence_id']][key]
+                               for key in ('shot_id', 'shot_revision_id')}}
+              for row in desired]
+    changes: list[dict[str, Any]] = []
+    _diff(current, target, 'parent', ('occurrences',), changes)
+    if not changes:
+        return []
+    # A list.move records the whole occurrence collection. Apply field edits
+    # first so the final collection write captures their final values too;
+    # otherwise immediate inverse sees the moved order with stale timing in
+    # the aggregate guard. The move still uses its original sequential order
+    # guard, but its row operand includes the preceding field edits.
+    moves = [change for change in changes if change['op'] == 'list.move']
+    fields = [change for change in changes if change['op'] != 'list.move']
+    target_by_id = {row['occurrence_id']: row for row in target}
+    for change in moves:
+        change['before'] = {'state': 'present', 'value': copy.deepcopy(target_by_id[change['id']])}
+
+    def command(group):
+        return {'schema_version': 1, 'op': 'doc.patch', 'version': '1', 'select': None,
+                'args': {'changes': group}}
+
+    # Keep collection order separate from timing fields so the inverse sees
+    # complete timing at its aggregate boundary before restoring row order.
+    result = []
+    if fields:
+        result.append(command(fields))
+    if moves:
+        result.append(command(moves))
+    return result
 
 
 def _materialize_duplicates(base: dict[str, Any], work: dict[str, Any]) -> tuple[
