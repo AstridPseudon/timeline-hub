@@ -102,29 +102,29 @@ after `commit` returns.
 |---|---|
 | `t.add(path, at=, hold=, track=, id=)` | Imports a local image, video or audio file (relative to the working directory) and places it. See the note below |
 | `t.add_text(text, at=, hold=, track="titles", id=)` | Places a plain text clip at `at` timeline seconds for `hold` seconds |
-| `t.track("titles", above="V2")` | Creates that track above `V2`, or selects the existing one (never a second); `.rename("Opening")` labels it |
+| `t.track("titles", above="V2")` | Creates that track, or selects the existing one (never a second), and puts it above `V2`, moving an existing track too (committing that move is not yet runtime-qualified); `.rename("Opening")` labels it |
 | `clip.on(seconds)` | Moves the start to that timeline time; the length stays. See the note below |
 | `clip.trim(in_s, out_s)` | Sets the source window in **file** seconds; the start stays, the length follows |
 | `clip.hold_for(seconds)` | Sets a literal length; on video or audio the source window keeps its in-point and refuses a length the file cannot fill |
 | `clip.set_track("V2")` | Moves the clip to another existing track |
 | `clip.split(at, id="right-id")` | Cuts at timeline seconds and returns the left half, which keeps the original id; the right is `t.clip("right-id")` |
-| `clip.swap_asset(path_or_key)` | Plays another file (imported) or catalog key in place; the start stays |
+| `clip.swap_asset(path_or_key)` | Plays another file (imported) or catalog key in place; the start stays. Pending E14: image and video keep their length; audio that played its whole file plays the whole new one |
 | `clip.remove()` | Deletes the clip and leaves its gap |
-| `t.arrange(occurrence_ids, at=0, gap=0)` | Places shot occurrences in that order from `at`, `gap` apart (timeline seconds); refuses to overlap a shot you did not select |
+| `t.arrange(occurrence_ids, at=0, gap=0)` | Places shot occurrences in that order from `at`, `gap` apart (timeline seconds), leaving their old slots empty; refuses to overlap a shot you did not select |
 | `t.insert_time(at, seconds, music=)` | Opens time; everything later moves later |
 | `t.ripple_delete(start, end, music=)` | Removes a window from every track and closes it up |
 | `t.close_gap(before=word, keep=0, music=)` | Shortens the silence between the previous word and this one (a Word or its text) to `keep` seconds |
 
-**`clip.on` with a number:** you always give timeline seconds. On a narrated
-film the clip belongs to a cut, so the time is stored relative to that cut's
-start and the clip moves with the cut if the narration is re-flowed. To follow
-a word instead, give a moment string (below).
+**`clip.on` with a number** is always timeline seconds. On a plain timeline it
+also clears any moment string the clip had. On a narrated film it is stored
+relative to the start of the clip's cut, so the clip moves with the cut if the
+narration is re-flowed. To follow a word, give a moment string (below).
 
-**`t.add`:** `at` is timeline seconds; `hold=N` gives a still N seconds, and
-a video or audio file without `hold` plays whole. Name the `track`: a missing
-one is created to match the file, a track of the wrong kind refuses. Helpers
-chain, `t.add("a.mp4", at=0, track="V1", id="a").trim(0, 4)`; give new clips
-an explicit `id` so later steps and reports can name them.
+**`t.add`:** `at` is timeline seconds. With `hold=N` a still lasts N seconds
+and video or audio plays source seconds 0–N (a draft rule E14 checks); without
+`hold` they play whole. Name the `track`: a missing one is created to match
+the file, a track of the wrong kind refuses. Helpers chain, `t.add("a.mp4",
+at=0, track="V1", id="a").trim(0, 4)`; give new clips an explicit `id`.
 
 ### Words and beats
 
@@ -147,19 +147,20 @@ beats near that word with their moment strings. The grammar is in the front door
 ### Ripple is explicit
 
 `insert_time`, `ripple_delete` and `close_gap` move everything after the
-point on every track: picture, audio and text. A clip spanning the point is
+point on every track: picture, audio and text. Picture spanning the point is
 held longer (insert) or shortened (delete); clips wholly inside a removed
-window are deleted; audio spanning it is split so later sound stays in sync.
-By default (`music="keep_end"`) the music bed is cut at a bar with a crossfade
-so it still ends with the film; `t.ripple_delete(20, 22, music="plays_on")`
-leaves the bed where it was, so the picture after the edit moves against its
-beats. On a flat timeline a ripple refuses to move a clip that carries a
-moment string, animation or transition.
+window are deleted. A **music bed** (audio on a track named `music`, or with a
+beat grid) is never split at the edit; other audio spanning a removed window
+is, so later sound stays in sync (a bed on `A1` without a beat grid splits).
+`music="keep_end"` (default) cuts the bed at a bar with a crossfade so it
+still ends with the film; `t.ripple_delete(20, 22, music="plays_on")` leaves
+it whole where it was, so the picture after the edit moves against its beats.
+E14 checks both at the accepted runtime. On a flat timeline a ripple refuses
+to move a clip that carries a moment string, animation or transition.
 
 A 15-second cut, `t.ripple_delete(15, t.duration)`, removes everything after
-15 s on every track, an end card included. To keep the card, delete up to it:
-`t.ripple_delete(15, t.clip("end-card").start)` moves it to 15 s, and the film
-ends one card later.
+15 s, an end card included. To keep the card, delete up to it:
+`t.ripple_delete(15, t.clip("end-card").start)`; the film ends one card later.
 
 ## Preview, then apply the reviewed list
 
@@ -233,10 +234,9 @@ landed keys return their receipts (discard a clashed timeline first). To skip
 a timeline, check first and record it: `if not any(c.id == "sponsor-card"
 for c in tl.clips()): record(ep, status="skipped"); continue`.
 
-**Variants** start from a copy; the source is only read.
-`tl.duplicate(as_="variant-a")` returns `destination_setup` and
-`copy_receipt` (repeating it returns the same copy); then
-`Timeline.open(project, "variant-a")`. `timelines archive variant-a --project
+**Variants** start from a copy; the source is only read. `tl.duplicate(as_="variant-a")`
+returns `destination_setup` and `copy_receipt` (a repeat returns the same copy);
+then `Timeline.open(project, "variant-a")`. `timelines archive variant-a --project
 <project>` removes an unwanted copy; `timelines recover` brings it back.
 
 ## Direct CLI and the sheet
@@ -260,11 +260,10 @@ edit the rows, then `timelines apply <timeline> cut.sheet --idempotency-key shee
 
 A commit returns `r["data"]["status"]` (`accepted`; `merged` or `rebased` when
 other edits landed first; `preview`) and `r["receipt"]["receipt_id"]` (`None`
-for a preview). Report the label, receipt, imported files (only a preview
-lists them yet) and how to undo. Catch `CommitConflict` before
-`TimelineEditError` (`exc.failure` holds Runtime's details); any other means
-nothing landed, unless it says no reply could be verified. Messages read
-*what went wrong*, *where*, *what to do*:
+for a preview). Report the label, receipt, imported files (only a preview lists
+them yet) and how to undo. Catch `CommitConflict` before `TimelineEditError`
+(`exc.failure` holds Runtime's details); any other means nothing landed, unless
+it says no reply could be verified. Messages read *what went wrong*, *where*, *what to do*:
 
 | Headline | Fix |
 |---|---|
@@ -278,15 +277,16 @@ nothing landed, unless it says no reply could be verified. Messages read
 ## Looking at the result
 
 A commit and a read-back prove timing and structure, not appearance. Unless
-the person asks for frames or a render, give them the editor link
-(`https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-id>`)
-and the times to check, and say the look is unverified.
+the person asks for frames or a render, give them the times to check and the editor link,
+`https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-id>`
+(`<timeline-id>` is the `timeline_id` from `timelines list --json`); say the look is unverified.
 
 <!-- Project P's perception guidance replaces this section; frame commands are in references/render-inspect-transfer.md until then. -->
 
 ## Not possible yet
 
 - A beat list; beats only through moment strings and `words --beats`.
+- Changing existing text in place (`clip.set(text=...)`): not qualified, awaiting E14.
 - Ripple on one track only: every ripple moves every track.
 - Grouping existing clips into a new shot (beyond `timelines restructure`).
 - A commit or undo across several timelines; loop per timeline.
