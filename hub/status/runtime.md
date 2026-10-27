@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T11:27:44Z | dispatcher heartbeat 13s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-27T11:27:15.391219+00:00
+<!-- main | 2026-10-27T11:33:54Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T11:33:36.984552+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -153,9 +153,11 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | B policy dispatch wait | Advance recorded independent policy work | B Luna lead | Main10:30 and11:10 decisions | blocked:B | Sole B lead18 | [Published handoff](../../design/peer-runtime-to-orchestrator-20261027T111426Z-B-policy-dispatch-wait.md). No policy author found. Current App comparison queued; existing B ownership retained. | No Runtime change |
 
+| OPS acceptance retention | Protect three open acceptance runs | Manager route | Existing B and baseline rows | merged | Runtime manager | [Three KEEP markers added prospectively; original run files exact](rounds/20261027T113254Z-test-retention.json). No earlier custody claim. | No source change |
+
 Blockers: B lead18 owns narrower transform policy, restoration of staging scalar fixtures and acceptance checks; App16657 queued behind the baseline Agent suite. C waits B READY, then forwards App/Runtime and compares. A accepted; H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5282426880 bytes. Runtime census: 36 trees; 31 KEEP, 5 dirty and 6 without ended markers, with overlapping holds. No eligible recycle. Guarded sweep running; compact follows. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5229305856 bytes. Runtime census: 36 trees; 31 KEEP, 5 dirty and 6 without ended markers, with overlapping holds. No eligible recycle. Sweep and compact exit0: removed0, packed0, compressed2 logs. Sealed entries skipped. Three acceptance raw runs now KEEP. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -166,4 +168,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T11:27:15.391219+00:00. Worker check exit 0; all 2717 rows unchanged, live 0 and ready 0. Inbox and header unchanged. B App16657 queued behind baseline Agent32136, progressing at 32 percent. Narrower transform policy and fixture restoration remain open with sole B lead18; Main peer1114 already published. C round17 confirms own repairs complete and renewed B READY still required. A accepted; H/D/P START absent. Guarded sweep running; no eligible Runtime recycle. [Pass evidence](rounds/20261027T112715Z-pass.json).
+Current pass: 2026-10-27T11:33:36.984552+00:00. Second worker check exit0; all2717 rows unchanged, live0 and ready0. Inbox/header unchanged. C round17 confirms own repairs complete and renewed B READY required. B App16657 remains queued behind progressing Agent32136; narrower policy and fixture restoration remain open with sole B lead18. Added missing KEEP prospectively to original21773, App16657 and baseline32136; original request/status/summary/log bytes exact. Main handoff records retention and existing source work. A accepted; H/D/P START absent. Sweep/compact exit0, removed0 and compressed2 logs; sealed entries skipped. No eligible Runtime recycle or refusal. [Pass evidence](rounds/20261027T113336Z-pass.json).
