@@ -58,6 +58,42 @@ def _timeline_history(client, project, timeline_id):
     return result.data["items"]
 
 
+def _capture_occurrence_creates(bundle, rows):
+    """Capture each birth against the state produced by the preceding birth."""
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+
+    commands = []
+    for occurrence_id, shot_id, name, track, on, duration in rows:
+        command = capture_occurrence_create(
+            bundle, occurrence_id, shot_id, name=name, track=track, on=on, duration=duration,
+        )
+        commands.append(command)
+        bundle = execute(bundle, [command]).bundle
+    return commands
+
+
+def test_e14_occurrence_setup_commands_compose_from_empty_bundle():
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.commit import bundle_from_document
+
+    fixture = Path(__file__).parent / "fixtures" / "p1_feasibility" / "canonical_created_ids.json"
+    document = json.loads(fixture.read_text(encoding="utf-8"))["input"]
+    bundle = bundle_from_document(document)
+    track = capture_track_create(bundle, "parent", {"id": "V1", "kind": "visual"})
+    bundle = execute(bundle, [track]).bundle
+    births = _capture_occurrence_creates(bundle, [
+        ("first-occ", "first-shot", "First", "V1", 0, 2),
+        ("second-occ", "second-shot", "Second", "V1", 3, 2),
+    ])
+
+    result = execute(bundle, births)
+    assert [row["occurrence_id"] for row in result.bundle["placements"]] == [
+        "first-occ", "second-occ",
+    ]
+
+
 def _snapshot(timeline):
     return copy.deepcopy(timeline._runtime_document)
 
@@ -98,16 +134,16 @@ def _voice_file(path, *, seconds=2):
 def test_e14_twenty_real_occurrences_arrange_once_and_exact_undo(editing_case):
     _daemon, client, project, timeline = editing_case
     from astrid.sdk.timeline.commit import bundle_from_document
-    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 
     bundle = bundle_from_document(_snapshot(timeline))
-    births = [capture_occurrence_create(
-        bundle, f"occ-{index:02d}", f"shot-{index:02d}", name=f"Shot {index:02d}",
-        track="V1", on=index * 3, duration=2,
-    ) for index in range(20)]
+    history_before = _history(client, project)
+    births = _capture_occurrence_creates(bundle, [
+        (f"occ-{index:02d}", f"shot-{index:02d}", f"Shot {index:02d}", "V1", index * 3, 2)
+        for index in range(20)
+    ])
     setup = timeline.commit(births, label="Create twenty shot occurrences", key="e14-create-shots")
     assert setup["receipt"]["receipt_id"]
-    assert len(_history(client, project)) == 2  # Bootstrap plus occurrence setup.
+    assert len(_history(client, project)) == len(history_before) + 1
 
     before = _snapshot(timeline)
     history_before = _history(client, project)
@@ -203,29 +239,36 @@ def test_e14_twenty_ordered_media_one_receipt_exact_undo_and_timings(editing_cas
     assert timed_after != prior
     assert len(_history(client, project)) == len(timing_history) + 2
 
-    # Keep each setup request bounded. The measured edit below changes one clip
-    # on a timeline that already contains 200 real items; it is not a 200-item
-    # batch mislabeled as a timeline-size observation.
-    timing_setup_commits = 0
-    local = timeline_type.open(project, "film", client=client,
+    # Create the real 200 clips in one setup receipt, and measure setup apart
+    # from the one-clip timeline-size observation below.
+    media_id = result["imports"][0]["object_id"]
+    config = {
+        "tracks": [{"id": "V1", "kind": "visual"}],
+        "clips": [
+            {"id": f"timing-200-{index:03d}", "track": "V1", "asset": "frame",
+             "clipType": "image", "at": index * 2, "hold": 1, "params": {}}
+            for index in range(200)
+        ],
+        "registry": {"assets": {
+            "frame": {"media_id": media_id, "type": "image/png"},
+        }},
+    }
+    setup_started = time.perf_counter()
+    seeded = client.timelines.create_empty(
+        project=project, timeline_id="timing-200", name="E14 timing 200",
+        config=config, idempotency_key="e14-timing-200-setup",
+    )
+    timings["200_item_setup"] = round(time.perf_counter() - setup_started, 6)
+    assert seeded.ok, seeded.as_dict()
+    assert seeded.receipt and seeded.receipt.receipt_id
+    local = timeline_type.open(project, "timing-200", client=client,
                                outbox_path=tmp_path / "timing-200.json")
-    for batch in range(10):
-        start_index = batch * 20
-        seeded = local.commit(
-            lambda t, start_index=start_index: [
-                t.add(source, at=2000 + index * 2, hold=1, track="V1",
-                      id=f"timing-200-{index:03d}")
-                for index in range(start_index, start_index + 20)
-            ],
-            label=f"Seed 200-item timing fixture {batch + 1}",
-            key=f"e14-timing-200-seed-{batch + 1}",
-        )
-        assert seeded["receipt"]["receipt_id"]
-        timing_setup_commits += 1
+    timing_setup_commits = len(_timeline_history(client, project, "timing-200")) - 1
+    assert timing_setup_commits == 1
 
     prior = _snapshot(local)
     assert len(prior["parent_revision"]["payload"]["clips"]) == 200
-    timing_history = _history(client, project)
+    timing_history = _timeline_history(client, project, "timing-200")
     start = time.perf_counter()
     measured = local.commit(
         lambda t: t.clip("timing-200-000").hold_for(2),
@@ -234,16 +277,16 @@ def test_e14_twenty_ordered_media_one_receipt_exact_undo_and_timings(editing_cas
     )
     timings["200_item_timeline_edit"] = round(time.perf_counter() - start, 6)
     assert measured["receipt"]["receipt_id"]
-    assert len(_history(client, project)) == len(timing_history) + 1
+    assert len(_timeline_history(client, project, "timing-200")) == len(timing_history) + 1
     timed_after = copy.deepcopy(measured["data"]["canonical_document"])
     assert timed_after != prior
     undone = local.undo(publications=[measured["receipt"]["receipt_id"]])
     assert undone["data"]["canonical_document"] == prior
-    assert len(_history(client, project)) == len(timing_history) + 2
+    assert len(_timeline_history(client, project, "timing-200")) == len(timing_history) + 2
 
     evidence = Path(
         "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a"
-        "/scratchpad/orch/workers/D-E14-qualification-r6/evidence"
+        "/scratchpad/orch/workers/D-E14-fixture-r8/evidence"
     )
     evidence.mkdir(parents=True, exist_ok=True)
     (evidence / "e14-timings.json").write_text(
@@ -355,16 +398,22 @@ def test_e14_music_beds_at_window_start_and_inside_follow_policy_and_undo(
 def test_e14_mixed_recut_previews_then_applies_exact_literal_list_once(editing_case, tmp_path):
     _daemon, client, project, timeline = editing_case
     picture = _video_file(tmp_path / "recut-picture.mp4")
+    from astrid.sdk.timeline.capture import capture_track_create
+    from astrid.sdk.timeline.commands import execute
     from astrid.sdk.timeline.commit import bundle_from_document
-    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 
     bundle = bundle_from_document(_snapshot(timeline))
-    occurrences = [capture_occurrence_create(
-        bundle, f"recut-occ-{index}", f"recut-shot-{index}", name=f"Recut shot {index}",
-        track="V1", on=index * 3, duration=2,
-    ) for index in range(2)]
+    occurrence_track = capture_track_create(bundle, "parent", {"id": "V2", "kind": "visual"})
+    bundle = execute(bundle, [occurrence_track]).bundle
+    occurrences = _capture_occurrence_creates(bundle, [
+        (f"recut-occ-{index}", f"recut-shot-{index}", f"Recut shot {index}", "V2", index * 3, 2)
+        for index in range(2)
+    ])
     history_before_occurrences = _history(client, project)
-    occurrence_setup = timeline.commit(occurrences, label="Seed recut occurrences", key="e14-seed-recut-occurrences")
+    occurrence_setup = timeline.commit(
+        [occurrence_track, *occurrences],
+        label="Seed recut occurrences", key="e14-seed-recut-occurrences",
+    )
     assert occurrence_setup["receipt"]["receipt_id"]
     assert len(_history(client, project)) == len(history_before_occurrences) + 1
 
@@ -479,9 +528,9 @@ def test_e14_create_with_picture_audio_content_and_fps_undoes_to_bootstrap(editi
         project, voice.read_bytes(), media_type="audio/wav", filename=voice.name,
         idempotency_key="e14-create-voice",
     )
-    assert picture_upload.get("object_id") and voice_upload.get("object_id")
-    picture_id = picture_upload["object_id"]
-    voice_id = voice_upload["object_id"]
+    picture_id = picture_upload["data"]["object_id"]
+    voice_id = voice_upload["data"]["object_id"]
+    assert picture_id and voice_id
     config = {
         "tracks": [{"id": "picture", "kind": "visual"}, {"id": "voice", "kind": "audio"}],
         "theme_overrides": {"visual": {"canvas": {"width": 640, "height": 360, "fps": 24}}},
@@ -525,19 +574,18 @@ def test_e14_create_with_picture_audio_content_and_fps_undoes_to_bootstrap(editi
 def test_e14_duplicate_uses_complete_fresh_identity_maps_and_separate_setup_receipt(editing_case):
     _daemon, client, project, timeline = editing_case
     from astrid.sdk.timeline.commit import bundle_from_document
-    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 
     bundle = bundle_from_document(_snapshot(timeline))
-    births = [capture_occurrence_create(
-        bundle, f"duplicate-occ-{index}", f"duplicate-shot-{index}",
-        name=f"Duplicate shot {index}", track="V1", on=index * 3, duration=2,
-    ) for index in range(3)]
+    births = _capture_occurrence_creates(bundle, [
+        (f"duplicate-occ-{index}", f"duplicate-shot-{index}", f"Duplicate shot {index}",
+         "V1", index * 3, 2)
+        for index in range(3)
+    ])
     setup_history = _history(client, project)
     setup = timeline.commit(births, label="Seed duplicate source", key="e14-seed-duplicate")
     assert setup["receipt"]["receipt_id"]
     assert len(_history(client, project)) == len(setup_history) + 1
     source_before = _snapshot(timeline)
-    history_before = _history(client, project)
     duplicated = timeline.duplicate(as_="variant-e14")
     destination_id = duplicated["destination_setup"]["timeline_id"]
     assert duplicated["destination_setup"]["receipt"]
@@ -583,14 +631,14 @@ def test_e14_duplicate_unknown_copy_retry_reuses_destination_and_receipt(
 ):
     _daemon, client, project, timeline = editing_case
     from astrid.sdk.timeline.commit import bundle_from_document
-    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
     from astrid_runtime_client import ApiError
 
     bundle = bundle_from_document(_snapshot(timeline))
-    births = [capture_occurrence_create(
-        bundle, f"retry-occ-{index}", f"retry-shot-{index}",
-        name=f"Retry shot {index}", track="V1", on=index * 2, duration=1,
-    ) for index in range(2)]
+    births = _capture_occurrence_creates(bundle, [
+        (f"retry-occ-{index}", f"retry-shot-{index}", f"Retry shot {index}",
+         "V1", index * 2, 1)
+        for index in range(2)
+    ])
     setup_history = _history(client, project)
     setup = timeline.commit(births, label="Seed duplicate retry", key="e14-seed-duplicate-retry")
     assert setup["receipt"]["receipt_id"]
@@ -600,7 +648,8 @@ def test_e14_duplicate_unknown_copy_retry_reuses_destination_and_receipt(
     sent = []
 
     def lose_copy_response(project_id, timeline_id, body, **kwargs):
-        if timeline_id == "variant-e14-retry":
+        if (timeline_id == "variant-e14-retry"
+                and kwargs["idempotency_key"].endswith("-copy")):
             sent.append((copy.deepcopy(body), kwargs["idempotency_key"]))
             result = original(project_id, timeline_id, body, **kwargs)
             if len(sent) == 1:
@@ -640,7 +689,11 @@ def test_e14_function_conflict_reruns_but_literal_list_conflict_stays_fixed(
     from astrid.sdk.timeline.sync import CommitConflict
     from tests.editing_conformance.test_commit_runtime_m1 import open_client
 
-    peer_client = open_client(daemon, actor="e14-peer")
+    _, peer_credential = daemon.credentials.provision("e14-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="e14-peer", credential=peer_credential)
     peer = type(timeline).open(project, "film", client=peer_client, outbox_path=tmp_path / "peer.json")
     generated = client._remote._transport._generated
     original = generated.commit_timeline
