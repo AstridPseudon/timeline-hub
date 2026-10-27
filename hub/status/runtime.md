@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T00:52:30Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# runtime board, 2026-10-27T00:45:00.788432+00:00
+<!-- main | 2026-10-27T00:56:55Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T00:55:33.582133+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -96,15 +96,17 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | F-final README | Retain delivered prose pending owner choice | Owner decision | Main19:40 question | gated:owner | No Runtime worker authorized | Main asks whether to correct historical PENDING prose. Delivered archive and bounded independent review unchanged; no rebuild or review request. | Delivered ZIP unchanged |
 
-| Follow-up agenda | Retain deployed lead ownership | Main and three Luna leads | Main Hour 3 notes | doing | A B C leads | B unaccepted until T4 fallback fix is reviewed and central green. A prepares proof runner; Main locates film and pack. C collects real timings; C2 waits B and Main merge. | Delivered ZIP unchanged |
+| Follow-up agenda | Retain deployed lead ownership | Main and three Luna leads | Main Hour 3 notes | doing | A B C leads | A central 95 and 181 green; film and pack absent. B fallback fix reviewed, merged, central 72 PASS; Main acceptance next. C2 waits Main merge; C3 needs real sample. | Delivered ZIP unchanged |
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
-| OPS follow-up alert | Receive Main test lane and input repairs | Manager receiving | Main Hour 3 notes | doing | diag-testlane3-0050 and diag-locate-inputs-0050 | Main owns Node 22 Remotion resolution, stale running markers and targeted suite selection. Main locates film and admitted pack; Runtime has no repair assignment. | No Runtime change |
+| OPS follow-up alert | Receive Main repairs and input search | Manager receiving | Main Hour 3 notes | doing | diag-testlane3-0050 and diag-locate-inputs-0050 | A input search terminal: no film or full pack snapshot. Main test-lane repair remains owner. B fallback fix is central-green and reviewed. No Runtime repair assigned. | No Runtime change |
 
-Blockers: Main owns shared dependency repair, sandbox input search and B milestone acceptance after the T4 fallback fix. No Runtime task blocked. C2 waits B and Main merge; C owns real sandbox timing sample. D130 holds.
+| C3 sample route | Hand off ordinary sandbox socket limit | C Luna and Main | Existing C sample and review | doing | C-review-C3-runtime-sample-5 | Zero real saves after socket EPERM. [Peer route](../../design/peer-runtime-to-orchestrator-20261027T005115Z-C3-sandbox-sample-route.md); C keeps sampling ownership and timing gate. | Evidence only |
+
+Blockers: Main owns A film and pack receiving, remaining test-service repairs, and B milestone acceptance and staging merge. No Runtime task blocked. C2 waits Main merge; C owns the supported sample route. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 5768740864 bytes. Main owns follow-ups; no new Runtime task. All Runtime trees remain KEEP or dirty.
+live 0 / cap 3; ready-undispatched 0. Free 6154092544 bytes. Main owns follow-ups; no new Runtime task. All 36 Runtime trees remain 31 KEEP or 5 dirty.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -115,4 +117,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Received Main Hour 3 notes at 2026-10-27T00:45:00.788432+00:00. A B C boards changed; INBOX, HEADER and five old owner boards unchanged. B remains unaccepted until T4 fallback correction passes review and central tests. Main owns test-lane3 and input search; A prepares the real proof runner. C owns a representative sandbox add-element timing sample; C2 waits B and Main merge. No Runtime ask or new Runtime worker. [Pass evidence](rounds/20261027T004500Z-pass.json).
+Current pass: Completed initial check at 2026-10-27T00:54:59.082351+00:00. INBOX, HEADER and five old owner boards unchanged; no new Runtime ask. B fallback correction is reviewed, merged and central 72 PASS; Main acceptance and staging merge next. A inputs absent; C retains real timing sample gate. Normal bin/workers rt- exit 0, 2717 rows, no running row. All 36 Runtime trees checked: 31 KEEP and 5 dirty, no eligible recycle. Archive and sidecar hashes exact. No source, test, kit, pin, Git, cleanup, hub or daemon mutation. [Pass evidence](rounds/20261027T005459Z-pass.json). Ten-minute observation interval follows.
