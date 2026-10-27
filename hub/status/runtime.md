@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T05:41:19Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T05:39:03.829692+00:00
+<!-- main | 2026-10-27T05:45:54Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
+# runtime board, 2026-10-27T05:41:54.657909+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -104,17 +104,17 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C3 sample route | Receive measured central sampler | C Sol and Luna | Independent central sampler review | merged | C-C3-runtime-sampler-8; review PASS | Central 2349: 1 PASS, five saves and durable replays. Total 183–264 ms. Synthetic fixture does not justify optimizing the reported 20 seconds. | Runtime 0e238fa008 |
 
-| C2 B forward | Receive B ancestry and recovery repair | C and B Luna | B recovery fix and current tips | blocked:B | B-recovery-sanitize-9; C forward10 and review | B recovery remains active. C App forward10 and Runtime review own receiving; final B recovery adoption and C acceptance remain open. | Project branches |
+| C2 B forward | Receive merged B recovery source | B and C Luna | B reviewed source; C receiving | doing | B fix10 complete; C forward10 owners | B recovery5505 merged and central74 PASS. C owns final receiving; Main acceptance remains open. | B App5505e9176b |
 
 | C2 save and fork | Retain bounded provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Central58 PASS retained. Browser new-track drop422 remains open under Main correction; source tests do not qualify that live path. | App98784a1d |
 
-| C2 browser journey | Receive restored browser assertion | C Luna and reviewer | Meaningful parent-timeline assertion | merging | C-C2-assertion-fix-10; C-review-C2-assertion-fix-10 | Independent PASS; central browser 1 PASS, exit 0, 23 trace samples. Merge queued. Original harness 125 retained; overall C2 acceptance remains open. | Private C candidate |
+| C2 browser journey | Retain restored browser assertion | C Luna and reviewer | Meaningful parent timeline assertion | merged | C assertion10 and independent review10 | Independent PASS; central browser1 PASS exit0 with23 samples. C reports all3 corrections in integrated1a02991e0e. | C App1a02991e0e |
 
 | B5 audit receiving | Retain qualified B audit corrections | B Sol and Luna | Three independent PASS reviews | merged | B three authors and review6 workers | App122, Agent43, Runtime4 central PASS; actual project heads11fa,1566,9c95. All three reviewed and merged. Visual proof remains open. | Project11fa /1566 /9c95 |
 | B5 visual parity | Retain qualified Agent export proof | B Sol and Luna | Independent review and central proof | merged | B-agent-export-proof-9; independent review | Central targeted and render proof each 1 PASS, 1 deselected. Real Agent output through Composition 0.0.14 verifies overlap and gap colors. Owner-film proof excluded. | B Agent 778bad7892 |
-| B5 conformance | Receive staging and B-tip comparison | B Luna | Real Agent export proof | doing | B-conformance-staging-10; B-conformance-tip-10 | Both owners started 05:35. Results and independent review pending. B recovery remains active; no final B acceptance. | B project branches |
+| B5 conformance | Receive qualified staging and B comparison | B Luna and independent reviews | Central staging and B tip runs | merged | B conformance staging10b and tip10 | Both central4 FAIL17 PASS; same typed FPS location baseline failures. B declares stand-in milestone ready; Main acceptance pending. | B project branches |
 
-| C2 safety and new track | Receive reviewed product corrections | C Luna and reviewers | B forward; Main 04:40 scope | merging | C-C2-new-track-10; C-C2-modal-safety-10; independent reviews | Independent PASS; new-track central 37 PASS, safety 15 PASS. Merges queued. Safety browser hit Chromium SIGTRAP; full App comparison still owed. | Private C candidates |
+| C2 safety and new track | Receive integrated product corrections | C Luna and reviewers | Independent PASS; central checks | merged | C newtrack10 and safety10; independent reviews | Central37 and15 PASS; C reports integrated1a02991e0e. Safety browser SIGTRAP remains disclosed; full-unit verification owns remaining comparison. | C App1a02991e0e |
 
 | H one head | Retain later consolidation gate | Main and H Luna manager | A B C accepted and Main START | gated:A-B-C | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Combines owner pins and A B C; independent reviews and full suites precede acceptance. | Later phase |
 
@@ -132,9 +132,11 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
-Blockers: A owns the real pinned-element proof. B owns recovery normalization and the staging/B-tip conformance comparisons; real Agent export proof is green. C owns queued correction merges, browser safety proof and full App comparison. H/D/P acceptance and START gates remain closed. D130 holds.
+| C2 full App comparison | Receive current C App full-unit proof | C Luna | Integrated three corrections | doing | C-full-unit-10 | Worker dispatched on1a02991e0e; actual full result, staging comparison and review pending. | C App1a02991e0e |
+
+Blockers: A owns the real pinned-element proof. C owns final B recovery receiving, browser safety proof and the full App comparison. B reports milestone ready; Main acceptance remains pending. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5240586240 bytes. Runtime trees: 36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact completed this round: 0 dirs removed or packed, 7 old logs losslessly gzipped. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5440724992 bytes. Runtime trees: 36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact completed at05:33 and05:37: 0 dirs removed or packed,7 logs gzipped. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -145,4 +147,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T05:39:03.829692+00:00. Two passes completed about 10 minutes apart. INBOX and HEADER unchanged; Runtime census 2717 has no live or changed row. B real Agent export proof reviewed and centrally green; staging/B-tip conformance owners started 05:35 while recovery remains active. C assertion review has browser 1 PASS/exit 0; new-track and safety independent reviews PASS, all queued for merge. Safety browser Chromium SIGTRAP and full App comparison remain open. A owns actual pinned-element proof. No H/D/P START or ready Runtime task. Guarded maintenance ledgered; no eligible recycle. [Pass evidence](rounds/20261027T053807Z-pass.json).
+Current pass: 2026-10-27T05:41:54.657909+00:00. Inbox and header unchanged; Runtime census2717 has no live worker. Rechecked B: recovery5505 merged, central74 PASS; both conformance comparisons independently reviewed with same4 baseline failures. C reports integrated1a02991e0e containing3 corrections and full-unit worker active. A owns actual pinned-element proof. No H/D/P START or ready Runtime task. No eligible guarded recycle. [Pass evidence](rounds/20261027T054154Z-pass.json).
