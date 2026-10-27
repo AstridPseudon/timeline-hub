@@ -15,12 +15,47 @@ from runtime_protocol.timeline_commit_auth import (
     _inverse_stage_restore_clip_order,
     command_output,
     site,
+    validate_bindings,
     validate_claims,
 )
 from runtime_protocol.timeline_commit_port import route_path
 from runtime_protocol.timeline_commit_validation import digest, validate_commit_value
 
 service = port_tests.service
+
+
+def test_authenticated_inverse_effect_accepts_only_derived_hydrated_parent_pin():
+    payload = {"tracks": [{"id": "picture"}, {"id": "titles"}],
+               "clips": [{"id": "chapter-one", "track": "titles"}]}
+    parent = {"revision_id": "landing-parent", "content_digest": digest(payload), "payload": payload}
+    boundary = {"parent": parent}
+    change = {"op": "set", "ref": "parent", "path": ["clips"],
+              "before": {"state": "present", "value": payload["clips"]},
+              "value": [{"id": "chapter-one", "track": "titles"}]}
+    expected = {"revision_id": "base", "publication_id": "publication"}
+    request_value = {"base_revision_id": "base", "base_publication_id": "publication",
+                     "commands": [{}]}
+    step = {"id": "mixed-edit", "command_ordinals": [0], "patch": [change]}
+    binding = {"key": "commit.effect", "ref": "parent", "physical_ref": "parent",
+               "revision_id": "hydrated-parent", "content_digest": parent["content_digest"],
+               "policy": "fixed", "dependencies": [], "path": change["path"], "effect_ordinal": 0,
+               "boundary": {"base_revision_id": "base", "base_publication_id": "publication",
+                            "evaluated_head": expected, "step_id": "mixed-edit", "command_ordinal": 0,
+                            "phase": "effect", "side": "before"}}
+    records = {"commands": [{"bindings": [binding]}]}
+
+    def validate():
+        validate_bindings(request_value, records, expected, boundary, boundary, step, 0, {}, boundary, boundary,
+                          effect_boundaries={0: (boundary, boundary)}, input_parent_revision="hydrated-parent")
+
+    validate()
+    for field, forged in (("revision_id", "foreign-parent"),
+                          ("content_digest", "sha256:" + "0" * 64)):
+        original = binding[field]
+        binding[field] = forged
+        with pytest.raises(CommitRejected):
+            validate()
+        binding[field] = original
 
 
 def test_inverse_stage_restores_clip_order_from_exact_source_selection():

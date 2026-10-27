@@ -549,9 +549,10 @@ def validate_bindings(request, records, expected, boundary, output, step, ordina
         revision_matches = image is not None and binding.get("revision_id") == image["revision_id"]
         if (not revision_matches and image is not None and physical == "parent"
                 and phase == "effect" and captured.get("side") == "before"
-                and effect_boundaries is None and input_parent_revision is not None):
-            # Agent hydrates captured documents before deriving effect images.
-            # Equal payloads alone cannot authorize a different parent pin.
+                and input_parent_revision is not None):
+            # Agent hydrates captured documents before deriving effect images,
+            # including when the effect-before image is an inverse-stage boundary.
+            # The derived input pin, digest and physical parent must all agree.
             revision_matches = binding.get("revision_id") == input_parent_revision
         require(image is not None and binding.get("content_digest") == image["content_digest"]
                 and revision_matches,
