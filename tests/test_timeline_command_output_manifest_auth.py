@@ -76,3 +76,38 @@ def test_unconsumed_manifest_claim_is_rejected_at_the_command_boundary():
     with pytest.raises(CommitRejected):
         command_output(boundary, record, following, identity_scope=("project", "timeline"),
                        manifest=consumed, previous_manifest=previous)
+
+
+def test_ordered_derived_clip_mirrors_chain_within_one_command():
+    initial = [{"id": "old-intro"}, {"id": "scene"}]
+    first = [{"id": "scene"}]
+    second = [{"id": "scene", "at": 2}]
+    payload = {"config": {"clips": initial}, "occurrences": []}
+    boundary = {"parent": {"revision_id": "source-parent", "content_digest": digest(payload),
+                            "payload": payload}}
+    def capture(before, after):
+        return {"ref": "parent", "path": ["config", "clips"], "cause": 4,
+                "before": {"state": "present", "value": before},
+                "after": {"state": "present", "value": after}}
+
+    record = {"ordinal": 4, "writes": [], "derived_writes": [capture(initial, first), capture(first, second)],
+              "created": [], "dependencies": []}
+    final_payload = {"config": {"clips": second}, "occurrences": []}
+    following = {"bindings": [{"physical_ref": "parent", "revision_id": "final-parent",
+                                "content_digest": digest(final_payload),
+                                "boundary": {"phase": "input"}}]}
+
+    result = command_output(boundary, record, following)
+
+    assert result["parent"]["payload"]["config"]["clips"] == second
+    assert result["parent"]["content_digest"] == digest(result["parent"]["payload"])
+
+    forged = copy.deepcopy(record)
+    forged["derived_writes"][1]["before"] = {"state": "present", "value": initial}
+    with pytest.raises(CommitRejected, match="different input observation"):
+        command_output(boundary, forged, following)
+
+    forged = copy.deepcopy(record)
+    forged["derived_writes"][1]["cause"] = 3
+    with pytest.raises(CommitRejected, match="different input observation"):
+        command_output(boundary, forged, following)

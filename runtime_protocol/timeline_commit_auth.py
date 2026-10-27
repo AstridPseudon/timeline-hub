@@ -549,9 +549,10 @@ def validate_bindings(request, records, expected, boundary, output, step, ordina
         revision_matches = image is not None and binding.get("revision_id") == image["revision_id"]
         if (not revision_matches and image is not None and physical == "parent"
                 and phase == "effect" and captured.get("side") == "before"
-                and effect_boundaries is None and input_parent_revision is not None):
-            # Agent hydrates captured documents before deriving effect images.
-            # Equal payloads alone cannot authorize a different parent pin.
+                and input_parent_revision is not None):
+            # Agent hydrates captured documents before deriving effect images,
+            # including when the effect-before image is an inverse-stage boundary.
+            # The derived input pin, digest and physical parent must all agree.
             revision_matches = binding.get("revision_id") == input_parent_revision
         require(image is not None and binding.get("content_digest") == image["content_digest"]
                 and revision_matches,
@@ -2412,7 +2413,9 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
                        if accepted is not None else set())
     created_roots = {item.get("ref") for item in record.get("created", [])
                      if re.fullmatch(r"(?:shot|occurrence):[^/]+", item.get("ref", ""))}
-    for capture in [*record["writes"], *record["derived_writes"]]:
+    derived_mirrors = {}
+    for capture, is_derived in [*((capture, False) for capture in record["writes"]),
+                                *((capture, True) for capture in record["derived_writes"])]:
         capture_site = capture.get("ref", "") + "/" + "/".join(capture.get("path", []))
         if ((capture.get("ref") in created_roots & projected_roots and not capture.get("path"))
                 or capture_site in projected_roots):
@@ -2435,10 +2438,22 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
         )
         payload = result[ref]["payload"]
         path = stored_path(payload, ref, path)
-        before_payload = boundary.get(ref, result[ref])["payload"] if "cause" in capture else payload
-        require(value_equal(location(before_payload, path, absent_items=True), capture["before"]),
+        derived_mirror_site = (ref, tuple(path))
+        chains_derived_mirror = (
+            is_derived and "cause" in capture and ref == "parent"
+            and capture["cause"] == record.get("ordinal")
+            and tuple(path) in {("config", "clips"), ("clips",)}
+        )
+        if chains_derived_mirror and derived_mirror_site in derived_mirrors:
+            expected_before = derived_mirrors[derived_mirror_site]
+        else:
+            before_payload = boundary.get(ref, result[ref])["payload"] if "cause" in capture else payload
+            expected_before = location(before_payload, path, absent_items=True)
+        require(value_equal(expected_before, capture["before"]),
                 "provider intermediate command has a different input observation")
         result[ref]["payload"] = project_observation(payload, path, capture["after"])
+        if chains_derived_mirror:
+            derived_mirrors[derived_mirror_site] = copy.deepcopy(capture["after"])
         if ref == "parent":
             for mirror in ("clips", "registry"):
                 projected = result[ref]["payload"]
