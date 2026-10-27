@@ -10,7 +10,7 @@ from astrid.core.timeline.duration import clip_end_frame, clip_start_frame, clip
 from astrid.core.timeline.shot_composition import MissingDependencyError, validate_shot_composition
 from astrid.core.timeline.shot_composition_projection import (
     ShotCompositionProjectionError,
-    _track_merge,
+    _build_track_group,
     project_shot_composition,
 )
 from astrid.core.timeline.validators.meta import MetaValidationError
@@ -79,13 +79,20 @@ def test_asset_media_classification_requires_an_exact_asset_id() -> None:
     )
 
 
-def test_shot_only_layer_merge_matches_chapter_render_order_and_keeps_properties():
+def test_shot_visual_group_keeps_inner_order_properties_and_audio_suffix():
     fixture = json.loads(ORDER_FIXTURE.read_text(encoding="utf-8"))
     config = {"tracks": copy.deepcopy(fixture["film_tracks"])}
     shot_tracks = fixture["shot_tracks"]
-    _track_merge(config, {"tracks": shot_tracks})
-    assert [track["id"] for track in config["tracks"]] == fixture["expected_order"]
-    assert config["tracks"][3] == shot_tracks[2]
+    _build_track_group(config, {"tracks": shot_tracks}, {"occurrence_id": "occ", "track": "picture"})
+    assert [track["id"] for track in config["tracks"]] == [
+        "occ~chrome", "occ~type", "occ~fx", "occ~sprite", "occ~plate",
+        "picture", "sprite", "plate", "vo", "music", "sfx",
+    ]
+    assert config["tracks"][2] == {
+        **shot_tracks[2], "id": "occ~fx",
+        "app": {"group": {"id": "occ", "sourceTrack": "fx"}},
+    }
+    assert config["tracks"][-1] == shot_tracks[-1]
 
 
 def test_projection_preserves_frames_trim_audio_and_occurrence_placement() -> None:

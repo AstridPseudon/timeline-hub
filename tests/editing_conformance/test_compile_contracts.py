@@ -296,7 +296,8 @@ def test_closure_places_occurrences_at_eight_and_ten_seconds_on_the_picture_lane
     placed = {o['occurrence_id']: (o['at'], o['hold']) for o in projection.occurrences}
     expected = {row['occurrence_id']: (row['at_ms'] / 1000, row['duration_ms'] / 1000) for row in VISUAL['closure']['occurrences']}
     assert placed == expected
-    assert all(c['track'] == VISUAL['lane'] for c in projection.config['clips'] if 'shot_occurrence_id' in c)
+    assert all(c['track'] == f"{c['shot_occurrence_id']}~{VISUAL['lane']}"
+               for c in projection.config['clips'] if 'shot_occurrence_id' in c)
 
 
 def test_popup_closure_source_windows_are_half_open_on_the_shared_lane():
@@ -337,7 +338,8 @@ def test_cap_fade_editor_projection_keeps_clamped_timing_and_authored_source():
     before = deepcopy(graph)
     projection = project_shot_composition(graph)
     clip = _source_clip(projection, occurrence['occurrence_id'], vector['child']['id'])
-    editor = vector['editor_projection']
+    editor = {**vector['editor_projection'],
+              'track': f"{occurrence['occurrence_id']}~{vector['editor_projection']['track']}"}
     for field in ('id', 'at', 'track', 'clipType', 'asset', 'hold', 'effects'):
         assert clip[field] == editor[field]
     assert clip_end_frame(clip, vector['fps']) == vector['end_frame']
@@ -433,11 +435,21 @@ def test_single_occurrence_cap_through_normal_managed_projection(tmp_path, publi
         parent, shot_revisions=closure['shot_revisions'],
         internal_timeline_revisions=closure['internal_timeline_revisions'],
     )
-    assert snapshot.config == projected.config == vector['projected_config']
+    expected_config = deepcopy(vector['projected_config'])
+    expected_timeline = deepcopy(vector['serialized_timeline'])
+    # Layering changes only track identity/order; retain every timing, fade,
+    # source, and provenance assertion from the shared compile vectors.
+    for expected in (expected_config, expected_timeline):
+        expected['tracks'].insert(0, {
+            **expected['tracks'][0], 'id': 'image-occurrence~picture',
+            'app': {'group': {'id': 'image-occurrence', 'sourceTrack': 'picture'}},
+        })
+        expected['clips'][0]['track'] = 'image-occurrence~picture'
+    assert snapshot.config == projected.config == expected_config
     assert snapshot.registry == projected.registry == vector['registry']
     timeline_path, _, _ = materialize_managed_render_snapshot(tmp_path, snapshot)
     timeline = _serialize_timeline(timeline_path)
-    assert timeline == vector['serialized_timeline']
+    assert timeline == expected_timeline
     assert timeline['clips'][0]['hold'] == 4
     assert clip_end_frame(timeline['clips'][0], vector['fps']) == vector['end_frame']
     assert closure == before
