@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T02:55:39Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-27T02:48:08.057690+00:00
+<!-- main | 2026-10-27T03:00:06Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T02:59:02.176173+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -108,7 +108,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C2 save and fork | Retain qualified provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Independent PASS; central58 PASS. Exact-one-clip and shared-shot fork covered. Browser drag/reload/undo remains unverified. | App 98784a1d |
 
-| C2 browser journey | Receive complete gallery browser proof | C Luna and independent Luna | Hosted Vite environment | blocked:main | C author8; independent review8 | Candidate collects1; real browser NOTRUN after Vite Node OOM. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T025526Z-C2-hosted-Vite-OOM.md). | Private990607470b |
+| C2 browser journey | Receive real browser behavior proof | C Luna and independent Luna | Central Chromium startup | blocked:main | C author8 and review8 terminal | Spec sound and collection1; Vite heap retry builds, Chromium SIGTRAP before body. [Evidence](rounds/20261027T025902Z-pass.json). | App 1d4ebbb55b |
 
 | B5 audit receiving | Receive finite B correction findings | Main and B Luna | Original audit report | review | diag-audit-B5-0212; existing B/C leads | UNSOUND: projected clip save fields and App/Agent role mismatch. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T021520Z-B5-audit-terminal-UNSOUND.md). | No Runtime change |
 
@@ -124,9 +124,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A stand-in environment | Receive central render blocker | Main kit and A Luna | Real renderer and local preview | blocked:main | Main kit allocator; A review r8 PASS | A author stopped before render on Runtime import and environment errors. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T022524Z-standin-environment-blocker.md). | No render or parity proof |
 
-Blockers: Main owns A/B render prerequisites, C2 hosted Vite OOM and B5 audit corrections. C owns unresolved App B-parent ancestry and browser proof after the qualified provider milestone. C3 synthetic timing wait is clear. D130 holds.
+Blockers: Main owns A/B render prerequisites, C2 Chromium startup and B5 audit corrections. C owns App B-parent ancestry and the merged browser spec; Main owns the browser environment. C3 synthetic timing wait is clear. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5967650816 bytes. All 36 retained Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Follow-up work stays with existing A/B/C leads.
+live 0 / cap 6; ready-undispatched 0. Free 6292013056 bytes. All 36 retained Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Follow-up work stays with existing A/B/C leads.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -137,4 +137,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T02:48:08.057690+00:00. PLAN, current manager rules, pipeline, owner boards and new inbox checks consumed. INBOX and HEADER unchanged. Runtime census2717, none running;31 KEEP and5 dirty retained trees, no eligible recycle. C provider proof independently PASS and merged98784a1d with central58 PASS. Browser drag/reload/undo unverified; App B-parent ancestry still fails, prior Main handoff controls. A/B real preview/export prerequisites stay Main-owned. H/D/P START markers absent. Guarded sweep and compact exit0, removed0, packed0 and compressed0; no refusal. Delivered archive and sidecar exact. [Pass evidence](rounds/20261027T024808Z-pass.json).
+Current pass: 2026-10-27T02:59:02.176173+00:00. New inbox and HEADER checks unchanged; owner boards rechecked. No ready Runtime task. All36 retained trees are31 KEEP or5 dirty, no eligible recycle. C provider proof merged98784a1d independent58 PASS; browser spec merged1d4ebbb55b with independent source PASS, behavior NOTRUN.6144MB heap retry builds; Chromium SIGTRAP before body is the current blocker, sent to Main existing environment owner. Required B App parent still absent; original024145 handoff retained. A/B real render prerequisites and B5 UNSOUND findings stay Main-owned. C lead8 terminal; no duplicate allocation. H/D/P START absent. Guarded sweep/compact exit0 with0 reclaimed, no refusal. Original browser raw prospective KEEP retained. [Pass evidence](rounds/20261027T025902Z-pass.json).
