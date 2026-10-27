@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T01:52:18Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# runtime board, 2026-10-27T01:50:38.941472+00:00
+<!-- main | 2026-10-27T01:56:36Z | dispatcher heartbeat 1s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T01:55:03.310085+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -108,7 +108,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | D editing | Retain later editing gate | Main and D lead | H accepted and Main START | gated:H | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Starts on the accepted one head; final ZIP follows D. | Later phase |
 
-| B C evidence cleanup | Retain project cleanup ownership | Luna | Main notes 01:20 | doing | C-clean-runtime-evidence-7; B leads | C board names its Runtime cleanup worker. B retains its three repo cleanups; future evidence stays in ORCH. No duplicate Runtime author. | Project branches |
+| B C evidence cleanup | Retain completed project evidence cleanup | Luna | Independent project reviews | merged | B three cleanups; C cleanup 7 | B board records three deletion-only PASS merges. C a7221e343b reviewed PASS and central 36 PASS. No overall project acceptance claimed. | Project branches |
 
 | P perception | Retain later perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). Fresh manager; P1 to P7 and deferred D visual purposes precede final ZIP. | Later phase |
 
@@ -116,7 +116,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: Main owns A film and pack receiving, remaining test-service repairs, and B milestone acceptance and staging merge. No Runtime task blocked. C2 waits Main merge; C owns the supported sample route. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 6200434688 bytes. Main owns follow-ups; no new Runtime task. All 36 Runtime trees remain 31 KEEP or 5 dirty.
+live 0 / cap 3; ready-undispatched 0. Free 6496968704 bytes. Main owns follow-ups; no new Runtime task. All 36 Runtime trees remain 31 KEEP or 5 dirty.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -127,4 +127,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Completed at 2026-10-27T01:50:38.941472+00:00. Interval checks consumed new PIPELINE and A C boards. Luna and Sol effort is high per latest owner routing. A source checks remain central green; film and complete pack absent. C board names C-clean-runtime-evidence-7 as its cleanup owner; no Runtime duplicate. Main retains B acceptance/staging and A input receiving; C retains real timing sampling. H, D and P START markers remain absent. INBOX and HEADER unchanged. Fresh normal rt- workers exit 0, 2717 rows, none running. All 36 Runtime trees remain 31 KEEP and 5 dirty; no eligible recycle. Delivered archive and sidecar match the recorded hash exactly. No Runtime task ready; manager board and evidence only. [Pass evidence](rounds/20261027T015023Z-pass.json).
+Current pass: Checked at 2026-10-27T01:55:03.310085+00:00. PLAN, manager rules, latest pipeline and A B C boards consumed. INBOX and HEADER unchanged. Fresh rt- census: exit 0, 2717 rows, none running. B and C cleanup now merged and reviewed. A film and complete pack remain missing; Main owns B acceptance and staging; C retains timing sampling. H, D and P START markers absent. All Runtime trees KEEP or dirty, so no eligible recycle. Sweep removed 0 dirs; compact packed 0 dirs and compressed 2 old logs, final scan pending. Delivered archive and sidecar match prior hash. [Pass evidence](rounds/20261027T015503Z-pass.json).
