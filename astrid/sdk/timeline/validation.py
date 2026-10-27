@@ -640,6 +640,70 @@ def _validate_params(
             _fail(f"{path}.params.{key}", "is not declared by the retained element schema")
 
 
+def _validate_visual_fields(clip: Mapping[str, Any], *, path: str) -> None:
+    """Check only the package visual slots stored directly on a clip."""
+    from astrid.core.timeline.clip_fields import _animations
+    from astrid.core.timeline.banodoco_schema import _transition_ids
+
+    animations = _animations()
+    for field, phase in (("entrance", "entrance"), ("exit", "exit")):
+        if field not in clip or clip[field] is None:
+            continue
+        value = clip[field]
+        if isinstance(value, str):
+            animation_id = value
+        elif isinstance(value, Mapping):
+            # Keep the package's canonical frame form and its drawable legacy
+            # type/seconds form. The serializer normalizes canonical refs for
+            # older shared element schemas; this check does not rewrite data.
+            if "id" in value and "type" in value and value["id"] != value["type"]:
+                _fail(f"{path}.{field}", "animation id and type must agree")
+            animation_id = value.get("id", value.get("type"))
+            if "durationFrames" in value and "duration" in value:
+                _fail(f"{path}.{field}", "must use durationFrames or duration, not both")
+            duration = value.get("durationFrames", value.get("duration"))
+            if duration is not None:
+                _validation_number(duration, f"{path}.{field}.duration", positive=True)
+            params = value.get("params", {})
+            if not isinstance(params, Mapping):
+                _fail(f"{path}.{field}.params", "must be an object")
+        else:
+            _fail(f"{path}.{field}", "must be an animation reference")
+        if not isinstance(animation_id, str) or not animation_id.strip():
+            _fail(f"{path}.{field}.id", "must be a non-empty string")
+        if animation_id == "type-on":
+            _fail(f"{path}.{field}", "type-on cannot draw as a top-level clip animation")
+        # Unknown IDs may be contributed project/custom animations. The
+        # retained project declaration owns those; only known builtins can be
+        # phase-checked here without resolving mutable external state.
+        phases = animations.get(animation_id)
+        if phases is not None and phase not in phases:
+            _fail(f"{path}.{field}", f"animation {animation_id!r} is not supported for {phase}")
+
+    transition = clip.get("transition")
+    if transition is None:
+        return
+    if isinstance(transition, str):
+        transition_id = transition
+    elif isinstance(transition, Mapping):
+        if "id" in transition and "type" in transition and transition["id"] != transition["type"]:
+            _fail(f"{path}.transition", "transition id and type must agree")
+        if "durationFrames" in transition and "duration" in transition:
+            _fail(f"{path}.transition", "must use durationFrames or duration, not both")
+        duration = transition.get("durationFrames", transition.get("duration"))
+        if duration is not None:
+            _validation_number(duration, f"{path}.transition.duration", positive=True)
+        transition_id = transition.get("id", transition.get("type"))
+    else:
+        _fail(f"{path}.transition", "must be a transition reference")
+    if not isinstance(transition_id, str) or not transition_id.strip():
+        _fail(f"{path}.transition.id", "must be a non-empty string")
+    if transition_id in _transition_ids() or transition_id in {"fade", "cross-fade"}:
+        return
+    # Preserve opaque/custom transition references; package-specific authority
+    # is checked by its retained declaration where one is available.
+
+
 def validate_final_candidate(
     candidate: Mapping[str, Any], *,
     baseline: Mapping[str, Any] | None = None,
@@ -749,6 +813,7 @@ def validate_final_candidate(
         before_child = _identity_rows(baseline_internal.get("clips", []), "baseline.clips", "id") if isinstance(baseline_internal, Mapping) and isinstance(baseline_internal.get("clips"), list) else {}
         for clip_id, clip in child_clips.items():
             clip_path = f"candidate.shots[{shot_id!r}].internal_timeline.clips[{clip_id!r}]"
+            _validate_visual_fields(clip, path=clip_path)
             text_reference = _validate_element_reference(
                 clip, path=clip_path, baseline=before_child.get(clip_id),
                 candidate=candidate, baseline_bundle=baseline, shot_id=shot_id,
@@ -761,6 +826,7 @@ def validate_final_candidate(
     for clip_id, clip in clips.items():
         prior = _baseline_clips(baseline or {}).get(("parent", clip_id))
         clip_path = f"candidate.parent.clips[{clip_id!r}]"
+        _validate_visual_fields(clip, path=clip_path)
         text_reference = _validate_element_reference(
             clip, path=clip_path, baseline=prior, candidate=candidate,
             baseline_bundle=baseline, shot_id="parent",

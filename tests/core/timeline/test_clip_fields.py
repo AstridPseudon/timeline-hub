@@ -100,6 +100,12 @@ def test_exit_only_animation_is_refused_as_entrance():
     assert cf.coerce("exit", "slide-up 8f")[1]["id"] == "slide-up"
 
 
+@pytest.mark.parametrize("field", ["entrance", "exit"])
+def test_top_level_type_on_is_refused(field):
+    with pytest.raises(ClipFieldError, match="type-on requires a text element"):
+        cf.coerce(field, "type-on 18f")
+
+
 def test_entrance_dict_with_conflicting_units_refused():
     with pytest.raises(ClipFieldError, match="not both"):
         cf.coerce("entrance", {"type": "fade", "duration": 0.25, "durationFrames": 8})
@@ -197,7 +203,6 @@ def test_transition_refs_refuse_conflicts_and_unsupported_values(transition, mes
         ("entrance", "fade-up 0.5s ease=out", {"id": "fade-up", "durationFrames": 12, "params": {"easing": "out"}}, "fade-up 12f ease=out"),
         ("entrance", "scale-in 8f", {"id": "scale-in", "durationFrames": 8}, "scale-in 8f"),
         ("entrance", "slide-left 8f", {"id": "slide-left", "durationFrames": 8}, "slide-left 8f"),
-        ("entrance", "type-on 5f", {"id": "type-on", "durationFrames": 5}, "type-on 5f"),
         ("exit", "fade 7f", {"id": "fade", "durationFrames": 7}, "fade 7f"),
         ("exit", "slide-up 0.25s", {"id": "slide-up", "durationFrames": 6}, "slide-up 6f"),
         ("transition", "crossfade 0.25s", {"id": "cross-fade", "durationFrames": 6}, "crossfade 6f"),
@@ -209,6 +214,14 @@ def test_public_setter_serializes_canonical_package_refs_at_timeline_fps(field, 
     assert clip["entrance" if field == "entrance" else "exit" if field == "exit" else field] == expected
     assert cf.read(clip, field) == expected
     assert cf.describe(clip, fps=24)[field] == human
+
+
+@pytest.mark.xfail(strict=True,
+                   reason="P1 requires refusing top-level type-on because the package clip hook has no text")
+def test_public_setter_serializes_top_level_type_on_legacy_expectation():
+    clip: dict = {}
+    cf.write(clip, "entrance", "type-on 5f", fps=24)
+    assert clip["entrance"] == {"id": "type-on", "durationFrames": 5}
 
 
 @pytest.mark.parametrize(

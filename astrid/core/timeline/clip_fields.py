@@ -327,6 +327,8 @@ def _animation_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
     else:
         raise ClipFieldError(f"{spec.name} must be 'none' or '<animation> <duration>', e.g. {spec.write!r}")
     allowed = _animation_ids(spec.phase or "entrance")
+    if name == "type-on":
+        raise ClipFieldError("type-on requires a text element animation slot; it cannot draw as a top-level clip animation")
     if name not in allowed:
         raise ClipFieldError(f"{spec.name} {name!r} is not a {spec.phase} animation; allowed: {', '.join(allowed)}")
     value: dict[str, Any] = {"id": name}
