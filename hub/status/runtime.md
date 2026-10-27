@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T10:20:09Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
-# runtime board, 2026-10-27T10:13:26.635561+00:00
+<!-- main | 2026-10-27T10:25:40Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T10:23:34.769179+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -104,7 +104,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C3 sample route | Receive measured central sampler | C Sol and Luna | Independent central sampler review | merged | C-C3-runtime-sampler-8; review PASS | Central 2349: 1 PASS, five saves and durable replays. Total 183–264 ms. Synthetic fixture does not justify optimizing the reported 20 seconds. | Runtime 0e238fa008 |
 
-| C2 B forward | Receive prior B recovery source | B and C Luna | Prior normal forward and proof | merged | B fix10 and C forward10 | Prior recovery5505 merged and central74 PASS; C final receiving recorded. New B acceptance repairs and future forward remain separate. | B App5505e9176b |
+| C2 B forward | Receive B recovery source and later forward | B and C Luna | B acceptance repairs | doing | B fix10; C prior forward; B new authors11 | Prior recovery5505 and74 PASS retained. Main10:12 requires another B forward after reopened B repairs qualify; no early receiving or full-suite credit. | B App5505e9176b |
 
 | C2 save and fork | Retain bounded provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Central58 PASS retained. Browser new-track drop422 remains open under Main correction; source tests do not qualify that live path. | App98784a1d |
 
@@ -132,12 +132,12 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
-| C2 full App comparison | Receive classified delta and repairs | B and C Luna leads | Main10:12 recorded scope | doing | B three authors and C three authors | Exact4 files38 delta classified; all four files unchanged from staging. Own targeted repair checks precede one full comparison per branch. | App9a94c24e93 |
+| C2 full App comparison | Await B forward and final comparison | B and C Luna leads | Reviewed B repairs | blocked:B | B authors11; C lead after B ready | C own repairs merged c3a28be2b2. Remaining B fixes then forward and one full comparison against staging required. | C App c3a28 / Runtime28f44 |
 
 
 | B acceptance audit | Receive reopened B acceptance | Main and B Luna lead | Main header10:12 | doing | B recovery11; scalar11; preview11 | Prior ACCEPT retained. B-only full8 files70 failures reopens acceptance; three authors active. Targeted reviews then one full comparison required. | B project branches |
 
-| C acceptance audit | Receive released three case repair scope | Main and C Luna lead | Main10:12 classification | doing | C stale15; waveform15; properties15 | Classifier terminal: B35 fixture or expectation, C1 expectation and C2 product regressions. C authors assigned; B forward and full comparison follow. | App9a94c24 / Runtime28f44 |
+| C acceptance audit | Receive reviewed C repair batch | C Luna lead | Independent reviews and central checks | merged | C stale15; properties15; waveform fix15 | All three merged with central45,10,45 PASS. Superseded waveform review FAIL retained. B forward and full comparison remain. | App c3a28be2b2 |
 
 | C browser lane | Receive reviewed three case browser merge | C Luna and reviewer | Independent PASS and normal merge | merged | Author isolation11; review isolation11 | Actual27831 three PASS; C board07:16 records normal9a94c24e93. Prior failures remain original. | App9a94c24e93 |
 
@@ -149,9 +149,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C current artifact cleanup | Receive exact current branch deletion | C Luna and reviewer | Independent cleanup12 PASS | merged | C author cleanup12; review cleanup12 | Normal28f44 removes only root report.md. Manager readback confirms absence; historical review11 remains separate. | Runtime28f44ab578 |
 | OPS old Runtime merge | Retain unused integration branch | Manager receiving | Main08:12 direction | gated:later | No Runtime worker | Main records old worker1620 merge requested07:16; leave unused tl/integration unchanged. No repair, reversal or C merge into it. | Historical branch |
-Blockers: B lead owns reopened full App failures; C lead owns three released repairs, then B forward and full comparison. A ACCEPTED at Main10:12 with owner document caveat. H/D/P START absent. D130 holds.
+Blockers: B lead owns reopened full App failures. C own repairs merged and central targeted green; B forward and final full comparison remain. A ACCEPTED. H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 4763734016 bytes. Runtime trees: 36; 31 KEEP and 5 dirty; no eligible recycle. Sweep exit0 removed0; compact in progress. No refusals. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5733605376 bytes. Runtime trees: 36; 31 KEEP, 3 dirty and 2 without ended markers; no eligible recycle. Guarded sweep and compact running. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -162,4 +162,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T10:13:26.635561+00:00. Inbox unchanged; Main10:12 A ACCEPTED and B REOPENED consumed. B three authors and C three authors now assigned; prior09:12 C HOLD superseded. Runtime worker check exit0,2717 rows unchanged, live0 and ready0. H/D/P START absent. No eligible Runtime recycle. Sweep exit0 removed0; compact ongoing. [Pass evidence](rounds/20261027T101326Z-pass.json).
+Current pass: 2026-10-27T10:23:34.769179+00:00. Worker check exit0, all2717 rows unchanged, live0 and ready0. Inbox and header unchanged; C now reports all three own repairs merged with central45/10/45 PASS. B repairs still assigned; final comparison open. H/D/P START absent. No eligible Runtime recycle. Guarded sweep and compact running. [Pass evidence](rounds/20261027T102334Z-pass.json).
