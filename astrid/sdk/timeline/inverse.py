@@ -160,7 +160,7 @@ def _set_physical(state, ref, path, value, records):
     if ref == 'parent' and list(path) in (['clips'], ['config'], ['config', 'clips']):
         state.parent_clip_path = State(state.bundle).parent_clip_path
     if projected is not state:
-        state.bundle['placements'] = projected.bundle['parent']['occurrences']
+        state.bundle['placements'] = projected.bundle['placements']
 
 
 def _validate_occurrences(state, value):
