@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T00:12:32Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# runtime board, 2026-10-27T00:04:54.308891+00:00
+<!-- main | 2026-10-27T00:17:01Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T00:15:53.981526+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -96,15 +96,15 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | F-final README | Retain delivered prose pending owner choice | Owner decision | Main19:40 question | gated:owner | No Runtime worker authorized | Main asks whether to correct historical PENDING prose. Delivered archive and bounded independent review unchanged; no rebuild or review request. | Delivered ZIP unchanged |
 
-| Follow-up agenda | Retain deployed lead ownership | Main and three Luna leads | Owner GO and DEPLOYED | doing | A B C leads | A boundary merged, proof active; B fixture merged, consumers assigned; C step 1 merged and central green. Main accepts milestones; C2 waits B. | Delivered ZIP unchanged |
+| Follow-up agenda | Retain deployed lead ownership | Main and three Luna leads | Owner GO and DEPLOYED | doing | A B C leads | B T1-T4 reported central-green and reviewed, awaits Main merge. A real proof awaits sandbox inputs. C2 follows B; C3 needs observed timings. | Delivered ZIP unchanged |
 
 | OPS cancellation scope | Clear prior work cancellation hold | Main and owner | Runbook section 0c owner decision | merged | Main deployment | Owner lifted cancellation for this work. Main owns deployed leads and daemons; no shutdown or competing Runtime dispatcher. | No source change |
 
-| OPS follow-up alert | Track Main runner and recycling repairs | Manager receiving | Main Hour 2 and lead reports | doing | diag-testlane2-2345 and diag-recycle-2356 | Main records disk recovery; current free in pass evidence. Lead A central dependency failures remain Main-owned. | No Runtime change |
+| OPS follow-up alert | Track Main runner and recycling repairs | Manager receiving | Main Hour 2 and lead reports | doing | diag-testlane2-2345 and diag-recycle-2356 | Main owns dependency repair and kit acceptance. Recycling author reports guarded cleanup and 181 PASS. No Runtime repair assigned. | No Runtime change |
 
-Blockers: Main owns central dependency and recycling repairs. Disk near-stop alert cleared after Main recovery; no Runtime task blocked. C2 sequencing and C3 timing measurement remain with Main and C. D130 holds.
+Blockers: Main owns shared dependency repair, sandbox input receiving and B milestone acceptance. No Runtime task blocked. C2 sequencing and C3 observed timing sample remain with Main and C. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 5709049856 bytes. Main owns recovery; no new Runtime task. All Runtime trees remain KEEP or dirty.
+live 0 / cap 3; ready-undispatched 0. Free 6373081088 bytes. Main owns follow-ups; no new Runtime task. All Runtime trees remain KEEP or dirty.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -115,4 +115,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Initial check at 2026-10-27T00:04:54.308891+00:00. No new INBOX or HEADER content. Five owner boards and deployed lead status read; Runtime live 0, ready 0. Delivered ZIP and sidecar hashes match. All Runtime worktrees remain KEEP or dirty; no eligible recycle. Main owns diagnostics and follow-up milestones. Ten-minute monitoring interval in progress. [Pass evidence](rounds/20261027T000454Z-pass.json).
+Current pass: 2026-10-27T00:15:53.981526+00:00. INBOX and HEADER unchanged; five owner boards and deployed lead boards checked. Normal bin/workers rt- exit 0: 2717 rows, no running row. No new Runtime ask. All 36 Runtime trees remain 31 KEEP and 5 dirty; no eligible recycle. B awaits Main milestone acceptance; A needs sandbox inputs and the shared Remotion dependency; C2 and C3 remain with Main and C. Main hourly ownership is preserved. No source, test, pin, Git, kit, hub, cleanup or daemon mutation. Ten-minute recheck pending. [Pass evidence](rounds/20261027T0015Z-pass.json).
