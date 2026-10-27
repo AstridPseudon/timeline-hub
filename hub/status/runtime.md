@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T01:31:12Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-27T01:31:05.028549+00:00
+<!-- main | 2026-10-27T01:35:23Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T01:34:52.383017+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -104,9 +104,13 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C3 sample route | Hand off ordinary sandbox socket limit | C Luna and Main | Existing C sample and review | doing | C-review-C3-runtime-sample-5 | Zero real saves after socket EPERM. [Peer route](../../design/peer-runtime-to-orchestrator-20261027T005115Z-C3-sandbox-sample-route.md); C keeps sampling ownership and timing gate. | Evidence only |
 
+| H one head | Retain later consolidation gate | Main and H Luna manager | A B C accepted and Main START | gated:A-B-C | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Combines owner pins and A B C; independent reviews and full suites precede acceptance. | Later phase |
+
+| D editing | Retain later editing gate | Main and D lead | H accepted and Main START | gated:H | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Starts on the accepted one head; final ZIP follows D. | Later phase |
+
 Blockers: Main owns A film and pack receiving, remaining test-service repairs, and B milestone acceptance and staging merge. No Runtime task blocked. C2 waits Main merge; C owns the supported sample route. D130 holds.
-Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main; no duplicate dispatch.
-live 0 / cap 3; ready-undispatched 0. Free 6186143744 bytes. Main owns follow-ups; no new Runtime task. All 36 Runtime trees remain 31 KEEP or 5 dirty.
+Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H and D remain gated by recorded acceptance and START markers; no duplicate dispatch.
+live 0 / cap 3; ready-undispatched 0. Free 6503288832 bytes. Main owns follow-ups; no new Runtime task. All 36 Runtime trees remain 31 KEEP or 5 dirty.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -117,4 +121,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: Completed at 2026-10-27T01:31:05.028549+00:00. Ten-minute interval complete; all twelve polls showed unchanged INBOX, HEADER, five old owner boards and A B C follow-up boards, with no running Runtime worker. B fallback remains reviewed, merged and central 72 PASS; Main acceptance and staging merge next. A inputs absent; C retains real sample gate and supported socket route. Normal bin/workers rt- exit 0, 2717 rows, no running row. All 36 Runtime trees checked: 31 KEEP and 5 dirty, no eligible recycle. Archive and sidecar hashes exact. No source, test, kit, pin, Git, cleanup, hub or daemon mutation. [Pass evidence](rounds/20261027T011935Z-pass.json).
+Current pass: 2026-10-27T01:34:52.383017+00:00. INBOX and five old owner boards unchanged. New HEADER and RUNBOOK section 1c record later phases H then D; both added as gated rows, no early start. A B C boards unchanged; B central 72 PASS awaits Main acceptance and staging merge. Normal workers rt- exit 0, 2717 rows, none running. All 36 Runtime trees remain 31 KEEP and 5 dirty; no eligible recycle. Delivered archive hash and sidecar exact. Manager board and evidence only. [Pass evidence](rounds/20261027T013300Z-pass.json).
