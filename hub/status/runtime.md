@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T06:25:26Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# runtime board, 2026-10-27T06:24:26.621634+00:00
+<!-- main | 2026-10-27T06:31:01Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T06:28:41.116260+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -132,18 +132,18 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
-| C2 full App comparison | Retain bounded C comparison; require staging | C and Main Luna | Actual staging full result | review | C full10 and compare10; Main audit0610 | Full27955:19957 PASS41 FAIL. Earlier C26d9 matches41; audit0610 REJECT says staging dispatch failed before a run. | C App1a02991e0e |
+| C2 full App comparison | Retain bounded C comparison; require staging | C and Main Luna | Actual staging full result | review | C full10; staging11b; Main audit0610 | C27955:19957 PASS41 FAIL retained. Actual staging11b full4499 is running; final same-kind per-ID comparison remains pending. | C App1a02991e0e |
 
 
 | B acceptance audit | Receive independent B acceptance verdict | Luna | Main acceptance | review | diag-accept-B-0610 | Auditor ACCEPT, no must fix; stand-in export and same4 conformance failures qualified. Main acceptance remains separate. | B project branches |
 
 | C acceptance audit | Receive independent C rejection | Luna | Staging and browser evidence; artifact cleanup | review | diag-accept-C-0610 | Auditor REJECT: staging NOTRUN; new-track and modal browser bodies unverified; Runtime root report.md artifact requires C worker cleanup. | C project branches |
 
-| C browser lane | Receive existing lane repair owner | Main Luna | Real browser-capable lane | doing | diag-browserlane-0610 | Actual worker active. C owns two browser journeys after repair. No Runtime duplicate or new body. | No Runtime change |
+| C browser lane | Receive existing lane repair owner | Main Luna | Real browser-capable lane | doing | diag-browserlane-0610 | Main repair active; C corrections11 queued behind staging4499. Modal24493 and A review25125 queued. No duplicate Runtime body. | No Runtime change |
 
-Blockers: A owns independent T3 review and merge after author central PASS. Main owns B acceptance after auditor ACCEPT. C owns the staging comparison, two browser journeys and Runtime review-artifact cleanup after auditor REJECT; Main owns the active browser-lane repair. H/D/P acceptance and START gates remain closed. D130 holds.
+Blockers: A owns independent T3 review and merge after author central PASS. Main owns B acceptance after auditor ACCEPT. C owns running staging4499 comparison, browser corrections11 and Runtime report.md cleanup after auditor REJECT. Main owns active browser-lane repair. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 4927610880 bytes. Runtime trees: 36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact completed: removed 0 dirs, packed 0 dirs and gzipped 0 logs. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5030309888 bytes. Runtime trees: 36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact completed: removed 0 dirs, packed 0 dirs and gzipped 0 logs. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -154,4 +154,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T06:24:26.621634+00:00. Two passes this round. Runtime census 2717 has zero live workers and no ready task. Inbox and header unchanged. A author r13 is terminal exit 0 with central 26842: 1 PASS; Lead A round 14 already owns independent A-review-T3-proof-standin-r13 and its fresh central run. No acceptance or merge credit yet. B auditor ACCEPT and C auditor REJECT remain distinct from Main acceptance; Main handoff 061148 names exact remaining C staging, browser and Runtime root report.md corrections. Existing Main browserlane0610 remains active with a fresh log. No duplicate worker or body. H/D/P START markers absent. Runtime 36 trees remain 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep/compact completed: removed 0 dirs, packed 0 dirs and gzipped 0 logs; protected data retained. [Pass evidence](rounds/20261027T062330Z-pass.json).
+Current pass: 2026-10-27T06:28:41.116260+00:00. Runtime has zero live workers and no ready task. Inbox and header unchanged. A independent review25125 and C browser corrections15487/modal24493 are queued behind the actual staging full4499. Lead C r11 owns audit corrections. No acceptance, merge or browser PASS inferred from active logs. H/D/P START markers remain absent. Runtime36 trees:31 KEEP and5 dirty, no eligible recycle. Guarded maintenance underway. [Pass evidence](rounds/20261027T062653Z-pass.json).
