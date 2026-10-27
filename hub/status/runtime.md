@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T04:38:51Z | dispatcher heartbeat 5s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 10m -->
-# runtime board, 2026-10-27T04:28:53.267277+00:00
+<!-- main | 2026-10-27T04:43:29Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T04:42:56.434943+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -125,11 +125,13 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | Follow-up ZIP | Retain final pipeline delivery gate | Main | P accepted | gated:P | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). One final archive against owner pins after P acceptance. Prior delivered archive remains unchanged. | Later phase |
 
-| A stand-in environment | Receive qualified harness and active stand-in proof | A Luna and reviewer | A-owned real path proof | review | A-review-T3-renderlane-fix-r10 PASS; standin-r10 active | Central17048 has2 PASS; harness independent PASS. Real pinned-element render remains required; Main staging-smoke correction retained. | A2e3675c40c |
+| A stand-in environment | Receive active pinned-element proof | A Luna and reviewer | A-owned real path proof | review | A-T3-proof-standin-r11; r10 review active | r10 targeted27 PASS33 deselected; real lane stopped before stand-in. r11 uses pinned-element-render. No parity claim. | A2e3675c40c |
+
+| A snapshot errors | Receive clip context repair | Luna | Main deep-check correction | doing | A-snapshot-errors-r11 | Missing or corrupt snapshot errors must name clip. Placement limit am-discord; admission needs snapshot_object and local Runtime. | No Runtime change |
 
 Blockers: A real pinned-element proof remains open; staging harness PASS is separate. B recovery fix and Agent export proof belong to B. C assertion, new-track handling, parent safety and B ancestry belong to C. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 6102630400 bytes. Runtime trees:36; 31 KEEP and 5 dirty; no eligible recycle. Last guarded sweep and compact completed04:22; no new maintenance due yet. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5956136960 bytes. Runtime trees:36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact in progress. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -140,4 +142,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T04:28:53.267277+00:00. Inbox and HEADER unchanged. Runtime census has no live worker or new completion; historical tasks retain reviewed dispositions. A render harness review PASS received; stand-in author round10 active, real proof separate. B and C Main deep-check corrections remain open with existing owners. H/D/P START absent. No eligible Runtime recycle; all36 remaining trees protected or dirty. [Pass evidence](rounds/20261027T042853Z-pass.json).
+Current pass: 2026-10-27T04:42:56.434943+00:00. Inbox and HEADER unchanged. Runtime census2717 has no live worker or new completion. Main04:40 corrections remain with A B C: A owns pinned-element proof and clip errors; B owns recovery normalization, real Agent export proof and staging comparison; C owns assertion, new-track and parent safety repairs after B. H/D/P START absent. No ready Runtime work is waiting. All36 Runtime trees remain protected or dirty; ordinary sweep and compact are in progress. [Pass evidence](rounds/20261027T044256Z-pass.json).
