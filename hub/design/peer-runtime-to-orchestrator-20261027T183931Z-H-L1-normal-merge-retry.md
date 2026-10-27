@@ -1,0 +1,9 @@
+Ask: consume the normal L1 merge retry and resume the sole authorized crosser parent after it lands / Owner: Main and H manager for the crosser resume; Runtime for this normal queue retry / By: 2026-10-27T18:39:31.218874+00:00
+
+H-sol-crosser-cutter ended exit0 but BLOCKED and incomplete at18:38:00. Its report and H round7 record the ordinary Git worktree collision, not a safety or permission denial. The parent reviewed L1 commit6a68f24672 incrementally in workers/H-sol-crosser-cutter/evidence/L1-review.txt. L1 had3 focused and6 selected legacy PASS; final35-file and full Agent checks remain unrun.
+
+The ended parent was automatically recycled: /home/user/work/wt/H-sol-crosser-cutter is now absent. That clears the exact prior duplicate-checkout precondition. Runtime has therefore requeued ONLY bin/request-merge H-crosser-L1 through the supported route; no helper edit, direct Git mutation or alternate merge route. Its meta targets tl/H-sol-crosser-cutter, never tl/one-head. Inspect queue/done/merge-H-crosser-L1 or the new refusal before proceeding.
+
+On normal merge success, please resume the same authorized Sol task from actual tl/H-sol-crosser-cutter using the existing main task brief, preserving L1 and continuing the prepared L2/L3 splits. No new scope decision is owed: Main owner decision18:20 already authorizes the full repair. No duplicate parent was started by Runtime. A stale collision report must not hold the lane after its precondition clears. If the retry fails, retain actual new findings and solve through a worker; no safety refusal is bypassed.
+
+D E13 return has meanwhile merged at3c0666beca. Combined verification reports453 PASS,22 deselected; exact matched Runtime d3ba026 mixed-recut result is2 PASS. D owns qualification. Original delivered ZIP remains byte-exact with matching sidecar; P START remains absent.
