@@ -12,10 +12,50 @@ import test_timeline_commit_authentication as auth
 
 from runtime_protocol.errors import RuntimeErrorBase
 from runtime_protocol.timeline_commit import CommitRejected, StaleHead
-from runtime_protocol.timeline_commit_auth import validate, validate_sequential_capture
+from runtime_protocol.timeline_commit_auth import (
+    step_output,
+    validate,
+    validate_sequential_capture,
+)
 from runtime_protocol.timeline_commit_validation import digest
 
 service = auth.service
+
+
+def test_step_output_preserves_physical_shots_when_arranging_occurrences():
+    rows = [
+        {"occurrence_id": f"occ-{index:02d}", "shot_id": f"shot-{index:02d}",
+         "shot_revision_id": f"shot-rev-{index:02d}", "placement": {"start_ms": index * 1000}}
+        for index in range(20)
+    ]
+    boundary = {"parent": {"revision_id": "parent-before", "payload": {"occurrences": rows},
+                           "content_digest": digest({"occurrences": rows})}}
+    for row in rows:
+        ref = "shot-revision:" + row["shot_revision_id"]
+        payload = {"internal_timeline_revision_id": "internal-" + row["shot_id"]}
+        boundary[ref] = {"revision_id": row["shot_revision_id"], "shot_id": row["shot_id"],
+                         "internal_timeline_revision_id": payload["internal_timeline_revision_id"],
+                         "payload": payload, "content_digest": digest(payload)}
+
+    arranged = copy.deepcopy(rows[::-1])
+    accepted = copy.deepcopy(boundary)
+    accepted["parent"]["payload"]["occurrences"] = arranged
+    accepted["parent"]["content_digest"] = digest(accepted["parent"]["payload"])
+    step = {"command_ordinals": [0], "patch": [
+        {"ref": "parent", "path": ["occurrences"], "op": "list.move",
+         "before": {"state": "present", "value": rows}, "value": arranged},
+    ]}
+    records = {"commands": [{"bindings": [], "writes": [
+        {"ref": "parent", "path": ["occurrences"],
+         "after": {"state": "present", "value": arranged}},
+    ]}]}
+
+    output = step_output(boundary, step, records, accepted, original=boundary, authenticated=accepted)
+
+    assert output["parent"]["payload"]["occurrences"] == arranged
+    for row in arranged:
+        ref = "shot-revision:" + row["shot_revision_id"]
+        assert output[ref]["shot_id"] == row["shot_id"]
 
 
 def _capture(context, port, prepared):
