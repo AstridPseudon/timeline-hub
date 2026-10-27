@@ -361,7 +361,7 @@ describe('shot timeline popup real recovery integration', () => {
         timelineId="popup-swap-refusal"
         userId={null}
         timelineEditability={allowTimelineEdits}
-        initialTimelineData={createShotTimelineInitialData(config)}
+        initialTimelineData={createShotTimelineInitialData(config, 1, composition, 'occ-1')}
       >
         <TimelineEditorCore />
         <ShotTimelineRecoveryControls />
