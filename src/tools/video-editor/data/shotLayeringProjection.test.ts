@@ -10,9 +10,9 @@ import { projectOutputTimelineConfig } from './timelineOutputProjection.ts';
 import { coversFrame, visualSeamSourceTrack } from './visualSeamCoverage.ts';
 import type { ResolvedTimelineConfig, TimelineClip } from '@/tools/video-editor/types/index.ts';
 
-// Exact Runtime role-parity fixture bytes, shared with Agent.
+// Exact shared Agent/Runtime fixture bytes.
 const canonicalPath = 'conformance/fixtures/shot-layering-v1.json';
-const canonicalSha256 = '7ebd8827e8f766854901029a17ccfad31684d6144150543411a34f5aefc65f56';
+const canonicalSha256 = '4900be369f31bd03736b7eadaf2f8595a7ce48df5218296d405162cb13cfc16c';
 
 type LayeringCase = typeof layeringFixture.cases[number];
 
@@ -21,7 +21,7 @@ function projectCase(testCase: LayeringCase, app?: ResolvedTimelineConfig['app']
   const parent = testCase.input.parent_composition.config;
   const base: ResolvedTimelineConfig = {
     output: { resolution: '1920x1080', fps: 30, file: 'layers.mp4' },
-    tracks: parent.tracks.map((track) => ({ ...track, kind: track.kind as 'visual' | 'audio', label: track.id })),
+    tracks: parent.tracks.map((track) => ({ label: track.id, ...track, kind: track.kind as 'visual' | 'audio' })),
     clips: parent.clips.map((clip) => ({
       ...clip, clipType: clip.clip_type, asset: clip.asset_id, at: clip.at_ms / 1000, hold: clip.duration_ms / 1000,
     })),
@@ -84,14 +84,23 @@ describe('shared Runtime shot-layering projection cases', () => {
     const before = JSON.stringify(testCase);
     const projection = projectCase(testCase);
     const { config } = projection;
+    const trackIds = new Set(config.tracks.map((track) => track.id));
+    expect(trackIds.size).toBe(config.tracks.length);
+    expect(config.clips.every((clip) => trackIds.has(clip.track))).toBe(true);
     expect(config.tracks.map((track) => track.id)).toEqual(testCase.expected.track_order);
+    if ('track_kinds' in testCase.expected) {
+      expect(Object.fromEntries(config.tracks.map((track) => [track.id, track.kind])))
+        .toEqual(testCase.expected.track_kinds);
+    }
     expect(config.tracks.filter((track) => track.app?.group).map(({ id, app, role }) => ({ id, app, ...(role ? { role } : {}) })))
       .toEqual(testCase.expected.group_tracks);
     expect(projection.warnings).toEqual(testCase.expected.warnings);
     expect(config.app?.canonicalComposition).toMatchObject({ warnings: testCase.expected.warnings });
-    for (const [id, track] of Object.entries(testCase.expected.clip_tracks)) {
-      const clip = config.clips.find((entry) => entry.id === id || projection.clipIdentities.get(entry.id)?.rawClipId === id);
-      expect(clip?.track, id).toBe(track);
+    expect(Object.fromEntries(config.clips.map((clip) => [
+      projection.clipIdentities.get(clip.id)?.rawClipId ?? clip.id, clip.track,
+    ]))).toEqual(testCase.expected.clip_tracks);
+    for (const parentTrack of testCase.input.parent_composition.config.tracks) {
+      expect(config.tracks.find((track) => track.id === parentTrack.id)).toMatchObject(parentTrack);
     }
     for (const occurrence of testCase.input.occurrences) {
       const shot = testCase.input.shot_revisions.find((revision) => revision.shot_id === occurrence.shot_id && revision.revision_id === occurrence.revision_id)!;
@@ -101,7 +110,12 @@ describe('shared Runtime shot-layering projection cases', () => {
       expect(indices).toEqual(indices.map((_, index) => indices[0] + index));
       for (const rawClip of timeline.clips) {
         const clip = config.clips.find((entry) => entry.id === `${occurrence.occurrence_id}:${rawClip.id}`)!;
-        expect(clip).toMatchObject({ at: (occurrence.at_ms + rawClip.at_ms) / 1000, hold: rawClip.duration_ms / 1000 });
+        expect(clip).toBeDefined();
+        // Preserve the duration-only vectors' timing checks. Trim/speed
+        // playback has independent coverage in shotCompositionProjection.test.
+        if (!('from' in rawClip)) {
+          expect(clip).toMatchObject({ at: (occurrence.at_ms + rawClip.at_ms) / 1000, hold: rawClip.duration_ms / 1000 });
+        }
         if (rawClip.track === 'audio') {
           expect(clip.track).toBe('audio');
           expect(clip.volume).toBeUndefined();

@@ -98,6 +98,57 @@ describe('canonical shot-composition downstream projection', () => {
     });
   });
 
+  it('uses a child audio declaration over a parent visual without inheriting placement playback', () => {
+    const child = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline,
+      tracks: [{ id: 'video', kind: 'audio', label: 'Child audio' }],
+      clips: [{ id: 'collision', asset: 'alpha-image', clipType: 'media', track: 'video', at: 0, from: 0, to: 2 }],
+    }));
+    const composition = { ...child, occurrences: [{
+      ...child.occurrences[0], sourceOffsetMs: 350, speed: 1.5,
+    }] };
+    const projection = projectCanonicalComposition(composition, {
+      output: { resolution: '1920x1080', fps: 30, file: 'collision.mp4' },
+      tracks: [{ id: 'video', kind: 'visual', label: 'Parent' }], clips: [], registry: {},
+    });
+    expect(projection.config.tracks).toEqual([
+      { id: 'video', kind: 'visual', label: 'Parent' },
+      { id: 'occ-1~video', kind: 'audio', label: 'Child audio' },
+    ]);
+    expect(projection.config.clips[0]).toMatchObject({
+      id: 'occ-1:collision', track: 'occ-1~video', from: 0, to: 2,
+      app: { canonicalTiming: { sourceOffsetMs: 350, occurrenceSpeed: 1.5, speed: 1 } },
+    });
+    expect(projection.config.clips[0].speed).toBeUndefined();
+  });
+
+  it.each([false, true])('keeps undeclared visual tracks local when another occurrence declares audio (reverse %s)', (reverse) => {
+    let source = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline, tracks: [],
+      clips: [{ id: 'visual', asset: 'alpha-image', clipType: 'media', track: 'shared', at: 0, from: 0, to: 2 }],
+    }));
+    source = withOccurrenceRevision(source, 1, (timeline) => ({
+      ...timeline, tracks: [{ id: 'shared', kind: 'audio' }],
+      clips: [{ id: 'audio', asset: 'alpha-image', clipType: 'media', track: 'shared', at: 0, from: 0, to: 2 }],
+    }));
+    const occurrences = source.occurrences.slice(0, 2).map((occurrence, index) => ({
+      ...occurrence, atMs: index * 10000, trackId: 'picture', sourceOffsetMs: 350, speed: 1.5,
+    }));
+    const projection = projectCanonicalComposition({ ...source, occurrences: reverse ? occurrences.reverse() : occurrences }, {
+      output: { resolution: '1920x1080', fps: 30, file: 'independent.mp4' },
+      tracks: [{ id: 'picture', kind: 'visual', label: 'Picture' }], clips: [], registry: {},
+    });
+    expect(projection.config.tracks.map(({ id, kind }) => ({ id, kind }))).toEqual([
+      { id: 'occ-1~shared', kind: 'visual' }, { id: 'picture', kind: 'visual' }, { id: 'shared', kind: 'audio' },
+    ]);
+    expect(projection.config.clips.find((clip) => clip.id === 'occ-1:visual')).toMatchObject({
+      track: 'occ-1~shared', from: 0.35, to: 2.35, speed: 1.5,
+    });
+    const audio = projection.config.clips.find((clip) => clip.id === 'occ-2:audio');
+    expect(audio).toMatchObject({ track: 'shared', from: 0, to: 2 });
+    expect(audio?.speed).toBeUndefined();
+  });
+
   it.each([
     { transform: { opacity: 0.5 } },
     { transform: { x: 0 } },
