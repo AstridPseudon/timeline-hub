@@ -322,6 +322,41 @@ describe('shot popup A3 save ingress', () => {
     }
   });
 
+  it('refuses a gallery ADD onto a new shot track before any fork or durable mutation', async () => {
+    const beforeDocument = canonicalDocument();
+    const selected = (beforeDocument.parent_revision.payload.occurrences as Array<Record<string, unknown>>)[0]!;
+    (beforeDocument.parent_revision.payload.occurrences as unknown[]).push({ ...selected, occurrence_id: 'occ-sibling' });
+    const h = harness(beforeDocument);
+    const asset = h.config.clips[0].asset;
+    h.config.registry[asset] = { ...h.config.registry[asset], generationId: 'generation-old', variantId: 'variant-old' };
+    h.transport.getProjectMediaSelection = vi.fn(async (query: MediaSelectionQuery) => ({
+      ...query, object_id: `sha256:${'1'.repeat(64)}`, catalog_digest: `sha256:${'2'.repeat(64)}`,
+    }));
+    const provider = h.mount();
+    const loadedBefore = await provider.loadTimeline('popup-timeline');
+    const added = h.add();
+    const next = {
+      ...added,
+      tracks: [...(h.config.tracks ?? []), { id: 'overlay', kind: 'visual' as const, label: 'Overlay' }],
+      clips: added.clips.map((clip) => clip.id === 'popup-added-a3' ? { ...clip, track: 'overlay' } : clip),
+    };
+    try {
+      await expect(provider.saveTimeline('popup-timeline', next, 1)).rejects.toMatchObject({
+        code: 'timeline_save_refused',
+        message: 'Gallery drops onto a new shot track are not supported yet. Drop the gallery item onto an existing shot track; nothing was saved.',
+      });
+      expect(h.transport.getProjectMediaSelection).not.toHaveBeenCalled();
+      expect(h.send).not.toHaveBeenCalled();
+      const records = await h.records();
+      expect(records).toHaveLength(1);
+      expect(records[0]).toMatchObject({ intents: [] });
+      expect(records[0].pending).toBeUndefined();
+      expect((await provider.loadTimeline('popup-timeline')).config.clips).toEqual(loadedBefore.config.clips);
+    } finally {
+      await provider.dispose();
+    }
+  });
+
   it('claims a newly registered asset before the added occurrence clip in Agent order', async () => {
     const h = harness();
     const asset = 'popup-new-asset';
