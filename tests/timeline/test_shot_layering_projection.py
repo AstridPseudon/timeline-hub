@@ -20,7 +20,7 @@ from tests.helpers.runtime import locate_runtime
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "timeline" / "shot-layering-v1.json"
 # Exact Runtime conformance/fixtures/shot-layering-v1.json, shared with the App.
-FIXTURE_SHA256 = "7ebd8827e8f766854901029a17ccfad31684d6144150543411a34f5aefc65f56"
+FIXTURE_SHA256 = "7ed1d614a287eecafc20f5bd9908233e4015c608a5e5c075f4e9440058f71f45"
 CASES = json.loads(FIXTURE.read_bytes())["cases"]
 
 
@@ -72,6 +72,9 @@ def test_shared_fixture_projection(project, case, caplog):
         projection = project(graph)
     expected = case["expected"]
     tracks = projection.config["tracks"]
+    tracks_by_id = {track["id"]: track for track in tracks}
+    assert len(tracks_by_id) == len(tracks)
+    assert all(clip["track"] in tracks_by_id for clip in projection.config["clips"])
     assert [track["id"] for track in tracks] == expected["track_order"]
     assert [{"id": track["id"], **({"role": track["role"]} if "role" in track else {}),
              "app": {"group": track["app"]["group"]}}
@@ -84,6 +87,20 @@ def test_shared_fixture_projection(project, case, caplog):
             for record in caplog.records] == expected["warnings"]
     assert graph == before
     assert projection.config["clips"][:len(graph["parent_composition"]["config"]["clips"])] == graph["parent_composition"]["config"]["clips"]
+    if "track_kinds" in expected:
+        assert {track["id"]: track["kind"] for track in tracks} == expected["track_kinds"]
+    clips = {
+        clip["app"]["astrid_shot_composition"]["source_clip_id"]: clip
+        for clip in projection.config["clips"] if "shot_occurrence_id" in clip
+    }
+    for clip_id, timing in expected.get("clip_timing", {}).items():
+        clip = clips[clip_id]
+        for field in ("at", "from", "to", "hold", "speed"):
+            if field in timing:
+                assert clip[field] == pytest.approx(timing[field]), (clip_id, field)
+            else:
+                assert field not in clip, (clip_id, field)
+        assert clip_timeline_duration(clip) == pytest.approx(timing["timeline_duration"]), clip_id
     for start_ms, end_ms in expected.get("transparent_windows_ms", []):
         visual_tracks = {track["id"] for track in tracks if "group" in track.get("app", {})}
         assert not any(
@@ -175,37 +192,68 @@ def test_missing_row_occurrences_keep_input_order_in_one_fallback_block(project,
     assert all(record.code == "timeline-patch/target-not-found" for record in caplog.records)
 
 
-def test_child_track_kind_wins_parent_collision_for_playback(project):
-    graph = source_graph()
-    graph["occurrences"][0].update(speed=1.5, source_offset=350)
+@pytest.mark.parametrize("case_id", ["child-audio-parent-visual", "child-visual-parent-audio"])
+def test_child_track_kind_wins_parent_collision_for_playback(project, case_id):
+    case = next(case for case in CASES if case["id"] == case_id)
+    graph = copy.deepcopy(case["input"])
     parent = graph["parent_composition"]["config"]
-    parent["tracks"].extend([
-        {"id": "video", "kind": "audio"}, {"id": "audio", "kind": "visual"},
-    ])
-    revision = next(r for r in graph["shot_revisions"] if r["shot_id"] == "shot-alpha" and r["revision_id"] == "rev-a")
-    timeline = revision["internal_timeline_revision"]["timeline"]
-    timeline["clips"] = [
-        {"id": "visual", "clip_type": "media", "track": "video", "at": 0, "from": 0.125, "to": 4.125},
-        {"id": "audio", "clip_type": "media", "track": "audio", "at": 0, "from": 0.125, "to": 4.125},
-    ]
+    timeline = graph["shot_revisions"][0]["internal_timeline_revision"]["timeline"]
     before = copy.deepcopy(graph)
     projection = project(graph)
     assert graph == before
-    assert projection.config["tracks"][1:] == parent["tracks"]
-    visual, audio = projection.config["clips"]
-    assert visual["track"] == "occ-1~video"
+    parent_ids = {track["id"] for track in parent["tracks"]}
+    assert [track for track in projection.config["tracks"] if track["id"] in parent_ids] == parent["tracks"]
+    projected_tracks = {track["id"]: track for track in projection.config["tracks"]}
+    child_tracks = {track["id"]: track for track in timeline["tracks"]}
+    source_clips = {clip["id"]: clip for clip in timeline["clips"]}
+    for clip in projection.config["clips"][len(parent["clips"]):]:
+        provenance = clip["app"]["astrid_shot_composition"]
+        source = source_clips[provenance["source_clip_id"]]
+        target = projected_tracks[clip["track"]]
+        assert target["kind"] == child_tracks[source["track"]]["kind"]
+        assert ("group" in target.get("app", {})) == (target["kind"] == "visual")
+        expected = case["expected"]["clip_timing"][source["id"]]
+        assert clip.get("speed") == expected.get("speed")
+        assert clip["from"] == pytest.approx(expected["from"])
+        assert clip_timeline_duration(clip) == pytest.approx(expected["timeline_duration"])
+        assert provenance["source_offset"] == 350
+        assert provenance["speed"] == 1.5
+
+
+@pytest.mark.parametrize("reverse", [False, True])
+def test_track_resolution_is_independent_of_other_occurrences(project, reverse):
+    case = next(case for case in CASES if case["id"] == "two-shots-one-row")
+    graph = copy.deepcopy(case["input"])
+    for index, revision in enumerate(graph["shot_revisions"]):
+        timeline = revision["internal_timeline_revision"]["timeline"]
+        timeline["tracks"] = [] if index == 0 else [{"id": "shared", "kind": "audio"}]
+        timeline["clips"] = [{
+            "id": f"clip-{index}", "clip_type": "media", "track": "shared",
+            "at": 0, "from": 0.125, "to": 4.125,
+        }]
+    for occurrence in graph["occurrences"]:
+        occurrence.update(at_ms=0, source_offset=350, speed=1.5)
+    if reverse:
+        graph["occurrences"].reverse()
+        for index, occurrence in enumerate(graph["occurrences"]):
+            occurrence["ordinal"] = index
+    before = copy.deepcopy(graph)
+    projection = project(graph)
+    assert graph == before
+    tracks = {track["id"]: track for track in projection.config["tracks"]}
+    clips = {clip["shot_occurrence_id"]: clip for clip in projection.config["clips"]}
+    visual, audio = clips["occ-first"], clips["occ-second"]
+    assert visual["track"] == "occ-first~shared"
+    assert tracks[visual["track"]]["kind"] == "visual"
+    assert audio["track"] == "shared"
+    assert tracks[audio["track"]]["kind"] == "audio"
     assert visual["speed"] == 1.5
     assert visual["from"] == pytest.approx(0.475)
     assert visual["to"] == pytest.approx(3.475)
-    assert audio["track"] == "audio"
     assert "speed" not in audio
     assert audio["from"] == 0.125
     assert audio["to"] == 2.125
-    for clip in (visual, audio):
-        assert clip_timeline_duration(clip) == pytest.approx(2)
-        provenance = clip["app"]["astrid_shot_composition"]
-        assert provenance["source_offset"] == 350
-        assert provenance["speed"] == 1.5
+    assert all(clip_timeline_duration(clip) == pytest.approx(2) for clip in clips.values())
 
 
 @pytest.mark.parametrize("child_speed", [None, 2])
