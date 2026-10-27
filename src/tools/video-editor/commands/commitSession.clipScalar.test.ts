@@ -20,6 +20,12 @@ const head = { revisionId: 'r0', publicationId: 'p0' };
 const holdRef = 'occurrence:f2-occurrence/clip:f2-agent-clip';
 const assetRef = 'occurrence:f2-occurrence/clip:f2-agent-clear-clip';
 const transitionRef = 'parent/clip:f2-transition-clip';
+const scalarPlacements = golden.bundle.placements.map((placement) => {
+  const transformFree = copy(placement);
+  delete transformFree.transform;
+  delete transformFree.opacity;
+  return transformFree;
+});
 const cases: Array<[string, ClipScalarArgs]> = [
   [holdRef, { values: { hold: 4 }, clear: [] }],
   [assetRef, { values: {}, clear: ['asset'] }],
@@ -31,7 +37,7 @@ const displayId = (ref: string) => owner(ref) === 'parent' ? ref.split('/clip:')
 function rawDocument(): CanonicalDocument {
   const raw = acceptedCommit({ revision_id: 'r0', publication_id: 'p0' },
     { revision_id: 'initial', publication_id: 'initial' }, { children: true }).data.canonical_document;
-  raw.parent_revision.payload = { ...copy(golden.bundle.parent), occurrences: golden.bundle.placements.map((placement) => ({
+  raw.parent_revision.payload = { ...copy(golden.bundle.parent), occurrences: scalarPlacements.map((placement) => ({
     ...copy(placement), shot_id: 'shot-1', shot_revision_id: 'shot-r1',
   })) };
   raw.parent_revision.content_digest = fixtureDigest(raw.parent_revision.payload);
