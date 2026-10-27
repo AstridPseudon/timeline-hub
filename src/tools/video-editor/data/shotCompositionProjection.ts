@@ -179,9 +179,9 @@ function childTimeline(occurrence: CanonicalShotOccurrence): JsonObject {
       occurrence.occurrenceId,
     );
   }
-  // Inner visuals belong to the occurrence's output block, including Source
-  // lanes. Normalize only the projected roles so later output/seam consumers
-  // retain them; authored roles and the audio filtering stay unchanged.
+  // Shared App/Agent policy: inner Source visuals project as output; omitted
+  // roles keep their default-output meaning. Authored roles and audio remain
+  // unchanged, while parent Source occurrences are filtered separately.
   const tracks = Array.isArray(timeline.tracks) ? timeline.tracks.map((rawTrack) => {
     const track = record(rawTrack);
     return track && track.kind !== 'audio' && track.role === 'source'

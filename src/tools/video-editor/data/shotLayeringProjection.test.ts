@@ -10,9 +10,9 @@ import { projectOutputTimelineConfig } from './timelineOutputProjection.ts';
 import { coversFrame, visualSeamSourceTrack } from './visualSeamCoverage.ts';
 import type { ResolvedTimelineConfig, TimelineClip } from '@/tools/video-editor/types/index.ts';
 
-// Runtime commit 54f35c64d382f04132a52c115e0460dfd1dfcf3c.
+// Exact Runtime role-parity fixture bytes, shared with Agent.
 const canonicalPath = 'conformance/fixtures/shot-layering-v1.json';
-const canonicalSha256 = 'c779ef38d4f47368967a5afab2704548c70c0f27c646f8ebab6be74ad3cf63a7';
+const canonicalSha256 = '7ebd8827e8f766854901029a17ccfad31684d6144150543411a34f5aefc65f56';
 
 type LayeringCase = typeof layeringFixture.cases[number];
 
@@ -85,7 +85,7 @@ describe('shared Runtime shot-layering projection cases', () => {
     const projection = projectCase(testCase);
     const { config } = projection;
     expect(config.tracks.map((track) => track.id)).toEqual(testCase.expected.track_order);
-    expect(config.tracks.filter((track) => track.app?.group).map(({ id, app }) => ({ id, app })))
+    expect(config.tracks.filter((track) => track.app?.group).map(({ id, app, role }) => ({ id, app, ...(role ? { role } : {}) })))
       .toEqual(testCase.expected.group_tracks);
     expect(projection.warnings).toEqual(testCase.expected.warnings);
     expect(config.app?.canonicalComposition).toMatchObject({ warnings: testCase.expected.warnings });

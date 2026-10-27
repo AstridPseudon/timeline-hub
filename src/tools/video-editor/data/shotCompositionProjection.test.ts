@@ -262,12 +262,12 @@ describe('canonical shot-composition downstream projection', () => {
     });
   });
 
-  it('keeps child Source visuals in their occurrence while filtering parent Source lanes', () => {
+  it.each([undefined, 'output'] as const)('keeps child Source visuals in their occurrence with sibling role %s', (role) => {
     const normalized = withOccurrenceRevision(prepared, 0, (timeline) => ({
       ...timeline,
       tracks: [
         { id: 'source-video', kind: 'visual', label: 'Interview', role: 'source' },
-        { id: 'video', kind: 'visual', label: 'Output cut' },
+        { id: 'video', kind: 'visual', label: 'Output cut', ...(role ? { role } : {}) },
       ],
       clips: [
         { id: 'long-source', asset: 'missing-source', clipType: 'media', track: 'source-video', at_ms: 0, duration_ms: 90000 },
@@ -301,12 +301,18 @@ describe('canonical shot-composition downstream projection', () => {
       kind: 'visual', role: 'output', app: { group: { id: 'occ-1', sourceTrack: 'source-video' } },
     });
     expect(projection.config.tracks.find((track) => track.id === 'occ-1~video')).toMatchObject({ kind: 'visual' });
-    expect(projection.config.tracks.find((track) => track.id === 'occ-1~video')?.role).toBeUndefined();
+    expect(projection.config.tracks.find((track) => track.id === 'occ-1~video')?.role).toBe(role);
     expect(projection.config.clips.find((clip) => clip.id === 'occ-1:short-output')?.hold).toBe(4);
     expect(projection.config.clips.find((clip) => clip.id === 'occ-1:short-output')?.app?.canonicalTiming)
       .toMatchObject({ occurrenceDurationMs: 4000 });
     expect(projection.config.registry).not.toHaveProperty('missing-source');
     expect(projection.config.registry).not.toHaveProperty('missing-parent');
+    expect((normalized.occurrences[0].revision.internal_timeline_revision as {
+      timeline: { tracks: unknown[] };
+    }).timeline.tracks).toEqual([
+      { id: 'source-video', kind: 'visual', label: 'Interview', role: 'source' },
+      { id: 'video', kind: 'visual', label: 'Output cut', ...(role ? { role } : {}) },
+    ]);
   });
 
   it('classifies parent Source ownership before filtering tracks, even when a child reuses the ID', () => {

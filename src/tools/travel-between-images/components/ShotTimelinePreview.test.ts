@@ -768,7 +768,7 @@ describe('shot timeline popup persistence', () => {
     });
   });
 
-  it('round-trips the occurrence child timeline without projection IDs or track groups', async () => {
+  it.each(['shot-local', 'projected'])('round-trips %s child clips without projection IDs or groups', async (source) => {
     const composition = createShotCompositionAdapter({ load: vi.fn(), publish: vi.fn() }).prepare(fixture);
     const publish = vi.fn(async (request) => request.graph);
     const adapter = createShotCompositionAdapter({ load: vi.fn(), publish });
@@ -781,8 +781,18 @@ describe('shot timeline popup persistence', () => {
     expect(loaded.config.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
     const edited = {
       ...loaded.config,
-      clips: loaded.config.clips.map((clip) => clip.id === 'beta-video'
-        ? { ...clip, label: 'Edited child clip', hold: 1.5 } : clip),
+      tracks: source === 'projected' ? projected.tracks : loaded.config.tracks,
+      clips: (source === 'projected' ? projected.clips : loaded.config.clips).map((clip) => ({
+        ...clip,
+        at: source === 'projected' ? clip.at - occurrence.atMs / 1000 : clip.at,
+        label: 'Edited child clip',
+        hold: 1.5,
+        app: {
+          ...clip.app,
+          authoredClipMetadata: { preserve: [null, false, 7] },
+          ...(source === 'projected' ? { group: { id: 'occ-4', sourceTrack: 'video' } } : {}),
+        },
+      })),
     };
 
     await provider.saveTimeline('shot-round-trip', edited, loaded.configVersion);
@@ -798,6 +808,11 @@ describe('shot timeline popup persistence', () => {
     });
     expect(savedTimeline.tracks.every((track) => !track.id.includes('~'))).toBe(true);
     expect(savedTimeline.tracks.every((track) => !track.app?.group)).toBe(true);
+    expect(savedTimeline.clips.every((clip) => !clip.track.includes('~'))).toBe(true);
+    expect(savedTimeline.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'group'))).toBe(true);
+    expect(savedTimeline.clips[0].app).toMatchObject({ authoredClipMetadata: { preserve: [null, false, 7] } });
+    expect(edited.clips[0].track).toBe(source === 'projected' ? 'occ-4~video' : 'video');
+    expect(Object.hasOwn(edited.clips[0].app, 'group')).toBe(source === 'projected');
 
     const savedComposition = adapter.prepare(saved);
     const savedOccurrence = savedComposition.occurrences.find((item) => item.occurrenceId === 'occ-4')!;
@@ -813,7 +828,7 @@ describe('shot timeline popup persistence', () => {
     });
   });
 
-  it('sanitizes projected tracks in durable recovery and retry bytes', async () => {
+  it.each(['shot-local', 'projected'])('sanitizes %s clips and projected tracks in durable recovery and retry bytes', async (source) => {
     resetFakeIndexedDB();
     const graph = structuredClone(fixture);
     const childTrack = graph.shot_revisions.find((revision) => revision.shot_id === 'shot-alpha' && revision.revision_id === 'rev-a')!
@@ -834,10 +849,18 @@ describe('shot timeline popup persistence', () => {
     const loaded = await provider.loadTimeline('shot-recovery');
     const edited = {
       ...loaded.config,
-      // Simulate the projected editor representation at the save boundary;
-      // the child clips remain locally identified so their edit is retained.
       tracks: projected.tracks,
-      clips: loaded.config.clips.map((clip) => ({ ...clip, hold: 1.5 })),
+      clips: [
+        ...(source === 'projected' ? projected.clips : loaded.config.clips).map((clip) => ({
+          ...clip, track: clip.track === 'audio' ? 'audio' : 'occ-1~video', hold: 1.5,
+          app: { ...clip.app, group: { id: 'occ-1', sourceTrack: 'video' }, authoredClipMetadata: { preserve: [null, false, 7] } },
+        })),
+        {
+          id: 'new-child-clip', track: 'occ-1~video', at: 1.5, hold: 0.5, clipType: 'text',
+          text: { content: 'New child' },
+          app: { group: { id: 'occ-1', sourceTrack: 'video' }, authoredClipMetadata: { preserve: [null, false, 7] } },
+        },
+      ],
     };
 
     await expect(provider.saveTimeline('shot-recovery', edited, 1)).rejects.toThrow('keep recovery draft');
@@ -860,6 +883,9 @@ describe('shot timeline popup persistence', () => {
     expect(recoveryTimeline.clips.find((clip) => clip.track === 'video')).toMatchObject({
       hold: 1.5,
     });
+    expect(recoveryTimeline.clips.map((clip) => clip.id)).toEqual(
+      ['alpha-video', 'alpha-audio', 'new-child-clip'].map((id) => `${recoveryOccurrence.shot_id}:${id}`),
+    );
 
     const recoveryConfig = recovery!.draft.config as TimelineConfig;
     expect(recoveryConfig.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
@@ -888,6 +914,17 @@ describe('shot timeline popup persistence', () => {
     expect(retryTimeline.clips.find((clip) => clip.track === 'video')).toMatchObject({
       hold: 1.5,
     });
+    expect(retryTimeline.clips.map((clip) => clip.id)).toEqual(recoveryTimeline.clips.map((clip) => clip.id));
+    for (const timeline of [recoveryTimeline, recoveryConfig, reloaded.config, retryTimeline]) {
+      expect(timeline.clips.map((clip) => clip.track)).toEqual(['video', 'audio', 'video']);
+      expect(timeline.clips.every((clip) => !clip.track.includes('~'))).toBe(true);
+      expect(timeline.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'group'))).toBe(true);
+      for (const clip of timeline.clips) {
+        expect(clip.app).toMatchObject({ authoredClipMetadata: { preserve: [null, false, 7] } });
+      }
+    }
+    expect(edited.clips.map((clip) => clip.track)).toEqual(['occ-1~video', 'audio', 'occ-1~video']);
+    expect(edited.clips.every((clip) => clip.app.group)).toBe(true);
 
     await clearTimelineDraft(recoveryKey);
   });
@@ -1256,7 +1293,14 @@ describe('shot timeline popup persistence', () => {
     const persisted = (await loadTimelineDraft(recoveryKey))?.draft.config as TimelineConfig;
     const { tracks: _persistedTracks, ...persistedWithoutTracks } = persisted;
     const { tracks: _draftTracks, ...draftWithoutTracks } = draft;
-    expect(persistedWithoutTracks).toEqual(draftWithoutTracks);
+    expect(persistedWithoutTracks).toEqual({
+      ...draftWithoutTracks,
+      clips: draftWithoutTracks.clips.map((clip) => ({
+        ...clip, track: clip.track === 'occ-1~video' ? 'video' : clip.track,
+      })),
+    });
+    expect(persisted.clips.every((clip) => !clip.track.includes('~'))).toBe(true);
+    expect(persisted.clips.every((clip) => !Object.hasOwn(clip.app ?? {}, 'group'))).toBe(true);
     expect(persisted.tracks?.map((track) => track.id)).toEqual(['video', 'audio']);
     expect(persisted.tracks?.every((track) => !track.app?.group)).toBe(true);
   });
