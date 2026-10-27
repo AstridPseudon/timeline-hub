@@ -464,10 +464,6 @@ function ClipActionComponent({
     };
   }, [contextMenu, closeMenu]);
 
-  useEffect(() => {
-    setContextMenu(null);
-  }, [action.id, clipMeta.asset]);
-
   openMenuWithSelectionRef.current = (clientX: number, clientY: number) => {
     if (isSelected && getSelectedTimelineDataItems(runtime?.agentSelectionOwner).length) return;
     if (!isSelected) {
