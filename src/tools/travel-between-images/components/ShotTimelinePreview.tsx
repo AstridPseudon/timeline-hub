@@ -541,8 +541,8 @@ export function ShotTimelinePreview({
       currentComposition.projectId, occurrenceId, shotCompositionAdapter, timelineDataProvider],
   );
   const initialTimelineData = useMemo(
-    () => projectionConfig ? createShotTimelineInitialData(projectionConfig) : undefined,
-    [projectionConfig],
+    () => projectionConfig ? createShotTimelineInitialData(projectionConfig, 1, currentComposition, occurrenceId) : undefined,
+    [currentComposition, occurrenceId, projectionConfig],
   );
   useEffect(() => () => { void dataProvider?.dispose().catch(() => {}); }, [dataProvider]);
   const handleActiveConfigChange = useCallback((nextConfig: ResolvedTimelineConfig) => {
