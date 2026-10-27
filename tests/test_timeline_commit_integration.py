@@ -365,6 +365,78 @@ def test_real_delete_then_reorder_undo_restores_exact_order(editing):
     assert restored["data"]["canonical_document"] == original
 
 
+@pytest.mark.parametrize("overlap", [False, True], ids=["immediate", "later-overlap"])
+def test_real_mixed_helper_commit_undo_is_exact_or_refuses_overlap(editing, overlap):
+    from astrid.sdk.timeline.api import Timeline
+    from astrid.sdk.timeline.commands import execute
+
+    def evaluate(base, document, edit):
+        bundle = editing.agent.bundle(document)
+        timeline = Timeline(None, bundle, base, evaluating=True)
+        edit(timeline)
+        timeline._capture_free_edits()
+        assert timeline._commands
+        commands = execute(bundle, timeline._commands).commands
+        return copy.deepcopy(commands), copy.deepcopy(timeline._steps)
+
+    def seed(timeline):
+        timeline.add_text("Old title", at=6, hold=7, track="picture", id="old-title")
+        timeline.add_text("Old intro", at=0, hold=1, track="picture", id="old-intro")
+
+    seed_base = editing.head()
+    seed_commands, seed_steps = evaluate(seed_base, editing.document(), seed)
+    seed_body = editing.body(seed_commands, seed_base)
+    seed_body["steps"] = seed_steps
+    editing.commit(seed_body, "mixed-helper-seed")
+
+    before = copy.deepcopy(editing.document())
+    history_before = copy.deepcopy(editing.history())
+    base = editing.head()
+
+    def recut(timeline):
+        timeline.track("titles", above="picture").rename("Opening")
+        timeline.add_text("Chapter one", at=12, hold=3, track="titles", id="chapter-one")
+        timeline.clip("old-title").set_track("titles").hold_for(2.5).on(5)
+        timeline.clip("old-intro").remove()
+
+    commands, steps = evaluate(base, before, recut)
+    body = editing.body(commands, base)
+    body["steps"] = steps
+    accepted = editing.commit(body, "mixed-helper-recut")
+
+    assert accepted["data"]["status"] == "accepted"
+    authored = editing.history()
+    assert authored[:-1] == history_before
+    assert authored[-1]["publication_id"] == accepted["receipt"]["receipt_id"]
+    parent = editing.document()["parent_revision"]["payload"]
+    tracks = parent["config"]["tracks"]
+    assert [row["id"] for row in tracks].index("titles") < [row["id"] for row in tracks].index("picture")
+    assert next(row for row in tracks if row["id"] == "titles")["label"] == "Opening"
+    clips = parent["clips"]
+    assert "old-intro" not in [row["id"] for row in clips]
+    title = next(row for row in clips if row["id"] == "old-title")
+    assert (title["track"], title["hold"], title["at"]) == ("titles", 2.5, 5)
+    assert next(row for row in clips if row["id"] == "chapter-one")["params"]["text"] == "Chapter one"
+
+    if overlap:
+        peer = editing.body([editing.move("old-title", 6)], editing.head())
+        editing.commit(peer, "mixed-helper-peer-move")
+        current = copy.deepcopy(editing.document())
+        current_history = copy.deepcopy(editing.history())
+        current_rows = rows(editing.service)
+        with pytest.raises(RuntimeErrorBase) as error:
+            editing.commit(editing.body([inverse(accepted["receipt"]["receipt_id"])]),
+                           "mixed-helper-undo-overlap")
+        assert error.value.status == 409
+        assert editing.document() == current
+        assert editing.history() == current_history
+        assert rows(editing.service) == current_rows
+    else:
+        undone = editing.commit(editing.body([inverse(accepted["receipt"]["receipt_id"])]),
+                                "mixed-helper-undo")
+        assert undone["data"]["canonical_document"] == before
+
+
 def test_real_inverse_refuses_well_hashed_wrong_clip_order(editing, monkeypatch):
     from astrid.sdk.timeline.capture import capture_clip_delete
     from runtime_protocol.timeline_commit_auth import _authoring_parent_identity, images
