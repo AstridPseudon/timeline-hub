@@ -328,6 +328,82 @@ def test_current_agent_inverse_stage_round_trip(editing, monkeypatch, recipe):
     editing.assert_readback(result)
 
 
+def _mixed_delete_order_body(editing):
+    """Delete one native clip, then reorder the remaining collection in one edit."""
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    original = editing.document()
+    clips = original["parent_revision"]["payload"]["clips"]
+    assert len(clips) == 2
+    order = [clip["id"] for clip in clips]
+    extra = copy.deepcopy(clips[-1])
+    extra["id"] = "mixed-order-extra"
+    extra["at"] = max(clip["at"] + clip["hold"] for clip in clips) + 1
+    insertion = {"op": "list.insert", "ref": "parent", "path": ["clips"],
+                 "before": {"state": "absent"}, "id": extra["id"],
+                 "order_before": order, "after_id": order[-1], "value": extra}
+    seed = editing.body([{"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                          "args": {"changes": [insertion]}, "created": ["parent/clip:" + extra["id"]]}])
+    seed["steps"][0]["patch"] = [insertion]
+    editing.commit(seed, "mixed-delete-order-seed")
+
+    original = editing.document()
+    clips = original["parent_revision"]["payload"]["clips"]
+    order = [clip["id"] for clip in clips]
+    target = order[0]
+    remaining = [clip for clip in clips if clip["id"] != target]
+    remaining_order = [clip["id"] for clip in remaining]
+    change = {"op": "list.move", "ref": "parent", "path": ["clips"],
+              "before": {"state": "present", "value": copy.deepcopy(remaining[-1])},
+              "id": remaining_order[-1], "order_before": remaining_order, "after_id": None}
+    reordered = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+                 "args": {"changes": [change]}}
+    delete = capture_clip_delete(editing.agent.bundle(original), "parent/clip:" + target)
+    body = editing.body([delete, reordered])
+    return body, target, original
+
+
+@pytest.mark.integration
+def test_current_agent_mixed_native_delete_and_order_undo_restores_exact_collection(editing):
+    body, deleted, original = _mixed_delete_order_body(editing)
+    forward = editing.commit(body, "mixed-delete-order-forward")
+    changed = forward["data"]["canonical_document"]
+    assert deleted not in [clip["id"] for clip in changed["parent_revision"]["payload"]["clips"]]
+    undo_body = editing.body([real_tests.inverse(forward["receipt"]["receipt_id"])])
+    undo = editing.commit(undo_body, "mixed-delete-order-undo")
+    restored = undo["data"]["canonical_document"]
+    original["parent_revision"]["revision_id"] = restored["parent_revision"]["revision_id"]
+    original["parent_revision"]["content_digest"] = digest(original["parent_revision"]["payload"])
+    real_tests.assert_json_equal(restored, original)
+
+
+@pytest.mark.integration
+def test_current_agent_mixed_delete_order_inverse_rejects_mismatched_stage(editing, monkeypatch):
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+
+    body, _, _ = _mixed_delete_order_body(editing)
+    forward = editing.commit(body, "mixed-delete-order-forgery-source")
+    before, history = real_tests.rows(editing.service), copy.deepcopy(editing.history())
+    accept = RequestCommitPort.accept
+
+    def forged_accept(port, prepared):
+        value = copy.deepcopy(prepared)
+        record = value["records"]["commands"][0]
+        stage = next(binding for binding in record["bindings"] if binding["key"] == "inverse.stage"
+                     and binding["boundary"]["effect_range"][1] > binding["boundary"]["effect_range"][0])
+        start, end = stage["boundary"]["effect_range"]
+        stage["boundary"]["effect_range"] = [start, end - 1]
+        return accept(port, value)
+
+    monkeypatch.setattr(RequestCommitPort, "accept", forged_accept)
+    undo = editing.body([real_tests.inverse(forward["receipt"]["receipt_id"])])
+    with pytest.raises(RuntimeErrorBase) as error:
+        editing.commit(undo, "mixed-delete-order-forged-undo")
+    assert error.value.details["reason"] == "invalid_records"
+    assert real_tests.rows(editing.service) == before
+    assert editing.history() == history
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("mutation", ["sequential-before", "sequential-after", "publication", "step",
                                       "command-ordinal", "ref"])
