@@ -352,7 +352,7 @@ def drafted(tmp_path, monkeypatch):
     assert _run("checkout", "t", "--project", "P") == 0
 
 
-def test_show_as_sheet_prints_the_working_copy_sheet_with_a_banner(tmp_path, monkeypatch, capsys):
+def test_show_as_sheet_reads_an_explicit_working_copy_with_a_banner(tmp_path, monkeypatch, capsys):
     from pathlib import Path
 
     root = Path(__file__).resolve().parents[2] / "fixtures" / "timeline_editing"
@@ -362,9 +362,9 @@ def test_show_as_sheet_prints_the_working_copy_sheet_with_a_banner(tmp_path, mon
     monkeypatch.setattr(tc, "fetch_bundle", lambda project, timeline, revision_id=None, client=None: copy.deepcopy(tiny))
     assert _run("checkout", "t", "--project", "P") == 0
     capsys.readouterr()
-    assert _run_with_client("show", "t", "--project", "P", "--as", "sheet") == 0
+    assert _run_with_client("show", "t", "--project", "P", "--as", "sheet", "--draft", "main") == 0
     lines = capsys.readouterr().out.splitlines()
-    assert lines[0].startswith("film P") and lines[1].startswith("WORKING COPY · 0 clips changed vs published")
+    assert lines[0].startswith("film P") and lines[1].startswith("WORKING COPY main · 0 clips changed · base revision")
     assert any(line.startswith("lines") for line in lines)
 
 
@@ -380,6 +380,7 @@ def test_show_summary_is_one_line_per_chapter(drafted, capsys):
     assert _run_with_client("show", "t", "--project", "P", "--summary") == 0
     out = capsys.readouterr().out
     assert "chapters" in out and "full table:" in out
+    assert "WORKING COPY" not in out
 
 
 def test_show_at_takes_m_ss(drafted, capsys):

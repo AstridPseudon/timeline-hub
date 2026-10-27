@@ -938,6 +938,7 @@ def _align_snapshot_to_render(snapshot: dict, video: Path) -> None:
 
 def _render_time_anchored_output(
     frame_index: Mapping[str, object], pack_root: Path, *, options: Mapping[str, object],
+    revision_label: Mapping[str, object] | None = None,
 ) -> list[Path]:
     """Render sampled output cards whose left edges are exact timeline times."""
     from PIL import Image, ImageDraw
@@ -977,7 +978,7 @@ def _render_time_anchored_output(
     cards = sorted(cards, key=lambda card: (float(card.get("time_seconds") or 0.0), str(card.get("id") or "")))
     page_size = max(1, int(options.get("page_size") or 50))
     width, lane_left, lane_right = 1500, 24, 1476
-    header, ruler_y = 144, 128
+    header, ruler_y = 170, 154
     title_font, font, small_font = _png_font(20), _png_font(16), _png_font(13)
     caption_font = _png_font(14)
     image_height = 202
@@ -988,10 +989,14 @@ def _render_time_anchored_output(
         draw = ImageDraw.Draw(image)
         timeline_name = str(provenance.get("timeline_name") or provenance.get("timeline_id") or "timeline")
         render_id = str(provenance.get("render_run_id") or "managed render")
-        _png_draw_text(draw, (16, 10), f"{timeline_name} · page {page} · time-anchored rendered samples", title_font, fill="white")
+        revision_text = revision_label.get("label") if isinstance(revision_label, Mapping) else None
+        title = f"{timeline_name} · page {page} · time-anchored rendered samples"
+        _png_draw_text(draw, (16, 10), title, title_font, fill="white")
         _png_draw_text(draw, (16, 36), f"Render {render_id} · each card begins at its exact sample time", small_font, fill="#acbbcb")
-        _png_draw_text(draw, (16, 58), "Shared ruler: sampled output above; continuous canonical input lanes below. Cards are point samples, not clip durations.", small_font, fill="#acbbcb")
-        _png_draw_text(draw, (16, 82), "Teal = exact sample guide · card boundaries line up with the same time coordinates as the input lanes.", small_font, fill="#8ce0d0")
+        if revision_text:
+            _png_draw_text(draw, (16, 58), f"Source: {revision_text}", small_font, fill="#acbbcb")
+        _png_draw_text(draw, (16, 80), "Shared ruler: sampled output above; continuous canonical input lanes below. Cards are point samples, not clip durations.", small_font, fill="#acbbcb")
+        _png_draw_text(draw, (16, 102), "Teal = exact sample guide · card boundaries line up with the same time coordinates as the input lanes.", small_font, fill="#8ce0d0")
         draw.line((lane_left, ruler_y, lane_right, ruler_y), fill="#6edac7", width=1)
         tick_count = 4
         for tick in range(tick_count + 1):
@@ -1000,7 +1005,7 @@ def _render_time_anchored_output(
             draw.line((x, ruler_y - 6, x, ruler_y + 6), fill="#6edac7", width=1)
             seconds = start_seconds + fraction * (end_seconds - start_seconds)
             label = f"{seconds:.1f}s"
-            _png_draw_text(draw, (x - _png_text_width(draw, label, small_font) / 2, 106), label, small_font, fill="#8ce0d0")
+            _png_draw_text(draw, (x - _png_text_width(draw, label, small_font) / 2, 132), label, small_font, fill="#8ce0d0")
             draw.line((x, ruler_y + 7, x, image.height - 12), fill="#23343f", width=1)
 
         audio = frame_index.get("audio") if isinstance(frame_index.get("audio"), Mapping) else None
@@ -1561,7 +1566,7 @@ def _compose_synchronized_surface(
             raw_output_paths.append(raw_path)
 
         anchored = _render_time_anchored_output(
-            frame_index, pack_root, options=options or {},
+            frame_index, pack_root, options=options or {}, revision_label=revision_label,
         ) if frame_index is not None else []
         surface_paths = anchored or raw_output_paths
         composed_paths: list[str] = []
