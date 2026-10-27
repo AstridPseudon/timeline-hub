@@ -1,13 +1,97 @@
 """Core media cutters used when a flat timeline is split into chapter shots."""
 from __future__ import annotations
 
-from astrid.sdk.timeline_restructure import differences, flatten, plan, split
+from astrid.sdk.timeline_restructure import describe, differences, flatten, plan, split
 from tests.sdk.test_timeline_restructure import flat_film
 
 
 def _clips_by_source(chapters, source_id):
     return [clip for chapter in chapters for clip in chapter.clips
             if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == source_id]
+
+
+def test_entrance_and_exit_crossers_keep_their_original_clock_on_named_over_rows():
+    for field in ("entrance", "exit"):
+        flat = flat_film()
+        source = {"id": f"{field}-cross", "clipType": "media", "track": "sprite", "asset": "R",
+                  "at": 3.5, "hold": 1.0, "from": 0.0, "to": 1.0,
+                  field: {"type": "fade", "duration": 0.5}}
+        flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
+
+        planned = plan(flat)
+        over = next(clip for clip in planned.film_clips if clip["id"] == source["id"])
+        report = "\n".join(describe(flat))
+
+        assert over["track"] == "picture-over"
+        assert over["at"] == source["at"] and over["hold"] == source["hold"]
+        assert over["from"] == source["from"] and over["to"] == source["to"]
+        assert over[field] == source[field]
+        assert source["id"] in report and "[media] -> picture-over" in report
+        assert f"{field} timing restarts" in report
+        assert not _clips_by_source(planned.chapters, source["id"])
+
+
+def test_fractional_source_frame_crosser_keeps_exact_source_sample_on_named_over_row():
+    flat = flat_film()
+    source = {"id": "fractional-trim", "clipType": "media", "track": "sprite", "asset": "R",
+              "at": 3.5, "hold": 1.0, "from": 0.0, "to": 1.0, "speed": 1.5}
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
+
+    planned = plan(flat)
+    over = next(clip for clip in planned.film_clips if clip["id"] == source["id"])
+    report = "\n".join(describe(flat))
+    source_at_global_4 = over["from"] + (4.0 - over["at"]) * over["speed"]
+
+    assert over["track"] == "picture-over"
+    assert source_at_global_4 == 0.75
+    assert source_at_global_4 * 30 == 22.5
+    assert "source offset at 4 s is not an exact 30 fps frame" in report
+    assert source["id"] in report and "[media] -> picture-over" in report
+    assert not _clips_by_source(planned.chapters, source["id"])
+
+
+def test_differences_rejects_legacy_manually_cut_animation_group():
+    flat = flat_film()
+    source = {"id": "legacy-animated", "clipType": "media", "track": "sprite", "asset": "R",
+              "at": 3.5, "hold": 1.0, "from": 0.0, "to": 1.0}
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
+    legacy = split(flat)
+    flat_source = next(clip for clip in flat["shots"]["film"]["internal_timeline"]["clips"]
+                       if clip["id"] == source["id"])
+    flat_source["entrance"] = {"type": "fade", "duration": 0.5}
+    for shot in legacy["shots"].values():
+        for clip in shot["internal_timeline"]["clips"]:
+            marker = clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {})
+            if marker.get("id") == source["id"]:
+                clip["entrance"] = {"type": "fade", "duration": 0.5}
+
+    pieces = [clip for shot in legacy["shots"].values() for clip in shot["internal_timeline"]["clips"]
+              if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == source["id"]]
+    assert len(pieces) == 2
+    assert differences(flat, legacy)
+
+
+def test_differences_rejects_legacy_manually_cut_fractional_media_group():
+    flat = flat_film()
+    source = {"id": "legacy-fractional", "clipType": "media", "track": "sprite", "asset": "R",
+              "at": 3.5, "hold": 1.0, "from": 0.0, "to": 1.0}
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
+    legacy = split(flat)
+    flat_source = next(clip for clip in flat["shots"]["film"]["internal_timeline"]["clips"]
+                       if clip["id"] == source["id"])
+    flat_source["speed"] = 1.5
+    pieces = [clip for shot in legacy["shots"].values() for clip in shot["internal_timeline"]["clips"]
+              if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == source["id"]]
+    assert len(pieces) == 2
+    for piece in pieces:
+        marker = piece["app"]["astrid"]["timeline_restructure_piece"]
+        piece["speed"] = 1.5
+        marker["source_speed_present"] = True
+        marker["source_speed"] = 1.5
+    pieces[0]["to"] = 0.75
+    pieces[1]["from"] = 0.75
+
+    assert differences(flat, legacy)
 
 
 def test_speeded_media_crossing_multiple_walls_advances_source_and_keeps_window():

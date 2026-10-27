@@ -51,6 +51,31 @@ def _cutter_for(clip: Mapping[str, Any]):
     return None
 
 
+def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps: float) -> str | None:
+    """Explain why a boundary cut would reset a supported clip clock or source sample."""
+    for field_name in ("entrance", "exit", "continuous", "animation", "animations", "effects", "transition",
+                       "keyframes", "keyframeOrigin", "fade_in", "fade_out", "fadeIn", "fadeOut"):
+        value = clip.get(field_name)
+        if value not in (None, [], {}, ""):
+            return f"{field_name} timing restarts at a chapter cut"
+    params = clip.get("params")
+    if isinstance(params, Mapping):
+        for field_name in ("animation", "animations", "effects", "fade_in", "fade_out", "fadeIn", "fadeOut",
+                           "fadeInCurve", "fadeOutCurve", "keyframeOrigin"):
+            if params.get(field_name) not in (None, [], {}, ""):
+                return f"params.{field_name} timing restarts at a chapter cut"
+        if _clip_kind(clip) != "am-sprite" and params.get("keyframes") not in (None, [], {}, ""):
+            return "params.keyframes timing restarts at a chapter cut"
+    if _clip_kind(clip) in {"media", "video"}:
+        source_from = _num(clip.get("from"))
+        speed = _num(clip.get("speed"), 1.0) or 1.0
+        for start in cut_starts:
+            source_frame = (source_from + (start - _num(clip.get("at"))) * speed) * fps
+            if abs(source_frame - round(source_frame)) > 1e-7:
+                return f"source offset at {start:g} s is not an exact {fps:g} fps frame"
+    return None
+
+
 def _piece_shape(clip: Mapping[str, Any]) -> str:
     if clip.get("hold") is not None:
         return "hold_window" if clip.get("from") is not None and clip.get("to") is not None else "hold"
@@ -381,6 +406,8 @@ def _rejoin_pieces(clips: list[dict[str, Any]], chapter_start: float, fps: float
                 original.pop("app", None)
         cutter = _cutter_for(original)
         valid = cutter is not None
+        if valid and _cut_safety_reason(original, starts[1:], fps):
+            continue
         expected_pieces = []
         for piece, start, length in zip(pieces, starts, lengths):
             if not valid:
@@ -701,6 +728,11 @@ def plan(flat: Mapping[str, Any]) -> Plan | None:
                 if hi - lo > 1e-9:
                     segments.append((chapter, lo, hi))
             if len(segments) > 1:
+                unsafe = _cut_safety_reason(clip, (lo for _, lo, _ in segments[1:]), fps)
+                if unsafe:
+                    can_cut = False
+                    why = f"{why}; {unsafe}" if why else unsafe
+            if can_cut and len(segments) > 1:
                 source_id = str(clip.get("id"))
                 shape = _piece_shape(clip)
                 for index, (chapter, lo, hi) in enumerate(segments):
