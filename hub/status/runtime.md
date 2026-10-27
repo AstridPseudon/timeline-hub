@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T18:21:15Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
-# runtime board, 2026-10-27T18:19:19.414027+00:00
+<!-- main | 2026-10-27T18:26:55Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T18:26:33.875658+00:00
 
 Original Runtime delivery is complete. H and D retain ownership of active follow-up work.
 
@@ -19,17 +19,17 @@ Original Runtime delivery is complete. H and D retain ownership of active follow
 | H Agent lanes | Resolve remaining restructure regressions | H lead and Sol | Corrected 35 file lane result | blocked:H | lead-H-r4; H-hard-agent-restructure-r3 | 11210: 910 PASS,41 FAIL,10 deselected. Twenty two new failures remain, all restructure. Plate and loader failures fixed. | Agent314a6d2bbb |
 | H and D continuity | Keep phase managers moving | Luna leads | Phase work remains open | doing | lead-H-r4; lead-D-r2 | Both managers active. Supported lead-roll owns automatic round continuity. | No source change |
 | D merged editing | Retain reviewed editing work | D Sol and Luna splits | Central merged-head tests | merged | lead-D-r2 and named D workers | E1 E2 E3 E4 E5 E6 E7 E8 E10 E11 merged. Combined416 PASS,16 native integration PASS; supplemental gaps remain. | Agentd1fe087ed5; Runtimeb8e4e8 |
-| D E9 undo | Qualify merged mixed undo integration | D Sol and Lunas | Both source halves merged | doing | lead-D-r2; D combined worker | Agent270 and Runtime112 targeted PASS; paired2 plus HTTP2 PASS. Runtime d3ba026 merged; D owns combined merged-tree qualification. | Agentbef21f; Runtimed3ba026 |
+| D E9 undo | Requalify mixed undo after E13 | D Sol and Lunas | E9 both halves merged | doing | lead-D-r2; E13 return worker | E9 combined413 PASS and paired2 PASS onbef21f/d3ba026. After E13 paired1 PASS1 FAIL; D owns repair and final acceptance. | Agentfbe0cc; Runtimed3ba026 |
 | D E12 | Retain merged preview and literal lists | D Luna and lead | Fresh no-code verification | merged | D-E12-r1; D-E12-integrate-r2 | 235 targeted PASS,5 integration deselected; Ruff and diff PASS. D records merged source and owns final acceptance. | Agent6fc24f72ec |
-| D next editing | Integrate errors and final guide | D Luna and taste workers | E13 author159 PASS | doing | D-E13-r1; lead-D-r2 | E13 author complete159 PASS. T1 and T2 provisional drafts ready. E14 and final guide need accepted H merged forward. | D owns E13 merge |
+| D next editing | Repair combined E13 regressions | D Luna and taste workers | E13 merged; combined red | doing | lead-D-r2; E13 return worker | Own159 PASS. Combined447 PASS3 FAIL; paired1 PASS1 FAIL. E13 not accepted. Final guide and E14 need accepted H merged forward. | Agentfbe0cc38c9 |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive on owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Retain guarded maintenance result | Runtime manager | Supported tools and KEEP guards | merged | Runtime manager | All 356 recorded KEEP hashes and modes exact. Sweep0; compact0 dirs;3 old logs compressed. Three dirty trees remain intact. | No source change |
+| OPS headroom | Retain guarded maintenance result | Runtime manager | Supported tools and KEEP guards | merged | Runtime manager | All356 prior KEEP hashes and modes exact. Sweep0; compact0 dirs;1 old log compressed. Three dirty trees remain intact. | No source change |
 
 Blockers: H owns the layer-order inversion and final qualification. Final App full has20036 PASS and10 baseline-matching failures; Runtime full is baseline-matched by name, not a full-suite PASS.
-Blockers: D owns E9 combined merged-tree verification and E13 merge after159 targeted PASS. Final D acceptance requires accepted H merged forward.
-Next ready: None for Runtime. D owns E9 merged-tree verification and E13; H owns the restructure failures and qualification.
-live 0 / cap 3; ready-undispatched 0. Free 3603337216 bytes. Follow-up physical disk policy applies; H and D workers are separately managed.
+Blockers: D owns post-E13 combined repairs: three targeted failures and one paired immediate-undo failure. E13 is merged but not accepted. Final D acceptance requires accepted H merged forward.
+Next ready: None for Runtime. D owns post-E13 repairs; H owns restructure disposition and final qualification.
+live 0 / cap 3; ready-undispatched 0. Free 3601924096 bytes. Follow-up physical disk policy applies; H and D workers are separately managed.
 
 Earlier detailed board: [preserved status](rounds/20261027T174711Z-prior-status.md). Full historical delivery rows: [historical board](rounds/20261027T114133Z-prior-status.md). Every original failure, proof tuple, custody limit, refusal, raw KEEP hold and deferred source remains unchanged.
 
@@ -37,6 +37,6 @@ Delivered archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timel
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled. Four recipient patch and bundle checks passed within documented scope. Historical PENDING prose, whitespace findings and monitor limits remain disclosed; this is not a full-suite or global behavior PASS.
 
-Current pass evidence: [management pass](rounds/20261027T181531Z-pass.json). Runtime inbox has no new bytes after1941564; header unchanged. Runtime has no live worker or ready source task. H and D managers are active. E9 Runtime source merged at d3ba02669b after the fresh verification worker reported112 targeted PASS with40 deselected by cache hit on the same tree, Ruff and diff PASS; D owns combined merged-tree verification. E13 author completed159 targeted PASS; D owns its merge. Final H App full completed20036 PASS and10 baseline-matching failures. Guarded recycle left the three historical dirty trees intact. Supported sweep removed0 temporary directories; compact is running. All356 recorded KEEP hashes and modes are exact. Delivered archive matches its sidecar. No duplicate source task, suite, manager merge, new safety refusal, P START or product edit.
+Current pass evidence: [management pass](rounds/20261027T181531Z-pass.json). Rechecked after 662 seconds. Runtime inbox has no new bytes after1941564; header unchanged. No Runtime live worker or ready source task. H and D managers remain active. H final App full is20036 PASS and10 baseline-matching failures; H owns final acceptance. E9 Runtime merged atd3ba02669b; pre-E13 combined413 PASS and paired2 PASS. E13 merged atfbe0cc38c9 after159 own targeted PASS, but its combined run has447 PASS3 FAIL and paired1 PASS1 FAIL. D owns the repair; E13 is not accepted. Supported maintenance removed0 temporary, scratch or test directories and compressed1 old log. All356 prior KEEP hashes and modes remain exact. Three historical dirty worktrees remain intact. Archive hash still matches its recorded sidecar; no rebuild or duplicate review. No new Runtime product edit, merge, test request, safety refusal or P START.
 
-Round continuity: Runtime remains available for lane-owned work. H owns its final qualification and layer-order decision; D owns E9 combined verification and E13. P and the follow-up ZIP remain gated. Original delivered archive and historical proof limitations are unchanged.
+Round handoff: Runtime has no ready work. H and D retain phase ownership and actual managers. H's restructure decision and final qualification, D's combined E13 repairs and acceptance remain open. P and the follow-up ZIP remain gated. Original delivered archive and all historical proof limitations are unchanged.
