@@ -1156,6 +1156,8 @@ def test_frozen_candidate_projects_to_labelled_managed_render_without_publicatio
     candidate = open_authoring_bundle(
         parent, shot_revisions=shots, internal_timeline_revisions=timelines
     )
+    # This preview exercises supported placement; group transforms are refused.
+    candidate["placements"][0]["transform"] = {}
     candidate["placements"][0]["duration_ms"] = 1234
     preview = preview_authoring_candidate(candidate)
     candidate["placements"][0]["duration_ms"] = 9999
