@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T11:51:25Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# runtime board, 2026-10-27T11:44:09.203681+00:00
+<!-- main | 2026-10-27T11:58:05Z | dispatcher heartbeat 3s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
+# runtime board, 2026-10-27T11:52:06.235805+00:00
 
 Original Runtime delivery is complete. Follow-up work remains with Main and leads A, B and C.
 
@@ -17,11 +17,11 @@ Original Runtime delivery is complete. Follow-up work remains with Main and lead
 | D editing | Retain editing gate | Main and D lead | H accepted and Main START | gated:H | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). D START absent. | Later phase |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive against owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Respect protected cleanup holds | Manager route | Guarded worktree census | merged | Runtime manager | 36 trees:31 KEEP,5 dirty,6 without ended markers; holds overlap. No eligible recycle. Sweep and compact exit0; nothing removed or packed. | No source change |
+| OPS headroom | Recycle merged ended worktrees | Manager route | Fresh guard census | doing | Runtime manager | Five A/C clean merged trees recycled; branches retained. Sweep exit 0, removed 0. Compact running. | No source change |
 
 Blockers: B lead18 owns the recorded App and Agent transform policy, staging scalar fixture restoration and final comparisons. App16657 is queued behind progressing Agent32136. C waits renewed B READY. A accepted; H, D and P START absent.
 Next ready: None for Runtime. Existing follow-up owners retain all work; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5113036800 bytes. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5743382528 bytes. Current follow-up disk rules apply.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -31,4 +31,4 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Current tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T11:44:09.203681+00:00. Second worker check exit0; all2717 rows unchanged, live0 and ready0. Inbox, header and A/B/C boards unchanged. App16657 remains queued behind progressing Agent32136; B policy and fixture restoration remain open with sole lead18. C waits renewed B READY. Sweep and compact exit0: removed0, packed0, compressed0, no stderr. No eligible Runtime recycle or refusal. [Pass evidence](rounds/20261027T114409Z-pass.json).
+Current pass: 2026-10-27T11:52:06.235805+00:00. Worker check exit 0; 2717 rows and no live Runtime worker. Inbox, header and A/B/C boards unchanged. App16657 remains queued behind Agent32136 at 91 percent. B policy and fixture restoration remain open with sole lead18; C waits renewed B READY. Fresh all-worker census found five clean ended merged A/C worktrees eligible; bin/recycle removed all five and retained their branches. Sweep exit 0 removed 0, with repeated shell Broken pipe messages; compact remains active. No refusal. [Pass evidence](rounds/20261027T115206Z-pass.json); [recycle guards and results](rounds/20261027T115106Z-recycle.json).
