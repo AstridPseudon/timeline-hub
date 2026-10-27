@@ -196,19 +196,32 @@ def test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam(sprite_ssr
         assert [strip_clip_identity(html) for html in before_html] == [strip_clip_identity(html) for html in after_html]
 
 
+@pytest.mark.parametrize("host_project", ["0.0.13"], indirect=True)
 def test_cut_sprite_uses_renderer_rounding_at_half_frame_seam(sprite_ssr, tmp_path):
     original = sprite({"x": 8, "keyframes": [{"frame": 32, "x": 24}]},
                       at=3.5, hold=1.516667, id="half-frame-seam")
-    first = _cut_sprite(original, 3.5, 4.55, Chapter("A", 0, 4550), piece_id="half-frame-first", fps=30)
     later = _cut_sprite(original, 4.55, 5.016667, Chapter("B", 4550, 5017), piece_id="half-frame-later", fps=30)
     later["at"] += 4.55
 
     assert later["params"]["sourceClock"]["offsetFrames"] == 32
     assert later["params"]["x"] == 24
     assert later["params"]["keyframes"] == []
+
+    flat = flat_film()
+    plates = {clip["id"]: clip for clip in flat["shots"]["film"]["internal_timeline"]["clips"]
+              if clip["id"] in {"p1", "p2", "p3"}}
+    plates["p1"]["hold"] = 4.55
+    plates["p2"]["at"] = 4.55
+    plates["p2"]["hold"] = 3.45
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(original)
+    planned = plan(flat)
+    assert planned is not None
+    fallback = next(clip for clip in planned.film_clips if clip["id"] == original["id"])
+    assert fallback["track"].endswith("-over")
+
     before = prepared_props(tmp_path, [original], {"R": asset()}, duration_ms=6000)
-    after = prepared_props(tmp_path, [first, later], {"R": asset()}, duration_ms=6000)
-    frames = list(range(137, 151))
+    after = prepared_props(tmp_path, [fallback], {"R": asset()}, duration_ms=6000)
+    frames = list(range(105, 151))
 
     before_html = [re.sub(r' data-clip-id="[^"]*"', '', html) for html in sprite_ssr(before, frames)]
     after_html = [re.sub(r' data-clip-id="[^"]*"', '', html) for html in sprite_ssr(after, frames)]
