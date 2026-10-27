@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T16:00:44Z | dispatcher heartbeat 12s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-27T16:00:59.434406+00:00
+<!-- main | 2026-10-27T16:10:13Z | dispatcher heartbeat 14s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 6m -->
+# runtime board, 2026-10-27T16:03:50.249323+00:00
 
 Original Runtime delivery is complete. Main started phase H and handed B and C remaining work to its existing lead.
 
@@ -30,7 +30,7 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 Blockers: H owns final full-suite comparisons. C2 is merged and its two browser suites each passed three cases. D final acceptance requires H; P awaits D and Main START.
 Blockers: D E5 needs a matching central test lane. Main kit coordination and the existing D lead own the route; no permission decision is needed. [Peer note](../../design/peer-runtime-to-orchestrator-20261027T152415Z-D-E5-central-lane.md).
 Next ready: None for Runtime. H and D own their active workers and next tasks.
-live 0 / cap 3; ready-undispatched 0. Free 4061007872 bytes. Current followup physical disk policy applies; H and D workers are separately managed.
+live 0 / cap 3; ready-undispatched 0. Free 3962793984 bytes. Current followup physical disk policy applies; H and D workers are separately managed.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -40,4 +40,4 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T16:00:59.434406+00:00. Runtime census reports 2717 terminal records, with no live worker and no actual pending request. Inbox and header are unchanged. H round two ended exit 0; automatic lead-roll queued round three at 15:55:04Z, and it started at 15:55:20Z. Manager lead-roll check was a no-op. D E1 Sol continuation is active from the retained bca403 branch; the stale missing-brief Blockers line is cleared. H owns the active Agent and App full-suite comparisons and the queued Composition and corrected Runtime full suites. D owns E3/E7 integration and E5 matching central qualification. P START is absent. All 99 original test KEEP hashes and modes match; all 135 markers present before maintenance are unchanged. Newly observed open test runs received prospective KEEP only. Sweep3 and compact both exited 0: zero directories removed or packed, one old worker log compressed. The global old-worktree scan found only five dirty unprotected Runtime trees, so no eligible recycle target exists. No Runtime product edit, worker dispatch, merge or new safety refusal. [Evidence](rounds/20261027T160059Z-pass.json); [maintenance](rounds/20261027T154821Z-maintenance.json).
+Current pass: 2026-10-27T16:03:50.249323+00:00. Runtime census reports 2717 terminal records, no live worker and no pending request. Inbox and header are unchanged. H and D leads are alive; H Agent and App full suites run, Composition and corrected Runtime full suites queue behind them. D E1 and E3 source workers remain active. D E5 central qualification stays with its existing lead and main kit coordination. No eligible old worktree can be recycled: all five unprotected trees are dirty. All 99 original test KEEP hashes and modes match. Guarded maintenance is in progress. No Runtime product edit, dispatch, merge or new safety refusal. [Evidence](rounds/20261027T160350Z-pass.json).
