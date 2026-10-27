@@ -640,6 +640,125 @@ def _validate_params(
             _fail(f"{path}.params.{key}", "is not declared by the retained element schema")
 
 
+def _validate_visual_fields(
+    clip: Mapping[str, Any], *, path: str, fps: float, schema_inputs: Sequence[Any],
+    realm_id: str | None, project: str,
+) -> None:
+    """Validate only the package visual slots stored directly on a clip."""
+    import math
+
+    from astrid.core.timeline.banodoco_schema import _animation_ids
+    from astrid.core.timeline.clip_fields import _animations
+    from astrid.core.timeline.validators.timeline import _validate_animation_reference
+
+    known = _animation_ids() | set(_animations())
+    for field in ("entrance", "exit"):
+        value = clip.get(field)
+        if value is None:
+            continue
+        ref = value
+        if isinstance(value, Mapping):
+            ref = dict(value)
+            if "id" in ref and "type" in ref and ref["id"] != ref["type"]:
+                _fail(f"{path}.{field}", "animation id and type must agree")
+            if "type" in ref:
+                ref.setdefault("id", ref.pop("type"))
+            if "duration" in ref:
+                if "durationFrames" in ref:
+                    _fail(f"{path}.{field}", "must use durationFrames or duration, not both")
+                seconds = _validation_number(ref.pop("duration"), f"{path}.{field}.duration", positive=True)
+                converted = float(seconds) * fps
+                if not math.isfinite(converted) or converted > 9007199254740991:
+                    _fail(f"{path}.{field}.duration", "must resolve to a safe frame count")
+                frames = math.floor(converted + 0.5)
+                ref["durationFrames"] = frames
+        animation_id = ref if isinstance(ref, str) else ref.get("id") if isinstance(ref, dict) else None
+        if animation_id == "type-on":
+            _fail(f"{path}.{field}", "type-on cannot draw as a top-level clip animation")
+        if isinstance(ref, dict) and ref.get("packId") and animation_id not in known:
+            if ref.get("kind") != "animation":
+                _fail(f"{path}.{field}", "scoped reference must declare an animation")
+            schema = _schema_for_selected(
+                {"elementRef": ref}, schema_inputs=schema_inputs, realm_id=realm_id, project=project,
+            )
+            params = ref.get("params", {})
+            if not isinstance(params, Mapping):
+                _fail(f"{path}.{field}.params", "must be an object")
+            if schema is not None:
+                properties = schema.get("properties", {})
+                if isinstance(properties, Mapping):
+                    validator = Draft202012Validator(dict(schema), registry=Registry())
+                    for key, param in params.items():
+                        if key in properties:
+                            errors = list(validator.evolve(schema=properties[key]).iter_errors(param))
+                            if errors:
+                                _fail(f"{path}.{field}.params.{key}", errors[0].message)
+            ref = {key: value for key, value in ref.items() if key in {"id", "durationFrames", "easing", "params"}}
+            scoped_known = known | {animation_id}
+        else:
+            scoped_known = known
+        try:
+            _validate_animation_reference(ref, field, f"{path}.{field}", scoped_known)
+        except (TypeError, ValueError, OverflowError) as exc:
+            _fail(f"{path}.{field}", str(exc))
+
+    value = clip.get("transition")
+    if value is None:
+        return
+    if isinstance(value, str):
+        transition_id = value
+    elif isinstance(value, Mapping):
+        unknown = set(value) - {"id", "type", "duration", "durationFrames", "params", "align", "incomingPolicy"}
+        if unknown:
+            _fail(f"{path}.transition", f"unsupported keys: {sorted(unknown)}")
+        if "id" in value and "type" in value and value["id"] != value["type"]:
+            _fail(f"{path}.transition", "transition id and type must agree")
+        if "durationFrames" in value and "duration" in value:
+            _fail(f"{path}.transition", "must use durationFrames or duration, not both")
+        transition_id = value.get("id", value.get("type"))
+        if "durationFrames" in value:
+            frames = _validation_number(value["durationFrames"], f"{path}.transition.durationFrames", positive=True)
+            if frames.denominator != 1 or frames > 9007199254740991:
+                _fail(f"{path}.transition.durationFrames", "must be a safe whole frame count")
+        if "duration" in value:
+            seconds = _validation_number(value["duration"], f"{path}.transition.duration", positive=True)
+            converted = float(seconds) * fps
+            if not math.isfinite(converted) or converted > 9007199254740991:
+                _fail(f"{path}.transition.duration", "must resolve to a safe frame count")
+            frames = math.floor(converted + 0.5)
+            if frames < 1 or frames > 9007199254740991:
+                _fail(f"{path}.transition.duration", "must resolve to a positive safe frame count")
+        params = value.get("params", {})
+        if not isinstance(params, Mapping) or any(k != "easing" or v != "linear" for k, v in params.items()):
+            _fail(f"{path}.transition.params", "only easing=linear is supported")
+        if value.get("align", "end") != "end":
+            _fail(f"{path}.transition.align", "only end alignment is supported")
+        if value.get("incomingPolicy", "preroll-crossfade") != "preroll-crossfade":
+            _fail(f"{path}.transition.incomingPolicy", "only preroll-crossfade is supported")
+    else:
+        _fail(f"{path}.transition", "must be a transition reference")
+    if transition_id not in {"fade", "cross-fade", "crossfade"}:
+        _fail(f"{path}.transition", "unsupported transition")
+
+
+def _refuse_visual_fields_on_audio_track(
+    clip: Mapping[str, Any], *, path: str, tracks: Mapping[str, Mapping[str, Any]],
+) -> None:
+    track = tracks.get(clip.get("track"))
+    if not isinstance(track, Mapping):
+        return
+    from astrid.core.timeline.kinds import normalize_track_kind
+
+    try:
+        is_audio = normalize_track_kind(track.get("kind")) == "audio"
+    except (TypeError, ValueError):
+        return
+    if is_audio:
+        for field in ("entrance", "exit", "transition"):
+            if clip.get(field) is not None:
+                _fail(f"{path}.{field}", "visual animation fields do not apply to an audio track")
+
+
 def validate_final_candidate(
     candidate: Mapping[str, Any], *,
     baseline: Mapping[str, Any] | None = None,
@@ -709,6 +828,8 @@ def validate_final_candidate(
     if not isinstance(shots_value, Mapping):
         _fail("candidate.shots", "must be an object")
     shots: Mapping[str, Any] = shots_value
+    fps_values = _fps_values(candidate)
+    visual_fps = float(fps_values[0][1]) if fps_values else 24.0
     for occurrence_id, placement in placements.items():
         shot_id_value = placement.get("shot_id")
         if not isinstance(shot_id_value, str):
@@ -749,6 +870,9 @@ def validate_final_candidate(
         before_child = _identity_rows(baseline_internal.get("clips", []), "baseline.clips", "id") if isinstance(baseline_internal, Mapping) and isinstance(baseline_internal.get("clips"), list) else {}
         for clip_id, clip in child_clips.items():
             clip_path = f"candidate.shots[{shot_id!r}].internal_timeline.clips[{clip_id!r}]"
+            _refuse_visual_fields_on_audio_track(clip, path=clip_path, tracks=child_tracks)
+            _validate_visual_fields(clip, path=clip_path, fps=visual_fps, schema_inputs=schema_inputs,
+                                    realm_id=realm_id, project=str(candidate.get("project_id", "")))
             text_reference = _validate_element_reference(
                 clip, path=clip_path, baseline=before_child.get(clip_id),
                 candidate=candidate, baseline_bundle=baseline, shot_id=shot_id,
@@ -761,6 +885,9 @@ def validate_final_candidate(
     for clip_id, clip in clips.items():
         prior = _baseline_clips(baseline or {}).get(("parent", clip_id))
         clip_path = f"candidate.parent.clips[{clip_id!r}]"
+        _refuse_visual_fields_on_audio_track(clip, path=clip_path, tracks=tracks)
+        _validate_visual_fields(clip, path=clip_path, fps=visual_fps, schema_inputs=schema_inputs,
+                                realm_id=realm_id, project=str(candidate.get("project_id", "")))
         text_reference = _validate_element_reference(
             clip, path=clip_path, baseline=prior, candidate=candidate,
             baseline_bundle=baseline, shot_id="parent",

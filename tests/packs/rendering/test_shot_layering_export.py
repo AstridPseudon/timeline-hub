@@ -136,7 +136,7 @@ def test_real_export_shot_covers_lower_clip_and_empty_areas_reveal_it(
         pinned = json.load(archive.extractfile("package/package.json"))
     installed = json.loads((REMOTION / "node_modules/@banodoco/timeline-composition/package.json").read_text())
     for manifest in (pinned, installed):
-        assert (manifest["name"], manifest["version"]) == ("@banodoco/timeline-composition", "0.0.15")
+        assert (manifest["name"], manifest["version"]) == ("@banodoco/timeline-composition", "0.0.17")
 
     timeline_path = tmp_path / "projected.timeline.json"
     assets_path = tmp_path / "projected.assets.json"

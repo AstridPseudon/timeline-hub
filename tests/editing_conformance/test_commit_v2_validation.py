@@ -28,6 +28,79 @@ def test_valid_candidate_keeps_unknown_authored_fields_verbatim():
     assert value["shots"]["chapter-shot"]["internal_timeline"]["unknown"] == [1, 2]
 
 
+@pytest.mark.parametrize("owner", ["parent", "child"])
+@pytest.mark.parametrize("field,value_ref", [
+    ("entrance", {"id": "fade", "durationFrames": 8}),
+    ("entrance", {"type": "fade", "duration": 0.25}),
+    ("exit", {"id": "slide-up", "durationFrames": 8}),
+    ("exit", {"type": "fade", "duration": 0.25}),
+    ("transition", {"id": "cross-fade", "durationFrames": 8}),
+    ("transition", {"type": "cross-fade", "duration": 0.25}),
+])
+def test_final_candidate_accepts_drawable_visual_field_forms(owner, field, value_ref):
+    value = candidate()
+    if owner == "parent":
+        timeline = value["parent"]
+    else:
+        timeline = value["shots"]["chapter-shot"]["internal_timeline"]
+    timeline["clips"][0][field] = value_ref
+    if owner == "parent":
+        value["parent"]["config"]["clips"] = copy.deepcopy(timeline["clips"])
+    validate_final_candidate(value)
+
+
+@pytest.mark.parametrize("owner", ["parent", "child"])
+@pytest.mark.parametrize("field", ["entrance", "exit"])
+def test_final_candidate_refuses_undrawable_top_level_type_on(owner, field):
+    value = candidate()
+    timeline = (value["parent"] if owner == "parent" else
+                value["shots"]["chapter-shot"]["internal_timeline"])
+    timeline["clips"][0][field] = {"id": "type-on", "durationFrames": 18}
+    if owner == "parent":
+        value["parent"]["config"]["clips"] = copy.deepcopy(timeline["clips"])
+    with pytest.raises(AuthoringBundleError, match="type-on cannot draw"):
+        validate_final_candidate(value)
+
+
+@pytest.mark.parametrize("owner", ["parent", "child"])
+@pytest.mark.parametrize("field", ["entrance", "exit", "transition"])
+def test_final_candidate_refuses_visual_animation_fields_on_audio_tracks(owner, field):
+    value = candidate()
+    timeline = (value["parent"] if owner == "parent" else
+                value["shots"]["chapter-shot"]["internal_timeline"])
+    clip = timeline["clips"][0]
+    track_id = clip["track"]
+    tracks = timeline["config"]["tracks"] if owner == "parent" else timeline["tracks"]
+    next(track for track in tracks if track["id"] == track_id)["kind"] = "audio"
+    clip[field] = {"id": "cross-fade", "durationFrames": 8}
+    if owner == "parent":
+        value["parent"]["config"]["clips"] = copy.deepcopy(timeline["clips"])
+    with pytest.raises(AuthoringBundleError, match="visual animation fields do not apply to an audio track"):
+        validate_final_candidate(value)
+
+
+def test_final_candidate_preserves_audio_fade_params_unchanged():
+    value = candidate()
+    clip = value["parent"]["clips"][0]
+    track_id = clip["track"]
+    next(track for track in value["parent"]["config"]["tracks"] if track["id"] == track_id)["kind"] = "audio"
+    clip["params"] = {"fadeIn": 0.25, "fadeOut": 0.5}
+    value["parent"]["config"]["clips"] = copy.deepcopy(value["parent"]["clips"])
+    validate_final_candidate(value)
+    assert clip["params"] == {"fadeIn": 0.25, "fadeOut": 0.5}
+
+
+def test_nested_element_type_on_params_are_not_mistaken_for_top_level_animation():
+    value = candidate()
+    clip = value["parent"]["clips"][0]
+    clip.update(clipType="am-title", params={
+        "content": "Hello", "entrance": {"id": "type-on", "params": {
+            "startFrame": 2, "durationFraction": 0.55, "showCaret": True}},
+    })
+    value["parent"]["config"]["clips"] = copy.deepcopy(value["parent"]["clips"])
+    validate_final_candidate(value)
+
+
 @pytest.mark.parametrize(
     ("change", "message"),
     [
@@ -176,3 +249,47 @@ def test_unchanged_selected_known_params_use_only_consumed_retained_schema(
                                  schema_inputs=[(verified, {})])
     validate_final_candidate(value, baseline=baseline, **{
         key: options[key] for key in ("realm_id", "schema_inputs")})
+
+
+@pytest.mark.parametrize("owner", ["parent", "child"])
+@pytest.mark.parametrize("field,reference", [
+    ("entrance", {"id": "unknown-animation"}),
+    ("entrance", {"type": "unknown-animation", "duration": 0.5}),
+    ("entrance", {"id": "fade", "params": {"ignored": 1}}),
+    ("exit", {"id": "fade", "params": {"easing": "bounce"}}),
+    ("entrance", {"id": "fade", "durationFrames": 1.5}),
+    ("transition", {"id": "unknown-transition"}),
+    ("transition", {"id": "fade", "params": {"easing": "out"}}),
+    ("transition", {"id": "fade", "align": "center"}),
+    ("transition", {"id": "fade", "incomingPolicy": "other"}),
+    ("transition", {"id": "fade", "duration": 0.001}),
+])
+def test_final_candidate_refuses_undrawable_visual_fields(owner, field, reference):
+    value = candidate()
+    timeline = value["parent"] if owner == "parent" else value["shots"]["chapter-shot"]["internal_timeline"]
+    timeline["clips"][0][field] = reference
+    if owner == "parent":
+        value["parent"]["config"]["clips"] = copy.deepcopy(timeline["clips"])
+    with pytest.raises(AuthoringBundleError):
+        validate_final_candidate(value)
+
+
+def test_scoped_animation_uses_retained_declaration_and_preserves_params(monkeypatch):
+    from astrid.sdk.timeline import validation
+
+    calls = []
+    def schema(clip, **kwargs):
+        calls.append(clip["elementRef"])
+        return {"type": "object", "properties": {"strength": {"type": "number", "maximum": 2}}}
+    monkeypatch.setattr(validation, "_schema_for_selected", schema)
+    value = candidate()
+    ref = {"id": "project-animation", "packId": "project-pack", "kind": "animation",
+           "revision": "sha256:" + "a" * 64, "params": {"strength": 1, "opaque": True}}
+    value["parent"]["clips"][0]["entrance"] = ref
+    value["parent"]["config"]["clips"] = copy.deepcopy(value["parent"]["clips"])
+    validate_final_candidate(value)
+    assert calls and value["parent"]["clips"][0]["entrance"] == ref
+    ref["params"]["strength"] = 3
+    value["parent"]["config"]["clips"] = copy.deepcopy(value["parent"]["clips"])
+    with pytest.raises(AuthoringBundleError, match="maximum|greater"):
+        validate_final_candidate(value)

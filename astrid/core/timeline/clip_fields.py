@@ -281,25 +281,28 @@ def _params(spec: FieldSpec, raw: Any) -> dict[str, Any] | None:
     params = dict(raw)
     if "easing" in params:
         easing = _easing(params.pop("easing"), f"{spec.name}.params.easing")
-        if easing != "linear":
-            params["easing"] = easing
+        params["easing"] = easing
     return params or None
 
 
 def _stored_easing(value: Mapping[str, Any]) -> str | None:
     params = value.get("params")
-    raw = params.get("easing") if isinstance(params, Mapping) else value.get("easing")
+    params_easing = params.get("easing") if isinstance(params, Mapping) else None
+    top_level = value.get("easing")
+    if params_easing is not None and top_level is not None and _easing_name(str(params_easing)) != _easing_name(str(top_level)):
+        raise ClipFieldError("animation has conflicting easing values")
+    raw = params_easing if params_easing is not None else top_level
     if raw is None:
         return None
     name = _easing_name(str(raw))
-    return None if name == "linear" else name
+    return _easing(name, "animation easing")
 
 
 def _animation_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
     if raw is None or (isinstance(raw, str) and raw.strip().lower() == "none"):
         return None
     if isinstance(raw, Mapping):
-        extra = set(raw) - {"id", "type", "duration", "durationFrames", "params"}
+        extra = set(raw) - {"id", "type", "duration", "durationFrames", "params", "easing"}
         if extra:
             raise ClipFieldError(f"{spec.name} has unsupported key {sorted(extra)[0]!r}")
         names = [raw[key] for key in ("id", "type") if key in raw]
@@ -316,7 +319,18 @@ def _animation_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
                 raise ClipFieldError(f"{spec.name}.durationFrames must be a positive whole frame count")
         else:
             duration_frames = None if raw.get("duration") is None else _frames(raw["duration"], fps, f"{spec.name}.duration")
-        extras = {"params": raw["params"]} if "params" in raw else {}
+        if "params" in raw:
+            if not isinstance(raw["params"], Mapping):
+                raise ClipFieldError(f"{spec.name}.params must be an object, e.g. {{'easing': 'out'}}")
+            extras = {"params": dict(raw["params"])}
+        else:
+            extras = {}
+        if "easing" in raw:
+            top_easing = _easing(raw["easing"], f"{spec.name}.easing")
+            params_easing = raw.get("params", {}).get("easing") if isinstance(raw.get("params"), Mapping) else None
+            if params_easing is not None and _easing(params_easing, f"{spec.name}.params.easing") != top_easing:
+                raise ClipFieldError(f"{spec.name} has conflicting easing values")
+            extras.setdefault("params", {})["easing"] = top_easing
     elif isinstance(raw, str):
         tokens, easing = _take_ease(spec, raw.split())
         if not tokens or len(tokens) > 2:
@@ -327,6 +341,8 @@ def _animation_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
     else:
         raise ClipFieldError(f"{spec.name} must be 'none' or '<animation> <duration>', e.g. {spec.write!r}")
     allowed = _animation_ids(spec.phase or "entrance")
+    if name == "type-on":
+        raise ClipFieldError("type-on requires a text element animation slot; it cannot draw as a top-level clip animation")
     if name not in allowed:
         raise ClipFieldError(f"{spec.name} {name!r} is not a {spec.phase} animation; allowed: {', '.join(allowed)}")
     value: dict[str, Any] = {"id": name}

@@ -21,7 +21,9 @@ from astrid.core.timeline.validators.meta import validate_timeline_meta_location
 # validators.registry here.
 
 
-def _validate_animation_reference(ref: Any, phase: str, path: str, known_ids: set[str]) -> None:
+def _validate_animation_reference(
+    ref: Any, phase: str, path: str, known_ids: set[str], *, nested: bool = False,
+) -> None:
     if isinstance(ref, str):
         animation_id = ref
     elif isinstance(ref, dict):
@@ -30,7 +32,8 @@ def _validate_animation_reference(ref: Any, phase: str, path: str, known_ids: se
         if "durationFrames" in ref:
             frames = ref["durationFrames"]
             if (isinstance(frames, bool) or not isinstance(frames, (int, float))
-                    or not float(frames).is_integer() or float(frames) <= 0):
+                    or not math.isfinite(float(frames)) or not float(frames).is_integer()
+                    or float(frames) <= 0 or float(frames) > 9007199254740991):
                 raise ValueError(f"{path}.durationFrames must be a positive whole frame count")
         if "params" in ref and not isinstance(ref.get("params"), dict):
             raise ValueError(f"{path}.params must be an object")
@@ -38,11 +41,6 @@ def _validate_animation_reference(ref: Any, phase: str, path: str, known_ids: se
         easing = ref.get("easing", params.get("easing"))
         if "easing" in ref and "easing" in params and ref["easing"] != params["easing"]:
             raise ValueError(f"{path} has conflicting easing values")
-        if easing is not None and (
-            not isinstance(easing, str)
-            or easing not in {"linear", "in", "out", "in-out", "step", "ease-in", "ease-out", "ease-in-out", "inOut", "inout", "in_out"}
-        ):
-            raise ValueError(f"{path}.params.easing {easing!r} is not supported by the installed animations")
     else:
         raise ValueError(f"{path} must be an animation id string or object")
     if not isinstance(animation_id, str) or not animation_id:
@@ -54,10 +52,15 @@ def _validate_animation_reference(ref: Any, phase: str, path: str, known_ids: se
     from astrid.core.timeline.clip_fields import _animations as builtin_animations
     if animation_id in builtin_animations():
         params = ref.get("params", {}) if isinstance(ref, dict) else {}
-        _raise_unknown_keys(f"{path}.params", params, frozenset({"easing"}))
-    easing = ref.get("easing", ref.get("params", {}).get("easing")) if isinstance(ref, dict) else None
-    if easing is not None and animation_id not in builtin_animations() and meta.get("supportsEasing") is not True:
-        raise ValueError(f"{path} animation {animation_id!r} cannot consume explicit easing")
+        if not isinstance(params, dict):
+            raise ValueError(f"{path}.params must be an object")
+        if not nested:
+            _raise_unknown_keys(f"{path}.params", params, frozenset({"easing"}))
+        easing = ref.get("easing", params.get("easing")) if isinstance(ref, dict) else None
+        if easing is not None and (not isinstance(easing, str) or easing.strip().lower() not in {
+            "linear", "in", "out", "in-out", "step", "ease-in", "ease-out", "ease-in-out", "inOut", "inout", "in_out"
+        }):
+            raise ValueError(f"{path}.params.easing {easing!r} is not supported by the installed animations")
     meta_phase = meta.get("phase")
     phase_matches = (
         meta_phase in (None, "any", phase)
@@ -74,7 +77,7 @@ def _validate_animation_reference_list(value: Any, phase: str, path: str, known_
     if not refs:
         raise ValueError(f"{path} must not be an empty animation list")
     for index, ref in enumerate(refs):
-        _validate_animation_reference(ref, phase, f"{path}[{index}]", known_ids)
+        _validate_animation_reference(ref, phase, f"{path}[{index}]", known_ids, nested=True)
 
 
 def _schema_params_for_animation_refs(schema: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
@@ -261,7 +264,11 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
             continue
         for phase in ("entrance", "exit"):
             if phase in clip:
-                _validate_animation_reference(clip[phase], phase, f"clips[{index}].{phase}", known_animation_ids)
+                raw_reference = clip[phase]
+                if isinstance(raw_reference, dict) and "id" in raw_reference:
+                    _validate_animation_reference(
+                        raw_reference, phase, f"clips[{index}].{phase}", known_animation_ids,
+                    )
     # Top-level ``app`` is the editor-extension metadata namespace owned by
     # Astrid's container contract. The currently pinned shared render schema
     # does not declare that namespace, so validate the renderable subset while
@@ -273,11 +280,12 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
                 _normalize_clip_for_validation({
                     **{
                         key: value for key, value in c.items()
-                        if key not in {"label", "entrance", "exit"}
+                        if key != "label"
                     },
                     **{
                         phase: _animation_shape_for_shared_schema(c[phase], fps)
-                        for phase in ("entrance", "exit") if phase in c
+                        for phase in ("entrance", "exit")
+                        if phase in c and isinstance(c[phase], dict) and "id" in c[phase]
                     },
                 })
                 if isinstance(c, dict)
