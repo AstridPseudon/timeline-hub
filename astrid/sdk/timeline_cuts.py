@@ -460,6 +460,7 @@ def build_cut_table(bundle: Mapping[str, Any]) -> dict[str, Any]:
             "shot_id": cut["shot_id"],
             "occurrence_id": cut["occurrence_id"],
             "clip_id": cut["clip_id"],
+            "cut_id": cut["cut_id"],
             "track": cut["track"],
             "type": cut["type"],
             "asset": base.get("asset") if base and isinstance(base.get("asset"), str) else None,

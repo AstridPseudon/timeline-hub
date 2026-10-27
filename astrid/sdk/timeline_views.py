@@ -178,20 +178,16 @@ def render_at(bundle,table,seconds,*,changed=None,show_command=""):
     rows=list(table.get("rows") or []); fps=float(table.get("fps") or 30)
     index=next((i for i,row in enumerate(rows) if row["start"]-_EPS<=seconds<row["end"]-_EPS),None)
     if index is None:return None
-    row=rows[index]; lines=[f"at {seconds:.2f} s ({timecode(seconds,fps)}) · cut {row['index']} of {len(rows)} · {row['start']:.2f}–{row['end']:.2f} s · {row['shot']}","on screen:"]
-    placement=next((p for p in _placements(bundle) if str(p.get("occurrence_id") or p.get("shot_id"))==row["occurrence_id"]),None)
+    row=rows[index]; lines=[f"at {seconds:.2f} s ({timecode(seconds,fps)}) · cut {row.get('cut_id') or row['index']} of {len(rows)} · {row['start']:.2f}–{row['end']:.2f} s · {row['shot']}","on screen:"]
+    from astrid.core.timeline.cuts import occurrences_from_bundle
+    occurrence=next((o for o in occurrences_from_bundle(bundle) if o["occurrence_id"]==row["occurrence_id"]), None)
     visible=[]
-    if placement:
-        shot,_sid,start,_end=_shot_context(bundle,placement); internal=_internal(shot); kinds=_track_kinds(internal)
-        for clip in _list(internal.get("clips")):
-            if not isinstance(clip,Mapping) or _is_audio(clip,kinds):continue
-            duration=clip_duration(clip)
-            if duration<=0:continue
-            begin=start+_num(clip.get("at")); end=begin+duration
-            if begin-_EPS<=seconds<end-_EPS:
-                what=clip.get("asset") if isinstance(clip.get("asset"),str) else (_clip_text(clip,40) or "-")
-                mark="✎ " if changed and str(clip.get("id")) in changed else "  "
-                visible.append((begin,f"  {mark}{str(clip.get('id')):<30} {str(clip.get('clipType')):<18} {str(clip.get('track')):<10} {str(what):<28} {begin:7.2f}–{end:7.2f} s"))
+    for span in (occurrence or {}).get("spans", []):
+        if span["audio"] or not (span["start"]-_EPS<=seconds<span["end"]-_EPS):continue
+        clip=span["clip"]; begin=span["start"]; end=span["end"]
+        what=clip.get("asset") if isinstance(clip.get("asset"),str) else (_clip_text(clip,40) or "-")
+        mark="✎ " if changed and str(clip.get("id")) in changed else "  "
+        visible.append((begin,f"  {mark}{str(clip.get('id')):<30} {str(clip.get('clipType')):<18} {str(clip.get('track')):<10} {str(what):<28} {begin:7.2f}–{end:7.2f} s"))
     lines.extend(line for _,line in sorted(visible))
     if not visible:lines.append("  (nothing visible)")
     words=Checkout(dict(bundle)).words(); spoken=[w for w in words if w.start-_EPS<=seconds<w.end-_EPS]

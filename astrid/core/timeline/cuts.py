@@ -129,8 +129,9 @@ def picture_bed(spans: Sequence[Mapping[str, Any]], track_order: Sequence[str] =
     visual = [span for span in spans if not span["audio"] and span["end"] - span["start"] > 0]
     tracks = {str(span["track"]) for span in visual}
     for preferred in PICTURE_BED_TRACKS:
-        if preferred in tracks:
-            return preferred
+        for track in sorted(tracks):
+            if track == preferred or track.endswith("~" + preferred):
+                return track
     if not tracks:
         return None
     coverage = {track: sum(s["end"] - s["start"] for s in visual if s["track"] == track) for track in tracks}
@@ -153,9 +154,9 @@ def picture_cuts(occurrences: Iterable[Mapping[str, Any]], *, fps: float = 30.0)
     for occurrence in sorted(occurrences, key=lambda item: (float(item["start"]), str(item.get("occurrence_id")))):
         start, end = float(occurrence["start"]), float(occurrence["end"])
         spans = list(occurrence.get("spans") or [])
-        bed = picture_bed(spans, occurrence.get("track_order") or ())
+        bed = picture_bed([s for s in spans if not s.get("parent_overlay")], occurrence.get("track_order") or ())
         visual = [s for s in spans if not s["audio"] and s["end"] - s["start"] > 0]
-        bed_spans = sorted((s for s in visual if s["track"] == bed), key=lambda s: (s["start"], s["id"]))
+        bed_spans = sorted((s for s in visual if s["track"] == bed and not s.get("parent_overlay")), key=lambda s: (s["start"], s["id"]))
         windows: list[tuple[float, float, Mapping[str, Any] | None, list[Mapping[str, Any]]]] = []
         cursor = start
         for span in bed_spans:
@@ -200,6 +201,8 @@ def picture_cuts(occurrences: Iterable[Mapping[str, Any]], *, fps: float = 30.0)
                 "shot_id": str(occurrence.get("shot_id") or ""),
                 "shot": str(occurrence.get("name") or occurrence.get("shot_id") or ""),
                 "clip": clip,
+                "picture_span": base,
+                "members": members,
                 "clip_id": base["id"] if base else None,
                 "cut_id": (str(read_app(clip).get("cut") or "") or None) if clip else None,
                 "track": bed,
@@ -231,6 +234,8 @@ def find_cut(cuts: Sequence[Mapping[str, Any]], selector: Any) -> Mapping[str, A
             return cuts[number - 1]
         raise ValueError(f"cut {number} does not exist; this timeline has cuts 1–{len(cuts)}")
     for cut in cuts:
+        if cut.get("cut_id") == text:
+            return cut
         clip_ids = [cut.get("clip_id") or ""] + list(_map(cut.get("sequence")).get("clip_ids") or [])
         if any(clip_id == text or clip_id.endswith(":" + text) for clip_id in clip_ids):
             return cut
@@ -295,6 +300,22 @@ def occurrences_from_bundle(bundle: Mapping[str, Any]) -> list[dict[str, Any]]:
     placements = [_map(item) for item in _list(bundle.get("placements")) if isinstance(item, Mapping)]
     placements.sort(key=lambda row: _num(row.get("at_ms", _map(row.get("placement")).get("start_ms"))))
     occurrences: list[dict[str, Any]] = []
+    parent = _map(bundle.get("parent"))
+    parent_config = _map(parent.get("config"))
+    parent_tracks = parent.get("tracks") or parent_config.get("tracks")
+    parent_kinds = _track_kinds(parent_tracks)
+    parent_clips = parent.get("clips") or parent_config.get("clips") or []
+    from .duration import clip_end_frame, clip_start_frame
+    fps = bundle_fps(bundle)
+    parent_spans = [_span(clip, _num(clip.get("at")), parent_kinds)
+                    for clip in _list(parent_clips) if isinstance(clip, Mapping)]
+    for span in parent_spans:
+        span["start"] = clip_start_frame(span["clip"], fps) / fps
+        span["end"] = clip_end_frame(span["clip"], fps) / fps
+        span["shot_id"] = ""
+        span["parent_overlay"] = True
+    from .shot_composition_projection import _project_clip, _placement_speed
+
     for placement in placements:
         shot_id = str(placement.get("shot_id") or "")
         occurrence_id = str(placement.get("occurrence_id") or shot_id)
@@ -304,8 +325,26 @@ def occurrences_from_bundle(bundle: Mapping[str, Any]) -> list[dict[str, Any]]:
         internal = _map(shot.get("internal_timeline")) or _map(shot.get("base_internal_timeline"))
         kinds = _track_kinds(internal.get("tracks"))
         clips = [_map(clip) for clip in _list(internal.get("clips")) if isinstance(clip, Mapping)]
-        spans = [_span(clip, start + _num(clip.get("at")), kinds) for clip in clips]
-        end = start + length if length > 0 else max([s["end"] for s in spans] or [start])
+        end = start + length if length > 0 else max(
+            [start + _num(c.get("at")) + clip_duration(c) for c in clips] or [start])
+        spans = []
+        occurrence = dict(placement, occurrence_id=occurrence_id)
+        revision = {"shot_id": shot_id, "revision_id": "", "internal_timeline_revision": {"timeline": internal}}
+        speed = _placement_speed(placement.get("speed", 1), path="placement.speed")
+        tracks = _list(internal.get("tracks")) + _list(parent_tracks)
+        for clip in clips:
+            projected = _project_clip(clip, occurrence=occurrence, revision=revision,
+                                      occurrence_start=start, occurrence_end=end,
+                                      occurrence_speed=speed, track_definitions=tracks, path="clip")
+            if projected is not None:
+                span = _span(projected, _num(projected.get("at")), kinds,
+                             kind=kinds.get(str(clip.get("track") or "")))
+                span["start"] = clip_start_frame(projected, fps) / fps
+                span["end"] = clip_end_frame(projected, fps) / fps
+                span.update(clip=clip, id=str(clip.get("id") or ""),
+                            track=str(clip.get("track") or ""), shot_id=shot_id)
+                spans.append(span)
+        spans.extend(span for span in parent_spans if span["end"] > start and span["start"] < end)
         occurrences.append({
             "occurrence_id": occurrence_id,
             "shot_id": shot_id,
@@ -324,11 +363,11 @@ def occurrences_from_bundle(bundle: Mapping[str, Any]) -> list[dict[str, Any]]:
         from .duration import clip_end_frame, clip_start_frame, timeline_duration_seconds
 
         parent = _map(bundle.get("parent"))
-        if not parent.get("clips"):
+        if not parent_clips:
             return []
         fps = bundle_fps(bundle)
         extent = timeline_duration_seconds(parent, fps)
-        flat = occurrences_from_snapshot(parent)
+        flat = occurrences_from_snapshot({**parent, "clips": parent_clips})
         # Sound contributes to render extent, never manufactures picture cuts.
         if not any(not span["audio"] for occurrence in flat for span in occurrence["spans"]):
             return []
@@ -362,7 +401,12 @@ def occurrences_from_snapshot(snapshot: Mapping[str, Any]) -> list[dict[str, Any
         key = str(clip.get("occurrence_id") or clip.get("shot_occurrence_id") or "")
         clip_kind = str(clip.get("kind") or "").lower()
         span_kind = "audio" if clip_kind in AUDIO_KINDS else None
-        groups.setdefault(key, []).append(_span(clip, _num(clip.get("at")), kinds, kind=span_kind))
+        span = _span(clip, _num(clip.get("at")), kinds, kind=span_kind)
+        fps = _num(snapshot.get("fps_rational"))
+        if fps > 0 and isinstance(clip.get("start_frame"), int) and isinstance(clip.get("end_frame"), int):
+            span["start"] = clip["start_frame"] / fps
+            span["end"] = clip["end_frame"] / fps
+        groups.setdefault(key, []).append(span)
         if key not in names:
             names[key] = (str(clip.get("shot_id") or ""), str(clip.get("shot_name") or clip.get("shot_id") or ""))
     windows = {
@@ -371,11 +415,18 @@ def occurrences_from_snapshot(snapshot: Mapping[str, Any]) -> list[dict[str, Any
         if isinstance(item, Mapping) and item.get("occurrence_id") is not None
     }
     occurrences: list[dict[str, Any]] = []
-    for key, spans in groups.items():
+    parent_spans = groups.pop("", []) if windows else []
+    for span in parent_spans:
+        span["parent_overlay"] = True
+    for key in dict.fromkeys([*windows, *groups]):
+        spans = groups.get(key, [])
+        if not spans and key not in windows:
+            continue
         window = _map(windows.get(key))
-        start = _num(window.get("start"), min(s["start"] for s in spans)) if window else min(s["start"] for s in spans)
-        end = _num(window.get("end"), max(s["end"] for s in spans)) if window else max(s["end"] for s in spans)
-        shot_id, name = names[key]
+        start = _num(window.get("start"), min((s["start"] for s in spans), default=0.0)) if window else min(s["start"] for s in spans)
+        end = _num(window.get("end"), max((s["end"] for s in spans), default=start)) if window else max(s["end"] for s in spans)
+        shot_id, name = names.get(key, ("", ""))
+        spans = spans + [s for s in parent_spans if s["end"] > start and s["start"] < end]
         occurrences.append({
             "occurrence_id": key,
             "shot_id": str(window.get("shot_id") or shot_id),

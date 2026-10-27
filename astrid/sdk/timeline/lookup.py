@@ -304,8 +304,7 @@ class _LookupMixin:
 
     def _cut_on_screen(self, t: float) -> str | None:
         """The cut id on screen at ``t`` (None when the timeline names no cuts)."""
-        spans = sorted(((lo, hi if hi is not None else self.duration, cid) for cid, (lo, hi) in self._cut_spans().items()))
-        return next((cid for lo, hi, cid in reversed(spans) if lo - 1e-6 <= t < hi - 1e-6), None)
+        return next((cut.id for cut in self.cuts if cut.start - 1e-6 <= t < cut.end - 1e-6), None)
 
     def _cut_clips(self, cut_id: str) -> list[Clip]:
         """Every clip of a cut, orphans included (an orphaned cut is not in the cut list until re-homed)."""
@@ -313,6 +312,9 @@ class _LookupMixin:
 
     def cut_picture(self, cut_id: str) -> Clip | None:
         """A cut's picture (its first bed clip), for live and orphaned cuts alike."""
+        cut = next((c for c in self.cuts if c.id == cut_id), None)
+        if cut:
+            return cut.picture
         beds = sorted((c for c in self._cut_clips(cut_id) if c.track == "plate" and not c.is_audio), key=lambda c: (c.start, c.id))
         return beds[0] if beds else None
 
@@ -349,23 +351,28 @@ class _LookupMixin:
             if cid:
                 groups.setdefault(cid, []).append(clip)
         out = []
+        projected_by_id = {}
+        for cut in self.cuts:
+            if cut.id:
+                projected_by_id.setdefault(cut.id, cut)
         for cid, clips in groups.items():
             if all(intent.orphan(c.data) for c in clips):
                 continue  # a cut kept only as orphans is not a cut until it is re-homed
-            beds = sorted((c for c in clips if c.track == "plate" and not c.is_audio), key=lambda c: (c.start, c.id))
-            out.append({"id": cid, "clips": clips, "picture": beds[0] if beds else None,
-                        "start": beds[0].start if beds else min(c.start for c in clips)})
+            projected = projected_by_id.get(cid)
+            picture = projected.picture if projected else None
+            out.append({"id": cid, "clips": clips, "picture": picture,
+                        "start": projected.start if projected else min(c.start for c in clips)})
         return sorted(out, key=lambda g: (g["start"], g["id"]))
 
     def _is_picture(self, clip: "Clip") -> bool:
         cut = intent.cut_of(clip.data)
-        if not cut or clip.track != "plate" or clip.is_audio:
+        if not cut or clip.is_audio:
             return False
         seq = intent.sequence(clip.data)
         if seq is not None and seq[1] > 0:
             return False
-        beds = [c for c in self.clips(shot=clip.shot_id) if intent.cut_of(c.data) == cut and c.track == "plate" and not c.is_audio]
-        return bool(beds) and min(beds, key=lambda c: (c.start, c.id)).data is clip.data
+        picture = self.cut_picture(cut)
+        return picture is not None and picture.data is clip.data
 
     # ---- internals ----------------------------------------------------------
     def _shot_ids(self) -> list[str]:
@@ -485,7 +492,7 @@ class _LookupMixin:
     def _cut_at(self, t: float) -> int | str:
         for cut in self.cuts:
             if cut.start - 1e-6 <= t < cut.end - 1e-6:
-                return cut.n
+                return cut.id or cut.n
         return "-"
 
     def _as_word(self, when: Any) -> Word | None:

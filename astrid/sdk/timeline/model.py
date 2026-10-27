@@ -166,10 +166,11 @@ _LOOK_FLAG = {"volume": "--volume / --gain-db"}
 class Clip(_Suggest):
     """A live view of one clip. Reads and writes go straight to the checkout document."""
 
-    def __init__(self, tl: "Checkout", shot_id: str, data: dict[str, Any]):  # noqa: F821
+    def __init__(self, tl: "Checkout", shot_id: str, data: dict[str, Any], *, span: Mapping[str, Any] | None = None):  # noqa: F821
         self._tl = tl
         self.shot_id = shot_id
         self.data = data
+        self._span = span
 
     # identity -----------------------------------------------------------
     @property
@@ -249,11 +250,11 @@ class Clip(_Suggest):
     @property
     def start(self) -> float:
         """Timeline seconds."""
-        return _r(self._tl._shot_start(self.shot_id) + self.at)
+        return _r(self._span["start"] if self._span is not None else self._tl._shot_start(self.shot_id) + self.at)
 
     @property
     def duration(self) -> float:
-        return _r(clip_duration(self.data))
+        return _r(self._span["end"] - self._span["start"] if self._span is not None else clip_duration(self.data))
 
     @property
     def end(self) -> float:
@@ -843,7 +844,8 @@ class Cut(_Suggest):
     @property
     def picture(self) -> Clip | None:
         clip = self.raw.get("clip")
-        return Clip(self._tl, self.shot_id, clip) if isinstance(clip, dict) else None
+        span = self.raw.get("picture_span")
+        return Clip(self._tl, self.shot_id, clip, span=span) if isinstance(clip, dict) else None
 
     @property
     def steps(self) -> list[Clip]:
@@ -852,7 +854,8 @@ class Cut(_Suggest):
         ids = list(sequence.get("clip_ids") or [])
         if not ids:
             return [self.picture] if self.picture else []
-        return [self._tl.clip(i) for i in ids]
+        return [Clip(self._tl, self.shot_id, span["clip"], span=span)
+                for span in self.raw.get("members", [])] if self.raw.get("members") else [self._tl.clip(i) for i in ids]
 
     def step(self, n: int) -> Clip:
         steps = self.steps
@@ -862,7 +865,8 @@ class Cut(_Suggest):
 
     @property
     def layers(self) -> list[Clip]:
-        return [Clip(self._tl, self.shot_id, span["clip"]) for span in self.raw.get("layers") or []]
+        return [Clip(self._tl, span.get("shot_id", self.shot_id), span["clip"], span=span)
+                for span in self.raw.get("layers") or []]
 
     @property
     def id(self) -> str | None:
