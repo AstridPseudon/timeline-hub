@@ -19,7 +19,7 @@ assert.equal(await realpath(join(root, 'node_modules')), join(root, 'node_module
 for (const name of ['bundler', 'renderer']) {
   await symlink(join(peers, '@remotion', name), join(root, 'node_modules/@remotion', name));
 }
-await writeFile(join(harness, 'index.html'), '<html><body style="margin:0"><div id="player" style="width:640px;height:360px"></div><script type="module" src="./preview.tsx"></script></body></html>');
+await writeFile(join(harness, 'index.html'), '<html><head><style>#player [style*="background-color"]{background-color:#050814!important}</style></head><body style="margin:0"><div id="player" style="width:640px;height:360px"></div><script type="module" src="./preview.tsx"></script></body></html>');
 let config;
 await writeFile(join(harness, 'preview.tsx'), `
 import React, {createRef} from 'react';
@@ -32,7 +32,7 @@ import fixture from '../src/tools/video-editor/data/shotComposition.fixture.json
 import {createShotCompositionAdapter} from '../src/tools/video-editor/data/shotCompositionAdapter.ts';
 import {projectCanonicalComposition} from '../src/tools/video-editor/data/shotCompositionProjection.ts';
 const standin = structuredClone(fixture);
-standin.occurrences = [standin.occurrences[0], standin.occurrences[3]].map((occurrence, index) => ({
+standin.occurrences = [standin.occurrences[3], standin.occurrences[4]].map((occurrence, index) => ({
   ...occurrence,
   at_ms: 23867 + index * 2500, duration_ms: 2500,
 }));
@@ -90,7 +90,6 @@ try {
   server = await createServer({
     configFile: join(root, 'config/vite/vite.config.ts'),
     cacheDir: join(harness, 'vite-cache'),
-    ssr: {external: ['react', 'react-dom', 'remotion']},
     optimizeDeps: {entries: [join(harness, 'index.html')]},
     server: {host: '127.0.0.1', port: 0},
   });
@@ -120,7 +119,7 @@ try {
   console.log('Remotion browser launched; composition=' + composition.id);
   const captures = [];
   // Include both transparent windows as well as all five requested stills.
-  for (const seconds of [23.9, 24.5, 25, 26, 27.5, 28.7, 28.85]) {
+  for (const seconds of [23.9, 24.5, 25, 26, 27.5, 28.7, 28.8]) {
     const frame = Math.round(seconds * 30);
     assert.equal(await page.evaluate(f => window.seekStandin(f), frame), frame);
     const preview = join(output, 'preview-' + frame + '.png');
