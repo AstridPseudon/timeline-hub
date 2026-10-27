@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T10:36:23Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
-# runtime board, 2026-10-27T10:33:05.783856+00:00
+<!-- main | 2026-10-27T10:42:29Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 5m -->
+# runtime board, 2026-10-27T10:37:32.015156+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -153,7 +153,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: B lead owns Main10:30 visual-only transform policy, compile classification and App/Agent comparisons. C waits B READY, then App/Runtime forwards and full comparisons. A ACCEPTED; C own repairs merged. H/D/P START absent. D130 holds.
 Next ready: None for the old Runtime lane. New-phase work stays with leads A, B and C under Main. No duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5406953472 bytes. Runtime trees: 36; 31 KEEP, 3 dirty and 2 without ended markers; no eligible recycle. Round sweep and compact exit0: removed0, packed0 and compressed0. No refusals. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5393436672 bytes. Runtime trees: 36; 31 KEEP, 3 dirty and 2 without ended markers; no eligible recycle. Guarded sweep and compact running; no refusal observed. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -164,4 +164,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T10:33:05.783856+00:00. Second worker check exit0, all2717 rows unchanged, live0 and ready0. Inbox/header unchanged. B/C MAIN-NOTES10:30 received: B owns transform policy and App/Agent comparisons; C forwards after B READY, then App/Runtime full comparisons. C own three repairs retain45/10/45 PASS. H/D/P START absent. No eligible Runtime recycle. Guarded maintenance exit0 with no recovery or refusals. [Pass evidence](rounds/20261027T103305Z-pass.json).
+Current pass: 2026-10-27T10:37:32.015156+00:00. Worker check exit0; all2717 rows unchanged, live0 and ready0. Inbox/header and B/C boards unchanged. Existing B lead18 is active, and C lead16 retains App/Runtime forward and full-comparison ownership after B renewed READY. H/D/P START absent. No eligible Runtime recycle. Guarded maintenance is running; observed sweep stderr contains only its known listing broken pipes. [Pass evidence](rounds/20261027T103732Z-pass.json).
