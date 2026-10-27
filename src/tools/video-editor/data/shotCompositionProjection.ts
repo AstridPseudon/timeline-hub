@@ -92,6 +92,17 @@ function optionalFiniteNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 }
 
+function transformChangesPicture(value: unknown): boolean {
+  const transform = record(value);
+  if (!transform) return false;
+  return Object.entries(transform).some(([key, setting]) => (
+    ['x', 'y', 'width', 'height'].includes(key)
+      || key.startsWith('crop')
+      || (key === 'opacity' && setting !== undefined && setting !== null && setting !== 1)
+      || (key === 'scale' && setting !== undefined && setting !== null && setting !== 1)
+  ));
+}
+
 function mediaTypeForAsset(asset: JsonObject): string | undefined {
   const source = record(asset.source);
   const candidates = [
@@ -611,9 +622,15 @@ export function projectCanonicalComposition(
 
   for (const occurrence of outputOccurrences) {
     const authored = composition.contract.occurrences.find((entry) => entry.occurrence_id === occurrence.occurrenceId);
-    const nonEmpty = (value: unknown): boolean => value !== undefined && value !== null && value !== ''
-      && (typeof value !== 'object' || Object.keys(value).length > 0);
-    if (nonEmpty(occurrence.transform) || nonEmpty(authored?.transform) || nonEmpty(authored?.opacity)) {
+    const authoredOpacity = authored?.opacity;
+    const authoredOpacityChangesPicture = authoredOpacity !== undefined
+      && authoredOpacity !== null
+      && authoredOpacity !== ''
+      && (typeof authoredOpacity !== 'object' || Object.keys(authoredOpacity).length > 0)
+      && authoredOpacity !== 1;
+    if (transformChangesPicture(occurrence.transform)
+      || transformChangesPicture(authored?.transform)
+      || authoredOpacityChangesPicture) {
       throw new CanonicalCompositionProjectionError(
         'unsupported_placement',
         'Shot opacity and transforms are not supported yet. Remove them from the shot placement to render this timeline.',
