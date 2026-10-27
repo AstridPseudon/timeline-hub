@@ -452,9 +452,29 @@ fi
 if [ $repo = agent ]; then
   RUNTIME_SHA=$(sed -n 's/.*"source_commit": *"\([0-9a-f]*\)".*/\1/p' "$SNAP/runtime.lock.json")
   RUNTIME_SOURCE=$(git -C /home/user/work/runtime worktree list --porcelain | awk -v sha="$RUNTIME_SHA" '/^worktree / {path=$2} /^HEAD / && $2 == sha {print path; exit}')
-  [ -n "$RUNTIME_SOURCE" ] || { echo "matching Runtime source $RUNTIME_SHA not found" >&2; exit 1; }
+  if [ -z "$RUNTIME_SOURCE" ]; then
+    RUNTIME_SOURCE=/home/user/work/wt-int/runtime-${RUNTIME_SHA:0:12}
+    if [ -d "$RUNTIME_SOURCE" ]; then
+      [ "$(git -C "$RUNTIME_SOURCE" rev-parse HEAD 2>/dev/null)" = "$RUNTIME_SHA" ] || { echo "Runtime source path has the wrong commit: $RUNTIME_SOURCE" >&2; exit 1; }
+    else
+      git -C /home/user/work/runtime worktree add --detach "$RUNTIME_SOURCE" "$RUNTIME_SHA" >/dev/null || exit 1
+    fi
+  fi
   TEST_PYTHONPATH=$SNAP:$RUNTIME_SOURCE
-  export ASTRID_RUNTIME_SOURCE=$RUNTIME_SOURCE
+  export ASTRID_RUNTIME_SOURCE=$RUNTIME_SOURCE ASTRID_RUNTIME_CHECKOUT=$RUNTIME_SOURCE
+  NODE_BIN=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin
+  export ASTRID_NODE_EXECUTABLE=$NODE_BIN/node
+  PATH=$NODE_BIN:$PATH
+  export PATH
+  # Some lane commands set a clean environment or retain older integration
+  # checkout pins. Keep the snapshot's locked Runtime and Node in every Agent
+  # lane, and expose runtime_protocol alongside its Agent source.
+  CMD=$(printf '%s' "$CMD" | sed -E "s#ASTRID_RUNTIME_CHECKOUT=[^[:space:]]+#ASTRID_RUNTIME_CHECKOUT=$RUNTIME_SOURCE#g")
+  CMD=${CMD//PYTHONPATH=\"\$PWD\"/PYTHONPATH=\"\$PWD:\$ASTRID_RUNTIME_SOURCE\"}
+  CMD=${CMD//PYTHONPATH=\$PWD /PYTHONPATH=\$PWD:\$ASTRID_RUNTIME_SOURCE }
+  CMD=${CMD//PYTHONPATH=\"\$PWD:\/home\/user\/work\/runtime\"/PYTHONPATH=\"\$PWD:\$ASTRID_RUNTIME_SOURCE\"}
+  CMD=${CMD//env -i /env -i ASTRID_RUNTIME_CHECKOUT=$RUNTIME_SOURCE ASTRID_RUNTIME_SOURCE=$RUNTIME_SOURCE ASTRID_NODE_EXECUTABLE=$NODE_BIN\/node PATH=$NODE_BIN:\/usr\/local\/bin:\/usr\/bin:\/bin PYTHONPATH=\$PWD:\$ASTRID_RUNTIME_SOURCE }
+  CMD=$(printf '%s' "$CMD" | sed -E 's#(^|[[:space:]])PATH=#\1PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:#g')
 fi
 if [ -n "$BENCH_CONTROL_FD" ]; then
   SUITE_TIMEOUT=90m; [ "$repo" = agent ] && [ "$suite" = full ] && SUITE_TIMEOUT=240m
