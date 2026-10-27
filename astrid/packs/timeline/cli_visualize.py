@@ -7,6 +7,7 @@ address, a preset, the working copy) into the options that call takes, and print
 from __future__ import annotations
 
 import argparse
+import copy
 import json
 import re
 import shlex
@@ -48,34 +49,63 @@ def _clips_changed(n: int) -> str:
     return f"{n} clip{'s' if n != 1 else ''} changed"
 
 
-def _working_banner(working: Mapping[str, Any]) -> str:
-    """The one-line banner show, lint and diff print when they read the working copy."""
-    return (f"WORKING COPY · {_clips_changed(len(working['changes']))} vs published {working['base_revision']} · "
-            "--published for the live version")
-
-
 def _visualize_working_copy(parsed: argparse.Namespace) -> dict[str, Any] | None:
-    """The working copy visualize reads (path, base, edits, changed cuts), or None when it reads the published head."""
-    from astrid.sdk.timeline_checkout import Checkout, find_draft
-
-    if getattr(parsed, "published", False) or getattr(parsed, "revision_id", None) or getattr(parsed, "from_revision", None):
+    """Metadata for the explicitly selected draft, already pinned by source selection."""
+    checkout = getattr(parsed, "_draft_checkout", None)
+    if checkout is None:
         return None
-    ref = getattr(parsed, "timeline_slug", None) or getattr(parsed, "timeline_ref", None)
-    try:
-        path = find_draft(parsed.project, ref, getattr(parsed, "draft", None))
-    except Exception as exc:  # the runtime is not reachable: say so, visualize the published head
-        print(f"working copy: not checked ({exc}); visualizing the published head", file=sys.stderr)
-        return None
-    if path is None:
-        return None
-    checkout = Checkout.load(path)
     changes = list(checkout.edits().get("changes") or [])
     return {
-        "draft": str(path),
+        "name": parsed.draft,
+        "draft": str(getattr(parsed, "_draft_path", "")),
         "base_revision": checkout.base_revision,
         "edits": len(changes),
         "changed_cuts": [int(n) for n in checkout.check().changed_cuts],
     }
+
+
+def _select_visualize_source(parsed: argparse.Namespace) -> dict[str, Any] | None:
+    """Select one immutable revision or one named working copy for this inspection."""
+    from astrid.sdk.timeline_checkout import Checkout, find_draft
+
+    draft_name = getattr(parsed, "draft", None)
+    revision_id = getattr(parsed, "revision_id", None)
+    if draft_name and (getattr(parsed, "published", False) or revision_id):
+        raise ValueError("--draft cannot be combined with --published or --revision-id")
+    if draft_name:
+        ref = getattr(parsed, "timeline_slug", None) or getattr(parsed, "timeline_ref", None)
+        try:
+            path = find_draft(parsed.project, ref, draft_name, client=parsed.client)
+        except Exception as exc:  # explicit selection must not fall back to published current
+            raise ValueError(f"could not read working copy {draft_name!r}: {exc}") from exc
+        if path is None:
+            raise ValueError(f"working copy {draft_name!r} does not exist")
+        checkout = Checkout.load(path)
+        parsed._draft_checkout = checkout
+        parsed._draft_path = str(path)
+        parsed._source_revision_id = checkout.base_revision
+        return _visualize_working_copy(parsed)
+
+    if getattr(parsed, "published", False) and revision_id:
+        raise ValueError("--published cannot be combined with --revision-id")
+    if revision_id:
+        parsed._source_revision_id = revision_id
+        return None
+
+    ref = getattr(parsed, "timeline_slug", None) or getattr(parsed, "timeline_ref", None)
+    opener = getattr(parsed.client.timelines, "open_bundle", None)
+    if not callable(opener):
+        raise ValueError("timeline visualization needs a client that can pin the published revision")
+    opened = opener(parsed.project, ref)
+    data = getattr(opened, "data", None)
+    bundle = data.get("bundle") if isinstance(data, Mapping) else None
+    parent = bundle.get("base_parent") if isinstance(bundle, Mapping) else None
+    pinned = parent.get("revision_id") if isinstance(parent, Mapping) else None
+    if not getattr(opened, "ok", False) or not isinstance(pinned, str) or not pinned:
+        raise ValueError("could not pin the published timeline revision for visualization")
+    parsed.revision_id = pinned
+    parsed._source_revision_id = pinned
+    return None
 
 
 def _changed_cuts_line(cuts: list[int], *, limit: int = 12) -> str:
@@ -98,10 +128,10 @@ _FILMSTRIP_ONLY = ("sample", "show", "hide", "track", "page_size", "include_medi
 
 def _resolve_visualize_addresses(parsed: argparse.Namespace) -> str | None:
     """``--at``, ``--range`` and ``--highlight`` take the same addresses as every other verb
-    (``'"Building" in v27'``, ``c30``, ``c41.mink``, ``93.5``), read from the working copy unless
-    ``--published``. Ambiguity lists the choices; the line printed says which one was used."""
+    (``'"Building" in v27'``, ``c30``, ``c41.mink``, ``93.5``), read from the selected source.
+    Ambiguity lists the choices; the line printed says which one was used."""
     from astrid.sdk.timeline_address import AddressError, resolve
-    from astrid.sdk.timeline_checkout import Checkout, find_draft
+    from astrid.sdk.timeline_checkout import Checkout
 
     def needs(name: str, plain: str) -> bool:
         value = getattr(parsed, name, None)
@@ -113,12 +143,9 @@ def _resolve_visualize_addresses(parsed: argparse.Namespace) -> str | None:
         return None  # plain seconds and cut numbers need no lookup
     ref = getattr(parsed, "timeline_slug", None) or getattr(parsed, "timeline_ref", None)
     tl = None
-    if not getattr(parsed, "published", False) and not getattr(parsed, "revision_id", None):
-        try:
-            path = find_draft(parsed.project, ref, getattr(parsed, "draft", None), client=parsed.client)
-        except Exception:  # noqa: BLE001 - fall back to the published head
-            path = None
-        tl = Checkout.load(path) if path is not None else None
+    selected_draft = getattr(parsed, "_draft_checkout", None)
+    if selected_draft is not None:
+        tl = selected_draft
     if tl is None:
         opener = getattr(parsed.client.timelines, "open_bundle", None)
         if not callable(opener):
@@ -602,9 +629,9 @@ def _lenient_json_or_path(value: str) -> Any:
 def add_visualize_flags(subparser: argparse.ArgumentParser) -> None:
     """The flags ``visualize`` had before the combined port (working copy, compare, plan, layers, review)."""
     subparser.add_argument("--published", action="store_true", default=False,
-                           help="Visualize the published head, ignoring the unpublished working copy (when one exists).")
-    subparser.add_argument("--draft", default=None,
-                           help="Which working copy (default: the current one, last checked out).")
+                           help="Read published current explicitly (the default).")
+    subparser.add_argument("--draft", default=None, metavar="NAME",
+                           help="Read this named working copy explicitly; output identifies it and its base revision.")
     subparser.add_argument("--every-cut", dest="all_cuts", action="store_true", default=False,
                            help="With a working copy and no cut/range selection: every cut, not only the cuts you changed.")
     subparser.add_argument("--compare", dest="compare_with", choices=("published",), default=None,
@@ -672,6 +699,8 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
             parsed.after_revision_id = head
     view_was_explicit = getattr(parsed, "view", None) is not None
     try:
+        is_diff_view = getattr(parsed, "view", None) == "diff"
+        working = None if is_diff_view else _select_visualize_source(parsed)
         at_note = _resolve_visualize_addresses(parsed)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
@@ -810,9 +839,6 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
         validation_error = ErrorObject("validation_error", "--edited applies to --view diff",
                                        {"field": "edited", "view": inputs.get("view")})
 
-    working = None
-    if validation_error is None and inputs.get("view") != "diff":
-        working = _visualize_working_copy(parsed)
     if working is not None:
         from astrid.core.timeline.authoring_bundle import AuthoringBundleError, preview_authoring_candidate
         from astrid.sdk.timeline_checkout import Checkout
@@ -820,18 +846,21 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
         draft = Checkout.load(working["draft"])
         if getattr(parsed, "compare_with", None) == "published":
             # Before, then after: the published version and the working copy, same frames.
-            parsed.compare_with = None
-            parsed.published = True
+            published_parsed = copy.copy(parsed)
+            published_parsed.compare_with = None
+            published_parsed.published = True
+            published_parsed.draft = None
+            published_parsed.revision_id = None
+            published_parsed._draft_checkout = None
             print("── PUBLISHED " + "─" * 60)
-            code = cmd_visualize(parsed)
-            parsed.published = False
+            code = cmd_visualize(published_parsed)
             print("── WORKING COPY " + "─" * 57)
             if code not in (0, None):
                 return code
         changed_ids = draft.changed_cut_ids()
         banner = (
-            f"WORKING COPY · {_clips_changed(len(draft.edits().get('changes') or []))} vs published "
-            f"{_short_rev(working['base_revision'])} · --published for the live version"
+            f"WORKING COPY {working['name']} · {_clips_changed(len(draft.edits().get('changes') or []))} · "
+            f"base revision {working['base_revision']}"
         )
         selected = any(
             inputs.get(name) not in (None, "", [])
@@ -869,12 +898,21 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
             if cut_line:
                 print(cut_line)
         try:
-            inputs["authoring_preview"] = preview_authoring_candidate(draft.document())
+            preview = preview_authoring_candidate(draft.document())
+            if isinstance(preview, dict):
+                preview["label"] = f"working copy {parsed.draft} · base revision {working['base_revision']}"
+            inputs["authoring_preview"] = preview
         except AuthoringBundleError as exc:
             print(f"error validation_error: the working copy does not compile ({exc}); run timelines check",
                   file=sys.stderr)
             return 2
         mode = "composed" if mode == "auto" else mode
+    source_identity = (
+        {"kind": "working_copy", "name": working["name"], "base_revision_id": working["base_revision"]}
+        if working is not None else
+        {"kind": "revision", "revision_id": getattr(parsed, "_source_revision_id", None)}
+        if not is_diff_view else None
+    )
     if getattr(parsed, "compare_with", None) and not parsed.json:
         print("no working copy: nothing to compare (showing the published head)")
     if getattr(parsed, "plan", False):
@@ -891,13 +929,14 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
             timeline_slug,
             mode=mode,
             options=inputs,
-            revision_id=getattr(parsed, "revision_id", None),
+            revision_id=getattr(parsed, "_source_revision_id", getattr(parsed, "revision_id", None)),
         )
     if isinstance(result, DomainResult):
         # Native Runtime views are already typed DomainResults and deliberately have no task/run identity.
         if result.ok:
             outputs = dict(result.data) if isinstance(result.data, Mapping) else {"data": result.data}
             outputs["working_copy"] = working if working is not None else None
+            outputs["source_identity"] = source_identity
             summary = cli._visualization_artifact_summary(outputs)
             if summary is not None:
                 outputs["artifact_summary"] = summary
@@ -925,6 +964,7 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
         if isinstance(outputs, Mapping):
             outputs = dict(outputs)
             outputs.setdefault("working_copy", working if working is not None else None)
+            outputs.setdefault("source_identity", source_identity)
             summary = cli._visualization_artifact_summary(outputs)
             if summary is not None:
                 outputs["artifact_summary"] = summary

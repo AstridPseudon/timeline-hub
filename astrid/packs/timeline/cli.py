@@ -1133,7 +1133,7 @@ def _presentation_selection(
 
 
 def _print_cut_table(parsed: argparse.Namespace, opener) -> int:
-    """The editor's cut table (and --summary / --at / --clips); the working copy unless --published."""
+    """The editor's cut table (and --summary / --at / --clips) for the selected source."""
     from astrid.packs.timeline.cli_show import print_cut_table
 
     code=print_cut_table(parsed, opener)
@@ -1801,9 +1801,15 @@ def _visualization_navigation_help(
     render_run = inputs.get("render_run")
     if render_run not in (None, ""):
         identity += ["--render-run", str(render_run)]
-    revision_id = inputs.get("revision_id") or _revision_from_outputs(outputs)
-    if revision_id not in (None, ""):
-        identity += ["--revision-id", str(revision_id)]
+    source_identity = outputs.get("source_identity")
+    if isinstance(source_identity, Mapping) and source_identity.get("kind") == "working_copy":
+        identity += ["--draft", str(source_identity.get("name"))]
+    else:
+        revision_id = inputs.get("revision_id") or (
+            source_identity.get("revision_id") if isinstance(source_identity, Mapping) else None
+        ) or _revision_from_outputs(outputs)
+        if revision_id not in (None, ""):
+            identity += ["--revision-id", str(revision_id)]
     if inputs.get("view") == "diff":
         for name, flag in (("before_revision_id", "--before-revision-id"), ("after_revision_id", "--after-revision-id")):
             if inputs.get(name) not in (None, ""):
@@ -1897,12 +1903,18 @@ def _visualization_navigation_help(
     ]
     if show_range is not None:
         show_selectors.append(["--range", show_range])
+    show_source = (
+        ["--draft", str(source_identity.get("name"))]
+        if isinstance(source_identity, Mapping) and source_identity.get("kind") == "working_copy"
+        else ["--revision-id", str(source_identity.get("revision_id"))]
+        if isinstance(source_identity, Mapping) and source_identity.get("revision_id") else []
+    )
     show_command = shlex.join(
         [
             "python3", "-m", "astrid", "timelines", "show",
             "--project", resolved_project,
             *([str(timeline)] if timeline not in (None, "") else []),
-            *(["--revision-id", str(revision_id)] if revision_id not in (None, "") else []),
+            *show_source,
             *sum(show_selectors, []),
             *sum((["--track", track] for track in tokens(inputs.get("track"))), []),
         ]
@@ -2411,8 +2423,9 @@ def _configure_show(subparser: argparse.ArgumentParser) -> None:
     subparser.add_argument("--at", default=None, help="The one cut on screen at SECONDS or m:ss (or a word): its clips, the words around it, next cuts.")
     subparser.add_argument("--clips", action="store_true", default=False, help="With --shot N: every clip in that chapter, one line each.")
     subparser.add_argument("--published", action="store_true", default=False,
-                           help="Read the published head, ignoring the unpublished working copy (when one exists).")
-    subparser.add_argument("--draft", default=None, help="Which working copy (default: the current one, last checked out).")
+                           help="Read published current explicitly (the default).")
+    subparser.add_argument("--draft", default=None, metavar="NAME",
+                           help="Read this named working copy explicitly; output identifies it and its base revision.")
     subparser.add_argument(
         "--as",
         dest="presentation",
