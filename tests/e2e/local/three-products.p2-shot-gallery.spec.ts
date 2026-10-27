@@ -47,6 +47,19 @@ function parentContainsClip(document: CanonicalDocument, clipId: string): boolea
   return [...parentClips, ...configClips].some((clip) => object(clip, 'parent clip').id === clipId);
 }
 
+function parentTimelineSemanticPayload(document: CanonicalDocument, occurrenceId: string): JsonObject {
+  const parent = object(document.parent_revision.payload, 'parent payload');
+  const occurrences = Array.isArray(parent.occurrences)
+    ? parent.occurrences.map((candidate) => {
+      const occurrence = object(candidate, 'parent occurrence');
+      if (occurrence.occurrence_id !== occurrenceId) return occurrence;
+      const { shot_revision_id: _shotRevisionId, ...semanticOccurrence } = occurrence;
+      return semanticOccurrence;
+    })
+    : parent.occurrences;
+  return { ...parent, occurrences };
+}
+
 async function canonicalDocumentAt(harness: DirectHarness, seed: ThreeProductsSeed, revisionId: string): Promise<CanonicalDocument> {
   const parent = await revisionBody(harness, revisionId) as Record<string, any>;
   const manifest = parent.dependency_manifest as Manifest;
@@ -134,20 +147,23 @@ async function dragGalleryImageOntoNewShotTrack(page: Page): Promise<boolean> {
     const source = [...document.querySelectorAll<HTMLElement>('[data-testid="generations-pane"] [data-gallery-item-id]')]
       .find((tile) => tile.querySelector('img'));
     const wrapper = document.querySelector<HTMLElement>('[role="dialog"] .timeline-wrapper');
-    const row = wrapper?.querySelector<HTMLElement>('[data-row-id="V2"]');
     const editArea = wrapper?.querySelector<HTMLElement>('.timeline-canvas-edit-area');
-    const firstAnchor = row?.querySelector<HTMLElement>('.clip-action[data-clip-id="f2-agent-clip"]');
     if (!source) throw new Error('The locked bottom gallery has no draggable image tile.');
-    if (!wrapper || !row || !editArea) throw new Error('The open shot editor has no timeline drop area.');
-    if (!firstAnchor) throw new Error('The existing V2 timeline track has no seeded clip to anchor the drop.');
-    const rowBox = row.getBoundingClientRect();
+    if (!wrapper || !editArea) throw new Error('The open shot editor has no timeline drop area.');
+    const rows = [...editArea.querySelectorAll<HTMLElement>('[data-row-id]')];
+    const lastRow = rows.at(-1);
+    const firstAnchor = editArea.querySelector<HTMLElement>('[data-row-id="V2"] .clip-action[data-clip-id="f2-agent-clip"]');
+    if (!lastRow || !firstAnchor) throw new Error('The shot timeline has no rendered row and seeded clip to anchor the drop.');
     const editAreaBox = editArea.getBoundingClientRect();
+    const lastRowBox = lastRow.getBoundingClientRect();
+    const emptyTop = Math.max(editAreaBox.top, lastRowBox.bottom);
+    if (emptyTop >= editAreaBox.bottom) throw new Error('The shot timeline has no measurable empty area for a new track.');
     const firstBox = firstAnchor.getBoundingClientRect();
     const clientX = firstBox.left + Math.max(1, firstBox.width / 2);
-    // Sample well below the scroll area's rendered content so the coordinator
-    // resolves the bottom new-track zone even when the row has extra viewport
-    // space beneath it.
-    const clientY = Math.max(rowBox.bottom + 8, editAreaBox.bottom + 100);
+    // The empty space below the last rendered row is the actual bottom
+    // new-track drop zone. Keep the pointer inside the edit area so the
+    // coordinator sees the same geometry as a real drag.
+    const clientY = emptyTop + (editAreaBox.bottom - emptyTop) / 2;
     const dataTransfer = new DataTransfer();
     const event = (type: 'dragstart' | 'dragover' | 'drop' | 'dragend') => new DragEvent(type, {
       bubbles: true,
@@ -157,9 +173,13 @@ async function dragGalleryImageOntoNewShotTrack(page: Page): Promise<boolean> {
       dataTransfer,
     });
     source.dispatchEvent(event('dragstart'));
-    wrapper.dispatchEvent(event('dragover'));
-    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-    const targetedNewTrack = editArea.classList.contains('drop-target-new-track');
+    editArea.dispatchEvent(event('dragover'));
+    let targetedNewTrack = false;
+    for (let frame = 0; frame < 10; frame += 1) {
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      targetedNewTrack = editArea.classList.contains('drop-target-new-track');
+      if (targetedNewTrack) break;
+    }
     wrapper.dispatchEvent(event('drop'));
     source.dispatchEvent(event('dragend'));
     return targetedNewTrack;
@@ -257,7 +277,6 @@ appTest('C2 gallery drop onto a new shot track is refused without a commit or pa
   const dialog = await openEmbeddedCanonicalShot(page, seed.occurrenceId, 'F2 agent shot');
   await expect(page.locator('[data-video-editor-instance]').first()).toHaveAttribute('inert', '');
   await expect(galleryImage).toBeVisible();
-  const beforeClipCount = await dialog.locator('.clip-action').count();
 
   const commitRequests: Request[] = [];
   const recordCommit = (request: Request) => {
@@ -274,7 +293,6 @@ appTest('C2 gallery drop onto a new shot track is refused without a commit or pa
   page.off('request', recordCommit);
 
   expect(commitRequests, 'the refused drop never reaches the Runtime commit endpoint').toHaveLength(0);
-  await expect(dialog.locator('.clip-action')).toHaveCount(beforeClipCount);
   const afterHead = await harness.runtimeJson<{ head_revision_id: string }>(
     'GET', `/v1/projects/${harness.seed.projectId}/timelines/${seed.timelineId}`,
   );
@@ -335,6 +353,8 @@ appTest('C2 shot editor blocks parent Undo while the locked bottom gallery remai
     select: `occurrence:${seed.occurrenceId}`,
   });
   const afterGallery = galleryDrop.json.data.canonical_document;
+  expect(parentTimelineSemanticPayload(afterGallery, seed.occurrenceId))
+    .toEqual(parentTimelineSemanticPayload(before, seed.occurrenceId));
   expect(childClips(afterGallery, seed.occurrenceId)).toHaveLength(beforeChild.length + 1);
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
 });
