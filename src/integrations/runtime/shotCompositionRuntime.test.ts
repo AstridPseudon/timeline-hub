@@ -285,10 +285,32 @@ describe('Runtime shot-composition port', () => {
     const newerDraft = { ...config, clips: config.clips.map((clip) => ({ ...clip, x: 12 })) };
     await expect(stalePopup.saveTimeline(recoveryId, newerDraft, 1)).rejects.toMatchObject({ code: 'stale_write' });
     const recovery = await loadTimelineDraft(recoveryId);
+    const authoredRecoveryConfig = {
+      ...newerDraft,
+      tracks: newerDraft.tracks.map(({ app: _app, ...track }) => ({
+        ...track,
+        id: track.id.replace(/^occ-1~/, ''),
+      })),
+      clips: newerDraft.clips.map(({ assetEntry: _assetEntry, ...clip }) => {
+        const app = clip.app && typeof clip.app === 'object'
+          ? Object.fromEntries(Object.entries(clip.app).filter(([key]) => (
+            !['canonical', 'canonicalTiming', 'canonicalEffects', 'group'].includes(key)
+          )))
+          : undefined;
+        return {
+          ...clip,
+          id: clip.id.replace(/^occ-1:/, ''),
+          track: clip.track.replace(/^occ-1~/, ''),
+          ...(app && Object.keys(app).length > 0 ? { app } : {}),
+        };
+      }),
+    };
     expect(recovery?.draft).toMatchObject({
-      config: newerDraft,
+      config: authoredRecoveryConfig,
       canonicalPublication: { expectedHeadRevisionId: composition.headRevisionId },
     });
+    expect(recovery?.draft.config.tracks?.every((track) => !track.app?.group)).toBe(true);
+    expect(recovery?.draft.config.clips.every((clip) => !clip.app?.group)).toBe(true);
     await clearTimelineDraft(recoveryId);
   });
 
