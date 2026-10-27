@@ -80,11 +80,34 @@ describe('canonical shot-composition downstream projection', () => {
       .toEqual([0, 0]);
   });
 
-  it('uses a child visual declaration over an inherited parent audio declaration with the same ID', () => {
+  const collisionTimingCases = [
+    {
+      name: 'inherited trim', raw: { from: 0.125, to: 2.125 }, durationMs: 2000, extentMs: 2000,
+      visual: { from: 0.475, to: 2.475, hold: undefined, speed: 1.5 },
+      audio: { from: 0.125, to: 2.125, hold: undefined, speed: undefined },
+    },
+    {
+      name: 'inherited hold', raw: { from: 0.125, hold: 4 }, durationMs: 4000, extentMs: 4000,
+      visual: { from: 0.475, to: undefined, hold: 4, speed: 1.5 },
+      audio: { from: 0.125, to: undefined, hold: 4, speed: undefined },
+    },
+    {
+      name: 'explicit trim speed', raw: { from: 0.125, to: 4.125, speed: 2 }, durationMs: 4000, extentMs: 2000,
+      visual: { from: 0.475, to: 4.475, hold: undefined, speed: 2 },
+      audio: { from: 0.125, to: 4.125, hold: undefined, speed: 2 },
+    },
+    {
+      name: 'explicit hold speed', raw: { from: 0.125, hold: 4, speed: 2 }, durationMs: 4000, extentMs: 2000,
+      visual: { from: 0.475, to: undefined, hold: 4, speed: 2 },
+      audio: { from: 0.125, to: undefined, hold: 4, speed: 2 },
+    },
+  ];
+
+  it.each(collisionTimingCases)('uses a child visual declaration over parent audio for $name', ({ raw, visual, durationMs, extentMs }) => {
     const child = withOccurrenceRevision(prepared, 0, (timeline) => ({
       ...timeline,
       tracks: [{ id: 'video', kind: 'visual', label: 'Child' }],
-      clips: [{ id: 'collision', asset: 'alpha-image', clipType: 'media', track: 'video', at: 0, from: 0, to: 2 }],
+      clips: [{ id: 'collision', asset: 'alpha-image', clipType: 'media', track: 'video', at: 0, ...raw }],
     }));
     const composition = { ...child, occurrences: [{
       ...child.occurrences[0], sourceOffsetMs: 350, speed: 1.5,
@@ -93,16 +116,23 @@ describe('canonical shot-composition downstream projection', () => {
       output: { resolution: '1920x1080', fps: 30, file: 'collision.mp4' },
       tracks: [{ id: 'video', kind: 'audio', label: 'Parent' }], clips: [], registry: {},
     });
-    expect(projection.config.clips[0]).toMatchObject({
-      id: 'occ-1:collision', track: 'occ-1~video', from: 0.35, to: 2.35, speed: 1.5,
+    const clip = projection.config.clips[0];
+    expect(clip).toMatchObject({
+      id: 'occ-1:collision', track: 'occ-1~video', at: 0,
+      app: { canonicalTiming: {
+        sourceOffsetMs: 350, occurrenceSpeed: 1.5, speed: visual.speed, durationMs,
+        occurrenceStartMs: 0, occurrenceDurationMs: extentMs, storedOccurrenceDurationMs: 2000,
+      } },
     });
+    expect({ from: clip.from, to: clip.to, hold: clip.hold, speed: clip.speed }).toStrictEqual(visual);
+    expect(getClipTimelineDuration(clip)).toBeCloseTo(durationMs / 1000 / visual.speed, 6);
   });
 
-  it('uses a child audio declaration over a parent visual without inheriting placement playback', () => {
+  it.each(collisionTimingCases)('uses a child audio declaration over parent visual for $name', ({ raw, audio, durationMs, extentMs }) => {
     const child = withOccurrenceRevision(prepared, 0, (timeline) => ({
       ...timeline,
       tracks: [{ id: 'video', kind: 'audio', label: 'Child audio' }],
-      clips: [{ id: 'collision', asset: 'alpha-image', clipType: 'media', track: 'video', at: 0, from: 0, to: 2 }],
+      clips: [{ id: 'collision', asset: 'alpha-image', clipType: 'media', track: 'video', at: 0, ...raw }],
     }));
     const composition = { ...child, occurrences: [{
       ...child.occurrences[0], sourceOffsetMs: 350, speed: 1.5,
@@ -115,11 +145,16 @@ describe('canonical shot-composition downstream projection', () => {
       { id: 'video', kind: 'visual', label: 'Parent' },
       { id: 'occ-1~video', kind: 'audio', label: 'Child audio' },
     ]);
-    expect(projection.config.clips[0]).toMatchObject({
-      id: 'occ-1:collision', track: 'occ-1~video', from: 0, to: 2,
-      app: { canonicalTiming: { sourceOffsetMs: 350, occurrenceSpeed: 1.5, speed: 1 } },
+    const clip = projection.config.clips[0];
+    expect(clip).toMatchObject({
+      id: 'occ-1:collision', track: 'occ-1~video', at: 0,
+      app: { canonicalTiming: {
+        sourceOffsetMs: 350, occurrenceSpeed: 1.5, speed: audio.speed ?? 1, durationMs,
+        occurrenceStartMs: 0, occurrenceDurationMs: extentMs, storedOccurrenceDurationMs: 2000,
+      } },
     });
-    expect(projection.config.clips[0].speed).toBeUndefined();
+    expect({ from: clip.from, to: clip.to, hold: clip.hold, speed: clip.speed }).toStrictEqual(audio);
+    expect(getClipTimelineDuration(clip)).toBeCloseTo(durationMs / 1000 / (audio.speed ?? 1), 6);
   });
 
   it.each([false, true])('keeps undeclared visual tracks local when another occurrence declares audio (reverse %s)', (reverse) => {

@@ -360,7 +360,7 @@ function stripProjectedClipFields(
       }
     }
   }
-  const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
+  const { assetEntry: _assetEntry, app: _app, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
   return {
     ...persistedClip,
     ...(authoredApp && Object.keys(authoredApp).length > 0 ? { app: authoredApp } : {}),
