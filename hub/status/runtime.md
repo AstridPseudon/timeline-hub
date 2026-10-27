@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T04:56:58Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
-# runtime board, 2026-10-27T04:52:17.056197+00:00
+<!-- main | 2026-10-27T05:01:23Z | dispatcher heartbeat 4s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+# runtime board, 2026-10-27T05:00:22.425329+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -125,13 +125,13 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | Follow-up ZIP | Retain final pipeline delivery gate | Main | P accepted | gated:P | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). One final archive against owner pins after P acceptance. Prior delivered archive remains unchanged. | Later phase |
 
-| A stand-in environment | Receive blocked real render proof | A Luna and Main | Managed session cleanup | blocked:main | A-T3-proof-standin-r11 | Actual9312 exited1 after198s; cleanup failed before stand-in export. No MP4, Vite captures or parity metrics. Kit smoke is separate. | A source retained |
+| A stand-in environment | Receive blocked real render proof | A Luna and Main | Managed session cleanup | blocked:main | A-T3-proof-standin-r11; Main diag-renderlane2-0440 | Actual9312 exited1 after198s; cleanup failed before stand-in export. No MP4, Vite captures or parity metrics. Kit smoke is separate. | A source retained |
 
 | A snapshot errors | Receive reviewed clip context repair | Luna | Independent review and central68 PASS | merged | A-snapshot-errors-r11 and review | Missing, corrupt and invalid pinned snapshot errors identify the clip. Central28453:68 PASS. Exact revision remains fail closed. | Agent9c1d676cf1 |
 
 Blockers: Main and A own managed session cleanup blocking the real pinned-element proof; kit smoke is separate. A snapshot errors are merged and central68 PASS. B recovery fix and Agent export proof belong to B. C assertion, new-track handling, parent safety and B ancestry belong to C. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 6345822208 bytes. Runtime trees:36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact completed; see pass evidence for exact results. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 6344171520 bytes. Runtime trees:36; 31 KEEP and 5 dirty; no eligible recycle. Guarded sweep and compact completed with no reclamation. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -142,4 +142,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T04:52:17.056197+00:00. Inbox and HEADER unchanged. Runtime census2717 has no live worker or new completion. A clip errors are merged and central68 PASS; actual9312 proof stopped at managed-session cleanup before any stand-in MP4/Vite/parity. B recovery/export/staging corrections and C assertion/new-track/parent-safety corrections stay with their existing leads. H/D/P START absent. Guarded maintenance completed; all36 Runtime trees remain protected or dirty. No ready Runtime work is waiting. [Pass evidence](rounds/20261027T044829Z-pass.json).
+Current pass: 2026-10-27T05:00:22.425329+00:00. Inbox, HEADER and A B C boards unchanged. Runtime census2717 has no live worker or new completion. A actual9312 remains blocked at managed-session cleanup before stand-in MP4/Vite/parity; Main diag-renderlane2-0440 owns render-lane repair. Main04:51 also owns shared App checkout investigation diag-sharedapp-0450. B recovery/export/staging and C assertion/new-track/parent-safety corrections remain with existing leads. H/D/P START absent. Guarded sweep and compact reclaimed nothing; all36 Runtime trees remain protected or dirty. No ready Runtime work is waiting. [Pass evidence](rounds/20261027T045518Z-pass.json).
