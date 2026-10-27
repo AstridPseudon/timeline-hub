@@ -85,13 +85,34 @@ def test_differences_rejects_complete_unsafe_legacy_groups(case, monkeypatch):
 def test_fractional_piece_offset_is_rejected_even_when_rounded_samples_can_match():
     flat = flat_film()
     source = {"id": "fractional-piece-offset", "clipType": "media", "track": "sprite", "asset": "R",
-              "at": 3.5, "hold": 1.0, "from": 0.0, "to": 1.0, "speed": 1.5}
+              "at": 3.5, "hold": 1.0, "from": 0.25, "to": 1.25, "speed": 1.0}
     flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
 
     planned = plan(flat)
     fallback = next(clip for clip in planned.film_clips if clip["id"] == source["id"])
     assert fallback["track"].endswith("-over")
     assert "fractional renderer source offset" in "\n".join(describe(flat))
+
+
+@pytest.mark.parametrize("shape", ["hold", "window", "hold_window", "duration"])
+def test_cut_safety_uses_the_actual_normalized_piece_lengths(shape):
+    flat = flat_film()
+    source = {"id": "normalized-hold", "clipType": "text", "track": "type", "at": 3.9833333333,
+              "speed": 1.5, "params": {"text": "hello"}}
+    if shape in {"hold", "hold_window"}:
+        source["hold"] = 1.5
+    if shape in {"window", "hold_window"}:
+        source.update({"from": 0.2, "to": 1.7})
+    if shape == "duration":
+        source["duration"] = 1.5
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
+
+    reason = restructure._cut_safety_reason(source, [4.0], 30)
+    assert reason == "renderer frame interval differs after cut at 4 s"
+
+    planned = plan(flat)
+    assert next(clip for clip in planned.film_clips if clip["id"] == source["id"])["track"] == "picture-over"
+    assert not _clips_by_source(planned.chapters, source["id"])
 
 
 def test_continuous_source_phase_rejects_fractional_original_trim():

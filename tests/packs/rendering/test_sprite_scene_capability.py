@@ -14,7 +14,7 @@ from astrid.core.timeline.cuts import clip_duration
 from astrid.core.timeline.shot_composition_projection import project_shot_composition
 from astrid.packs.rendering.shared.rendering_backend import _serialize_timeline
 from astrid.sdk.timeline.units import from_canvas
-from astrid.sdk.timeline_restructure import plan
+from astrid.sdk.timeline_restructure import Chapter, _cut_sprite, plan
 from tests.packs.rendering.test_scene_host import BASIS, ROOT, props
 from tests.sdk.test_timeline_restructure import flat_film
 
@@ -194,6 +194,25 @@ def test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam(sprite_ssr
         assert any('transform:scale(6)' in html for html in before_html)
         assert any('transform:scale(6)' in html for html in after_html)
         assert [strip_clip_identity(html) for html in before_html] == [strip_clip_identity(html) for html in after_html]
+
+
+def test_cut_sprite_uses_renderer_rounding_at_half_frame_seam(sprite_ssr, tmp_path):
+    original = sprite({"x": 8, "keyframes": [{"frame": 32, "x": 24}]},
+                      at=3.5, hold=1.516667, id="half-frame-seam")
+    first = _cut_sprite(original, 3.5, 4.55, Chapter("A", 0, 4550), piece_id="half-frame-first", fps=30)
+    later = _cut_sprite(original, 4.55, 5.016667, Chapter("B", 4550, 5017), piece_id="half-frame-later", fps=30)
+    later["at"] += 4.55
+
+    assert later["params"]["sourceClock"]["offsetFrames"] == 32
+    assert later["params"]["x"] == 24
+    assert later["params"]["keyframes"] == []
+    before = prepared_props(tmp_path, [original], {"R": asset()}, duration_ms=6000)
+    after = prepared_props(tmp_path, [first, later], {"R": asset()}, duration_ms=6000)
+    frames = list(range(137, 151))
+
+    before_html = [re.sub(r' data-clip-id="[^"]*"', '', html) for html in sprite_ssr(before, frames)]
+    after_html = [re.sub(r' data-clip-id="[^"]*"', '', html) for html in sprite_ssr(after, frames)]
+    assert before_html == after_html
 
 
 def test_public_sprite_offcanvas_run_in_mixedscale_and_integrity_addresses(native_host, sprite_ssr, tmp_path):
