@@ -114,7 +114,7 @@ describe('shot timeline popup real recovery integration', () => {
     await clearTimelineDraft(recoveryKey);
   });
 
-  it('labels the reloaded projected ADD hold after a real pointer click without enabling Swap', async () => {
+  it('labels the reloaded authored ADD hold after a real pointer click without enabling Swap', async () => {
     __resetSelectionStoreForTests();
     // ADD27885: the authored image row is a five-second hold, whereas
     // SWAP9674 keeps the existing three-second media row. Keep both shapes.
@@ -185,14 +185,14 @@ describe('shot timeline popup real recovery integration', () => {
       const dialogElement = screen.getByRole('dialog', { name: 'Reloaded ADD' });
       const dialog = within(dialogElement);
       const clip = await waitFor(() => {
-        const element = dialogElement.querySelector('.clip-action[data-clip-id="f2-occurrence-copy:clip-0"]');
+        const element = dialogElement.querySelector('.clip-action[data-clip-id="clip-0"]');
         expect(element).toBeInTheDocument();
         return element!;
       });
       await waitFor(() => expect(load).toHaveBeenCalled());
       expect(readBasis).toHaveBeenCalledWith(composition.parentDocumentId);
       expect(dialogElement.querySelector('[data-shot-timeline-canvas="true"]'))
-        .toHaveAttribute('data-shot-timeline-clip-assets', expect.stringContaining('f2-occurrence-copy:clip-0:V2:0:no-from:no-to:5:hold:asset:image'));
+        .toHaveAttribute('data-shot-timeline-clip-assets', expect.stringContaining('clip-0:V2:0:no-from:no-to:5:hold:asset:image'));
       const user = userEvent.setup();
       const sequence: string[] = [];
       for (const type of ['pointerdown', 'pointerup', 'click']) clip.addEventListener(type, () => sequence.push(type));
@@ -200,17 +200,16 @@ describe('shot timeline popup real recovery integration', () => {
 
       expect(sequence).toEqual(['pointerdown', 'pointerup', 'click']);
       expect(clip).toHaveAttribute('data-selected', 'true');
-      expect([...__getSelectionStateForTests().timeline.selectedClipIds]).toEqual(['f2-occurrence-copy:clip-0']);
-      expect(dialog.getByText('Selected clip: f2-occurrence-copy:clip-0', { exact: true })).toBeVisible();
-      expect(dialog.queryByText('Selected clip: clip-0', { exact: true })).not.toBeInTheDocument();
+      expect([...__getSelectionStateForTests().timeline.selectedClipIds]).toEqual(['clip-0']);
+      expect(dialog.getByText('Selected clip: clip-0', { exact: true })).toBeVisible();
       expect(dialog.getByRole('button', { name: 'Swap selected clip' })).toBeDisabled();
       expect(dialog.getByRole('button', { name: 'Add video after selected clip' })).toBeDisabled();
 
       // The bounded SWAP comparator still selects its own existing media row.
-      const sibling = dialogElement.querySelector('.clip-action[data-clip-id="f2-occurrence-copy:f2-agent-clip"]')!;
+      const sibling = dialogElement.querySelector('.clip-action[data-clip-id="f2-agent-clip"]')!;
       await user.pointer({ target: sibling, keys: '[MouseLeft]' });
-      expect(dialog.getByText('Selected clip: f2-occurrence-copy:f2-agent-clip', { exact: true })).toBeVisible();
-      expect(dialog.queryByText('Selected clip: f2-occurrence-copy:clip-0', { exact: true })).not.toBeInTheDocument();
+      expect(dialog.getByText('Selected clip: f2-agent-clip', { exact: true })).toBeVisible();
+      expect(dialog.queryByText('Selected clip: clip-0', { exact: true })).not.toBeInTheDocument();
       expect(dialog.getByRole('button', { name: 'Swap selected clip' })).toBeEnabled();
 
       await user.pointer({ target: dialogElement.querySelector('.timeline-canvas-edit-area')!, keys: '[MouseLeft]' });
@@ -221,16 +220,16 @@ describe('shot timeline popup real recovery integration', () => {
       const owner = __getSelectionStateForTests().timelineSelectionOwner!;
       const wrongOwner = Symbol('other-editor');
       setTimelineClipData([], wrongOwner);
-      act(() => userSelectTimelineClip('f2-occurrence-copy:clip-0', {}, wrongOwner));
+      act(() => userSelectTimelineClip('clip-0', {}, wrongOwner));
       expect(dialog.queryByText(/^Selected clip:/)).not.toBeInTheDocument();
-      for (const invalidSelection of [['f2-occurrence-original:clip-0'], ['f2-occurrence-copy:stale'],
-        ['f2-occurrence-copy:clip-0', 'f2-occurrence-copy:f2-agent-clip']]) {
+      for (const invalidSelection of [['other-occurrence:clip-0'], ['stale'],
+        ['clip-0', 'f2-agent-clip']]) {
         act(() => editorReplaceTimelineSelection(invalidSelection, owner));
         expect(dialog.queryByText(/^Selected clip:/)).not.toBeInTheDocument();
         expect(dialog.getByRole('button', { name: 'Swap selected clip' })).toBeDisabled();
       }
       await user.pointer({ target: clip, keys: '[MouseLeft]' });
-      expect(dialog.getByText('Selected clip: f2-occurrence-copy:clip-0', { exact: true })).toBeVisible();
+      expect(dialog.getByText('Selected clip: clip-0', { exact: true })).toBeVisible();
       expect(dialog.getByRole('button', { name: 'Swap selected clip' })).toBeDisabled();
       expect(publish).not.toHaveBeenCalled();
       expect(send).not.toHaveBeenCalled();
@@ -478,7 +477,7 @@ describe('shot timeline popup real recovery integration', () => {
     );
 
     const clip = await waitFor(() => {
-      const element = document.querySelector('.clip-action');
+      const element = document.querySelector('.clip-action[data-clip-id="alpha-video"]');
       if (!element) throw new Error('timeline clip has not rendered');
       return element;
     });
@@ -652,7 +651,7 @@ describe('shot timeline popup real recovery integration', () => {
     await waitFor(() => expect(document.querySelector('[data-shot-timeline-canvas="true"]')).toBeTruthy());
     const canvas = document.querySelector('[data-shot-timeline-canvas="true"]')!;
     await waitFor(() => expect(canvas.getAttribute('data-shot-timeline-clip-assets')).toContain(':0.2:'));
-    const initiallySelectedClip = document.querySelector('.clip-action');
+    const initiallySelectedClip = document.querySelector('.clip-action[data-clip-id="alpha-video"]');
     expect(initiallySelectedClip, JSON.stringify({
       clipCount: canvas.getAttribute('data-shot-timeline-clip-count'),
       clipIds: Array.from(document.querySelectorAll('[data-clip-id]')).map((node) => node.getAttribute('data-clip-id')),
@@ -684,7 +683,7 @@ describe('shot timeline popup real recovery integration', () => {
     await waitFor(() => expect(canvas.getAttribute('data-shot-timeline-clip-assets')).toContain(':0.9:'));
     await waitFor(() => expect(screen.queryByText('Updating canonical shot; editing is paused.')).toBeNull());
     expect(document.querySelector('[data-shot-timeline-editor="true"]')).toBe(originalEditor);
-    const currentClip = document.querySelector('.clip-action');
+    const currentClip = document.querySelector('.clip-action[data-clip-id="alpha-video"]');
     expect(currentClip).toHaveAttribute('data-selected', 'true');
     fireEvent.contextMenu(currentClip!, { clientX: 20, clientY: 20 });
     fireEvent.click(screen.getByText('Delete Clip'));
