@@ -241,7 +241,7 @@ def test_e14_twenty_ordered_media_one_receipt_exact_undo_and_timings(editing_cas
 
     evidence = Path(
         "/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a"
-        "/scratchpad/orch/workers/D-E14-scenarios-r5/evidence"
+        "/scratchpad/orch/workers/D-E14-qualification-r6/evidence"
     )
     evidence.mkdir(parents=True, exist_ok=True)
     (evidence / "e14-timings.json").write_text(
@@ -477,9 +477,9 @@ def test_e14_create_with_picture_audio_content_and_fps_undoes_to_bootstrap(editi
         project, voice.read_bytes(), media_type="audio/wav", filename=voice.name,
         idempotency_key="e14-create-voice",
     )
-    assert picture_upload.ok and voice_upload.ok
-    picture_id = picture_upload.data["object_id"]
-    voice_id = voice_upload.data["object_id"]
+    assert picture_upload.get("object_id") and voice_upload.get("object_id")
+    picture_id = picture_upload["object_id"]
+    voice_id = voice_upload["object_id"]
     config = {
         "tracks": [{"id": "picture", "kind": "visual"}, {"id": "voice", "kind": "audio"}],
         "theme_overrides": {"visual": {"canvas": {"width": 640, "height": 360, "fps": 24}}},
