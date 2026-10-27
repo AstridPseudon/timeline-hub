@@ -306,13 +306,15 @@ def test_conflict_attempt_unknown_outcome_replays_exact_wire_request_after_reope
     state = session._state()
     generated.lose_ack = True
 
-    with pytest.raises(WorkspaceClientError, match="response lost"):
+    with pytest.raises(WorkspaceClientError) as unknown:
         session.submit(
             [next_command], label="Move clip", steps=[{"id": "step-1", "label": "Move clip",
             "intent": "", "tags": [], "command_ordinals": [0], "patch": []}],
             idempotency_key="logical-key", expected_state=state,
             evaluation={"kind": "function", "count": 2, "media_cache": {}},
         )
+    assert unknown.value.outcome == "unknown"
+    assert unknown.value.cause["message"] == "response lost after acceptance"
 
     flight = json.loads(path.read_bytes())["flight"]
     expected = (flight["body"].encode(), flight["key"])
@@ -533,13 +535,21 @@ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(con
     with pytest.raises(CommitConflict):
         session.flush()
     state = json.loads(path.read_bytes())
-    assert state["conflict"]["details"]["status"] == "conflict"
-    assert state["pending"] and state["flight"]
+    assert state["flight"] is None and state["pending"] == []
+    assert state["rejected"]["failure"]["details"]["status"] == "conflict"
+    assert state["rejected"]["commands"]
     assert not generated.accepted
+    with session.outbox.locked():
+        state = session._state()
+        state.pop("rejected")
+        session.outbox.write(state)
+    session.queue_move("parent/clip:b", 6)
     generated.refusal = ConnectionError("connection unavailable")
-    with pytest.raises(WorkspaceClientError):
+    with pytest.raises(WorkspaceClientError) as unknown:
         open_session(connected).flush()
-    assert json.loads(path.read_bytes()) == state
+    assert unknown.value.outcome == "unknown"
+    saved = json.loads(path.read_bytes())
+    assert saved["flight"] is not None and saved["pending"]
 
 
 def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(connected):
@@ -719,8 +729,10 @@ def test_nonidentity_map_does_not_acknowledge_pending_work(connected, monkeypatc
         return response
 
     monkeypatch.setattr(generated, "commit_timeline", remapping)
-    with pytest.raises(TimelineEditError, match="nonidentity"):
+    with pytest.raises(TimelineEditError) as unknown:
         session.move("parent/clip:a", 5)
+    assert unknown.value.outcome == "unknown"
+    assert "nonidentity" in unknown.value.cause["message"]
     state = json.loads(path.read_bytes())
     assert state["flight"] and state["pending"] and state["base"]["revision_id"] == "r0"
 
@@ -946,12 +958,13 @@ def test_dependent_suffix_conflict_preserves_original_guards_and_identity(connec
     with pytest.raises(CommitConflict):
         open_session(connected).flush(idempotency_key="b")
     state = json.loads(path.read_bytes())
-    assert state["pending"] == [original]
-    assert state["conflict"] and state["flight"]["key"] == "b"
-    body = json.loads(state["flight"]["body"])
+    assert state["pending"] == [] and state["flight"] is None
+    assert state["rejected"]["commands"] == [original]
+    assert state["rejected"]["failure"]["details"]["status"] == "conflict"
+    body = json.loads(state["rejected"]["flight"]["body"])
     assert body["commands"] == [original] and body["base_revision_id"] == "r1"
     before = path.read_bytes()
-    with pytest.raises(TimelineEditError, match="immutable"):
+    with pytest.raises(TimelineEditError, match="no pending"):
         session.flush(idempotency_key="replacement")
     assert path.read_bytes() == before
 

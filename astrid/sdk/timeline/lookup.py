@@ -17,6 +17,7 @@ from astrid.sdk.timeline._common import (
     TIME_RE,
     WORD_ID_RE,
     TimelineEditError,
+    TimelineSelectionError,
     _norm,
     _num,
     _r,
@@ -511,7 +512,13 @@ class _LookupMixin:
             if len(unique) > 1:
                 listing = "\n  ".join(f"{c.address:<18} {c.element:<14} {c.start:7.3f}–{c.end:.3f} s" for c in unique[:12])
                 more = f"\n  … {len(unique) - 12} more" if len(unique) > 12 else ""
-                raise TimelineEditError(f"{text!r} matches {len(unique)} clips in {where}; name one:\n  {listing}{more}")
+                candidates = [{"id": c.address, "track": c.data.get("track"),
+                               "start": c.start, "end": c.end} for c in unique[:12]]
+                error = TimelineSelectionError(text, candidates, len(unique))
+                error.detail = f"{error.detail} {listing}{more}"
+                error.presentation["detail"] = error.detail
+                error.details["detail"] = error.detail
+                raise error
         raise TimelineEditError(f"no clip in {where} matches {text!r} (by id, asset, element or text); "
                                 f"list them with tl.clips() or `timelines show --as script`")
 
