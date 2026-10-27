@@ -109,8 +109,10 @@ def test_place_element_cli_exposes_occurrence_target_and_forwards_arguments(caps
     client.timelines = timelines
     parser = timeline_cli.build_parser(client)
     help_text = parser._subparsers._group_actions[0].choices['place-element'].format_help()
+    normalized_help = ' '.join(help_text.split())
     assert '--target' in help_text
     assert 'occurrence:<occurrence-' in help_text and 'id>/clip:<clip-id>' in help_text
+    assert 'effect elements on am-discord clips only' in normalized_help
     parsed = parser.parse_args([
         'place-element', 'film', '--project', 'p', '--realm', 'realm',
         '--target', 'occurrence:shot-1/clip:discord', '--pack', 'project_pack',
