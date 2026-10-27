@@ -17,6 +17,7 @@ import { AudioTrack } from '@/tools/video-editor/compositions/AudioTrack.tsx';
 import { AudioAnalysisProvider } from '@/tools/video-editor/compositions/AudioAnalysisProvider.tsx';
 import { timelineNeedsAudioAnalysis } from '@/tools/video-editor/compositions/audio-analysis/audioAnalysisDemand.ts';
 import { LocalFontFaces } from '@/tools/video-editor/compositions/LocalFontFaces.tsx';
+import { partitionTrackGroups } from './partitionTrackGroups.ts';
 import { EffectLayerSequence } from '@/tools/video-editor/compositions/EffectLayerSequence.tsx';
 import { TextClipSequence } from '@/tools/video-editor/compositions/TextClip.tsx';
 import { AudioReactiveColourSequence } from '@/tools/video-editor/compositions/AudioReactiveColour.tsx';
@@ -1663,42 +1664,59 @@ const TimelineRendererBody: FC<{ config: ResolvedTimelineConfig }> = memo(({ con
 
   const visualContent = useMemo(() => {
     const resolution = renderConfig.output.resolution;
-    // Keep ordinary tracks as keyed siblings. Nesting another unkeyed Fragment for
-    // every new row reparents (and remounts) all existing images, worlds and decoders.
-    let accumulated: ReactNode[] = [];
-
-    for (const track of visualTracks) {
-      const trackClips = clipsByTrack.regular[track.id] ?? [];
-      const trackContent: ReactNode = trackClips.length > 0
-        ? (
-            <VisualTrack
-              key={track.id}
-              track={track}
-              clips={trackClips}
-              renderConfig={renderConfig}
-              fps={fps}
-              theme={runtimeTheme}
-              resolution={resolution}
-              allClips={renderConfig.clips}
-              liveBindingRecordsByClip={liveBindingRecordsByClip}
-              liveDataRegistry={liveDataRegistry}
-            />
-          )
-        : null;
-      let lowerTrackContent = accumulated;
-      const effectLayers = sortClipsByAt(clipsByTrack.effectLayers[track.id] ?? []);
-
-      if (lowerTrackContent.length > 0 && effectLayers.length > 0) {
-        for (const effectLayer of effectLayers) {
-          lowerTrackContent = [
-            <EffectLayerSequence key={`effect:${effectLayer.id}`} clip={effectLayer} fps={fps}>
-              {lowerTrackContent}
-            </EffectLayerSequence>,
-          ];
+    const renderTracks = (tracks: readonly TrackDefinition[], allClips: ResolvedTimelineClip[], initial: ReactNode[] = []): ReactNode[] => {
+      // Keep ordinary tracks as keyed siblings so adding a row does not remount decoders.
+      let accumulated = initial;
+      for (const track of tracks) {
+        const trackClips = clipsByTrack.regular[track.id] ?? [];
+        const trackContent: ReactNode = trackClips.length > 0
+          ? (
+              <VisualTrack
+                key={track.id}
+                track={track}
+                clips={trackClips}
+                renderConfig={renderConfig}
+                fps={fps}
+                theme={runtimeTheme}
+                resolution={resolution}
+                allClips={allClips}
+                liveBindingRecordsByClip={liveBindingRecordsByClip}
+                liveDataRegistry={liveDataRegistry}
+              />
+            )
+          : null;
+        let lowerTrackContent = accumulated;
+        const effectLayers = sortClipsByAt(clipsByTrack.effectLayers[track.id] ?? []);
+        if (lowerTrackContent.length > 0 && effectLayers.length > 0) {
+          for (const effectLayer of effectLayers) {
+            lowerTrackContent = [
+              <EffectLayerSequence key={`effect:${effectLayer.id}`} clip={effectLayer} fps={fps}>
+                {lowerTrackContent}
+              </EffectLayerSequence>,
+            ];
+          }
         }
+        accumulated = trackContent ? [...lowerTrackContent, trackContent] : lowerTrackContent;
       }
-
-      accumulated = trackContent ? [...lowerTrackContent, trackContent] : lowerTrackContent;
+      return accumulated;
+    };
+    let accumulated: ReactNode[] = [];
+    const ungroupedClips = renderConfig.clips.filter((clip) => (
+      !renderConfig.tracks.find((track) => track.id === clip.track)?.app?.group
+    ));
+    for (const group of partitionTrackGroups(visualTracks)) {
+      if (group.id) {
+        const ids = new Set(group.tracks.map((track) => track.id));
+        const groupClips = renderConfig.clips.filter((clip) => ids.has(clip.track));
+        accumulated.push(
+          <AbsoluteFill key={`group:${group.id}`} data-shot-group={group.id} style={{ isolation: 'isolate' }}>
+            {renderTracks(group.tracks, groupClips)}
+          </AbsoluteFill>,
+        );
+      } else {
+        // Parent effect layers may wrap the whole stack, including completed shots.
+        accumulated = renderTracks(group.tracks, ungroupedClips, accumulated);
+      }
     }
 
     return accumulated;

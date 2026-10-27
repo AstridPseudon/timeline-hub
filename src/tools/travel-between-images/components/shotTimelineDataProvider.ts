@@ -39,7 +39,9 @@ import { toOutboxJson, type OutboxJson } from '@/tools/video-editor/commands/com
 import type {
   ResolvedAssetRegistryEntry,
   ResolvedTimelineConfig,
+  TimelineClip,
   TimelineConfig,
+  TrackDefinition,
 } from '@/tools/video-editor/types/index.ts';
 import { timelineContentExtentMs } from '@/tools/video-editor/data/shotCompositionTiming.ts';
 import { bridgeMediaUrl } from '@/shared/lib/media/bridgeMediaUrl.ts';
@@ -133,6 +135,235 @@ function createShotTimelineConfig(config: ResolvedTimelineConfig): TimelineConfi
   };
 }
 
+type ShotTimelineSource = 'projection' | 'shot-local';
+
+function stringValue(value: unknown): string | undefined {
+  return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+function finiteValue(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+}
+
+function occurrenceInternalTimeline(
+  composition: PreparedShotComposition,
+  occurrenceId: string,
+): { occurrence: PreparedShotComposition['occurrences'][number]; timeline: JsonObject } {
+  const matches = composition.occurrences.filter((candidate) => candidate.occurrenceId === occurrenceId);
+  if (matches.length !== 1) throw new Error('Shot popup has no unique verified occurrence binding');
+  const occurrence = matches[0]!;
+  const revision = composition.contract.shot_revisions.filter((candidate) => (
+    candidate.shot_id === occurrence.shotId && candidate.revision_id === occurrence.revisionId
+  ));
+  if (revision.length !== 1 || revision[0] !== occurrence.revision) {
+    throw new Error('Shot popup has no verified child revision binding');
+  }
+  const internal = object(occurrence.revision.internal_timeline_revision);
+  if (!internal || internal.revision_id !== occurrenceInternalRevisionId(occurrence)
+    || typeof internal.content_digest !== 'string') {
+    throw new Error('Shot popup has no verified child timeline pin');
+  }
+  const timeline = object(internal.timeline);
+  if (!timeline || !Array.isArray(timeline.clips) || !Array.isArray(timeline.tracks)) {
+    throw new Error('Shot popup has no verified child timeline');
+  }
+  return { occurrence, timeline };
+}
+
+function occurrenceInternalRevisionId(occurrence: PreparedShotComposition['occurrences'][number]): string {
+  const internal = object(occurrence.revision.internal_timeline_revision);
+  return typeof internal?.revision_id === 'string' ? internal.revision_id : '';
+}
+
+function authoredRowApp(value: unknown): Record<string, unknown> | undefined {
+  const app = object(value);
+  if (!app) return undefined;
+  const { group: _projectionGroup, ...authored } = app;
+  return authored;
+}
+
+function shotLocalTrack(raw: unknown): TrackDefinition | null {
+  const track = object(raw);
+  const id = stringValue(track?.id);
+  if (!track || !id) return null;
+  return {
+    ...track,
+    id,
+    kind: track.kind === 'audio' ? 'audio' : 'visual',
+    label: stringValue(track.label) ?? id,
+    ...(authoredRowApp(track.app) ? { app: authoredRowApp(track.app) } : {}),
+  } as TrackDefinition;
+}
+
+function shotLocalClip(raw: unknown, index: number): TimelineClip {
+  const source = object(raw);
+  if (!source) throw new Error(`Shot popup child clip ${index} is not an object`);
+  const id = stringValue(source.id);
+  if (!id) throw new Error(`Shot popup child clip ${index} has no authored ID`);
+  const atMs = finiteValue(source.at_ms);
+  const durationMs = finiteValue(source.duration_ms);
+  const duration = finiteValue(source.duration);
+  const rawFrom = finiteValue(source.from);
+  const rawTo = finiteValue(source.to);
+  const hasTrim = rawFrom !== undefined && rawTo !== undefined && rawTo > rawFrom;
+  const muted = source.muted === true || source.mute === true;
+  const gain = finiteValue(source.gain ?? source.volume);
+  const app = object(source.app);
+  const {
+    at_ms: _atMs,
+    duration_ms: _durationMs,
+    asset_id: _assetId,
+    clip_type: _clipType,
+    duration: _duration,
+    gain: _gain,
+    mute: _mute,
+    muted: _muted,
+    volume: _volume,
+    ...authoredFields
+  } = source;
+  return {
+    ...authoredFields,
+    id,
+    at: atMs !== undefined ? Math.max(0, atMs) / 1000 : Math.max(0, finiteValue(source.at) ?? 0),
+    track: stringValue(source.track) ?? 'video',
+    clipType: stringValue(source.clip_type) ?? stringValue(source.clipType) ?? 'media',
+    ...(stringValue(source.asset_id) ?? stringValue(source.asset)
+      ? { asset: stringValue(source.asset_id) ?? stringValue(source.asset) } : {}),
+    ...(hasTrim
+      ? { from: rawFrom, to: rawTo }
+      : durationMs !== undefined
+        ? { hold: Math.max(0, durationMs) / 1000 }
+        : duration !== undefined
+          ? { hold: Math.max(0, duration) }
+          : {}),
+    ...(muted || gain !== undefined ? { volume: muted ? 0 : gain } : {}),
+    ...(app ? { app: structuredClone(app) } : {}),
+  } as TimelineClip;
+}
+
+/** Read the verified child timeline directly; unlike projection, this keeps authored IDs and metadata. */
+function createShotLocalTimelineConfig(
+  composition: PreparedShotComposition,
+  occurrenceId: string,
+  fallback: TimelineConfig,
+): TimelineConfig {
+  const { occurrence, timeline } = occurrenceInternalTimeline(composition, occurrenceId);
+  const tracks = (timeline.tracks as unknown[]).map(shotLocalTrack)
+    .filter((track): track is TrackDefinition => Boolean(track));
+  const clips = (timeline.clips as unknown[]).map(shotLocalClip);
+  const timelineApp = object(timeline.app);
+  return {
+    output: fallback.output,
+    clips,
+    tracks,
+    ...(timeline.theme !== undefined ? { theme: timeline.theme as TimelineConfig['theme'] } : {}),
+    ...(timeline.theme_overrides !== undefined ? { theme_overrides: timeline.theme_overrides as TimelineConfig['theme_overrides'] } : {}),
+    ...(timeline.generation_defaults !== undefined ? { generation_defaults: timeline.generation_defaults as TimelineConfig['generation_defaults'] } : {}),
+    app: {
+      ...(timelineApp ?? {}),
+      canonicalComposition: {
+        projectId: composition.projectId,
+        parentDocumentId: composition.parentDocumentId,
+        headRevisionId: composition.headRevisionId,
+        occurrenceIds: [occurrence.occurrenceId],
+      },
+    },
+  };
+}
+
+function rawChildRows(
+  composition: PreparedShotComposition,
+  occurrenceId: string,
+  key: 'clips' | 'tracks',
+): Map<string, Record<string, unknown>> {
+  const { timeline } = occurrenceInternalTimeline(composition, occurrenceId);
+  return collectionRows(timeline[key], [key]);
+}
+
+function timelineOccurrenceId(config: TimelineConfig, composition: PreparedShotComposition): string {
+  const app = object(config.app);
+  const canonical = object(app?.canonicalComposition);
+  const configured = Array.isArray(canonical?.occurrenceIds) ? canonical.occurrenceIds : [];
+  if (configured.length === 1 && typeof configured[0] === 'string') return configured[0];
+  for (const occurrence of composition.occurrences) {
+    const raw = rawChildRows(composition, occurrence.occurrenceId, 'clips');
+    if (config.clips.some((clip) => raw.has(clip.id))) return occurrence.occurrenceId;
+  }
+  return composition.occurrences[0]?.occurrenceId ?? '';
+}
+
+function timelineSource(
+  config: TimelineConfig,
+  composition: PreparedShotComposition,
+  occurrenceId: string,
+): ShotTimelineSource {
+  const raw = rawChildRows(composition, occurrenceId, 'clips');
+  const projectedIdPrefix = `${occurrenceId}:`;
+  const hasExplicitProjectedClip = config.clips.some((clip) => clip.id.startsWith(projectedIdPrefix));
+  if (!hasExplicitProjectedClip && config.clips.some((clip) => raw.has(clip.id))) return 'shot-local';
+  const projected = projectedClipCounterparts(composition, config.clips);
+  if (config.clips.some((clip) => projected.has(clip.id))) return 'projection';
+  if (config.clips.some((clip) => raw.has(clip.id))) return 'shot-local';
+  const prefix = `${occurrenceId}~`;
+  if ((config.tracks ?? []).some((track) => track.id.startsWith(prefix))) return 'projection';
+  return 'shot-local';
+}
+
+function authoredTracks(
+  tracks: TrackDefinition[],
+  composition: PreparedShotComposition,
+  occurrenceId: string,
+): TrackDefinition[] {
+  const rawTracks = rawChildRows(composition, occurrenceId, 'tracks');
+  const prefix = `${occurrenceId}~`;
+  return tracks.map((track) => {
+    const localId = rawTracks.has(track.id) ? track.id
+      : track.id.startsWith(prefix) && rawTracks.has(track.id.slice(prefix.length))
+        ? track.id.slice(prefix.length) : track.id;
+    const app = authoredRowApp(track.app);
+    return { ...track, id: localId, ...(app ? { app } : {}) };
+  });
+}
+
+function authoredClipFields(clip: TimelineClip, occurrenceId: string): TimelineClip {
+  const prefix = `${occurrenceId}~`;
+  const app = object(clip.app);
+  const authoredApp = authoredRowApp(app);
+  return {
+    ...clip,
+    track: clip.track.startsWith(prefix) ? clip.track.slice(prefix.length) : clip.track,
+    ...(authoredApp ? { app: authoredApp } : {}),
+  };
+}
+
+function stripProjectedClipFields(
+  clip: TimelineClip,
+  raw: Record<string, unknown> | null,
+): TimelineClip {
+  const app = object(clip.app);
+  const rawApp = object(raw?.app);
+  const authoredApp = app ? { ...app } : undefined;
+  if (authoredApp) {
+    for (const key of ['canonical', 'canonicalTiming', 'canonicalEffects']) {
+      if (rawApp && own(rawApp, key) && key !== 'canonicalEffects') {
+        Object.defineProperty(authoredApp, key, {
+          value: structuredClone(rawApp[key]),
+          enumerable: true,
+          configurable: true,
+          writable: true,
+        });
+      } else {
+        Reflect.deleteProperty(authoredApp, key);
+      }
+    }
+  }
+  const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
+  return {
+    ...persistedClip,
+    ...(authoredApp && Object.keys(authoredApp).length > 0 ? { app: authoredApp } : {}),
+  };
+}
+
 /** Build first-render editor data from the already-resolved parent projection. */
 export function createShotTimelineInitialData(
   config: ResolvedTimelineConfig,
@@ -155,26 +386,42 @@ export function createShotTimelineInitialData(
   });
 }
 
-function createCanonicalTimeline(config: TimelineConfig, composition: PreparedShotComposition): Record<string, unknown> {
+function createCanonicalTimeline(
+  config: TimelineConfig,
+  composition: PreparedShotComposition,
+  source: ShotTimelineSource = timelineSource(config, composition, timelineOccurrenceId(config, composition)),
+): Record<string, unknown> {
+  const occurrenceId = timelineOccurrenceId(config, composition);
   const retainedRawClipIds = verifiedRetainedRawClipIds(composition);
-  for (const clip of config.clips) {
-    if (retainedRawClipIds.has(clip.id)) {
-      throw new Error(`The shot draft clip ${clip.id} collides with a retained raw clip ID; keep the draft`);
+  const projectedCounterparts = projectedClipCounterparts(composition, config.clips);
+  const counterparts = source === 'shot-local'
+    ? rawChildRows(composition, occurrenceId, 'clips')
+    : projectedCounterparts;
+  if (source === 'projection') {
+    for (const clip of config.clips) {
+      if (retainedRawClipIds.has(clip.id)) {
+        throw new Error(`The shot draft clip ${clip.id} collides with a retained raw clip ID; keep the draft`);
+      }
     }
   }
-  const counterparts = projectedClipCounterparts(composition, config.clips);
-  const clips = (config.clips ?? []).map((clip) => {
-    const raw = counterparts.get(clip.id);
+  const clips = (config.clips ?? []).map((editorClip) => {
+    // Apply to existing and newly authored clips on every save path, before
+    // restoring identity and app collisions from the verified child bytes.
+    const projectedClip = authoredClipFields(editorClip, occurrenceId);
+    const raw = counterparts.get(projectedClip.id) ?? null;
     // A clip absent from the verified identity map is a newly authored editor
     // clip (existing projected clips are present with either a raw match or a
     // null value when their identity is ambiguous). Keep it intact so popup
     // add remains a normal authoring operation.
-    if (!raw && counterparts.has(clip.id)) {
+    if (!raw && counterparts.has(projectedClip.id)) {
       throw new Error('The shot draft has no unambiguous raw clip counterpart');
     }
+    const clip = stripProjectedClipFields(
+      raw ? { ...projectedClip, id: String(raw.id) } : projectedClip,
+      raw,
+    );
     if (!raw) {
-      const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
-      return persistedClip;
+      return clip;
     }
     const rawApp = raw.app as Record<string, unknown> | undefined;
     const app = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app)
@@ -187,20 +434,23 @@ function createCanonicalTimeline(config: TimelineConfig, composition: PreparedSh
         } else Reflect.deleteProperty(app, key);
       }
     }
-    const { assetEntry: _assetEntry, ...persistedClip } = clip as typeof clip & { assetEntry?: unknown };
     return {
-      ...persistedClip,
+      ...clip,
       id: String(raw.id),
       ...(app && typeof app === 'object' ? { app } : {}),
     };
   });
+  const app = object(config.app);
+  const authoredApp = app
+    ? Object.fromEntries(Object.entries(app).filter(([key]) => key !== 'canonicalComposition' && key !== 'visualSeamContract'))
+    : undefined;
   return {
-    tracks: config.tracks ?? [],
+    tracks: authoredTracks(config.tracks ?? [], composition, occurrenceId),
     clips,
     ...(config.theme ? { theme: config.theme } : {}),
     ...(config.theme_overrides ? { theme_overrides: config.theme_overrides } : {}),
     ...(config.generation_defaults ? { generation_defaults: config.generation_defaults } : {}),
-    ...(config.app ? { app: config.app } : {}),
+    ...(authoredApp && Object.keys(authoredApp).length > 0 ? { app: authoredApp } : {}),
   };
 }
 
@@ -208,29 +458,21 @@ function restoreRawAppCollisionsInRecoveryDraft(
   config: TimelineConfig,
   composition: PreparedShotComposition,
 ): TimelineConfig {
+  const occurrenceId = timelineOccurrenceId(config, composition);
   const counterparts = projectedClipCounterparts(composition, config.clips);
   return {
     ...config,
-    clips: config.clips.map((clip) => {
-      const raw = counterparts.get(clip.id);
-      const app = object(clip.app);
-      const rawApp = raw ? object(raw.app) : null;
-      if (!raw || !app || !rawApp
-        || !['canonical', 'canonicalTiming'].some((key) => own(rawApp, key))) return clip;
-      const restoredApp = { ...app };
-      for (const key of ['canonical', 'canonicalTiming']) {
-        if (rawApp && Object.prototype.hasOwnProperty.call(rawApp, key)) {
-          Object.defineProperty(restoredApp, key, {
-            value: structuredClone(rawApp[key]),
-            enumerable: true,
-            configurable: true,
-            writable: true,
-          });
-        } else {
-          Reflect.deleteProperty(restoredApp, key);
-        }
-      }
-      return { ...clip, app: restoredApp };
+    // Recovery is durable editor data too. Keep the authored track fields and
+    // raw app metadata, but never retain the projection's occurrence prefix or
+    // its group hint in the child timeline draft.
+    tracks: authoredTracks(config.tracks ?? [], composition, occurrenceId),
+    clips: config.clips.map((editorClip) => {
+      const projectedClip = authoredClipFields(editorClip, occurrenceId);
+      const raw = counterparts.get(projectedClip.id) ?? null;
+      return stripProjectedClipFields(
+        raw ? { ...projectedClip, id: String(raw.id) } : projectedClip,
+        raw,
+      );
     }),
   };
 }
@@ -880,7 +1122,7 @@ export function projectShotTimelineDraftComposition(
 ): PreparedShotComposition {
   const occurrence = composition.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
   if (!occurrence) return composition;
-  const timeline = createCanonicalTimeline(createShotTimelineConfig(config), rawComposition);
+  const timeline = createCanonicalTimeline(createShotTimelineConfig(config), rawComposition, 'shot-local');
   const extentMs = timelineContentExtentMs(timeline);
   const hardLimitMs = hardDurationMs(composition.contract, occurrenceId, occurrence.atMs);
   const revision = occurrence.revision;
@@ -939,7 +1181,8 @@ export function createShotTimelineDataProvider(
       ? bridgeMediaUrl(composition.projectId, file)
       : file;
   };
-  let timelineConfig = createShotTimelineConfig(config);
+  const projectedTimelineConfig = createShotTimelineConfig(config);
+  let timelineConfig = createShotLocalTimelineConfig(composition, occurrenceId, projectedTimelineConfig);
   let canonicalTimelineConfig = timelineConfig;
   let configVersion = 1;
   // This is the CAS base for the mounted popup session. Never reload here:
@@ -998,10 +1241,11 @@ export function createShotTimelineDataProvider(
     if (!occurrence) throw new Error('Popup A2 save received a canonical closure without the edited occurrence');
     const projected = projectCanonicalComposition({ ...published, occurrences: [occurrence] },
       { ...config, clips: [], tracks: [], registry: {} }, { clampToOccurrenceDuration: false }).config;
-    const canonicalConfig = createShotTimelineConfig({ ...projected, clips: projected.clips.map((clip) => ({
-      ...clip, at: Math.max(0, clip.at - occurrence.atMs / 1000),
-      app: { ...clip.app, canonicalTiming: { ...object(clip.app?.canonicalTiming), occurrenceStartMs: 0 } },
-    })) });
+    const canonicalConfig = createShotLocalTimelineConfig(
+      published,
+      occurrenceId,
+      createShotTimelineConfig(projected),
+    );
     return () => {
       composition = published;
       localSaveSource = undefined;
@@ -1143,7 +1387,10 @@ export function createShotTimelineDataProvider(
             const edit = popupDocumentAfter(
               before,
               nextConfig,
-              localSaveSource?.config ?? timelineConfig,
+              localSaveSource?.config
+                ?? (timelineSource(nextConfig, rawComposition, occurrenceId) === 'shot-local'
+                  ? timelineConfig
+                  : projectedTimelineConfig),
               nextRegistry && !sameJson(nextRegistry, localSaveSource?.registry ?? registry) ? draftRegistry : undefined,
               localSaveSource?.registry ?? registry,
               rawComposition,
@@ -1243,7 +1490,7 @@ export function createShotTimelineDataProvider(
     resolveAssetUrl: resolve,
     onResolve: async ({ file }) => resolve(file),
     loadTimeline: async (_timelineId) => {
-      timelineConfig = canonicalTimelineConfig;
+      timelineConfig = createShotLocalTimelineConfig(composition, occurrenceId, canonicalTimelineConfig);
       const recovery = await loadTimelineDraft(recoveryKey).catch(() => null);
       let recoveryBaseHeadRevisionId: string | null = null;
       if (recovery?.baseCanonicalGraph && shotCompositionAdapter) {
@@ -1277,9 +1524,13 @@ export function createShotTimelineDataProvider(
       }
       const recoveredConfig = recovery?.draft.config;
       if (recoveredConfig && typeof recoveredConfig === 'object' && !Array.isArray(recoveredConfig)) {
+        const authoredRecoveryConfig = restoreRawAppCollisionsInRecoveryDraft(
+          recoveredConfig as TimelineConfig,
+          composition,
+        );
         timelineConfig = recoveryBaseHeadRevisionId
-          ? reconcileConfigHeadRevision(recoveredConfig as TimelineConfig, recoveryBaseHeadRevisionId)
-          : recoveredConfig as TimelineConfig;
+          ? reconcileConfigHeadRevision(authoredRecoveryConfig, recoveryBaseHeadRevisionId)
+          : authoredRecoveryConfig;
       }
       if (recoveredConfig) {
         const identities = projectCanonicalComposition(composition, undefined, { clampToOccurrenceDuration: false }).clipIdentities;
@@ -1320,36 +1571,20 @@ export function createShotTimelineDataProvider(
         timelineQueryIdentity = latest.headRevisionId;
         const occurrence = latest.occurrences.find((candidate) => candidate.occurrenceId === occurrenceId);
         if (!occurrence) throw new Error('The canonical shot occurrence is unavailable');
-        const projected = projectCanonicalComposition(
-          { ...latest, occurrences: [occurrence] },
-          { ...canonicalTimelineConfig, clips: [], tracks: [], registry: {} },
-          { clampToOccurrenceDuration: false },
-        ).config;
-        const offsetSeconds = occurrence.atMs / 1000;
-        const canonicalResolvedConfig = {
-          ...projected,
-          clips: projected.clips.map((clip) => {
-            const app = clip.app && typeof clip.app === 'object' && !Array.isArray(clip.app) ? clip.app : null;
-            const timing = app?.canonicalTiming && typeof app.canonicalTiming === 'object'
-              && !Array.isArray(app.canonicalTiming) ? app.canonicalTiming : null;
-            return {
-              ...clip,
-              at: Math.max(0, clip.at - offsetSeconds),
-              ...(app && timing
-                ? { app: { ...app, canonicalTiming: { ...timing, occurrenceStartMs: 0 } } }
-                : {}),
-            };
-          }),
-        };
+        const canonicalLocalConfig = createShotLocalTimelineConfig(
+          latest,
+          occurrenceId,
+          canonicalTimelineConfig,
+        );
         registry = {
-          assets: Object.fromEntries(Object.entries(canonicalResolvedConfig.registry).map(([assetId, entry]) => ([assetId, {
+          assets: Object.fromEntries(Object.entries(config.registry).map(([assetId, entry]) => ([assetId, {
             ...entry,
             file: entry.file ?? entry.media_id ?? entry.url,
           }]))),
         };
-        canonicalTimelineConfig = createShotTimelineConfig(canonicalResolvedConfig);
+        canonicalTimelineConfig = canonicalLocalConfig;
       }
-      timelineConfig = canonicalTimelineConfig;
+      timelineConfig = createShotLocalTimelineConfig(composition, occurrenceId, canonicalTimelineConfig);
       pendingPublication = null;
       return { config: timelineConfig, configVersion };
     },
@@ -1372,7 +1607,7 @@ export function createShotTimelineDataProvider(
       let publicationExpectedHeadRevisionId: string | null = null;
       if (timingTraceId) recordShotTimelinePhase(timingTraceId, 'request-start', { expectedVersion });
       try {
-        const timeline = createCanonicalTimeline(nextConfig, rawComposition);
+        const timeline = createCanonicalTimeline(nextConfig, rawComposition, timelineSource(nextConfig, rawComposition, occurrenceId));
         // Reserve the project queue synchronously in caller order before any
         // async recovery read or hashing. Otherwise a later edit can finish
         // preparation first and publish ahead of the save that was requested
@@ -1423,7 +1658,11 @@ export function createShotTimelineDataProvider(
               && typeof recoveryDraftConfig === 'object'
               && !Array.isArray(recoveryDraftConfig)
               && await digest(normalizeHeadForSignature(
-                createCanonicalTimeline(recoveryDraftConfig as TimelineConfig, rawComposition),
+                createCanonicalTimeline(
+                  recoveryDraftConfig as TimelineConfig,
+                  rawComposition,
+                  timelineSource(recoveryDraftConfig as TimelineConfig, rawComposition, occurrenceId),
+                ),
                 canonicalBase.headRevisionId,
               )) === configSignature,
             );
@@ -1442,8 +1681,10 @@ export function createShotTimelineDataProvider(
               // stored occurrence duration used to replay its preview. The
               // publication candidate above remains the sanitized canonical
               // graph; do not strip replay metadata from the stale draft.
-              config: recoveryMatchesThisSave ? recoveryAtStart!.draft.config
-                : restoreRawAppCollisionsInRecoveryDraft(nextConfig, rawComposition),
+              config: restoreRawAppCollisionsInRecoveryDraft(
+                recoveryMatchesThisSave ? recoveryAtStart!.draft.config as TimelineConfig : nextConfig,
+                rawComposition,
+              ),
               registry: draftRegistry,
               canonicalPublication: candidate,
             };
@@ -1483,7 +1724,7 @@ export function createShotTimelineDataProvider(
             // so it can continue on the new CAS base without waiting for a
             // redundant query echo to rewrite its head marker.
             adoptCanonicalBase(acknowledged, true);
-            canonicalTimelineConfig = nextConfig;
+            canonicalTimelineConfig = createShotLocalTimelineConfig(acknowledged, occurrenceId, nextConfig);
             timelineConfig = canonicalTimelineConfig;
             pendingPublication = null;
             const clearedAcknowledgedDraft = await clearTimelineDraftIfMatches(
@@ -1532,7 +1773,8 @@ export function createShotTimelineDataProvider(
       if (draftDirty || pendingPublishes > 0) {
         return false;
       }
-      timelineConfig = createShotTimelineConfig(nextConfig);
+      composition = nextComposition;
+      timelineConfig = createShotLocalTimelineConfig(nextComposition, occurrenceId, nextConfig);
       canonicalTimelineConfig = timelineConfig;
       registry = {
         assets: Object.fromEntries(Object.entries(nextConfig.registry).map(([assetId, entry]) => ([assetId, {
@@ -1540,7 +1782,6 @@ export function createShotTimelineDataProvider(
           file: entry.file ?? entry.media_id ?? entry.url,
         }]))),
       };
-      composition = nextComposition;
       adoptCanonicalBase(nextComposition);
       timelineQueryIdentity = nextComposition.headRevisionId;
       return true;
