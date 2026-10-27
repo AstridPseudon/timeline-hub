@@ -1,6 +1,9 @@
 """Core media cutters used when a flat timeline is split into chapter shots."""
 from __future__ import annotations
 
+import pytest
+
+import astrid.sdk.timeline_restructure as restructure
 from astrid.sdk.timeline_restructure import describe, differences, flatten, plan, split
 from tests.sdk.test_timeline_restructure import flat_film
 
@@ -45,25 +48,31 @@ def test_fractional_source_frame_crosser_keeps_exact_source_sample_on_named_over
     assert over["track"] == "picture-over"
     assert source_at_global_4 == 0.75
     assert source_at_global_4 * 30 == 22.5
-    assert "source offset at 4 s is not an exact 30 fps frame" in report
+    assert "renderer source sample" in report
     assert source["id"] in report and "[media] -> picture-over" in report
     assert not _clips_by_source(planned.chapters, source["id"])
 
 
-def test_differences_rejects_legacy_manually_cut_animation_group():
+@pytest.mark.parametrize("case", ["entrance", "exit", "fractional-source", "fractional-original-trim",
+                                  "non-frame-aligned-start"])
+def test_differences_rejects_complete_unsafe_legacy_groups(case, monkeypatch):
     flat = flat_film()
-    source = {"id": "legacy-animated", "clipType": "media", "track": "sprite", "asset": "R",
-              "at": 3.5, "hold": 1.0, "from": 0.0, "to": 1.0}
+    source = {"id": f"legacy-{case}", "clipType": "media", "track": "sprite", "asset": "R",
+              "at": 3.5, "hold": 1.0}
+    if case == "entrance":
+        source["entrance"] = {"type": "fade", "duration": 0.5}
+    elif case == "exit":
+        source["exit"] = {"type": "fade", "duration": 0.5}
+    elif case == "fractional-source":
+        source.update({"from": 0.0, "to": 1.0, "speed": 1.5})
+    elif case == "non-frame-aligned-start":
+        source["at"] = 3.55
+    else:
+        source.update({"from": 0.25, "to": 1.75, "speed": 1.5})
     flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
-    legacy = split(flat)
-    flat_source = next(clip for clip in flat["shots"]["film"]["internal_timeline"]["clips"]
-                       if clip["id"] == source["id"])
-    flat_source["entrance"] = {"type": "fade", "duration": 0.5}
-    for shot in legacy["shots"].values():
-        for clip in shot["internal_timeline"]["clips"]:
-            marker = clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {})
-            if marker.get("id") == source["id"]:
-                clip["entrance"] = {"type": "fade", "duration": 0.5}
+    with monkeypatch.context() as patcher:
+        patcher.setattr(restructure, "_cut_safety_reason", lambda *args: None)
+        legacy = split(flat)
 
     pieces = [clip for shot in legacy["shots"].values() for clip in shot["internal_timeline"]["clips"]
               if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == source["id"]]
@@ -71,26 +80,17 @@ def test_differences_rejects_legacy_manually_cut_animation_group():
     assert differences(flat, legacy)
 
 
-def test_differences_rejects_legacy_manually_cut_fractional_media_group():
+def test_differences_rejects_legacy_manually_cut_fractional_media_group(monkeypatch):
     flat = flat_film()
     source = {"id": "legacy-fractional", "clipType": "media", "track": "sprite", "asset": "R",
-              "at": 3.5, "hold": 1.0, "from": 0.0, "to": 1.0}
+              "at": 3.5, "hold": 1.0, "from": 0.0, "to": 1.0, "speed": 1.5}
     flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
-    legacy = split(flat)
-    flat_source = next(clip for clip in flat["shots"]["film"]["internal_timeline"]["clips"]
-                       if clip["id"] == source["id"])
-    flat_source["speed"] = 1.5
+    with monkeypatch.context() as patcher:
+        patcher.setattr(restructure, "_cut_safety_reason", lambda *args: None)
+        legacy = split(flat)
     pieces = [clip for shot in legacy["shots"].values() for clip in shot["internal_timeline"]["clips"]
               if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == source["id"]]
     assert len(pieces) == 2
-    for piece in pieces:
-        marker = piece["app"]["astrid"]["timeline_restructure_piece"]
-        piece["speed"] = 1.5
-        marker["source_speed_present"] = True
-        marker["source_speed"] = 1.5
-    pieces[0]["to"] = 0.75
-    pieces[1]["from"] = 0.75
-
     assert differences(flat, legacy)
 
 

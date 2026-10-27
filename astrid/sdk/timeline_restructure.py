@@ -53,6 +53,10 @@ def _cutter_for(clip: Mapping[str, Any]):
 
 def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps: float) -> str | None:
     """Explain why a boundary cut would reset a supported clip clock or source sample."""
+    def js_round(value: float) -> int:
+        # The pinned renderer uses JavaScript Math.round (ties go toward +infinity).
+        return math.floor(value + 0.5)
+
     for field_name in ("entrance", "exit", "continuous", "animation", "animations", "effects", "transition",
                        "keyframes", "keyframeOrigin", "fade_in", "fade_out", "fadeIn", "fadeOut"):
         value = clip.get(field_name)
@@ -69,10 +73,27 @@ def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps
     if _clip_kind(clip) in {"media", "video"}:
         source_from = _num(clip.get("from"))
         speed = _num(clip.get("speed"), 1.0) or 1.0
-        for start in cut_starts:
-            source_frame = (source_from + (start - _num(clip.get("at"))) * speed) * fps
-            if abs(source_frame - round(source_frame)) > 1e-7:
-                return f"source offset at {start:g} s is not an exact {fps:g} fps frame"
+        source_start = _num(clip.get("at"))
+        original_trim = js_round(source_from * fps)
+        original_placement = js_round(source_start * fps)
+        original_end = js_round((source_start + clip_duration(clip)) * fps)
+        starts = sorted(set(cut_starts))
+        for index, start in enumerate(starts):
+            elapsed = start - source_start
+            piece_from = source_from + elapsed * speed
+            piece_trim = js_round(piece_from * fps)
+            piece_placement = js_round(start * fps)
+            # Check every frame that the later piece would render. Its trim is
+            # rounded independently, and its local frame clock starts at the
+            # rounded piece placement (the renderer's Sequence clock).
+            piece_end = starts[index + 1] if index + 1 < len(starts) else source_start + clip_duration(clip)
+            first = max(original_placement, piece_placement)
+            last = min(original_end, js_round(piece_end * fps))
+            for frame in range(first, last):
+                original_sample = original_trim + js_round((frame - original_placement) * speed)
+                piece_sample = piece_trim + js_round((frame - piece_placement) * speed)
+                if original_sample != piece_sample:
+                    return f"renderer source sample at frame {frame} differs after cut at {start:g} s"
     return None
 
 
