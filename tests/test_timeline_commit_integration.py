@@ -6,8 +6,10 @@ Default neutral Runtime collection never imports Agent.
 from __future__ import annotations
 
 import copy
+import io
 import json
 import sys
+import wave
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime, timedelta
 from threading import Barrier, Lock
@@ -427,6 +429,63 @@ def test_real_track_create_and_inverse_keep_complete_film_closure(editing):
         assert restored[family] == original[family]
     editing.assert_readback(accepted)
     editing.assert_readback(undone)
+
+
+def test_real_picture_audio_tracks_and_overlay_wav_undo_exactly(editing):
+    from astrid.sdk.timeline._command_state import ABSENT, present
+    from test_timeline_clip_replacement import _media_bytes
+
+    original = editing.document()
+    image = editing.service.ingest(
+        editing.project, _media_bytes(kind="image"), media_type="image/png", idempotency_key="e2-picture",
+    )["data"]["object_id"]
+    audio = io.BytesIO()
+    with wave.open(audio, "wb") as output:
+        output.setparams((1, 2, 8000, 0, "NONE", "not compressed"))
+        output.writeframes(b"\x00\x00" * 8000)
+    wav = editing.service.ingest(
+        editing.project, audio.getvalue(), media_type="audio/wav", idempotency_key="e2-wav",
+    )["data"]["object_id"]
+
+    def command(op, select, args):
+        return {"schema_version": 1, "op": op, "version": "1", "select": select, "args": args}
+
+    clips = original["parent_revision"]["payload"]["clips"]
+    added = [
+        {"id": "e2-picture", "track": "V2", "asset": "e2-picture", "clipType": "image", "at": 0, "hold": 1},
+        {"id": "e2-wav", "track": "A2", "asset": "e2-wav", "clipType": "audio", "at": 0, "hold": 1},
+    ]
+    changes = [{"op": "set", "ref": "parent", "path": ["clips"], "before": present(clips),
+                "value": [*clips, *added]}]
+    for identity, media, kind in (("e2-picture", image, "image/png"), ("e2-wav", wav, "audio/wav")):
+        changes.append({"op": "set", "ref": "parent", "path": ["registry", "assets", identity],
+                        "before": ABSENT, "value": {"media_id": media, "type": kind}})
+    patch = command("doc.patch", None, {"changes": changes})
+    patch["created"] = ["parent/clip:e2-picture", "parent/clip:e2-wav",
+                        "parent/asset:e2-picture", "parent/asset:e2-wav"]
+    admission = command("media.admit", None, {"inputs": [
+        {"pin": {"media_id": media, "content_digest": media}} for media in (image, wav)
+    ]})
+    commands = [admission, command("track.create", "parent", {"row": {"id": "V2", "kind": "visual"}}),
+                command("track.create", "parent", {"row": {"id": "A2", "kind": "audio"}}), patch]
+    request = editing.body(commands)
+    request["steps"] = [
+        {"id": "admit", "label": "Admit", "intent": "", "tags": [],
+         "command_ordinals": [0], "patch": []},
+        {"id": "edit", "label": "Edit", "intent": "", "tags": [],
+         "command_ordinals": [1, 2, 3], "patch": copy.deepcopy(changes)},
+    ]
+
+    prior_count = len(editing.history())
+    accepted = editing.commit(request, "picture-audio-overlay-wav")
+    assert len(editing.history()) == prior_count + 1
+    edited = accepted["data"]["canonical_document"]["parent_revision"]["payload"]
+    assert [row["id"] for row in edited["config"]["tracks"]][-2:] == ["V2", "A2"]
+    assert [row["id"] for row in edited["clips"][-2:]] == ["e2-picture", "e2-wav"]
+
+    undone = editing.commit(editing.body([inverse(accepted["receipt"]["receipt_id"])]), "picture-audio-undo")
+    assert len(editing.history()) == prior_count + 2
+    assert undone["data"]["canonical_document"] == original
 
 
 def _start_door(film, tmp_path):

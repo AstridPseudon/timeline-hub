@@ -1354,7 +1354,11 @@ def _inverse_stage_history(records, history):
         expected.append({"publication_id": publication, "step_id": source_step["id"],
                          "command_ordinals": ordinals,
                          "native_sites": ([(write["ref"], write["path"]) for write in shared["writes"]]
-                                          if shared is not None else native_sites), "shared": shared})
+                                          if shared is not None else native_sites), "shared": shared,
+                         "empty_native": (not native_sites and not source_step["patch"]
+                                          and not any(command.get("writes")
+                                                      or command.get("derived_writes")
+                                                      for command in source_commands))})
     for stage in expected:
         stage["timing_sites"] = timing_sites
     return expected
@@ -1417,8 +1421,17 @@ def _inverse_stage_ranges(step, records, history=None):
                 "inverse stage effect range is malformed")
         native_start, native_end = native_range
         effect_start, effect_end = effect_range
+        # A media.admit-only step survives as an authenticated, zero-effect
+        # inverse stage; its empty spans are valid only when source history is empty too.
+        empty_native_stage = source_stage.get("empty_native", False)
+        native_span_valid = (
+            native_start == previous_native_end
+            and native_end <= len(record["writes"])
+            and (native_start == native_end if empty_native_stage else native_start < native_end)
+        )
         require(native_end - native_start == len(source_stage["native_sites"])
-                and native_start == previous_native_end and native_start < native_end <= len(record["writes"]),
+                and native_span_valid
+                and (not empty_native_stage or effect_start == effect_end),
                 "inverse stage native ranges are missing, reordered, or overlapping")
         require(effect_start == previous_effect_end and effect_start <= effect_end <= len(step["patch"]),
                 "inverse stage effect ranges are missing, reordered, or overlapping")
