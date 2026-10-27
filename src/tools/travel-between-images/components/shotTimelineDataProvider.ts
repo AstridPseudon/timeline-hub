@@ -322,6 +322,15 @@ function authoredTracks(
   });
 }
 
+function authoredClipFields(clip: TimelineClip, occurrenceId: string): TimelineClip {
+  const prefix = `${occurrenceId}~`;
+  const app = authoredTrackApp(clip.app);
+  return {
+    ...clip,
+    track: clip.track.startsWith(prefix) ? clip.track.slice(prefix.length) : clip.track,
+    ...(app ? { app } : {}),
+  };
+}
 /** Build first-render editor data from the already-resolved parent projection. */
 export function createShotTimelineInitialData(
   config: ResolvedTimelineConfig,
@@ -379,7 +388,10 @@ function createCanonicalTimeline(
       }
     }
   }
-  const clips = (config.clips ?? []).map((clip) => {
+  const clips = (config.clips ?? []).map((editorClip) => {
+    // Apply to existing and newly authored clips on every save path, before
+    // restoring identity and app collisions from the verified child bytes.
+    const clip = authoredClipFields(editorClip, occurrenceId);
     const raw = counterparts.get(clip.id);
     // A clip absent from the verified identity map is a newly authored editor
     // clip (existing projected clips are present with either a raw match or a
@@ -436,7 +448,8 @@ function restoreRawAppCollisionsInRecoveryDraft(
     // raw app metadata, but never retain the projection's occurrence prefix or
     // its group hint in the child timeline draft.
     tracks: authoredTracks(config.tracks ?? [], composition, occurrenceId),
-    clips: config.clips.map((clip) => {
+    clips: config.clips.map((editorClip) => {
+      const clip = authoredClipFields(editorClip, occurrenceId);
       const raw = counterparts.get(clip.id);
       const app = object(clip.app);
       const rawApp = raw ? object(raw.app) : null;
