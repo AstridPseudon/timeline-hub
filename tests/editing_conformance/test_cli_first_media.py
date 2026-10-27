@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+import wave
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,27 @@ from astrid.sdk.timeline.sync import TimelineSession
 from tests.editing_conformance.test_native_batch_ingress import runtime  # noqa: F401
 
 pytestmark = pytest.mark.integration
+
+
+@pytest.mark.parametrize('track', [None, 'A2'])
+def test_first_wav_selects_or_creates_audio_lane(runtime, tmp_path, capsys, track):  # noqa: F811
+    source = tmp_path / 'voice.wav'
+    with wave.open(str(source), 'wb') as audio:
+        audio.setnchannels(1)
+        audio.setsampwidth(2)
+        audio.setframerate(8000)
+        audio.writeframes(b'\0\0' * 16000)
+    extra = ('--track', track) if track else ()
+    before = len(runtime.history()['items'])
+    code, added = run(runtime, capsys, 'edit', 'film', '--add-layer', 'media',
+                      '--layer-asset', str(source), '--on', '0', '--for', '1',
+                      '--id', 'voice', '--idempotency-key', 'first-wav', *extra)
+    assert code == 0 and added['ok'], added
+    assert len(runtime.history()['items']) == before + 1
+    clip = added['data']['canonical_document']['parent_revision']['payload']['clips'][0]
+    assert (clip['clipType'], clip['track'], clip['from'], clip['to']) == (
+        'audio', track or 'A1', 0, 1)
+    assert added['data']['imports'][0]['catalog_write'] is True
 
 
 def run(world, capsys, *args):

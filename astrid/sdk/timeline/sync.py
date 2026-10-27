@@ -444,9 +444,9 @@ class TimelineSession:
                     and pending[0]["args"] == {"in_s": in_s, "out_s": out_s})
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
-    def add_media(self, source, *, on, duration, track='V1', clip_id=None, values=None,
+    def add_media(self, source, *, on, duration, track=None, clip_id=None, values=None,
                   idempotency_key=None, dry_run=False, via='python'):
-        """Add an image/video through the same parent-media recipe as an editor drop."""
+        """Add verified media, choosing an audio or visual lane when omitted."""
         from .media_add import add_media
 
         return add_media(self, source, on=on, duration=duration, track=track, clip_id=clip_id,
@@ -476,7 +476,7 @@ class TimelineSession:
         result = _response(self.client.timelines.commit(
             self.project_id, self.timeline_id, body, idempotency_key=key))
         data, receipt = _ack(result, body, flight, self.identity)
-        return self._present(result, data, receipt)
+        return self._present(result, data, receipt, imports=flight.get('imports', ()))
 
     def undo(self, publications, *, steps=None, idempotency_key=None, dry_run=False, via="python"):
         publications = list(publications)
@@ -607,6 +607,7 @@ class TimelineSession:
                           "explicit_key": idempotency_key is not None}
                 if 'media_input' in state:
                     flight['media_input'] = copy.deepcopy(state['media_input'])
+                    flight['imports'] = copy.deepcopy(state.get('media_imports', []))
                 state["flight"] = flight
                 self.outbox.write(state)
             body = self._flight_body(state, flight, idempotency_key, dry_run)
@@ -670,6 +671,7 @@ class TimelineSession:
                     del state["pending"][:flight["count"]]
                     state.pop('rationale', None)
                     state.pop('media_input', None)
+                    state.pop('media_imports', None)
                 if "commit_options" in state:
                     if dry_run:
                         del state["pending"][:flight["count"]]
@@ -678,11 +680,13 @@ class TimelineSession:
                 state["flight"] = None
                 state.pop("conflict", None)
                 self.outbox.write(state)
-        return self._present(result, data, receipt)
+        return self._present(result, data, receipt, imports=flight.get('imports', ()))
 
-    def _present(self, result, data, receipt):
+    def _present(self, result, data, receipt, *, imports=()):
         result = copy.deepcopy(result)
         result["data"] = copy.deepcopy(data)
+        if imports:
+            result['imports'] = copy.deepcopy(list(imports))
         if receipt is not None:
             result["data"]["accepted_publication_id"] = receipt["receipt_id"]
             result["data"]["show_command"] = shlex.join([

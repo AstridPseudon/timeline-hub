@@ -60,7 +60,7 @@ def _consume(ctx, owner, ids):
 def _binding(pin, kind, *, verified=None):
     entry = {'media_id': pin['object_id'], 'type': kind,
              'generationId': pin['generation_id'], 'variantId': pin['variant_id']}
-    if kind == 'video' and verified is not None:
+    if kind in ('video', 'audio') and verified is not None:
         entry['duration'] = verified['duration_seconds']
     return entry
 
@@ -138,7 +138,7 @@ def _registry(ctx, owner, pin, kind, *, create=False, alias=None):
     if ctx.state.get(ref, []) == ABSENT and create:
         ctx.create_asset(owner, identity, expected)
     elif create:
-        if kind == 'video' and equal(entry, _binding(pin, kind)):
+        if kind in ('video', 'audio') and equal(entry, _binding(pin, kind)):
             ctx.write(ref, ['duration'], expected['duration'])
         elif not equal(entry, expected):
             raise CommandError('existing registry binding differs from exact selection', kind='dependency_changed')
@@ -188,7 +188,7 @@ def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False, bound_tra
             raise CommandError('image requires hold without a source window', kind='unsupported_timing')
     else:
         left, right = row.get('from'), row.get('to')
-        if raw_window:
+        if raw_window and kind == 'video':
             left = number(0 if left is None else left, 'clip.from')
             right = left + hold if right is None else right
         left, right = number(left, 'clip.from'), number(right, 'clip.to')
@@ -198,9 +198,11 @@ def _clip(ctx, owner, row, limit, kind, verified, *, raw_window=False, bound_tra
     track = owner + '/track:' + str(row.get('track'))
     ctx.select('collection.tracks', owner)
     value = ctx.read(track)
-    if (not isinstance(value, dict) or value.get('kind') != 'visual'
+    lane_kind = 'audio' if kind == 'audio' else 'visual'
+    if (not isinstance(value, dict) or value.get('kind') != lane_kind
             or value.get('role', 'output') != 'output' or not active(value)):
-        raise CommandError('media edit requires an active raw visual child track')
+        raise CommandError(f'media edit requires an active raw {lane_kind} child track',
+                           kind='unsupported_media')
     # The same-alias validation loop performs no writes. Within that one
     # command input, an exact scoped ref and observed row share the same
     # physical revision, owners and evaluation boundary after authentication.
