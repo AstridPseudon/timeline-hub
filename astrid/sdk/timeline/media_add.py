@@ -66,40 +66,8 @@ def _selection(session, bundle, source):
     return _verified(transport, project, pin)
 
 
-def add_media(session, source, *, on, duration, track, clip_id, values,
-              idempotency_key, dry_run, via):
-    """Capture once, including IDs/import selection, then retry the original request.
-
-    The editor's empty drop authors a parent clip, not a synthetic shot. A missing
-    output track and the clip are one commit_many batch. Catalog import is the
-    existing independent managed-media operation, never a timeline publication.
-    """
-    on, duration = number(on, 'on'), number(duration, 'duration', positive=True)
-    if on < 0:
-        raise TimelineEditError('on must not be negative')
-    if idempotency_key is not None and (not isinstance(idempotency_key, str) or not idempotency_key.strip()):
-        raise TimelineEditError('idempotency key must be nonempty')
-    if track is not None and (not isinstance(track, str) or not track.strip()):
-        raise TimelineEditError('media track must be a nonempty track ID')
-    if {'id', 'clipType', 'track', 'asset', 'at', 'hold', 'from', 'to', 'speed'}.intersection(values or {}):
-        raise TimelineEditError('media identity and timing must use the add_media arguments')
-    intent = {'source': dict(source) if isinstance(source, Mapping) else str(source),
-              'on': on, 'duration': duration, 'track': track,
-              'clip_id': clip_id, 'values': dict(values or {})}
-    with session.outbox.locked():
-        state = session._state()
-    previous = state.get('acknowledged', {}).get(idempotency_key)
-    if previous is not None:
-        return session.retry(idempotency_key, matches=lambda _: previous.get('media_input') == intent,
-                             dry_run=dry_run, via=via)
-    if state['pending'] or state['flight'] is not None:
-        if state.get('media_input') != intent:
-            raise TimelineEditError('pending intent differs; retry the original edit and key first')
-        return session.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
-
-    bundle = session._bundle(state)
-    local_source = not isinstance(source, Mapping) and Path(source).expanduser().is_file()
-    pin, verified = _selection(session, bundle, source)
+def _placement_commands(bundle, pin, verified, *, on, duration, track, clip_id, values=None):
+    """Build the shared native track and media placement recipe."""
     kind = verified['media_type'].split('/', 1)[0]
     if kind not in ('image', 'video', 'audio'):
         raise TimelineEditError('verified media must be an image, video, or audio file')
@@ -137,6 +105,45 @@ def add_media(session, source, *, on, duration, track, clip_id, values,
                          'select': 'parent', 'args': {'row': {'id': track, 'kind': expected_lane}}})
     commands.append({'schema_version': 1, 'op': 'clip.add-media', 'version': '1',
                      'select': 'parent', 'args': {'row': row, 'media': pin}})
+    return commands
+
+
+def add_media(session, source, *, on, duration, track, clip_id, values,
+              idempotency_key, dry_run, via):
+    """Capture once, including IDs/import selection, then retry the original request.
+
+    The editor's empty drop authors a parent clip, not a synthetic shot. A missing
+    output track and the clip are one commit_many batch. Catalog import is the
+    existing independent managed-media operation, never a timeline publication.
+    """
+    on, duration = number(on, 'on'), number(duration, 'duration', positive=True)
+    if on < 0:
+        raise TimelineEditError('on must not be negative')
+    if idempotency_key is not None and (not isinstance(idempotency_key, str) or not idempotency_key.strip()):
+        raise TimelineEditError('idempotency key must be nonempty')
+    if track is not None and (not isinstance(track, str) or not track.strip()):
+        raise TimelineEditError('media track must be a nonempty track ID')
+    if {'id', 'clipType', 'track', 'asset', 'at', 'hold', 'from', 'to', 'speed'}.intersection(values or {}):
+        raise TimelineEditError('media identity and timing must use the add_media arguments')
+    intent = {'source': dict(source) if isinstance(source, Mapping) else str(source),
+              'on': on, 'duration': duration, 'track': track,
+              'clip_id': clip_id, 'values': dict(values or {})}
+    with session.outbox.locked():
+        state = session._state()
+    previous = state.get('acknowledged', {}).get(idempotency_key)
+    if previous is not None:
+        return session.retry(idempotency_key, matches=lambda _: previous.get('media_input') == intent,
+                             dry_run=dry_run, via=via)
+    if state['pending'] or state['flight'] is not None:
+        if state.get('media_input') != intent:
+            raise TimelineEditError('pending intent differs; retry the original edit and key first')
+        return session.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
+
+    bundle = session._bundle(state)
+    local_source = not isinstance(source, Mapping) and Path(source).expanduser().is_file()
+    pin, verified = _selection(session, bundle, source)
+    commands = _placement_commands(bundle, pin, verified, on=on, duration=duration,
+                                   track=track, clip_id=clip_id, values=values)
     # Capture/validate the entire batch before persisting its input descriptor.
     from .commands import execute
 

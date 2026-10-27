@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+from collections.abc import Mapping
 from typing import Any, cast
 
-from ._common import TimelineEditError
+from ._common import PARENT_SHOT, TimelineEditError
 from .checkout import Checkout
 from .sync import CommitConflict, TimelineSession, _pin
 
@@ -29,12 +31,14 @@ class Timeline(Checkout):
     keep external side effects out of its body because it can run three times.
     """
 
-    def __init__(self, session, bundle, base, *, evaluating=False):
+    def __init__(self, session, bundle, base, *, evaluating=False, media_cache=None):
         # Initialize helper state without migrating/flattening the pinned bundle.
         super().__init__({})
         self.session = session
         self._basis = copy.deepcopy(base)
         self._evaluating = evaluating
+        self._media_cache = copy.deepcopy(media_cache or {})
+        self._verified_media = []
         self._adopt(bundle)
 
     @classmethod
@@ -50,6 +54,110 @@ class Timeline(Checkout):
         self._free_edits = False
         self._journal.clear()
         self._refresh()
+
+    def add(self, source, *, at, hold=None, duration=None, track=None, id=None, clip_id=None, **options):
+        """Stage media, retaining its exact content selection across reruns."""
+        from pathlib import Path
+
+        local_path = Path(source).expanduser() if isinstance(source, (str, Path)) else None
+        source_path = str(local_path.absolute()) if local_path is not None else None
+        cached = next((entry for entry in (self._media_cache.values() if self._evaluating else ())
+                       if source_path is not None and source_path in entry.get("sources", ())), None)
+        native_media = (self._evaluating and
+                        (isinstance(source, (Mapping, Path)) or cached is not None
+                         or bool(local_path and local_path.is_file())
+                         or bool(local_path and not options
+                                 and (local_path.suffix or len(local_path.parts) > 1))
+                         or duration is not None or id is not None))
+        if not native_media:
+            if duration is not None:
+                options["duration"] = duration
+            if id is not None:
+                options["id"] = id
+            if clip_id is not None:
+                options["clip_id"] = clip_id
+            return super().add(source, at=at, hold=hold, track=track, **options)
+        if options:
+            raise TimelineEditError("flat media add accepts only at, hold, track and id options")
+
+        from astrid.sdk.timeline_media_replacement import _verified
+
+        from .capture import number
+        from .media_add import _placement_commands, _selection
+        from .model import Clip
+
+        if id is not None and clip_id is not None:
+            raise TimelineEditError("use only one of id or clip_id")
+        clip_id = id if id is not None else clip_id
+        if clip_id is not None and (not isinstance(clip_id, str) or not clip_id.strip()):
+            raise TimelineEditError("media clip id must be a nonempty string")
+        on = number(at, "at")
+        if on < 0:
+            raise TimelineEditError("at must not be negative")
+        if track is not None and (not isinstance(track, str) or not track.strip()):
+            raise TimelineEditError("media track must be a nonempty track ID")
+        if duration is not None and hold is not None:
+            raise TimelineEditError("use only one of hold or duration")
+        requested_duration = duration if duration is not None else hold
+        if requested_duration is not None:
+            requested_duration = number(requested_duration, "hold", positive=True)
+        cache_key = cached["pin"]["object_id"] if cached is not None else None
+        if cached is None and local_path is not None and local_path.is_file():
+            from astrid.core.media import MediaProbeError
+            from astrid.sdk.authoring_media import _metadata
+
+            try:
+                metadata = _metadata(local_path)
+                payload = local_path.read_bytes()
+            except (MediaProbeError, OSError, ValueError) as exc:
+                raise TimelineEditError(f"invalid local media {str(local_path)!r}: {exc}; "
+                                        "use a readable image, video, or audio file") from exc
+            cache_key = metadata["digest"]
+            if "sha256:" + hashlib.sha256(payload).hexdigest() != cache_key:
+                raise TimelineEditError("local media changed during import; retry after the file is saved")
+            cached = self._media_cache.get(cache_key)
+        if cached is None:
+            pin, verified = _selection(self.session, self.bundle, source)
+        else:
+            pin = copy.deepcopy(cached["pin"])
+            pin, verified = _verified(self.session.client._remote._transport, self.session.project_id, pin)
+        if cache_key is not None and pin.get("object_id") != cache_key:
+            raise TimelineEditError("local media changed during import; retry after the file is saved")
+        kind = verified.get("media_type", "").split("/", 1)[0]
+        if kind not in {"image", "video", "audio"}:
+            raise TimelineEditError("verified media must be an image, video, or audio file")
+        length = requested_duration if requested_duration is not None else number(
+            verified.get("duration_seconds") or 1.0, "hold", positive=True)
+
+        self._capture_free_edits()
+        commands = _placement_commands(self.bundle, pin, verified, on=on, duration=length,
+                                       track=track, clip_id=clip_id)
+        from .commands import execute
+
+        capture_bundle = (self._execution_bundle(self._command_bundle)
+                          if self._runtime_document is not None else self._command_bundle)
+        commands = execute(capture_bundle, commands,
+                           verified_media=[*self._verified_media, copy.deepcopy(verified)]).commands
+        self._verified_media.append(copy.deepcopy(verified))
+        try:
+            self._append(commands, label="Add media")
+        except Exception:
+            self._verified_media.pop()
+            raise
+        if cache_key is not None:
+            entry = self._media_cache.setdefault(cache_key, {
+                "pin": copy.deepcopy(pin), "sources": [],
+                "imports": [{"object_id": pin["object_id"], "generation_id": pin["generation_id"],
+                             "variant_id": pin["variant_id"], "catalog_write": True,
+                             "retained_on_undo": True}],
+            })
+            if source_path not in entry.setdefault("sources", []):
+                entry["sources"].append(source_path)
+        identity = commands[-1]["args"]["row"]["id"]
+        added = next((candidate for candidate in self._parent_clips() if candidate.get("id") == identity), None)
+        if added is None:
+            raise TimelineEditError("media capture did not create the requested clip")
+        return Clip(self, PARENT_SHOT, added)
 
     def _execution_bundle(self, bundle):
         """Supply private canonical input from this evaluation's exact base pair."""
@@ -102,7 +210,7 @@ class Timeline(Checkout):
             bundle = (self._execution_bundle(self._command_bundle)
                       if self._runtime_document is not None or any(command.get("op") == "doc.patch" for command in commands)
                       else self._command_bundle)
-            plan = execute(bundle, commands)
+            plan = execute(bundle, commands, verified_media=self._verified_media)
         except CommandError as exc:
             if exc.kind == "unsupported_operation" and any(command.get("op") == "doc.patch" for command in commands):
                 raise TimelineEditError(
@@ -178,10 +286,21 @@ class Timeline(Checkout):
         label = (getattr(function, "__name__", "Timeline edit") if function else label_or_fn)
         if not isinstance(label, str) or not label.strip():
             raise TimelineEditError("commit requires a nonempty label or a function")
+        if function:
+            replay = self.session.resolve_acknowledged(idempotency_key, dry_run=dry_run)
+            if replay is not None:
+                return replay
         with self.session.outbox.locked():
             state = self.session._state()
         evaluation = state.get("evaluation") or {}
         count = evaluation.get("count", 0)
+        if function and state["flight"] is not None and evaluation.get("kind") == "function":
+            flight = state["flight"]
+            logical_key = flight.get("logical_key", flight["key"] if flight.get("explicit_key") else None)
+            if logical_key is not None:
+                if idempotency_key is not None and idempotency_key != logical_key:
+                    raise TimelineEditError("retry the original function idempotency key")
+                idempotency_key = logical_key
         if state["pending"] or state["flight"] is not None:
             # A known conflict may be recomputed; every other outcome must first
             # reconcile the exact original request, without invoking user code.
@@ -196,6 +315,7 @@ class Timeline(Checkout):
                     conflict = exc.failure
                     with self.session.outbox.locked():
                         state = self.session._state()
+                        evaluation = state.get("evaluation") or evaluation
                 else:
                     return self._accepted(result)
             if conflict.get("details", {}).get("status") != "conflict":
@@ -203,7 +323,6 @@ class Timeline(Checkout):
             if not function or evaluation.get("kind") != "function" or count >= 3:
                 raise CommitConflict(conflict)
             base = _pin(conflict["details"]["current"])
-            idempotency_key = None
         else:
             if not function and state["base"] != self._basis:
                 raise TimelineEditError("session base changed; reopen before committing")
@@ -219,7 +338,8 @@ class Timeline(Checkout):
                 bundle = fetch_bundle(self.session.project_id, self.session.timeline_id,
                                       revision_id=base["revision_id"], publication_id=base["publication_id"],
                                       client=self.session.client)
-                working = Timeline(self.session, bundle, base, evaluating=True)
+                saved_cache = (evaluation.get("media_cache", {}) if function else {})
+                working = Timeline(self.session, bundle, base, evaluating=True, media_cache=saved_cache)
                 function(working)
                 count += 1
             else:
@@ -241,15 +361,16 @@ class Timeline(Checkout):
                 result = self.session.submit(
                     working._commands, label=label, steps=steps, merge=effective_merge, reads=reads,
                     idempotency_key=idempotency_key, dry_run=dry_run, expected_state=state, base=base,
-                    evaluation={"kind": "function" if function else "label", "count": count},
+                    evaluation={"kind": "function" if function else "label", "count": count,
+                                "media_cache": copy.deepcopy(working._media_cache)},
                 )
             except CommitConflict as exc:
                 if not function or exc.failure["details"].get("status") != "conflict" or count >= 3:
                     raise
                 base = _pin(exc.failure["details"]["current"])
-                idempotency_key = None
                 with self.session.outbox.locked():
                     state = self.session._state()
+                    evaluation = state.get("evaluation") or evaluation
                 continue
             return self._accepted(result)
 

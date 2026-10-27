@@ -55,7 +55,9 @@ class Generated:
     def commit_timeline(self, project, timeline, body, *, idempotency_key):
         raw = request_bytes(body)
         durable = json.loads(self.path.read_bytes())
-        flight = durable["flight"] or durable.get('acknowledged', {}).get(idempotency_key)
+        flight = durable["flight"] or next(
+            (saved for saved in durable.get('acknowledged', {}).values()
+             if saved['key'] == idempotency_key), None)
         assert flight["body"].encode() == raw
         assert flight["key"] == idempotency_key
         assert flight["path"] == "/v1/projects/p/timelines/t/commit"
@@ -168,6 +170,136 @@ def connected(tmp_path, monkeypatch):
 def open_session(connected):
     client, _, path = connected
     return TimelineSession.open("project-slug", "timeline-slug", client=client, outbox_path=path)
+
+
+def test_acknowledged_function_key_replays_original_request_read_only(connected):
+    session = open_session(connected)
+    client, generated, path = connected
+    command = capture_move(initial_bundle(), "parent/clip:a", 3)
+    state = session._state()
+    disclosure = {"object_id": "media-object", "generation_id": "generation",
+                  "variant_id": "original", "catalog_write": True, "retained_on_undo": True}
+    result = session.submit(
+        [command], label="Move clip", steps=[{"id": "step-1", "label": "Move clip",
+        "intent": "", "tags": [], "command_ordinals": [0], "patch": []}],
+        idempotency_key="logical-function-key", expected_state=state,
+        evaluation={"kind": "function", "count": 1, "media_cache": {
+            "sha256:media": {"pin": {"object_id": "media-object"}, "imports": [disclosure]}}},
+    )
+    head_after_commit = copy.deepcopy(session._state()["base"])
+    original_request, original_wire_key = generated.calls[-1]
+
+    replayed = session.resolve_acknowledged("logical-function-key")
+
+    assert generated.calls[-1] == (original_request, original_wire_key)
+    assert replayed["receipt"] == result["receipt"]
+    assert replayed["imports"] == [disclosure]
+    assert session._state()["base"] == head_after_commit
+    assert json.loads(path.read_bytes())["acknowledged"]["logical-function-key"]["evaluation"]["media_cache"]["sha256:media"]["imports"] == [disclosure]
+    assert client is session.client
+
+
+def test_function_key_replays_original_receipt_after_undo_without_evaluation(connected):
+    from astrid.sdk import timeline
+
+    client, generated, path = connected
+    editor = timeline.open("project-slug", "timeline-slug", client=client, outbox_path=path)
+    evaluations = []
+
+    def edit(working):
+        evaluations.append(True)
+        working.move("parent/clip:a", 3)
+
+    accepted = editor.commit(edit, idempotency_key="edit-key")
+    original_request = generated.calls[-1]
+    editor.undo(publications=[accepted["receipt"]["receipt_id"]])
+    head_after_undo = copy.deepcopy(editor.session._state()["base"])
+
+    replayed = editor.commit(
+        lambda working: pytest.fail("acknowledged function must replay before evaluation"),
+        idempotency_key="edit-key",
+    )
+
+    assert evaluations == [True]
+    assert replayed["receipt"] == accepted["receipt"]
+    assert generated.calls[-1] == original_request
+    assert editor.session._state()["base"] == head_after_undo
+    assert json.loads(path.read_bytes())["base"] == head_after_undo
+
+
+def test_function_replay_refuses_key_acknowledged_for_literal_edit(connected):
+    session = open_session(connected)
+    command = capture_move(initial_bundle(), "parent/clip:a", 3)
+    session.commit(command, idempotency_key="literal-key")
+
+    with pytest.raises(TimelineEditError, match="belongs to another edit"):
+        session.resolve_acknowledged("literal-key")
+
+
+def test_conflict_reevaluation_keeps_logical_key_and_uses_fresh_wire_key(connected):
+    session = open_session(connected)
+    _, generated, path = connected
+    prior = capture_move(initial_bundle(), "parent/clip:a", 2)
+    next_command = capture_move(initial_bundle(), "parent/clip:a", 4)
+    with session.outbox.locked():
+        state = session._state()
+        state["pending"] = [prior]
+        state["flight"] = {"path": session.path, "body": "{}", "key": "logical-key",
+                            "logical_key": "logical-key", "count": 1, "fence": "old-fence",
+                            "explicit_key": True}
+        state["conflict"] = {"details": {"status": "conflict"}}
+        session.outbox.write(state)
+    state = session._state()
+
+    result = session.submit(
+        [next_command], label="Move clip", steps=[{"id": "step-1", "label": "Move clip",
+        "intent": "", "tags": [], "command_ordinals": [0], "patch": []}],
+        idempotency_key="logical-key", expected_state=state,
+        evaluation={"kind": "function", "count": 2, "media_cache": {}},
+    )
+
+    state = json.loads(path.read_bytes())
+    final_flight = state["acknowledged"]["logical-key"]
+    assert final_flight["key"] != "logical-key"
+    assert set(state["acknowledged"]) == {"logical-key"}
+    assert generated.calls[-1][1] == final_flight["key"]
+    assert result["receipt"]["idempotency_key"] == final_flight["key"]
+    assert session.resolve_acknowledged("logical-key")["receipt"] == result["receipt"]
+
+
+def test_conflict_attempt_unknown_outcome_replays_exact_wire_request_after_reopen(connected):
+    session = open_session(connected)
+    _, generated, path = connected
+    prior = capture_move(initial_bundle(), "parent/clip:a", 2)
+    next_command = capture_move(initial_bundle(), "parent/clip:a", 4)
+    with session.outbox.locked():
+        state = session._state()
+        state["pending"] = [prior]
+        state["flight"] = {"path": session.path, "body": "{}", "key": "logical-key",
+                            "logical_key": "logical-key", "count": 1, "fence": "old-fence",
+                            "explicit_key": True}
+        state["conflict"] = {"details": {"status": "conflict"}}
+        session.outbox.write(state)
+    state = session._state()
+    generated.lose_ack = True
+
+    with pytest.raises(WorkspaceClientError, match="response lost"):
+        session.submit(
+            [next_command], label="Move clip", steps=[{"id": "step-1", "label": "Move clip",
+            "intent": "", "tags": [], "command_ordinals": [0], "patch": []}],
+            idempotency_key="logical-key", expected_state=state,
+            evaluation={"kind": "function", "count": 2, "media_cache": {}},
+        )
+
+    flight = json.loads(path.read_bytes())["flight"]
+    expected = (flight["body"].encode(), flight["key"])
+    reloaded = TimelineSession.open("project-slug", "timeline-slug", client=session.client,
+                                    outbox_path=path)
+    result = reloaded.flush(idempotency_key="logical-key")
+
+    assert generated.calls[-2:] == [expected, expected]
+    assert result["receipt"]["idempotency_key"] == flight["key"]
+    assert json.loads(path.read_bytes())["acknowledged"]["logical-key"]["body"] == flight["body"]
 
 
 def test_clean_bundle_hydration_authenticates_exact_pair_without_pending_commands(connected):
