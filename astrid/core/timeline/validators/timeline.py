@@ -23,7 +23,6 @@ from astrid.core.timeline.validators.meta import validate_timeline_meta_location
 
 def _validate_animation_reference(
     ref: Any, phase: str, path: str, known_ids: set[str], *, nested: bool = False,
-    legacy_shape: bool = False,
 ) -> None:
     if isinstance(ref, str):
         animation_id = ref
@@ -67,7 +66,7 @@ def _validate_animation_reference(
         meta_phase in (None, "any", phase)
         or (isinstance(meta_phase, list) and phase in meta_phase)
     )
-    if not phase_matches and not legacy_shape:
+    if not phase_matches:
         raise ValueError(f"{path} animation {animation_id!r} has phase {meta_phase!r}, expected {phase!r}")
 
 
@@ -114,27 +113,6 @@ def _animation_shape_for_shared_schema(value: Any, fps: float) -> Any:
     if "easing" in value:
         legacy.setdefault("params", {})["easing"] = value["easing"]
     return legacy
-
-
-def _legacy_animation_for_validation(value: Any, fps: float) -> Any:
-    """Project public legacy animation forms into the canonical validator shape."""
-    if not isinstance(value, dict) or "id" in value:
-        return value
-    if "type" not in value:
-        return value
-    if "duration" in value and "durationFrames" in value:
-        return value
-    projected = {key: item for key, item in value.items() if key in {"type", "duration", "durationFrames", "params", "easing"}}
-    projected["id"] = projected.pop("type")
-    if "duration" in projected:
-        duration = projected.pop("duration")
-        if isinstance(duration, bool) or not isinstance(duration, (int, float)) or not math.isfinite(float(duration)) or duration <= 0:
-            return value  # canonical validator reports the legacy shape's actual error below
-        frames = float(duration) * fps
-        if not math.isfinite(frames) or frames <= 0:
-            return value
-        projected["durationFrames"] = math.floor(frames + 0.5)
-    return projected
 
 
 def _validate_effect_params(effect_id: str, params: Any, path: str, theme: str | None = None) -> None:
@@ -287,12 +265,10 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
         for phase in ("entrance", "exit"):
             if phase in clip:
                 raw_reference = clip[phase]
-                legacy_reference = isinstance(raw_reference, dict) and "id" not in raw_reference and "type" in raw_reference
-                _validate_animation_reference(
-                    _legacy_animation_for_validation(raw_reference, fps), phase,
-                    f"clips[{index}].{phase}", known_animation_ids, nested=legacy_reference,
-                    legacy_shape=legacy_reference,
-                )
+                if isinstance(raw_reference, dict) and "id" in raw_reference:
+                    _validate_animation_reference(
+                        raw_reference, phase, f"clips[{index}].{phase}", known_animation_ids,
+                    )
     # Top-level ``app`` is the editor-extension metadata namespace owned by
     # Astrid's container contract. The currently pinned shared render schema
     # does not declare that namespace, so validate the renderable subset while
@@ -304,11 +280,12 @@ def validate_timeline(config: Any, *, strict: bool = True) -> None:
                 _normalize_clip_for_validation({
                     **{
                         key: value for key, value in c.items()
-                        if key not in {"label", "entrance", "exit"}
+                        if key != "label"
                     },
                     **{
                         phase: _animation_shape_for_shared_schema(c[phase], fps)
-                        for phase in ("entrance", "exit") if phase in c
+                        for phase in ("entrance", "exit")
+                        if phase in c and isinstance(c[phase], dict) and "id" in c[phase]
                     },
                 })
                 if isinstance(c, dict)

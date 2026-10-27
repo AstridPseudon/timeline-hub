@@ -741,6 +741,24 @@ def _validate_visual_fields(
         _fail(f"{path}.transition", "unsupported transition")
 
 
+def _refuse_visual_fields_on_audio_track(
+    clip: Mapping[str, Any], *, path: str, tracks: Mapping[str, Mapping[str, Any]],
+) -> None:
+    track = tracks.get(clip.get("track"))
+    if not isinstance(track, Mapping):
+        return
+    from astrid.core.timeline.kinds import normalize_track_kind
+
+    try:
+        is_audio = normalize_track_kind(track.get("kind")) == "audio"
+    except (TypeError, ValueError):
+        return
+    if is_audio:
+        for field in ("entrance", "exit", "transition"):
+            if clip.get(field) is not None:
+                _fail(f"{path}.{field}", "visual animation fields do not apply to an audio track")
+
+
 def validate_final_candidate(
     candidate: Mapping[str, Any], *,
     baseline: Mapping[str, Any] | None = None,
@@ -852,6 +870,7 @@ def validate_final_candidate(
         before_child = _identity_rows(baseline_internal.get("clips", []), "baseline.clips", "id") if isinstance(baseline_internal, Mapping) and isinstance(baseline_internal.get("clips"), list) else {}
         for clip_id, clip in child_clips.items():
             clip_path = f"candidate.shots[{shot_id!r}].internal_timeline.clips[{clip_id!r}]"
+            _refuse_visual_fields_on_audio_track(clip, path=clip_path, tracks=child_tracks)
             _validate_visual_fields(clip, path=clip_path, fps=visual_fps, schema_inputs=schema_inputs,
                                     realm_id=realm_id, project=str(candidate.get("project_id", "")))
             text_reference = _validate_element_reference(
@@ -866,6 +885,7 @@ def validate_final_candidate(
     for clip_id, clip in clips.items():
         prior = _baseline_clips(baseline or {}).get(("parent", clip_id))
         clip_path = f"candidate.parent.clips[{clip_id!r}]"
+        _refuse_visual_fields_on_audio_track(clip, path=clip_path, tracks=tracks)
         _validate_visual_fields(clip, path=clip_path, fps=visual_fps, schema_inputs=schema_inputs,
                                 realm_id=realm_id, project=str(candidate.get("project_id", "")))
         text_reference = _validate_element_reference(

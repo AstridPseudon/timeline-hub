@@ -221,6 +221,9 @@ def test_public_setter_serializes_top_level_type_on_legacy_expectation():
     clip: dict = {}
     cf.write(clip, "entrance", "type-on 5f", fps=24)
     assert clip["entrance"] == {"id": "type-on", "durationFrames": 5}
+    assert cf.read(clip, "entrance", fps=24) == {"id": "type-on", "durationFrames": 5}
+    # P1 must restore top-level type-on text-hook behavior across storage, read, and describe.
+    assert cf.describe(clip, fps=24)["entrance"] == "type-on 5f"
 
 
 @pytest.mark.parametrize(
@@ -626,6 +629,18 @@ def test_omitted_easing_stays_omitted_and_top_level_easing_normalizes():
     )
     with pytest.raises(ClipFieldError, match="conflicting easing"):
         cf.coerce("entrance", {"id": "fade", "easing": "linear", "params": {"easing": "out"}})
+
+
+def test_top_level_easing_normalization_does_not_mutate_input_and_rejects_bad_params():
+    raw = {"id": "fade", "durationFrames": 12, "easing": "linear", "params": {}}
+    before = copy.deepcopy(raw)
+    assert cf.coerce("entrance", raw)[1] == {
+        "id": "fade", "durationFrames": 12, "params": {"easing": "linear"},
+    }
+    assert raw == before
+    for params in (None, [], "bad"):
+        with pytest.raises(ClipFieldError, match="params must be an object"):
+            cf.coerce("entrance", {"id": "fade", "easing": "linear", "params": params})
 
 
 def test_top_level_canonical_easing_describes_and_round_trips():

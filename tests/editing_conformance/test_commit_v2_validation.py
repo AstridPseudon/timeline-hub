@@ -62,6 +62,34 @@ def test_final_candidate_refuses_undrawable_top_level_type_on(owner, field):
         validate_final_candidate(value)
 
 
+@pytest.mark.parametrize("owner", ["parent", "child"])
+@pytest.mark.parametrize("field", ["entrance", "exit", "transition"])
+def test_final_candidate_refuses_visual_animation_fields_on_audio_tracks(owner, field):
+    value = candidate()
+    timeline = (value["parent"] if owner == "parent" else
+                value["shots"]["chapter-shot"]["internal_timeline"])
+    clip = timeline["clips"][0]
+    track_id = clip["track"]
+    tracks = timeline["config"]["tracks"] if owner == "parent" else timeline["tracks"]
+    next(track for track in tracks if track["id"] == track_id)["kind"] = "audio"
+    clip[field] = {"id": "cross-fade", "durationFrames": 8}
+    if owner == "parent":
+        value["parent"]["config"]["clips"] = copy.deepcopy(timeline["clips"])
+    with pytest.raises(AuthoringBundleError, match="visual animation fields do not apply to an audio track"):
+        validate_final_candidate(value)
+
+
+def test_final_candidate_preserves_audio_fade_params_unchanged():
+    value = candidate()
+    clip = value["parent"]["clips"][0]
+    track_id = clip["track"]
+    next(track for track in value["parent"]["config"]["tracks"] if track["id"] == track_id)["kind"] = "audio"
+    clip["params"] = {"fadeIn": 0.25, "fadeOut": 0.5}
+    value["parent"]["config"]["clips"] = copy.deepcopy(value["parent"]["clips"])
+    validate_final_candidate(value)
+    assert clip["params"] == {"fadeIn": 0.25, "fadeOut": 0.5}
+
+
 def test_nested_element_type_on_params_are_not_mistaken_for_top_level_animation():
     value = candidate()
     clip = value["parent"]["clips"][0]
@@ -226,6 +254,7 @@ def test_unchanged_selected_known_params_use_only_consumed_retained_schema(
 @pytest.mark.parametrize("owner", ["parent", "child"])
 @pytest.mark.parametrize("field,reference", [
     ("entrance", {"id": "unknown-animation"}),
+    ("entrance", {"type": "unknown-animation", "duration": 0.5}),
     ("entrance", {"id": "fade", "params": {"ignored": 1}}),
     ("exit", {"id": "fade", "params": {"easing": "bounce"}}),
     ("entrance", {"id": "fade", "durationFrames": 1.5}),

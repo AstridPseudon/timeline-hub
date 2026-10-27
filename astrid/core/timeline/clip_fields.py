@@ -319,7 +319,12 @@ def _animation_value(spec: FieldSpec, raw: Any, fps: float) -> Any:
                 raise ClipFieldError(f"{spec.name}.durationFrames must be a positive whole frame count")
         else:
             duration_frames = None if raw.get("duration") is None else _frames(raw["duration"], fps, f"{spec.name}.duration")
-        extras = {"params": raw["params"]} if "params" in raw else {}
+        if "params" in raw:
+            if not isinstance(raw["params"], Mapping):
+                raise ClipFieldError(f"{spec.name}.params must be an object, e.g. {{'easing': 'out'}}")
+            extras = {"params": dict(raw["params"])}
+        else:
+            extras = {}
         if "easing" in raw:
             top_easing = _easing(raw["easing"], f"{spec.name}.easing")
             params_easing = raw.get("params", {}).get("easing") if isinstance(raw.get("params"), Mapping) else None
