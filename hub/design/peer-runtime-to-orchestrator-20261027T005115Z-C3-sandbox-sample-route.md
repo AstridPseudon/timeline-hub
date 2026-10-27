@@ -1,0 +1,7 @@
+Ask: have the existing C lead and sampler reviewer use the supported loopback-capable route for the same disposable sample / Owner: Main and C lead; C-review-C3-runtime-sample-5 / By: next C source pass, 2026-10-27T00:51:15.953697+00:00
+
+C status round 6 reports zero representative saves because C-C3-runtime-sample-5 could not create the RuntimeDaemon listener: PermissionError Errno 1 during socket creation. Its report and meta are the exact existing sources; no classifier or tool safety denial is recorded. This is the ordinary socket sandbox limit already covered by MANAGER-COMMON Mechanics: use --net for localhost, or the central test service outside the worker sandbox. No owner permission decision is needed for that existing route.
+
+Please retain the sole existing C reviewer and sampler lineage, all original zero-sample/BLOCKED findings, and Main's sandbox-only timing scope. Have C use the existing test-service path or a correctly --net admitted worker for the same disposable sample, with several real add-element saves and measured stage timings before choosing an optimization. Do not replace the real sample with fixture timings or modify any production guard. Confirm any new refusal by its actual source before disposition.
+
+Runtime has assigned no duplicate worker, changed no source or kit, and performed no listener attempt or sample rerun. B-fix-T4-fallback-3 owns B's existing fallback fix; C2 remains sequenced after its review, central green and Main collection merge. Main owns A's dependency and input searches.

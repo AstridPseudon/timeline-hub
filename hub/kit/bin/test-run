@@ -19,6 +19,8 @@ finalize_stale_run() {
   suite=$(sed -n 's/^suite=//p' "$stale_dir/request")
   tree=$(sed -n 's/^tree=//p' "$stale_dir/snap")
   key=$(sed -n 's/^key=//p' "$stale_dir/snap")
+  SNAP=/home/user/work/wt/.test-$stale_id
+  git -C /home/user/work/$repo worktree remove --force "$SNAP" 2>/dev/null || :
   if grep -aqE '[1-9][0-9]* failed|[1-9][0-9]* errors|^ERROR ' "$stale_dir/log.txt" 2>/dev/null; then
     rc=1; st=fail
   elif grep -aqE '[0-9]+ passed|Tests +[1-9][0-9]*|collected [1-9][0-9]*' "$stale_dir/log.txt" 2>/dev/null; then
@@ -397,11 +399,13 @@ esac
 if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
   [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
 TEST_PYTHONPATH=$SNAP
+ASTRID_RUNTIME_SOURCE=
 if [ $repo = agent ]; then
   RUNTIME_SHA=$(sed -n 's/.*"source_commit": *"\([0-9a-f]*\)".*/\1/p' "$SNAP/runtime.lock.json")
   RUNTIME_SOURCE=$(git -C /home/user/work/runtime worktree list --porcelain | awk -v sha="$RUNTIME_SHA" '/^worktree / {path=$2} /^HEAD / && $2 == sha {print path; exit}')
   [ -n "$RUNTIME_SOURCE" ] || { echo "matching Runtime source $RUNTIME_SHA not found" >&2; exit 1; }
   TEST_PYTHONPATH=$SNAP:$RUNTIME_SOURCE
+  export ASTRID_RUNTIME_SOURCE=$RUNTIME_SOURCE
 fi
 if [ -n "$BENCH_CONTROL_FD" ]; then
   ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$TEST_PYTHONPATH D66_OUTPUT_DIR="$D/d66" exec timeout -k 60 90m nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null &
