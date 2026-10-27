@@ -43,7 +43,7 @@ const parseYamlManifest = (text) => {
       continue;
     }
     if (!inRendering) continue;
-    const key = line.match(/^  ([^:#]+):\s*$/)?.[1]?.trim();
+    const key = line.match(/^  ([^\s:#][^:#]*):\s*$/)?.[1]?.trim();
     if (key) {
       current = {key, type: undefined, path: undefined};
       rendering[key] = current;
@@ -138,7 +138,7 @@ export const assertOutsidePublicRoot = (publicRoot, candidate) => {
   return resolved;
 };
 
-const collectDeclaredPackElementAliases = (packRoots) => {
+const collectDeclaredPackElementAliases = (packRoots, scope) => {
   const aliases = {};
   for (const packRoot of packRoots) {
     const manifest = readPackManifest(packRoot);
@@ -157,7 +157,7 @@ const collectDeclaredPackElementAliases = (packRoots) => {
       const elementRoot = path.dirname(elementManifest);
       const kindRoot = path.dirname(elementRoot);
       if (path.basename(kindRoot) !== kind || !isDirectory(kindRoot)) continue;
-      aliases[`@pack-${packId}-elements-${kind}`] = kindRoot;
+      aliases[`@${scope ?? `pack-${packId}-elements`}-${kind}`] = kindRoot;
     }
   }
   return aliases;
@@ -171,9 +171,14 @@ export const packElementAliases = ({env = process.env, astridDir = repoRootOf()}
   for (const rawRoot of (env.ASTRID_PACKS_PATH ?? '').split(path.delimiter)) {
     if (rawRoot) external.push(...packRootsIn(rawRoot, {skipLocal: true}));
   }
+  const selected = {};
+  for (const {root, scope} of JSON.parse(env.ASTRID_RENDER_PACK_ROOTS ?? '[]')) {
+    Object.assign(selected, collectDeclaredPackElementAliases([root], scope));
+  }
   return {
     ...collectDeclaredPackElementAliases(inTree),
     ...collectDeclaredPackElementAliases(external),
+    ...selected,
   };
 };
 
@@ -193,6 +198,14 @@ const primitiveAliases = (projectDir) => {
 const applyAliasesForRoot = (currentConfiguration, remotionRoot) => {
   const repoRoot = projectDirOf(remotionRoot);
   const packAliases = packElementAliases({astridDir: repoRoot});
+  const selectedRegistries = {};
+  if (process.env.ASTRID_RENDER_REGISTRY_ROOT) {
+    for (const kind of ['effects', 'animations', 'transitions']) {
+      selectedRegistries[`./${kind}.generated$`] = path.resolve(
+        process.env.ASTRID_RENDER_REGISTRY_ROOT, 'src', `${kind}.generated.ts`,
+      );
+    }
+  }
   return {
     ...currentConfiguration,
     resolve: {
@@ -200,6 +213,7 @@ const applyAliasesForRoot = (currentConfiguration, remotionRoot) => {
       alias: {
         ...currentConfiguration.resolve?.alias,
         ...packAliases,
+        ...selectedRegistries,
         ...primitiveAliases(repoRoot),
       },
       modules: [

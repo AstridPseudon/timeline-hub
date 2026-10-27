@@ -1345,6 +1345,13 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
         from .timeline_elements import update_parent_element
         return update_parent_element(self, project, ref, realm=realm, clip_id=clip_id, element=element, expected_head=expected_head, duration=duration, params=params, idempotency_key=idempotency_key, session=session, clear_params=clear_params)
 
+    def place_element(self, project, ref, *, realm, target, element, expected_head,
+                      idempotency_key=None, session=None):
+        from .timeline_elements import place_element
+        return place_element(self, project, ref, realm=realm, target=target, element=element,
+                             expected_head=expected_head, idempotency_key=idempotency_key,
+                             session=session)
+
     def save(self, project, ref, *, config: Mapping[str, Any], registry: Mapping[str, Any], expected_version=1, slug=None, name=None, idempotency_key=None):
         return self._retired_document_route("save", idempotency_key=idempotency_key)
     def replace_clip(
