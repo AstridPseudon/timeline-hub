@@ -464,6 +464,10 @@ function ClipActionComponent({
     };
   }, [contextMenu, closeMenu]);
 
+  useEffect(() => {
+    setContextMenu(null);
+  }, [action.id, clipMeta.asset]);
+
   openMenuWithSelectionRef.current = (clientX: number, clientY: number) => {
     if (isSelected && getSelectedTimelineDataItems(runtime?.agentSelectionOwner).length) return;
     if (!isSelected) {
@@ -836,6 +840,8 @@ function areClipActionPropsEqual(prev: ClipActionProps, next: ClipActionProps): 
     && prev.onToggleMuteClips === next.onToggleMuteClips
     && prev.onOpenSequenceCreator === next.onOpenSequenceCreator
     && prev.onDuplicateGeneration === next.onDuplicateGeneration
+    && prev.onUpdateVariant === next.onUpdateVariant
+    && prev.onDismissStale === next.onDismissStale
     && prev.onCreateShotFromSelection === next.onCreateShotFromSelection
     && prev.onGenerateVideoFromSelection === next.onGenerateVideoFromSelection
     && prev.onNavigateToShot === next.onNavigateToShot

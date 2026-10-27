@@ -1,11 +1,12 @@
 import { defineConfig } from 'vitest/config';
 import path from 'path';
+import { fileURLToPath } from 'node:url';
 import { createElementAdmissionsPlugin } from '../vite/astridElementAdmissions';
 import { resolveAstridSource, validateAstridToolCatalog } from '../vite/astridSource';
 import { CHECKOUT_LANE, assertCheckoutLaneFilesExist } from './lanes';
 import SkipGuardReporter from './skipGuardReporter';
 
-const projectRoot = path.resolve(__dirname, '../..');
+const projectRoot = fileURLToPath(new URL('../..', import.meta.url));
 const checkoutLane = process.env.VITEST_LANE === 'checkout';
 assertCheckoutLaneFilesExist(projectRoot);
 const astridSource = resolveAstridSource();
