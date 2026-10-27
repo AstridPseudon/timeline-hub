@@ -1,4 +1,4 @@
-<!-- main | 2026-10-27T06:04:31Z | dispatcher heartbeat 2s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
+<!-- main | 2026-10-27T06:09:10Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
 # runtime board, 2026-10-27T06:02:55.175732+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
@@ -136,7 +136,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 Blockers: A owns the real pinned-element proof. C owns the full App staging comparison; earlier C-head comparison is narrower. Main owns acceptance. B reports milestone ready; Main acceptance remains pending. H/D/P acceptance and START gates remain closed. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 5832736768 bytes. Runtime trees: 36;31 KEEP and5 dirty;no eligible recycle. Last guarded sweep/compact05:33/05:37 removed0 dirs,packed0 dirs and gzipped7 logs. Current follow-up disk rules apply.
+live 0 / cap 6; ready-undispatched 0. Free 5832736768 bytes. Runtime trees: 36;31 KEEP and5 dirty;no eligible recycle. Last guarded sweep/compact06:02 completed: removed0 dirs,packed0 dirs and gzipped1 log. Current follow-up disk rules apply.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -147,4 +147,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T06:02:55.175732+00:00. First pass this round. Inbox, header and A B C boards unchanged from 05:59. Runtime census has zero live workers and no ready task. A original proof remains active; B and C await Main acceptance. C comparison remains narrower than staging, as already sent to Main05:56. H/D/P START markers absent. Runtime36 trees remain31 KEEP and5 dirty; no eligible recycle. Guarded sweep and compact in progress. [Pass evidence](rounds/20261027T060255Z-pass.json).
+Current pass: 2026-10-27T06:02:55.175732+00:00. First pass this round. Inbox, header and A B C boards unchanged from 05:59. Runtime census has zero live workers and no ready task. A original proof remains active; B and C await Main acceptance. C comparison remains narrower than staging, as already sent to Main05:56. H/D/P START markers absent. Runtime36 trees remain31 KEEP and5 dirty; no eligible recycle. Guarded sweep and compact06:02 complete: removed0 dirs,packed0 dirs,gzipped1 log; protected trees and data retained. [Pass evidence](rounds/20261027T060255Z-pass.json).
