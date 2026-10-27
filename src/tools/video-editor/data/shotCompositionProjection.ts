@@ -319,13 +319,24 @@ function groupedTracksFor(
     const rawTracks = Array.isArray(timeline.tracks) ? timeline.tracks : [];
     for (const rawTrack of rawTracks) {
       const track = record(rawTrack);
-      const id = text(track?.id);
-      if (!id || trackIds.has(id) || track?.kind !== 'audio') continue;
+      const sourceId = text(track?.id);
+      if (!sourceId || track?.kind !== 'audio') continue;
+      const existing = tracks.find((entry) => entry.id === sourceId);
+      const collision = existing && existing.kind !== 'audio';
+      const id = collision ? `${occurrence.occurrenceId}~${sourceId}` : sourceId;
+      if (trackIds.has(id)) continue;
       if (trackRole({
         id,
         role: track?.role as TrackDefinition['role'],
       }) === 'source') continue;
       const definition = { ...track, id, kind: 'audio', label: text(track?.label) ?? id } as TrackDefinition;
+      // Incompatible parent rows keep their kind and clips. The child audio
+      // gets its own lane, outside the occurrence's visual group.
+      if (collision) {
+        tracks.push(definition);
+        trackIds.add(id);
+        continue;
+      }
       const shotTrackOrder = rawTracks.map((raw) => text(record(raw)?.id)).filter((value): value is string => Boolean(value));
       const position = shotTrackOrder.indexOf(id);
       let insertAt = tracks.length;
@@ -374,7 +385,7 @@ function groupedTracksFor(
       if (!clip) continue;
       const id = text(clip.track) ?? occurrence.trackId ?? 'video';
       if (!rawTracks.some((raw) => text(record(raw)?.id) === id)
-        && !tracks.some((track) => track.id === id && track.kind === 'audio')) addVisual(id);
+        && !baseConfig?.tracks.some((track) => track.id === id && track.kind === 'audio')) addVisual(id);
     }
     if (visualTracks.length === 0) continue;
     const row = occurrence.trackId ?? 'video';
@@ -407,10 +418,8 @@ function isAudioClip(
   const childTrack = (Array.isArray(timeline.tracks) ? timeline.tracks : [])
     .map(record)
     .find((track) => track?.id === trackId);
-  // A declared child visual belongs to its occurrence block even if an
-  // inherited audio lane uses the same ID. Keep inherited lane precedence
-  // for the other kinds, as required by the shared playback fixture.
-  const track = childTrack?.kind === 'visual' ? childTrack : parentTrack ?? childTrack;
+  // Child declarations control playback even when the parent reuses the ID.
+  const track = childTrack ?? parentTrack;
   if (track?.kind === 'audio' || track?.kind === 'visual') return track.kind === 'audio';
 
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? text(rawClip.type);
@@ -493,7 +502,10 @@ function projectClip(
   const hasAuthoredGain = [rawClip.gain, rawClip.volume, occurrence.gain]
     .some((value) => typeof value === 'number' && Number.isFinite(value));
   const sourceTrack = text(rawClip.track) ?? occurrence.trackId ?? 'video';
-  const track = audioTrackIds.has(sourceTrack) ? sourceTrack : `${occurrence.occurrenceId}~${sourceTrack}`;
+  const parentTrack = parentTracks.find((track) => track.id === sourceTrack);
+  const track = audioTrackIds.has(sourceTrack) && (!parentTrack || parentTrack.kind === 'audio')
+    ? sourceTrack
+    : `${occurrence.occurrenceId}~${sourceTrack}`;
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? 'media';
   const asset = text(rawClip.asset_id) ?? text(rawClip.asset);
   const params = record(rawClip.params);
