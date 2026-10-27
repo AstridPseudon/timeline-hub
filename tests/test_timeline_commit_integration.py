@@ -323,6 +323,97 @@ def test_real_same_step_multi_delete_undo_restores_each_command_order(editing):
     assert restored["data"]["canonical_document"] == original
 
 
+def test_real_delete_then_reorder_undo_restores_exact_order(editing):
+    from astrid.sdk.timeline.capture import capture_clip_delete
+    from astrid.sdk.timeline.commands import execute
+
+    clips = editing.document()["parent_revision"]["payload"]["clips"]
+    extra = copy.deepcopy(clips[-1])
+    extra.update(id="parent-after-order-extra", at=max(row["at"] + row["hold"] for row in clips) + 1)
+    insert = {"op": "list.insert", "ref": "parent", "path": ["clips"],
+              "before": {"state": "absent"}, "id": extra["id"], "value": extra,
+              "order_before": [row["id"] for row in clips], "after_id": clips[-1]["id"]}
+    seed = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+            "args": {"changes": [insert]}, "created": ["parent/clip:" + extra["id"]]}
+    setup = editing.body([seed])
+    setup["steps"][0]["patch"] = [insert]
+    editing.commit(setup, "delete-before-order-setup")
+
+    original = editing.document()
+    clips = original["parent_revision"]["payload"]["clips"]
+    baseline = editing.agent.bundle(original)
+    deletion = capture_clip_delete(baseline, "parent/clip:" + clips[0]["id"])
+    staged = execute(baseline, [deletion])
+    remaining = staged.bundle["parent"]["clips"]
+    change = {"op": "list.move", "ref": "parent", "path": ["clips"],
+              "before": {"state": "present", "value": copy.deepcopy(remaining[0])},
+              "id": remaining[0]["id"], "order_before": [row["id"] for row in remaining],
+              "after_id": None}
+    reorder = {"schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
+               "args": {"changes": [change]}}
+    body = editing.body([deletion, reorder])
+    body["steps"] = [
+        {"id": "delete", "label": "Delete", "intent": "", "tags": [],
+         "command_ordinals": [0], "patch": [], "reads": []},
+        {"id": "order", "label": "Order", "intent": "", "tags": [],
+         "command_ordinals": [1], "patch": [change], "reads": []},
+    ]
+
+    forward = editing.commit(body, "delete-before-order-forward")
+    restored = editing.commit(editing.body([inverse(forward["receipt"]["receipt_id"])]),
+                              "delete-before-order-undo")
+
+    assert restored["data"]["canonical_document"] == original
+
+
+def test_real_inverse_refuses_same_id_wrong_output_clip_order(editing, monkeypatch):
+    from runtime_protocol.errors import RuntimeErrorBase
+    from runtime_protocol.timeline_commit import CommitRejected
+    from runtime_protocol.timeline_commit_auth import validate
+    from runtime_protocol.timeline_commit_port import RequestCommitPort
+    from runtime_protocol.timeline_commit_validation import digest
+
+    original = editing.document()
+    clips = original["parent_revision"]["payload"]["clips"]
+    from astrid.sdk.timeline.capture import capture_clip_delete
+
+    forward = editing.commit(editing.body([capture_clip_delete(
+        editing.agent.bundle(original), "parent/clip:" + clips[0]["id"])]), "wrong-order-source")
+    inverse_body = editing.body([inverse(forward["receipt"]["receipt_id"])])
+    before = rows(editing.service)
+    request_before = copy.deepcopy(inverse_body)
+
+    def wrong_output_order(port, prepared):
+        store = editing.service._timeline_commits()[0]
+        source = store.revision_closure(editing.project, editing.timeline,
+                                        prepared["expected_head"]["revision_id"])
+        base = store.revision_closure(editing.project, editing.timeline, inverse_body["base_revision_id"])
+        continuations = store._binding_continuations(
+            editing.project, editing.timeline, inverse_body["base_publication_id"], prepared["expected_head"])
+        history = store._inverse_stage_history(editing.project, editing.timeline, prepared["records"])
+        validate(inverse_body, prepared, source, base, continuations, history)
+        payload = prepared["canonical_document"]["parent_revision"]["payload"]
+        reordered = list(reversed(payload["clips"]))
+        payload["clips"] = copy.deepcopy(reordered)
+        if isinstance(payload.get("config"), dict) and isinstance(payload["config"].get("clips"), list):
+            payload["config"]["clips"] = copy.deepcopy(reordered)
+        prepared["canonical_document"]["parent_revision"]["content_digest"] = digest(payload)
+        try:
+            validate(inverse_body, prepared, source, base, continuations, history)
+        except CommitRejected as error:
+            assert error.failure["details"]["reason"] == "invalid_records"
+            raise RuntimeErrorBase("forged authenticated inverse output order", details=error.failure["details"])
+        raise AssertionError("same-ID wrong order unexpectedly validated")
+
+    monkeypatch.setattr(RequestCommitPort, "accept", wrong_output_order)
+    with pytest.raises(RuntimeErrorBase) as error:
+        editing.commit(inverse_body, "wrong-order-inverse")
+
+    assert error.value.details["reason"] == "invalid_records"
+    assert rows(editing.service) == before
+    assert inverse_body == request_before
+
+
 def test_real_door_concurrent_disjoint_moves_accept_and_rebase(film, agent, tmp_path, monkeypatch):
     world = _start_door(film, tmp_path)
     try:

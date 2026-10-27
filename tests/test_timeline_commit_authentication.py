@@ -43,6 +43,49 @@ def test_inverse_stage_restores_clip_order_from_exact_source_selection():
     assert boundary["parent"]["payload"]["clips"] == expected
 
 
+@pytest.mark.parametrize("shape", ["payload-only", "config-only", "both", "null-payload", "null-config"])
+def test_inverse_stage_preserves_clip_mirror_container_shapes(shape):
+    rows = [
+        {"id": "first", "asset": "a", "extension": {"keep": [None, 1]}},
+        {"id": "last", "asset": "b", "opaque": True},
+    ]
+    payload = {"extra": {"keep": True}}
+    config = {"extra_config": ["keep"]}
+    if shape in ("payload-only", "both", "null-config"):
+        payload["clips"] = copy.deepcopy(rows) if shape != "null-config" else None
+    if shape in ("config-only", "both", "null-payload"):
+        config["clips"] = copy.deepcopy(rows) if shape != "null-payload" else None
+    boundary = {"parent": {"payload": {**payload, "config": config}}}
+    command = {"selections": [{"key": "collection.clips", "owner": "parent",
+                                "query_version": 1, "policy": "guard-membership",
+                                "members": ["parent/clip:last", "parent/clip:first"],
+                                "order": ["parent/clip:last", "parent/clip:first"],
+                                "boundaries": ["parent/clip:last", "parent/clip:first"]}]}
+
+    _inverse_stage_restore_clip_order(boundary, command)
+
+    expected = [rows[1], rows[0]]
+    actual = boundary["parent"]["payload"]
+    assert actual["config"].get("clips") == (expected if shape in ("config-only", "both", "null-payload") else None)
+    assert actual.get("clips") == (expected if shape in ("payload-only", "both", "null-config") else None)
+    assert actual["extra"] == payload["extra"]
+    assert actual["config"]["extra_config"] == config["extra_config"]
+
+
+def test_inverse_stage_restores_clip_order_from_create_after_boundary():
+    rows = [{"id": "first", "asset": "a"}, {"id": "last", "asset": "b"}]
+    boundary = {"parent": {"payload": {"config": {"clips": copy.deepcopy(rows)}}}}
+    command = {"selections": [{"key": "collection.clips.after", "owner": "parent",
+                                "query_version": 1, "policy": "guard-membership",
+                                "members": ["parent/clip:first"],
+                                "order": ["parent/clip:first", "parent/clip:last"],
+                                "boundaries": ["parent/clip:first", "parent/clip:last"]}]}
+
+    _inverse_stage_restore_clip_order(boundary, command)
+
+    assert boundary["parent"]["payload"]["config"]["clips"] == rows
+
+
 @pytest.mark.parametrize("mutation", ["duplicate", "missing", "extra-row", "order-proof"])
 def test_inverse_stage_rejects_clip_order_selection_not_covering_exact_rows(mutation):
     rows = [{"id": "first", "asset": "a"}, {"id": "last", "asset": "b"}]

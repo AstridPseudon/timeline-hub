@@ -944,19 +944,23 @@ def _inverse_stage_restore_clip_order(boundary, command):
     require(isinstance(recorded, list) and all(isinstance(selection, dict) for selection in recorded),
             "inverse stage source selections are malformed")
     selections = [selection for selection in recorded
-                  if selection.get("key") == "collection.clips"
+                  if selection.get("key") in ("collection.clips", "collection.clips.after")
                   and selection.get("owner") == "parent"]
     if not selections:
         return
     require(len(selections) == 1, "inverse stage source clip order is ambiguous")
     selection = selections[0]
     members, order = selection.get("members"), selection.get("order")
+    after = selection.get("key") == "collection.clips.after"
+    valid_order = (isinstance(members, list) and isinstance(order, list)
+                   and all(isinstance(ref, str) for ref in [*members, *order])
+                   and len(members) == len(set(members))
+                   and (members == order == selection.get("boundaries") if not after else
+                        len(members) == 1 and members[0] in order
+                        and selection.get("boundaries") == order[order.index(members[0]):order.index(members[0]) + 2]))
     require(selection.get("query_version") == 1
             and selection.get("policy") == "guard-membership"
-            and isinstance(members, list) and isinstance(order, list)
-            and all(isinstance(ref, str) for ref in [*members, *order])
-            and len(members) == len(set(members))
-            and members == order == selection.get("boundaries")
+            and valid_order
             and all(isinstance(ref, str) and re.fullmatch(r"parent/clip:[^/]+", ref)
                     for ref in members),
             "inverse stage source clip order is malformed")
@@ -976,9 +980,8 @@ def _inverse_stage_restore_clip_order(boundary, command):
     restored = [by_id[identity] for identity in expected_ids]
     if isinstance(config_rows, list):
         config["clips"] = restored
-    if "clips" in payload:
+    if isinstance(payload_rows, list):
         payload["clips"] = copy.deepcopy(restored)
-    boundary["parent"]["content_digest"] = digest(payload)
 
 
 def _inverse_stage_root(boundary, ref):
@@ -1403,14 +1406,44 @@ def _inverse_stage_history(records, history):
                 write["ref"].startswith("parent/clip:") and not write["path"]
                 and {write["before"].get("state"), write["after"].get("state")} == {"absent", "present"}
                 for write in command.get("writes", []))
-            if structural_clip_write:
+            reordered_clip_write = any(
+                write["ref"] == "parent" and write["path"] in (["clips"], ["config", "clips"])
+                and write["before"].get("state") == write["after"].get("state") == "present"
+                and isinstance(write["before"].get("value"), list)
+                and isinstance(write["after"].get("value"), list)
+                and [row.get("id") for row in write["before"]["value"] if isinstance(row, dict)]
+                != [row.get("id") for row in write["after"]["value"] if isinstance(row, dict)]
+                and {row.get("id") for row in write["before"]["value"] if isinstance(row, dict)}
+                == {row.get("id") for row in write["after"]["value"] if isinstance(row, dict)}
+                for write in command.get("writes", []))
+            if structural_clip_write or reordered_clip_write:
                 selections = [selection for selection in command.get("selections", [])
-                              if selection.get("key") == "collection.clips"
+                              if selection.get("key") in ("collection.clips", "collection.clips.after")
                               and selection.get("owner") == "parent"]
+                if not selections and reordered_clip_write:
+                    source_orders = []
+                    for write in command.get("writes", []):
+                        if (write["ref"] != "parent" or write["path"] not in (["clips"], ["config", "clips"])
+                                or write["before"].get("state") != "present"
+                                or not isinstance(write["before"].get("value"), list)):
+                            continue
+                        rows = write["before"]["value"]
+                        ids = [row.get("id") for row in rows if isinstance(row, dict)]
+                        if len(ids) == len(rows) and len(ids) == len(set(ids)):
+                            source_orders.append(ids)
+                    require(source_orders and all(order == source_orders[0] for order in source_orders),
+                            "inverse stage clip reorder has no unique source order")
+                    order = source_orders[0]
+                    selections = [{"key": "collection.clips", "owner": "parent", "query_version": 1,
+                                   "policy": "guard-membership",
+                                   "members": ["parent/clip:" + identity for identity in order],
+                                   "order": ["parent/clip:" + identity for identity in order],
+                                   "boundaries": ["parent/clip:" + identity for identity in order]}]
                 require(len(selections) == 1,
                         "inverse stage structural clip write has no unique source order")
                 command_boundaries.append({"native_end": native_end,
-                                           "selection": copy.deepcopy(selections[0])})
+                                           "selection": copy.deepcopy(selections[0]),
+                                           "order_only": reordered_clip_write and not structural_clip_write})
         expected.append({"publication_id": publication, "step_id": source_step["id"],
                          "command_ordinals": ordinals,
                          "native_sites": ([(write["ref"], write["path"]) for write in shared["writes"]]
@@ -1619,9 +1652,10 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
         for write_index, write in enumerate(writes):
             while (clip_order_boundary_index < len(clip_order_boundaries)
                    and clip_order_boundaries[clip_order_boundary_index]["native_end"] == write_index):
-                _inverse_stage_restore_clip_order(
-                    native_image, {"selections": [clip_order_boundaries[
-                        clip_order_boundary_index]["selection"]]})
+                command = {"selections": [clip_order_boundaries[clip_order_boundary_index]["selection"]]}
+                _inverse_stage_restore_clip_order(native_image, command)
+                if clip_order_boundaries[clip_order_boundary_index]["order_only"]:
+                    _inverse_stage_restore_clip_order(stage_after, command)
                 clip_order_boundary_index += 1
             if not write["path"] and re.fullmatch(r"(?:shot|occurrence):[^/]+", write["ref"]):
                 root = write["ref"]
@@ -1760,9 +1794,10 @@ def _inverse_stage_boundaries(boundary, output, step, records, accepted, origina
                             projected[mirror] = copy.deepcopy(projected["config"][mirror])
         while (clip_order_boundary_index < len(clip_order_boundaries)
                and clip_order_boundaries[clip_order_boundary_index]["native_end"] == len(writes)):
-            _inverse_stage_restore_clip_order(
-                native_image, {"selections": [clip_order_boundaries[
-                    clip_order_boundary_index]["selection"]]})
+            command = {"selections": [clip_order_boundaries[clip_order_boundary_index]["selection"]]}
+            _inverse_stage_restore_clip_order(native_image, command)
+            if clip_order_boundaries[clip_order_boundary_index]["order_only"]:
+                _inverse_stage_restore_clip_order(stage_after, command)
             clip_order_boundary_index += 1
         require(clip_order_boundary_index == len(clip_order_boundaries),
                 "inverse stage source clip-order boundary was not replayed")
