@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T18:00:47Z | dispatcher heartbeat 15s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-27T18:00:38.950852+00:00
+<!-- main | 2026-10-27T18:07:57Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 4m -->
+# runtime board, 2026-10-27T18:03:57.699494+00:00
 
 Original Runtime delivery is complete. H and D retain ownership of active follow-up work.
 
@@ -16,20 +16,20 @@ Original Runtime delivery is complete. H and D retain ownership of active follow
 | H Runtime route | Retain source route diagnosis | Luna and independent Luna | Independent source-map PASS | merged | rt-OPS-H-runtime-consumer-review-1711 | [Source PASS](../../design/runtime-H-runtime-consumer-independent-publication-20261027T171745Z.json); historical import inferred, no origin capture. | No source change |
 | H audit | Resolve real layer-order inversion | H lead and Sol splits | Main paired checks complete | blocked:H | lead-H-r4; H-hard-agent-restructure-r3 | Sol22 FAIL,154 PASS; both Lunas confirm actual inversion. Assertions unchanged. H owns disposition. | Agent88a9dfe985 |
 | H App full | Qualify repaired final full suite | H lead and Luna | Focused repair merged | doing | H-tests-app-final-r4 | Prior13630:20035 PASS,11 FAIL. AppProviders correction merged after5 PASS; next full run active. Ten other tests and suite digest match baseline. | App11de9b8a1a |
-| H Agent lanes | Complete corrected lane qualification | H lead and Luna | Runtime and Node lane repair | doing | H-check-agent-lanes-r3 | Exact35-file selection active on Agent314a. Original full18591 PASS,274 FAIL,324 ERROR is not final lane qualification. | Agent314a6d2bbb |
+| H Agent lanes | Resolve remaining restructure regressions | H lead and Sol | Corrected 35 file lane result | blocked:H | lead-H-r4; H-hard-agent-restructure-r3 | 11210: 910 PASS,41 FAIL,10 deselected. Twenty two new failures remain, all restructure. Plate and loader failures fixed. | Agent314a6d2bbb |
 | H and D continuity | Keep phase managers moving | Luna leads | Phase work remains open | doing | lead-H-r4; lead-D-r2 | Both managers active. Supported lead-roll owns automatic round continuity. | No source change |
 | D merged editing | Retain reviewed editing work | D Sol and Luna splits | Central merged-head tests | merged | lead-D-r2 and named D workers | E1 E2 E3 E4 E5 E6 E7 E8 E10 E11 merged. Combined416 PASS,16 native integration PASS; supplemental gaps remain. | Agentd1fe087ed5; Runtimeb8e4e8 |
 | D E9 undo | Repair mixed helper undo across layers | D Sol and two Lunas | Main17:42 direction | doing | D-E9b-inverse-binding-r1 | Original E9 unmerged:153 PASS,1 FAIL,17 deselected. Narrow Agent and Runtime binding repair is dispatched; verification stays intact. | D owns candidate |
 | D E12 | Retain merged preview and literal lists | D Luna and lead | Fresh no-code verification | merged | D-E12-r1; D-E12-integrate-r2 | 235 targeted PASS,5 integration deselected; Ruff and diff PASS. D records merged source and owns final acceptance. | Agent6fc24f72ec |
-| D next editing | Complete guide and wording drafts | D named taste workers | E12 merged; E13 needs wording draft | doing | D-T1-draft-r1; D-T2-draft-r1 | D owns drafts. E14, final guide and reviews require accepted H merged forward. E13 follows provisional T2 wording. | Agent6fc24f72ec |
+| D next editing | Complete structured errors and final guide | D Luna and taste workers | E12 merged; provisional T2 ready | doing | D-E13-r1; lead-D-r2 | E13 active. T1 and T2 drafts complete with gaps disclosed. E14, final guide and reviews need accepted H merged forward. | Agent6fc24f72ec |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive on owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Retain guarded maintenance result | Runtime manager | Supported tools and KEEP guards | merged | Runtime manager | 216 prior KEEP hashes and modes exact; 23 prospective additions. Sweep0, compact0 dirs,2 logs compressed. Five dirty trees intact. | No source change |
+| OPS headroom | Complete guarded maintenance pass | Runtime manager | Supported tools and KEEP guards | doing | Runtime manager | 239 prior test KEEP hashes and modes exact. Three remaining historical trees refused as dirty and remain intact; sweep active. | No source change |
 
 Blockers: H owns final qualification and the real layer-order inversion. AppProviders repair is merged and the next App full run is active. Runtime full results are baseline-matched by name, not a full-suite PASS.
 Blockers: D owns narrow cross-layer E9b repair. Original E9 remains unmerged. Final D acceptance requires accepted H merged forward.
-Next ready: None for Runtime. D has dispatched E9b under Main17:42; H owns its focused repairs.
-live 0 / cap 3; ready-undispatched 0. Free 3232026624 bytes. Follow-up physical disk policy applies; H and D workers are separately managed.
+Next ready: None for Runtime. D owns E9b and E13; H owns the remaining restructure failures and qualification.
+live 0 / cap 3; ready-undispatched 0. Free 3612639232 bytes. Follow-up physical disk policy applies; H and D workers are separately managed.
 
 Earlier detailed board: [preserved status](rounds/20261027T174711Z-prior-status.md). Full historical delivery rows: [historical board](rounds/20261027T114133Z-prior-status.md). Every original failure, proof tuple, custody limit, refusal, raw KEEP hold and deferred source remains unchanged.
 
@@ -37,6 +37,6 @@ Delivered archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timel
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled. Four recipient patch and bundle checks passed within documented scope. Historical PENDING prose, whitespace findings and monitor limits remain disclosed; this is not a full-suite or global behavior PASS.
 
-Current pass evidence: [management pass](rounds/20261027T174711Z-pass.json). Two passes completed with sleep600 between them. No new Runtime inbox bytes after1941564; header unchanged. E12 is now merged at6fc24f72ec after235 targeted PASS,5 integration deselected; D owns final acceptance. AppProviders correction is merged at11de9b8a1a after5 focused PASS; H final full rerun is active. D E9b parent and Runtime split remain active; original E9 stays unmerged. All recorded KEEP hashes and modes remain exact. Sweep removed0 dirs; compaction packed0 scratch/test dirs and compressed2 old logs. Normal recycle refused five dirty historical trees and all are intact. No Runtime source task, product edit, manager merge, duplicate suite, new safety or permission refusal, or P START.
+Current pass evidence: [management pass](rounds/20261027T180243Z-pass.json). No new Runtime inbox bytes after1941564; header unchanged. Runtime original delivery and artifact review remain complete. H's corrected 35-file selection ended with910 PASS,41 FAIL,10 deselected; all22 new failures are restructure cases, with plate and loader fixes confirmed. H owns their resolution. D's E9b parent continues, its Runtime split has returned, and E13 is active. T1 and T2 drafts are complete with their proof limits retained. Supported maintenance is active; all prior test KEEP hashes and modes are exact. No duplicate source task, suite, merge, P START or product edit.
 
 Round handoff: Runtime has no ready work. H and D retain their actual phase workers and next dispatches. H final qualification and D E9b acceptance remain open. P and the follow-up ZIP remain gated. Original delivered archive and historical proof limitations are unchanged.
