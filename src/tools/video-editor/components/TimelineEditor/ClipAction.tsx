@@ -837,7 +837,7 @@ function areClipActionPropsEqual(prev: ClipActionProps, next: ClipActionProps): 
     && prev.onOpenSequenceCreator === next.onOpenSequenceCreator
     && prev.onDuplicateGeneration === next.onDuplicateGeneration
     && prev.onUpdateVariant === next.onUpdateVariant
-    && prev.onDismissStale === next.onDismissStale
+    && ((!prev.isVariantStale && !next.isVariantStale) || prev.onDismissStale === next.onDismissStale)
     && prev.onCreateShotFromSelection === next.onCreateShotFromSelection
     && prev.onGenerateVideoFromSelection === next.onGenerateVideoFromSelection
     && prev.onNavigateToShot === next.onNavigateToShot
