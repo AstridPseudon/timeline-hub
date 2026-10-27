@@ -45,7 +45,8 @@ max(c.end for c in tl.clips(track="V1"))       # where V1 ends
 never guess one from a display title. Pass a `client=` to `Timeline.open` only
 when you already hold an authenticated SDK client; never recover credentials
 from Runtime storage. Shot occurrence ids for `arrange` are
-`[p["occurrence_id"] for p in tl.bundle["placements"]]`, in their stored
+`[p["occurrence_id"] for p in tl.bundle["placements"]]`. Put them in the
+intended order yourself; do not assume the bundle's stored order is editorial
 order.
 
 `tl.clip(name)` matches a clip id or id prefix, an address, a layer name, an
@@ -110,11 +111,13 @@ verified file; an existing track of the wrong kind refuses.
   without `hold` a video or audio file plays its verified duration.
   `.trim(in, out)` then sets the source window.
 - **`t.add_text(text, at=, hold=, track="titles", id=)`**: plain text at `at`
-  timeline seconds for `hold` seconds.
-- **`t.track(id, above=)`**, **`.rename(label)`**: create a track or select
-  the existing one (never a second), place it above `above`, and label it.
-  `above=` moves an existing track too; committing that move is not yet
-  qualified against Runtime.
+  timeline seconds for `hold` seconds; creates a missing track (runtime
+  behavior pending E14).
+- **`t.track(id, above=, kind=)`**, **`.rename(label)`**: create a track or
+  select the existing one (never a second), optionally place it above another,
+  and label it. Moving an existing track is not runtime-qualified (pending
+  E14). Use `t.track("music", kind="audio")` to name an audio bed track;
+  track-kind behavior is pending E14.
 - **`clip.on(t)`, `clip.trim(in, out)`, `clip.hold_for(s)`, `clip.end`**:
   timing. `trim` is in source seconds and keeps the start. `hold_for` sets a
   literal length on any clip; on video or audio the source window keeps its
@@ -124,7 +127,8 @@ verified file; an existing track of the wrong kind refuses.
   to a cut, it is stored relative to that cut's start, so the clip follows
   its cut when the narration is re-flowed; to follow a word, give a moment
   string.
-- **`clip.split(at, id=)`**: native split at timeline seconds; it returns the
+- **`clip.split(at, id=)`**: supported over native split at timeline seconds;
+  it returns the
   left half, which keeps the original id, and the right half gets `id`
   (`t.clip(id)`). Requires registry-backed parent media, an interior cut, an
   explicit source window for moving media, and no timing anchors,
@@ -132,7 +136,8 @@ verified file; an existing track of the wrong kind refuses.
 - **`clip.swap_asset(path_or_key)`**: plays another file (imported) or
   catalog key in place; the start stays. From the source, pending E14
   confirmation: an image or video keeps its length; an audio clip that played
-  its whole file plays the whole replacement file.
+  its whole file plays the whole replacement file. Swapping a music clip with
+  a beat grid to an asset without one may refuse until a grid is attached.
 - **`clip.set_track`, `clip.set_look`, `clip.remove`** (`remove` leaves a gap).
 - **`t.arrange(ids, at=, gap=)`**: shot occurrences in caller order, from
   `at`, `gap` apart (both timeline seconds). It keeps
@@ -164,9 +169,9 @@ tl.commit(lambda t: t.close_gap(before=t.word("Meanwhile"), keep=0),
 Clips after the point move on every track, text included; picture spanning it
 is held longer or shortened; clips wholly inside a removed window are deleted.
 The **music bed** is any audio clip on a track named `music` or with a beat
-grid, and it is never split at the edit. Other audio spanning a removed window
-is split so later sound stays in sync, so a bed on `A1` without a beat grid is
-split even under `plays_on`. On a
+grid. Other audio spanning a removed window is split at the edit point;
+`keep_end` cuts the bed at a bar with a crossfade. Name an audio bed track
+with `t.track("music", kind="audio")` (track-kind behavior pending E14). On a
 flat timeline a ripple refuses to move a clip that carries a moment string,
 animation or transition. Closing a hole on one track only is not supported.
 
@@ -178,8 +183,11 @@ the card then starts at 15 s and the film ends one card later.
 `insert_time`, `ripple_delete` and `close_gap` each take `music=`:
 `"keep_end"` (default) cuts the bed at a bar with a crossfade so it still ends
 with the film; `"plays_on"`, as in `t.ripple_delete(4, 6, music="plays_on")`,
-leaves the bed exactly where it was, neither cut nor moved, so what follows
-moves against its beats. E14 checks both modes at the accepted runtime.
+makes what follows move against the bed's beats. Do not assume the bed stays
+whole: behavior when it begins at the ripple window's start is pending E14.
+E14 must exercise that boundary case under `plays_on`; its observed result is
+not accepted as desired behavior. E14 also checks both modes at the accepted
+runtime.
 `close_gap` measures the silence from the end of the
 previous word. Within one function each call sees the previous one, so times
 after a ripple have already moved.
@@ -273,12 +281,14 @@ past a clash and report failures individually. Rerunning the loop is safe:
 landed keys return their receipts, and an unknown outcome is settled by the
 same key; discard a clashed timeline first. For "the end of V1", compute
 it from V1's clips; `t.duration` also counts V2 and titles. There is no
-transaction across timelines. A preview list belongs to one timeline: preview
-one episode with the function (or each, if each needs approval), then run the
-function per episode.
+transaction across timelines. A preview list belongs to one timeline: apply
+the reviewed list to the approved episode; do not rerun its function after
+approval. Run the function for the other episodes (or preview each if each
+needs approval).
 
 `tl.duplicate(as_="variant-01")` creates the destination timeline, then
-copies the head into it with fresh shot and occurrence ids, returning
+copies the head into it with fresh shot and occurrence ids while retaining clip
+ids (runtime behavior pending E14), returning
 `destination_setup` and `copy_receipt` separately. The source is only read.
 Its operation key comes from the project, source and name, so a retry never
 creates a second destination. `timelines archive variant-01 --project
