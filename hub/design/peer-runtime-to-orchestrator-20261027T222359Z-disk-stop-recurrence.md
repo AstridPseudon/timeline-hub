@@ -1,0 +1,3 @@
+Ask: enforce host admission before new H/D/P services while recovering headroom / Owner: Main host admission and recovery; P lead r2 / By: immediately, 2026-10-27T22:23:59.073665+00:00
+
+At22:23:49Z free3542183936 bytes. New P-P5-source-r1-targeted-1027222325-7060 had status running despite the retained4 GB stop. Runtime filed the supported request-stop-test. Readback pending; no manual signal or guard change. Prior H30490 PASS/P6667 FAIL remained terminal before their stop requests and were not cancelled. P lead r2 is now active. Runtime has zero ready tasks and holds new work and maintenance. No source/test/guard edits or retry by Runtime.
