@@ -126,6 +126,12 @@ OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; FILTERED=; 
   # Python lanes receive changed source and fixture paths; pytest gets test selectors only.
   case $repo in
     agent|runtime) case $f in tests/*.py|tests/*.py::*) CMD+=" $f"; SELECTORS+=" $f";; *) FILTERED+=" $f";; esac;;
+    composition) if [ "$suite" = targeted ]; then
+      case $f in
+        typescript/tests/*.test.ts) test_file=${f#typescript/tests/}; CMD+=" typescript/test-dist/tests/${test_file%.ts}.js";;
+        *) CMD+=" $f";;
+      esac
+    else CMD+=" $f"; fi;;
     *) CMD+=" $f";;
   esac
 done; set +f
@@ -532,6 +538,10 @@ if [ $repo = agent ]; then
   CMD=${CMD//PYTHONPATH=\"\$PWD:\/home\/user\/work\/runtime\"/PYTHONPATH=\"\$PWD:\$ASTRID_RUNTIME_SOURCE\"}
   CMD=${CMD//env -i /env -i ASTRID_RUNTIME_CHECKOUT=$RUNTIME_SOURCE ASTRID_RUNTIME_SOURCE=$RUNTIME_SOURCE ASTRID_NODE_EXECUTABLE=$NODE_BIN\/node PATH=$NODE_BIN:\/usr\/local\/bin:\/usr\/bin:\/bin PYTHONPATH=\$PWD:\$ASTRID_RUNTIME_SOURCE }
   CMD=$(printf '%s' "$CMD" | sed -E 's#(^|[[:space:]])PATH=#\1PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:#g')
+fi
+if [ "$repo" = composition ]; then
+  PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:$PATH
+  export PATH
 fi
 if [ -n "$BENCH_CONTROL_FD" ]; then
   SUITE_TIMEOUT=90m; [ "$repo" = agent ] && [ "$suite" = full ] && SUITE_TIMEOUT=240m
