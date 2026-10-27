@@ -207,7 +207,6 @@ function createOverlayTestStore(options: {
     },
     chrome: {
       handleAddTrack: vi.fn(),
-      handleAddTextAt: vi.fn(),
       handleClearUnusedTracks: vi.fn(),
       unusedTrackCount: 0,
     },

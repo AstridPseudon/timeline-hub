@@ -231,8 +231,6 @@ export interface TimelineChromeContextValue {
   handleAddTrack: TimelineTrackManagementHook['handleAddTrack'];
   handleClearUnusedTracks: TimelineTrackManagementHook['handleClearUnusedTracks'];
   unusedTrackCount: TimelineTrackManagementHook['unusedTrackCount'];
-  handleAddText: ClipEditingHook['handleAddText'];
-  handleAddTextAt: ClipEditingHook['handleAddTextAt'];
   reloadFromServer: TimelineReloadFromServer;
   retrySaveAfterConflict: TimelineRetrySaveAfterConflict;
   /**

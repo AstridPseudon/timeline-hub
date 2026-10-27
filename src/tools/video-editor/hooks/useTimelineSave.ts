@@ -776,15 +776,17 @@ export function useTimelineSave(
         if (localDocumentSave) {
           const handoff = await localOwner.ready;
           if (!handoff || localOwner.closed) throw new TimelineSaveError('Element local save owner was replaced');
-          const next = await buildTimelineData(config, registry, resolveAssetUrl, input.expectedVersion,
-            input.bundle?.itemsBySchemaRef, input.expectedHead, input.bundle?.transcriptReferences);
           checkCurrent();
           await handoff.capture({ config, registry, head: input.expectedHead, bundle: input.bundle }, {
             kind: 'element', config: original!.config as TimelineConfig, registry: original!.registry as AssetRegistry,
             clipId: 'clip_id' in input.operation ? input.operation.clip_id ?? '' : '', operation: input.operation, context: input.context,
           });
           checkCurrent();
-          commitElementData(next, { save: false, skipHistory: true });
+          // The element operation is intentionally not projected into the live
+          // editor before Runtime acceptance. The local save session retains
+          // the exact draft and its outbox identity while the editor remains
+          // on the durable document; its acceptance adoption below is the
+          // single point at which the element becomes applied.
           await handoff.flush();
         } else {
           const next = await buildTimelineData(config, registry, resolveAssetUrl, input.expectedVersion,

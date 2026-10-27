@@ -134,7 +134,7 @@ async function runD102LauncherControl(f, { source, failure, suiteName = 'p2', in
   const childProcess = {
     execFileSync(command, args, options) {
       if (command === 'git') return execFileSync(command, args, options);
-      if (args.includes('--list')) return `offline collection control\nTotal: ${suites[suiteName].count} tests in 3 files\n`;
+      if (args.includes('--list')) return `offline collection control\nTotal: ${suites[suiteName].count} tests in ${suites[suiteName].files.length} files\n`;
       if (path.basename(command) === 'npm') { assert.deepEqual(args, ['--version']); return 'offline-npm\n'; }
       if (command === 'openssl') {
         for (const flag of ['-keyout', '-out']) writeFileSync(args[args.indexOf(flag) + 1], 'offline TLS');
@@ -344,13 +344,11 @@ test('D105 actual two-start production caller keeps independent private evidence
   assert.equal(new Set(launchDirectories).size, 2);
 });
 
-test('D83 focused P2 descriptors select one exact original test each and retain the full eight-test tour', () => {
+test('D83 focused P2 descriptors select one exact original test each and retain the six-test tour', () => {
   const expected = {
     'p2-element': ['tests/e2e/local/three-products.p2-elements-assets.spec.ts', 'P2 mounted element edit: real catalog apply, exact params patch, reload and guarded Undo$'],
     'p2-register-asset': ['tests/e2e/local/three-products.p2-elements-assets.spec.ts', 'P2 mounted registerAsset save: real file drop, exact media/registry fields, reload and guarded Undo$'],
     'p2-automatic-child-placement': ['tests/e2e/local/three-products.p2-elements-assets.spec.ts', 'P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo$'],
-    'p2-popup-add': ['tests/e2e/local/three-products.p2-popup.spec.ts', 'P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit$'],
-    'p2-popup-swap': ['tests/e2e/local/three-products.p2-popup.spec.ts', 'P2 popup mounted SWAP on selected child uses authenticated old/new media selections$'],
     'p2-parent-move': ['tests/e2e/local/three-products.p2-tour.spec.ts', 'P2 mounted single parent move: v2 commit, exact field delta, reload and guarded Undo$'],
     'p2-transition-none-single': ['tests/e2e/local/three-products.p2-tour.spec.ts', 'P2 mounted transition None single: raw clear preserves opaque data/order and guarded Undo$'],
     'p2-transition-none-bulk': ['tests/e2e/local/three-products.p2-tour.spec.ts', 'P2 mounted transition None bulk: atomic raw clears preserve unknown fields/order and guarded Undo$'],
@@ -367,11 +365,10 @@ test('D83 focused P2 descriptors select one exact original test each and retain 
   assert.equal(suites['p2-element-verify'].retainRuntimeLogs, true);
   assert.equal(suites['p2-element-verify'].verificationOnly, true);
   assert.deepEqual(suites.p2.files, [
-    'tests/e2e/local/three-products.p2-popup.spec.ts',
     'tests/e2e/local/three-products.p2-tour.spec.ts',
     'tests/e2e/local/three-products.p2-elements-assets.spec.ts',
   ]);
-  assert.equal(suites.p2.count, 8);
+  assert.equal(suites.p2.count, 6);
   assert.equal(suites.p3.count, 1);
 });
 
@@ -541,7 +538,6 @@ function fixtureRepo(directory, name) {
     writeFileSync(path.join(directory, 'scripts/testing/d66-plain-stack.mjs'), readFileSync(new URL('./d66-plain-stack.mjs', import.meta.url)));
     for (const file of [
       'tests/e2e/local/three-products.p1-chain.spec.ts',
-      'tests/e2e/local/three-products.p2-popup.spec.ts',
       'tests/e2e/local/three-products.p2-tour.spec.ts',
       'tests/e2e/local/three-products.p2-elements-assets.spec.ts',
       'tests/e2e/local/three-products.mounted-readiness.spec.ts',

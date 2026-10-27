@@ -8,7 +8,7 @@ import { compileFunction } from 'node:vm';
 import { expect } from '@playwright/test';
 import ts from 'typescript';
 
-const source = readFileSync(new URL('../three-products.p2-popup.spec.ts', import.meta.url), 'utf8');
+const source = readFileSync(new URL('./p2-popup-helpers.ts', import.meta.url), 'utf8');
 const trafficHelper = source.match(/^function isReadOnlyInspection\([^]*?^}/m)?.[0];
 const createdClaimsHelper = source.match(/^function expectedPopupCreatedClaims\([^]*?^}/m)?.[0];
 const publicationHelper = source.match(/^function authoritativePublicationId\([^]*?^}/m)?.[0];

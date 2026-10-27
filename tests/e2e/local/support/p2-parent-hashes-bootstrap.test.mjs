@@ -7,7 +7,7 @@ import test from 'node:test';
 import { compileFunction } from 'node:vm';
 import ts from 'typescript';
 
-const source = readFileSync(new URL('../three-products.p2-popup.spec.ts', import.meta.url), 'utf8');
+const source = readFileSync(new URL('./p2-popup-helpers.ts', import.meta.url), 'utf8');
 const helperSource = source.match(/^function authoritativeParentHashes\([^]*?^}/m)?.[0];
 assert.ok(helperSource, 'exercise the actual authoritative parent-hash helper');
 

@@ -363,11 +363,12 @@ function stripProjectedClipFields(
     ...(authoredApp && Object.keys(authoredApp).length > 0 ? { app: authoredApp } : {}),
   };
 }
-
 /** Build first-render editor data from the already-resolved parent projection. */
 export function createShotTimelineInitialData(
   config: ResolvedTimelineConfig,
   configVersion = 1,
+  composition?: PreparedShotComposition,
+  occurrenceId?: string,
 ): TimelineData {
   const registry = {
     assets: Object.fromEntries(Object.entries(config.registry).map(([assetId, entry]) => ([assetId, {
@@ -375,12 +376,27 @@ export function createShotTimelineInitialData(
       file: entry.file ?? entry.media_id ?? entry.url,
     }]))),
   };
-  const timelineConfig = createShotTimelineConfig(config);
+  const projectedConfig = createShotTimelineConfig(config);
+  const timelineConfig = composition && occurrenceId
+    ? createShotLocalTimelineConfig(composition, occurrenceId, projectedConfig)
+    : projectedConfig;
+  const resolvedConfig = composition && occurrenceId
+    ? {
+        ...config,
+        clips: timelineConfig.clips.map((clip) => ({
+          ...clip,
+          ...(clip.asset && config.registry[clip.asset]
+            ? { assetEntry: config.registry[clip.asset] }
+            : {}),
+        })),
+        tracks: timelineConfig.tracks ?? [],
+      }
+    : config;
   return assembleTimelineData({
     config: timelineConfig,
     configVersion,
     registry,
-    resolvedConfig: config,
+    resolvedConfig,
     output: config.output,
     assetMap: buildAssetReferenceMap(registry),
   });
@@ -1050,7 +1066,9 @@ async function sharedPopupMediaCommands(
     throw new Error('Popup occurrence isolation requires a registered per-occurrence fork before editing the shared image');
   }
   const rawTimeline = object(internal[0].payload);
-  if (!rawTimeline || !Array.isArray(rawTimeline.clips)) throw new Error('Popup save has no verified raw child timeline');
+  if (!rawTimeline || !Array.isArray(rawTimeline.clips) || !Array.isArray(rawTimeline.tracks)) {
+    throw new Error('Popup save has no verified raw child timeline');
+  }
   const beforeRegistry = registryValue(before, rawTimeline) ?? baselineRegistry;
   const authored = createCanonicalTimeline(nextConfig, composition);
   const oldRows = collectionRows(rawTimeline.clips, ['clips']);
@@ -1064,6 +1082,17 @@ async function sharedPopupMediaCommands(
   if (!shared && (added.length !== 1 || changed.length !== 0)) return null;
   if (added.length > 1 || changed.length > 1 || (added.length === 0 && changed.length === 0)) {
     throw new Error('Shared popup edits require one occurrence media ADD or SWAP');
+  }
+  if (added.length === 1) {
+    const [, addedRow] = added[0];
+    const asset = mediaAssetId(addedRow);
+    const track = stringValue(addedRow.track);
+    const rawTracks = collectionRows(rawTimeline.tracks, ['tracks']);
+    if (asset && (!track || !rawTracks.has(track))) {
+      throw new TimelineSaveError(
+        'Gallery drops onto a new shot track are not supported yet. Drop the gallery item onto an existing shot track; nothing was saved.',
+      );
+    }
   }
   const forkShotId = shared
     ? `shot-fork-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`}`

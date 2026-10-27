@@ -384,7 +384,6 @@ function useTimelineChromeContextValue({
   history,
   setScaleWidth,
   trackManagement,
-  clipEditing,
   reloadFromServer,
   retrySaveAfterConflict,
   startRender,
@@ -411,7 +410,6 @@ function useTimelineChromeContextValue({
   history: Pick<TimelineHistoryHook, 'undo' | 'redo' | 'canUndo' | 'canRedo' | 'historyPausedForUploads' | 'checkpoints' | 'jumpToCheckpoint' | 'createManualCheckpoint' | 'canonicalHistory' | 'canonicalHistorySupported' | 'canonicalHistoryError' | 'refreshCanonicalHistory' | 'restoringCanonicalRevisionId' | 'restoreCanonicalRevision'>;
   setScaleWidth: ReturnType<typeof useEditorPreferences>['setScaleWidth'];
   trackManagement: Pick<TimelineTrackManagementHook, 'handleAddTrack' | 'handleClearUnusedTracks' | 'unusedTrackCount'>;
-  clipEditing: Pick<ClipEditingHook, 'handleAddText' | 'handleAddTextAt'>;
   reloadFromServer: ReturnType<typeof useTimelineSave>['reloadFromServer'];
   retrySaveAfterConflict: ReturnType<typeof useTimelineSave>['retrySaveAfterConflict'];
   startRender: ReturnType<typeof useRenderState>['startRender'];
@@ -465,8 +463,6 @@ function useTimelineChromeContextValue({
     handleAddTrack: trackManagement.handleAddTrack,
     handleClearUnusedTracks: trackManagement.handleClearUnusedTracks,
     unusedTrackCount: trackManagement.unusedTrackCount,
-    handleAddText: clipEditing.handleAddText,
-    handleAddTextAt: clipEditing.handleAddTextAt,
     reloadFromServer,
     retrySaveAfterConflict,
     watchdogTripped,
@@ -481,10 +477,8 @@ function useTimelineChromeContextValue({
     loadError,
     retryLoad,
   }), [
-    clipEditing.handleAddText,
     loadError,
     retryLoad,
-    clipEditing.handleAddTextAt,
     history.canRedo,
     history.canUndo,
     history.historyPausedForUploads,
@@ -1219,10 +1213,6 @@ export function useTimelineState(services: TimelineHostServiceHooks, initialTime
       handleAddTrack: trackManagement.handleAddTrack,
       handleClearUnusedTracks: trackManagement.handleClearUnusedTracks,
       unusedTrackCount: shotTracksSettling ? 0 : trackManagement.unusedTrackCount,
-    },
-    clipEditing: {
-      handleAddText: clipEditing.handleAddText,
-      handleAddTextAt: clipEditing.handleAddTextAt,
     },
     reloadFromServer,
     retrySaveAfterConflict,

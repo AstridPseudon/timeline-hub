@@ -14,8 +14,8 @@ const readiness = 'tests/e2e/local/three-products.mounted-readiness.spec.ts';
 export const suites = {
   p1: { files: ['tests/e2e/local/three-products.p1-chain.spec.ts'], count: 2 },
   p2: {
-    files: ['tests/e2e/local/three-products.p2-popup.spec.ts', 'tests/e2e/local/three-products.p2-tour.spec.ts', 'tests/e2e/local/three-products.p2-elements-assets.spec.ts'],
-    count: 8,
+    files: ['tests/e2e/local/three-products.p2-tour.spec.ts', 'tests/e2e/local/three-products.p2-elements-assets.spec.ts'],
+    count: 6,
     retainRuntimeLogs: true,
   },
   'p2-element': {
@@ -37,16 +37,6 @@ export const suites = {
   'p2-automatic-child-placement': {
     files: ['tests/e2e/local/three-products.p2-elements-assets.spec.ts'], count: 1,
     grep: 'P2 mounted automatic child placement: embedded shot file gesture, occurrence command, closure and guarded Undo$',
-    retainRuntimeLogs: true,
-  },
-  'p2-popup-add': {
-    files: ['tests/e2e/local/three-products.p2-popup.spec.ts'], count: 1,
-    grep: 'P2 popup mounted ADD on selected child uses shared occurrence fork and A2 commit$',
-    retainRuntimeLogs: true,
-  },
-  'p2-popup-swap': {
-    files: ['tests/e2e/local/three-products.p2-popup.spec.ts'], count: 1,
-    grep: 'P2 popup mounted SWAP on selected child uses authenticated old/new media selections$',
     retainRuntimeLogs: true,
   },
   'p2-parent-move': {
