@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T12:15:26Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
-# runtime board, 2026-10-27T12:15:27.990196+00:00
+<!-- main | 2026-10-27T12:23:56Z | dispatcher heartbeat 9s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 3m -->
+# runtime board, 2026-10-27T12:20:17.196800+00:00
 
 Original Runtime delivery is complete. Main started phase H and handed B and C remaining work to its existing lead.
 
@@ -13,16 +13,16 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | B acceptance | Hand comparisons to H | H Luna lead and service | Main transfer and H START | doing | lead-H-r1; B full App16657 | App16657 cancelled exit 130 through supported stop-test; no suite verdict. Baseline32136 FAIL. H owns final comparisons. Raw runs stay KEEP. | B App b837346ee6 |
 | C repair batch | Retain reviewed C corrections | C Luna and reviewers | Independent reviews and central checks | merged | C stale15 properties15 and waveform fix15 | Central45,10,45 PASS. Browser27831 three PASS; provider58 PASS. Original failures retained. | App c3a28be2b2 |
 | C B forward | Hand forward merge to H | H Luna lead | Main transfer and H START | doing | lead-H-r1 | Resolve authoredClipFields with authoredRowApp during consolidation. H full Runtime suite covers C server and service changes. | C App c3a28; Runtime28f44 |
-| H baseline | Retain owner pin comparison inputs | Main Luna and service | Existing baseline service results | doing | diag-baselines-1030 | App14843 running; Agent32136 ended FAIL. BASELINES.md pending the existing owner. All named raw runs KEEP. | Owner pins |
-| H one head | Consolidate owner pins and A B C | H Luna and Sol | Main START recorded | doing | lead-H-r1 and H merge workers | H reports Runtime B and C merged, fixture4 and targeted1340 PASS. Agent and App work active. H2 reviews and H3 full comparisons remain open. | H Runtime f232693222 |
+| H baseline | Retain owner pin comparison inputs | Main Luna and service | Existing baseline service results | doing | diag-baselines-1030 | App14843 running; Agent32136 FAIL. Main owns BASELINES.md. All named raw runs KEEP. | Owner pins |
+| H one head | Consolidate owner pins and A B C | H Luna and Sol | Main START recorded | doing | lead-H-r1 and H merge workers | H reports Runtime B/C, Agent A and App B merged; App C and Agent B follow. Runtime targeted4 and1340 PASS. H2/H3 remain open. | H Runtime f232693222 |
 | D editing | Retain editing gate | Main and D lead | H accepted and Main START | gated:H | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). D START absent. | Later phase |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive against owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Complete guarded cleanup | Runtime manager | Guard census and supported tools | merged | Runtime manager | No eligible worktree. Sweep exit0 removed0; compact exit0 packed0 and gzipped0, no stderr. All named raw records KEEP. | No source change |
+| OPS headroom | Run guarded cleanup | Runtime manager | Guard census and supported tools | doing | Runtime manager | Sweep running; compact follows. Three old non-KEEP trees are dirty and stay untouched. Named raw records KEEP. | No source change |
 
 Blockers: H owns remaining B/C policy, fixture restoration, compile classification and App/Agent/Runtime comparisons. Main diag-baselines-1030 owns BASELINES.md; App14843 running. B App16657 cancelled exit130. D waits H acceptance and START; P waits D.
 Next ready: None for Runtime. Existing lead-H-r1 owns all consolidation and remaining B/C work; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 4834373632 bytes. H is separately managed under current follow-up rules.
+live 0 / cap 3; ready-undispatched 0. Free 4270768128 bytes. No Runtime dispatch; H is separately managed.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -32,4 +32,4 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Current tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T12:15:27.990196+00:00. Second workers check exit0; all 2717 Runtime rows unchanged, live0 and ready0. Inbox and header unchanged. Recorded Main H START and transfer supersede prior blocked:B rows; existing lead-H-r1 owns the work. H reports Runtime B59b0 and Cf232 merged, targeted4 and1340 PASS; broader H reviews and suites remain open. Existing B App16657 cancelled exit130 through supported stop-test, no suite verdict. Owner-pin App14843 running; Agent32136 FAIL retained. All three raw records KEEP, with App14843 marker added prospectively at12:06:15. D/P START absent. Sweep and compact exit0 with nothing removed or packed, no stderr; no eligible guarded recycle. No source edits, dispatches or refusals. [Pass evidence](rounds/20261027T121527Z-pass.json); [retention](rounds/20261027T120615Z-retention.json); [sweep](rounds/20261027T120407Z-sweep.json); [compact](rounds/20261027T120732Z-compact.json); [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T120451Z-H-transfer-consumed.md).
+Current pass: 2026-10-27T12:20:17.196800+00:00. Workers exit0; all 2717 Runtime rows unchanged, live0 and ready0. Inbox and header hashes unchanged. H owns remaining B/C work and is moving. App baseline14843 still running; Agent32136 FAIL and B16657 cancelled130 retained. All three raw records KEEP. Main baseline worker is active; BASELINES.md absent. D/P START absent. Guarded census finds no eligible recycle: all three old trees without KEEP contain uncommitted files. Sweep running; compact follows. No source edits, dispatches or refusals. [Pass evidence](rounds/20261027T122017Z-pass.json).
