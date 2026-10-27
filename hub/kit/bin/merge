@@ -5,6 +5,9 @@ N=$1; target=; . $O/workers/$N/meta || exit 2; I=/home/user/work/$repo; TGT=tl/i
 exec 9>/home/user/work/.$repo.merge.lock; flock -w 600 9 || { echo "lock timeout"; exit 3; }
 # 26 Oct follow-ups: a worker dispatched with --merge-target BRANCH (meta target=) merges into BRANCH, inside its own integration worktree, created on first use under the same lock
 if [ -n "$target" ]; then TGT=$target; I=/home/user/work/wt-int/$repo-$(echo "$target" | tr '/' '-')
+  # 27 Oct 18:45Z: if the target branch is already checked out in another worktree (e.g. a Sol worker's own branch, merging its Lunas), merge there, but only when that worktree is clean
+  CO=$(git -C /home/user/work/$repo worktree list --porcelain | awk -v b="refs/heads/$target" '/^worktree /{w=$2} /^branch /{ if ($2==b) print w }' | head -1)
+  if [ -n "$CO" ] && [ "$CO" != "$I" ]; then [ -z "$(git -C "$CO" status --porcelain --untracked-files=no)" ] || { echo "target $target is checked out in $CO with uncommitted changes; finish or commit them first"; exit 1; }; I=$CO; fi
   [ -d $I ] || { mkdir -p /home/user/work/wt-int && git -C /home/user/work/$repo worktree add -q $I "$target" 2>&1 || { echo "cannot create integration worktree $I for $target"; exit 1; }; }
   [ "$(git -C $I symbolic-ref -q --short HEAD)" = "$target" ] || { echo "integration worktree $I is not on $target"; exit 1; }; fi
 if git -C $I merge --no-ff -q -m "Merge tl/$N" tl/$N 2>&1; then echo "merged tl/$N into $repo $TGT -> $(git -C $I rev-parse --short HEAD)"; echo "$(date -u +%FT%TZ) $repo $N $(git -C $I rev-parse --short HEAD) target=$TGT" >> $O/merges.log
