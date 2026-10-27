@@ -194,6 +194,21 @@ def test_child_track_kind_wins_parent_collision_for_playback(project, case_id):
     projected_tracks = {track["id"]: track for track in projection.config["tracks"]}
     child_tracks = {track["id"]: track for track in timeline["tracks"]}
     source_clips = {clip["id"]: clip for clip in timeline["clips"]}
+    audio_collision = case_id == "child-audio-parent-visual"
+    expected_timing = {
+        "trim-inherited": (0.125, 2.125, None, None, 2),
+        "hold-inherited": (0.125, None, 2, None, 2),
+        "trim-child-speed": (0.125, 4.125, None, 2, 2),
+        "hold-child-speed": (0.125, None, 4, 2, 2),
+        "compatible-audio": (0.125, 2.125, None, None, 2),
+    }
+    if not audio_collision:
+        expected_timing.update({
+            "trim-inherited": (0.475, 2.475, None, 1.5, 4 / 3),
+            "hold-inherited": (0.475, None, 3, 1.5, 2),
+            "trim-child-speed": (0.475, 4.475, None, 2, 2),
+            "hold-child-speed": (0.475, None, 4, 2, 2),
+        })
     for clip in projection.config["clips"][len(parent["clips"]):]:
         provenance = clip["app"]["astrid_shot_composition"]
         source = source_clips[provenance["source_clip_id"]]
@@ -202,6 +217,16 @@ def test_child_track_kind_wins_parent_collision_for_playback(project, case_id):
         assert ("group" in target.get("app", {})) == (target["kind"] == "visual")
         assert provenance["source_offset"] == 350
         assert provenance["speed"] == 1.5
+        source_id = provenance["source_clip_id"]
+        expected_from, expected_to, expected_hold, expected_speed, expected_duration = expected_timing[source_id]
+        assert clip["at"] == pytest.approx(1)
+        assert clip["from"] == pytest.approx(expected_from), source_id
+        if expected_to is not None:
+            assert clip["to"] == pytest.approx(expected_to), source_id
+        if expected_hold is not None:
+            assert clip["hold"] == pytest.approx(expected_hold), source_id
+        assert clip.get("speed") == expected_speed, source_id
+        assert clip_timeline_duration(clip) == pytest.approx(expected_duration), source_id
 
 
 @pytest.mark.parametrize("reverse", [False, True])
