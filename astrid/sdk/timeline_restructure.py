@@ -51,11 +51,13 @@ def _cutter_for(clip: Mapping[str, Any]):
     return None
 
 
+def _js_round(value: float) -> int:
+    """Match JavaScript Math.round, which sends half values toward +infinity."""
+    return math.floor(value + 0.5)
+
+
 def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps: float) -> str | None:
     """Explain why cutting changes the renderer's frame interval or source phase."""
-    def js_round(value: float) -> int:
-        # The pinned renderer uses JavaScript Math.round (ties go toward +infinity).
-        return math.floor(value + 0.5)
 
     for field_name in ("entrance", "exit", "continuous", "animation", "animations", "effects", "transition",
                        "keyframes", "keyframeOrigin", "fade_in", "fade_out", "fadeIn", "fadeOut"):
@@ -71,20 +73,23 @@ def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps
         if _clip_kind(clip) != "am-sprite" and params.get("keyframes") not in (None, [], {}, ""):
             return "params.keyframes timing restarts at a chapter cut"
     source_start = _num(clip.get("at"))
-    original_placement = js_round(source_start * fps)
-    original_duration = max(1, js_round(clip_duration(clip) * fps))
+    original_placement = _js_round(source_start * fps)
+    original_duration = max(1, _js_round(clip_duration(clip) * fps))
     original_end = original_placement + original_duration
     cuts = sorted(set(cut_starts))
     starts = [source_start, *cuts]
 
-    # Remotion rounds each Sequence start and its duration separately. A cut
-    # therefore has to cover the same contiguous frame interval as the source.
+    # Remotion rounds each Sequence start and duration separately. Measure each
+    # duration after the same cutter normalization used by split and rejoining.
     cursor = original_placement
+    cutter = _cutter_for(clip)
     for index, start in enumerate(starts):
         piece_end = starts[index + 1] if index + 1 < len(starts) else source_start + clip_duration(clip)
-        piece_start_frame = js_round(start * fps)
-        piece_duration = max(0.0, _r(piece_end - start))
-        piece_duration_frames = max(1, js_round(piece_duration * fps))
+        chapter = Chapter("", _js_round(start * 1000), _js_round(piece_end * 1000))
+        piece = (cutter(clip, start, piece_end, chapter, fps=fps)
+                 if cutter is _cut_sprite else cutter(clip, start, piece_end, chapter))
+        piece_start_frame = _js_round(start * fps)
+        piece_duration_frames = max(1, _js_round(clip_duration(piece) * fps))
         piece_end_frame = piece_start_frame + piece_duration_frames
         if piece_start_frame != cursor or piece_end_frame > original_end:
             return f"renderer frame interval differs after cut at {start:g} s"
@@ -95,12 +100,12 @@ def _cut_safety_reason(clip: Mapping[str, Any], cut_starts: Iterable[float], fps
     if _clip_kind(clip) in {"media", "video"} and cuts:
         source_from = _num(clip.get("from"))
         speed = _num(clip.get("speed"), 1.0) or 1.0
-        original_trim = js_round(max(0.0, source_from) * fps)
+        original_trim = _js_round(max(0.0, source_from) * fps)
         for start in cuts:
             elapsed = start - source_start
             piece_from = source_from + elapsed * speed
-            piece_trim = js_round(max(0.0, piece_from) * fps)
-            piece_placement = js_round(start * fps)
+            piece_trim = _js_round(max(0.0, piece_from) * fps)
+            piece_placement = _js_round(start * fps)
             if abs(piece_from * fps - round(piece_from * fps)) > 1e-7:
                 return f"fractional renderer source offset after cut at {start:g} s"
             expected_trim = original_trim + (piece_placement - original_placement) * speed
@@ -144,7 +149,7 @@ def _cut_sprite(clip: Mapping[str, Any], start: float, end: float, chapter: Chap
     value = _cut_clip(clip, start, end, chapter, piece_id=piece_id)
     params = copy.deepcopy(dict(clip.get("params") or {})) if isinstance(clip.get("params"), Mapping) else {}
     speed = _num(clip.get("speed"), 1.0) or 1.0
-    offset = max(0, int(round(start * fps)) - int(round(_num(clip.get("at")) * fps)))
+    offset = max(0, _js_round(start * fps) - _js_round(_num(clip.get("at")) * fps))
     prior_clock = params.get("sourceClock") if isinstance(params.get("sourceClock"), Mapping) else {}
     prior_offset = _num(prior_clock.get("offsetFrames"))
     prior_speed = _num(prior_clock.get("speed"), 1.0) or 1.0
