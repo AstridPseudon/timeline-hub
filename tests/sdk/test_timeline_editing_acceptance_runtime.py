@@ -1,4 +1,4 @@
-"""E14 acceptance against the current editing-integration Runtime."""
+"""E14 acceptance against the locked Runtime."""
 from __future__ import annotations
 
 import copy
@@ -11,8 +11,10 @@ from pathlib import Path
 
 import pytest
 
-RUNTIME_CHECKOUT = "/home/user/work/wt-int/runtime-tl-editing-integration"
-RUNTIME_COMMIT = "d3ba02669bdffa84f9c43979c87dae0d3648b287"
+from tests.helpers.runtime import runtime_checkout
+
+RUNTIME_CHECKOUT = str(runtime_checkout())
+RUNTIME_COMMIT = "da69b479151d98a2dd987a0c483af82a6e1d0a3b"
 
 
 @pytest.fixture
