@@ -10,7 +10,7 @@ bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "
 alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }
 alive_render() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 "$(cat "$r")" 2>/dev/null && grep -Eq '^suite=(render-proof|pinned-element-render)$' "${r%running}request" 2>/dev/null && echo x; done | wc -l; }
 finalize_stale_run() {
-  local stale_dir=$1 stale_id=${1##*/} pid rc=125 st=error target repo suite tree key
+  local stale_dir=$1 stale_id=${1##*/} pid rc=125 st=interrupted target repo suite tree key last_line tail_log recorded_rc complete
   [ "$(cat "$stale_dir/status" 2>/dev/null)" = running ] || return
   pid=$(cat "$stale_dir/running" 2>/dev/null) || return
   kill -0 "$pid" 2>/dev/null && return
@@ -22,21 +22,47 @@ finalize_stale_run() {
   key=$(sed -n 's/^key=//p' "$stale_dir/snap")
   SNAP=/home/user/work/wt/.test-$stale_id
   git -C /home/user/work/$repo worktree remove --force "$SNAP" 2>/dev/null || :
-  if grep -aqE '[1-9][0-9]* failed|[1-9][0-9]* errors|^ERROR ' "$stale_dir/log.txt" 2>/dev/null; then
-    rc=1; st=fail
-  elif grep -aqE '[0-9]+ passed|Tests +[1-9][0-9]*|collected [1-9][0-9]*' "$stale_dir/log.txt" 2>/dev/null; then
-    rc=0; st=pass
+  if [ -f "$stale_dir/exit" ]; then
+    recorded_rc=$(cat "$stale_dir/exit" 2>/dev/null)
+    [[ "$recorded_rc" =~ ^[0-9]+$ ]] && rc=$recorded_rc
+  fi
+  last_line=$(awk 'NF { line=$0 } END { print line }' "$stale_dir/log.txt" 2>/dev/null)
+  tail_log=$(tail -20 "$stale_dir/log.txt" 2>/dev/null)
+  complete=0
+  if [[ "$last_line" =~ ^[[:space:]]*[1-9][0-9]*[[:space:]]+passed([,[:space:]].*)?[[:space:]]+in[[:space:]]+[0-9.]+s[[:space:]]*$ ]] &&
+     ! grep -aqE '(^|[^0-9])[1-9][0-9]* failed\b|(^|[^0-9])[1-9][0-9]* errors\b|^ERROR ' "$stale_dir/log.txt"; then
+    complete=1
+  elif [[ "$last_line" =~ ^[[:space:]]*Duration[[:space:]] ]] &&
+       grep -aqE '^ *Test Files +.*[1-9][0-9]* passed.*\([0-9]+\)' <<< "$tail_log" &&
+       grep -aqE '^ *Tests +.*[1-9][0-9]* passed.*\([0-9]+\)' <<< "$tail_log" &&
+       ! grep -aqE '(^|[[:space:]])[1-9][0-9]* failed|^ *Errors +[1-9][0-9]*' <<< "$tail_log"; then
+    complete=1
+  elif grep -aqE '^# tests [1-9][0-9]*$' <<< "$tail_log" &&
+       grep -aqE '^# pass [1-9][0-9]*$' <<< "$tail_log" &&
+       grep -aqE '^# fail 0$' <<< "$tail_log" &&
+       grep -aqE '^# duration_ms [0-9.]+$' <<< "$last_line"; then
+    complete=1
+  fi
+  if [ "$complete" = 1 ] && [ -f "$stale_dir/exit" ] && [[ "$recorded_rc" =~ ^[0-9]+$ ]]; then
+    if [ "$rc" -eq 0 ]; then st=pass; else st=fail; fi
+  else
+    st=interrupted; rc=125
   fi
   {
     echo "test $stale_id: $st exit=$rc — $suite on $target ($repo tree $tree; recovered after runner death)"
-    echo "cmd: stale runner finalized from existing log"
+    [ "$st" != interrupted ] || echo "runner exit: missing or final summary incomplete; not a test result"
+    echo "cmd: stale runner finalized from recorded exit and complete log summary"
     echo "counts: $(grep -aE '[0-9]+ (passed|failed|errors)|Tests +[0-9]|^# (pass|fail) ' "$stale_dir/log.txt" 2>/dev/null | tail -3 | tr '\n' ' ')"
     echo "--- last 60 lines of $stale_dir/log.txt ---"
     tail -60 "$stale_dir/log.txt" 2>/dev/null
   } > "$stale_dir/summary"
   echo "$rc" > "$stale_dir/exit"
   echo "$st" > "$stale_dir/status"
-  [ "$rc" = 0 -o "$rc" = 1 ] && [ ! -f "$stale_dir/EXIT-MISMATCH" ] && [ -n "$key" ] && echo "$stale_id" > "$C/$key"
+  if [ "$st" = interrupted ]; then
+    [ "$(cat "$C/$key" 2>/dev/null)" = "$stale_id" ] && unlink "$C/$key" 2>/dev/null || :
+  else
+    [ "$rc" = 0 -o "$rc" = 1 ] && [ ! -f "$stale_dir/EXIT-MISMATCH" ] && [ -n "$key" ] && echo "$stale_id" > "$C/$key"
+  fi
   unlink "$stale_dir/running" 2>/dev/null || :
   [ -n "$key" ] && unlink "$C/$key.running" 2>/dev/null || :
 }
