@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T14:34:55Z | dispatcher heartbeat 6s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 1m -->
-# runtime board, 2026-10-27T14:33:21.942536+00:00
+<!-- main | 2026-10-27T14:42:17Z | dispatcher heartbeat 11s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 2m -->
+# runtime board, 2026-10-27T14:40:15.316682+00:00
 
 Original Runtime delivery is complete. Main started phase H and handed B and C remaining work to its existing lead.
 
@@ -15,7 +15,7 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | C B forward | Hand forward merge to H | H Luna lead | Main transfer and H START | doing | lead-H-r2 | App C merged at89cc30; targeted218 PASS. Main diag-applane-1240 owns stale Agent checkout fix; H owns C2 rerun and C3 sampler. | C App89cc30; Runtimef232 |
 | H baseline | Use published baseline comparisons | Main Luna and H | BASELINES.md published | doing | diag-baselines-1030; lead-H-r2 | [Baselines](../../followups/leads/BASELINES.md): completed suites FAIL. Shotlayer20416 cancelled, no verdict. H owns final comparisons. | Owner and staging pins |
 | H one head | Qualify merged collision corrections | H Luna Sol and Astra | Consumer corrections merged | review | lead-H-r2; H-review-r3-retry | Agent 148, App 111 plus 70, Runtime 4 PASS. Corrected Astra review actually running; original argument refusal retained. | Agent46b149; App39aa7b; Runtime6f0770 |
-| H C2 fixture | Repair provider record handoff | H Luna lead | Diagnosis returned | doing | lead-H-r2; H-diagnose-c2-seed | Validator and seed path unchanged by B/C. Local probe has collection write; remote handoff cause unknown. Original C2 fails retained. | Runtime6f0770 |
+| H C2 fixture | Qualify browser fixture repair | H Luna and service | Diagnosis and comparison returned | doing | lead-H-r2; H-fix-c2-seed-r3 | Comparison 29549 PASS on its actual tuple. Repair 18356 FAIL; worker active. H owns follow-up and final qualification. Original 3 FAIL retained. | App39aa7b; Runtime6f0770 |
 | H C3 sampler | Retain measured save and restart proof | H Luna and service | Matching one-head checkout | review | H-proof-c3-sampler | 28319: 1 PASS, five saves durable after restart. Handler 296 to 402 ms. H owns acceptance; raw KEEP added after result. | Runtime tree7636c4; Agent46b149 |
 | H continuity | Keep H manager running | Luna | H round one ended | doing | lead-H-r2 | Round one timeout 124 retained. Supported lead-roll dispatched round two, confirmed started 14:03:50Z. | No source change |
 | D editing | Retain editing gate | Main and D lead | H accepted and Main START | gated:H | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). D START absent. | Later phase |
@@ -23,9 +23,9 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive against owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
 | OPS headroom | Complete guarded maintenance | Runtime manager | Guard census and supported tools | merged | Runtime manager | [Maintenance](rounds/20261027T142540Z-maintenance-complete.json): exit 0; zero removals or packs; one log compressed; 136 KEEP markers unchanged. | No source change |
 
-Blockers: Main owns renewed disk stop, reported at 14:33. H owns final review, full comparisons, remaining proofs and C2 provider handoff repair. C3 bounded sampler passed. D/P remain gated.
-Next ready: None for Runtime. H lead-H-r2 and actual H-review-r3-retry own the next stage work; no duplicate dispatch.
-live 0 / cap 0; ready-undispatched 0. Free 3875459072 bytes, below recorded 4.0 GB stop. Runtime has no live worker or body; Main/H own their controllers.
+Blockers: H owns final review, full comparisons, remaining proofs and C2 repair after actual 18356 FAIL. Runtime has no ready rows. Follow-up physical admission follows the current runbook; H and Main own active work. D/P remain gated.
+Next ready: None for Runtime. H lead-H-r2, H-review-r3-retry and H-fix-c2-seed-r3 retain sole ownership of active follow-up work.
+live 0 / cap 3; ready-undispatched 0. Free 4208603136 bytes. No Runtime task waits for disk; H and Main workers are separately managed.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -35,4 +35,4 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T14:25:56.621785+00:00. Runtime census 2717 records, live 0 and ready 0. Inbox and header unchanged. H reviewer H-review-r3-retry and lead-H-r2 active. H board now consumes Main 14:30 assignment of fixture-seeding repair; no duplicate dispatch. D/P START absent. Worktree census 45 trees, none eligible; dirty, held, unowned and live trees retained. Guarded maintenance running with KEEP baseline. No product edit, merge, new safety refusal or escalation. [Pass evidence](rounds/20261027T142442Z-pass.json); [recycle census](rounds/20261027T142502Z-cleanup-census.json). H-diagnose-c2-seed started 14:25:53; sole C3 sampler 28319 terminal 1 PASS, five saves durable after restart. Raw KEEP added prospectively at 2026-10-27T14:30:26.191062+00:00, after original request and result; no creation-time claim. Maintenance complete exit 0, all 136 baseline KEEP markers unchanged. Disk 3952009216 bytes at 14:32:56; Main notified via peer-runtime-to-main-20261027T143321Z-disk-stop-observation.md. No Runtime worker or body to stop.
+Current pass: 2026-10-27T14:40:15.316682+00:00. Runtime census found 0 live and no ready rows; 2717 historical worker records remain. Inbox and header unchanged. H lead, reviewer and C2 author are active; D/P START absent. Current runbook physical admission replaces stale Runtime disk-floor wording. Guarded sweep is running. Recycle census found 47 trees; three old unheld candidates contain untracked tests and were left untouched. KEEP baseline captured before maintenance. No Runtime source edit, dispatch, merge, new safety refusal or escalation. [Latest evidence](rounds/20261027T1440Z-pass.json).
