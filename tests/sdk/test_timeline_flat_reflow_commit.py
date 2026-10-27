@@ -180,6 +180,34 @@ def test_flat_ripple_composes_with_free_edits_under_one_capture_guard(arranged_s
     assert undone["data"]["canonical_document"] == original
 
 
+def test_mirrored_ripple_changes_share_their_authenticated_command_input(arranged_session):
+    tl, realm, calls = arranged_session
+    original = _flat_audio_picture_fixture(realm)
+    input_head = tl.head
+
+    tl.commit(lambda t: t.insert_time(4, 2))
+
+    assert len(calls) == 1
+    body = calls[0]
+    assert body["base_revision_id"] == input_head["revision_id"]
+    assert len(body["commands"]) == 1
+    command = body["commands"][0]
+    assert command["op"] == "doc.patch"
+    payload = original["parent_revision"]["payload"]
+    assert payload["config"]["output"]["fps"] == {"numerator": 30, "denominator": 1}
+    assert payload["config"]["clips"] == payload["clips"]
+
+    from astrid.sdk.timeline._doc_patch import apply_change, value_at
+
+    observed = copy.deepcopy(payload)
+    for change in command["args"]["changes"]:
+        if not change["op"].startswith("list."):
+            assert value_at(observed, "parent", change["path"]) == change["before"]
+        observed, _ = apply_change(observed, change, physical="parent")
+    assert observed["config"]["output"]["fps"] == payload["config"]["output"]["fps"]
+    assert observed["config"]["clips"] == observed["clips"]
+
+
 @pytest.mark.parametrize("damage", ["split-id-collision", "source-overrun"])
 def test_flat_ripple_refusal_is_atomic(arranged_session, damage):
     tl, realm, calls = arranged_session

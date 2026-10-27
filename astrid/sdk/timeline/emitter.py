@@ -285,11 +285,15 @@ def emit_document_commands(before_bundle: Mapping[str, Any], after_bundle: Mappi
         mirrored = "clips" in parent and "clips" in parent.get("config", {})
         for index, change in enumerate(changes):
             pending.append(change)
-            # Native item setters refresh clip mirrors at command completion.
-            # Keep the next operand's closure consistent at that boundary.
-            clip_item = change["ref"] == "parent" and change["path"][:1] == ["clips"] and len(change["path"]) > 1
-            if index != len(changes) - 1 and not (mirrored and clip_item):
+            clip_item = (change["ref"] == "parent" and change["path"][:1] == ["clips"]
+                         and len(change["path"]) > 1)
+            next_clip_item = (index + 1 < len(changes) and changes[index + 1]["ref"] == "parent"
+                              and changes[index + 1]["path"][:1] == ["clips"]
+                              and len(changes[index + 1]["path"]) > 1)
+            if index != len(changes) - 1 and (not mirrored or not clip_item or next_clip_item):
                 continue
+            # A mirrored clip projection is refreshed once at command end, so
+            # keep the whole contiguous clip edit on one authenticated input.
             command: dict[str, Any] = {
                 "schema_version": 1, "op": "doc.patch", "version": "1", "select": None,
                 "args": {"changes": copy.deepcopy(pending)},
