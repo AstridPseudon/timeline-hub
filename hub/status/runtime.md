@@ -1,4 +1,4 @@
-<!-- main | 2026-10-27T02:51:15Z | dispatcher heartbeat 0s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+<!-- main | 2026-10-27T02:55:39Z | dispatcher heartbeat 8s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
 # runtime board, 2026-10-27T02:48:08.057690+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
@@ -108,7 +108,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C2 save and fork | Retain qualified provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Independent PASS; central58 PASS. Exact-one-clip and shared-shot fork covered. Browser drag/reload/undo remains unverified. | App 98784a1d |
 
-| C2 browser journey | Receive complete gallery browser proof | C Luna | Provider proof merged98784a1d | doing | C-C2-browser-journey-8 | Existing bottom-gallery drag, save, reload and undo proof in progress; no browser verdict yet. | C App branch |
+| C2 browser journey | Receive complete gallery browser proof | C Luna and independent Luna | Hosted Vite environment | blocked:main | C author8; independent review8 | Candidate collects1; real browser NOTRUN after Vite Node OOM. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T025526Z-C2-hosted-Vite-OOM.md). | Private990607470b |
 
 | B5 audit receiving | Receive finite B correction findings | Main and B Luna | Original audit report | review | diag-audit-B5-0212; existing B/C leads | UNSOUND: projected clip save fields and App/Agent role mismatch. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T021520Z-B5-audit-terminal-UNSOUND.md). | No Runtime change |
 
@@ -124,7 +124,7 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | A stand-in environment | Receive central render blocker | Main kit and A Luna | Real renderer and local preview | blocked:main | Main kit allocator; A review r8 PASS | A author stopped before render on Runtime import and environment errors. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T022524Z-standin-environment-blocker.md). | No render or parity proof |
 
-Blockers: Main owns A/B central render prerequisites and B5 audit corrections. C owns unresolved App B-parent ancestry and browser proof after the qualified provider milestone. C3 synthetic timing wait is clear. D130 holds.
+Blockers: Main owns A/B render prerequisites, C2 hosted Vite OOM and B5 audit corrections. C owns unresolved App B-parent ancestry and browser proof after the qualified provider milestone. C3 synthetic timing wait is clear. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
 live 0 / cap 6; ready-undispatched 0. Free 5967650816 bytes. All 36 retained Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Follow-up work stays with existing A/B/C leads.
 
