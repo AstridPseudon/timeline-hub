@@ -7,7 +7,7 @@ while true; do
   f=$(df -BM --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$f" -lt 3000 ] && timeout 120 $O/bin/recycle-ended >/dev/null 2>&1
   f=$(df -BM --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$f" -lt 1500 ] && echo "DISK LOW: ${f}M free after auto-recycle"
   for w in $O/workers/diag-*/ended $O/workers/H-sol-*/ended $O/workers/P-*-sol*/ended; do [ -f "$w" ] || continue; n=$(basename $(dirname $w))
-    case $n in diag-base-*|diag-deep-*|diag-cdelta-b-*|diag-agentlane-pin-*|diag-agentlane-head-*) touch "${w%ended}.seen"; continue;; esac
+    case $n in diag-base-*|diag-deep-*|diag-cdelta-b-*|diag-agentlane-pin-*|diag-agentlane-head-*|diag-oe-*) touch "${w%ended}.seen"; continue;; esac
     [ ! -f "${w%ended}.seen" ] && { echo "finished: $n"; touch "${w%ended}.seen"; }; done
   for p in H-onehead D-editing P-perception; do s=$L/$p/STATUS.md; [ -f $s ] || continue
     sed -n '/## Blocked/,/## Next round/p' $s | grep -iE 'main (must|should|needs to)|please|advise|needs main:' | cut -c1-200 | while read -r l; do k="$p|$(echo "$l" | md5sum | cut -c1-10)"; grep -qxF "$k" $L/.asks-seen 2>/dev/null || { echo "$p asks main: $l"; echo "$k" >> $L/.asks-seen; }; done

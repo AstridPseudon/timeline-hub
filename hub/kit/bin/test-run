@@ -461,20 +461,27 @@ elif [ -f "$O/workers/$target/meta" ]; then
 fi
 export ASTRID_TEST_BASE
 if [ "$repo" = runtime ]; then
-  AGENT_BASE=
-  if [ "${target#integration:}" = "$target" ] && [ -f "$O/workers/$target/meta" ]; then
-    AGENT_BASE=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
+  AGENT_PIN=$SNAP/tests/astrid-agent.pin
+  if [ -f "$AGENT_PIN" ]; then
+    AGENT_SHA=$(tr -d '[:space:]' < "$AGENT_PIN")
+    [[ "$AGENT_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid Agent commit pin in $AGENT_PIN" >&2; exit 1; }
+    git -C /home/user/work/agent rev-parse --verify "$AGENT_SHA^{commit}" >/dev/null 2>&1 || { echo "pinned Agent commit unavailable for runtime target $target: $AGENT_SHA" >&2; exit 1; }
+  else
+    AGENT_BASE=
+    if [ "${target#integration:}" = "$target" ] && [ -f "$O/workers/$target/meta" ]; then
+      AGENT_BASE=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
+    fi
+    case "$AGENT_BASE" in
+      tl/one-head) AGENT_REF=refs/heads/tl/one-head ;;
+      origin/*) AGENT_REF="refs/remotes/$AGENT_BASE" ;;
+      tl/*) AGENT_REF="refs/heads/$AGENT_BASE" ;;
+      *) AGENT_REF= ;;
+    esac
+    if [ -z "$AGENT_REF" ] || ! git -C /home/user/work/agent rev-parse --verify "$AGENT_REF^{commit}" >/dev/null 2>&1; then
+      AGENT_REF=refs/remotes/origin/staging/timeline-v2.1
+    fi
+    AGENT_SHA=$(git -C /home/user/work/agent rev-parse --verify "$AGENT_REF^{commit}") || { echo "matching Agent source unavailable for runtime target $target (base $AGENT_BASE)" >&2; exit 1; }
   fi
-  case "$AGENT_BASE" in
-    tl/one-head) AGENT_REF=refs/heads/tl/one-head ;;
-    origin/*) AGENT_REF="refs/remotes/$AGENT_BASE" ;;
-    tl/*) AGENT_REF="refs/heads/$AGENT_BASE" ;;
-    *) AGENT_REF= ;;
-  esac
-  if [ -z "$AGENT_REF" ] || ! git -C /home/user/work/agent rev-parse --verify "$AGENT_REF^{commit}" >/dev/null 2>&1; then
-    AGENT_REF=refs/remotes/origin/staging/timeline-v2.1
-  fi
-  AGENT_SHA=$(git -C /home/user/work/agent rev-parse --verify "$AGENT_REF^{commit}") || { echo "matching Agent source unavailable for runtime target $target (base $AGENT_BASE)" >&2; exit 1; }
   ASTRID_AGENT_SOURCE=/home/user/work/wt-int/agent-${AGENT_SHA:0:12}
   if [ -d "$ASTRID_AGENT_SOURCE" ]; then
     [ "$(git -C "$ASTRID_AGENT_SOURCE" rev-parse HEAD 2>/dev/null)" = "$AGENT_SHA" ] || { echo "Agent source path has the wrong commit: $ASTRID_AGENT_SOURCE" >&2; exit 1; }
