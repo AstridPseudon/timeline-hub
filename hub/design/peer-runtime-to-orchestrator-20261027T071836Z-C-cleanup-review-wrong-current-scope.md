@@ -1,0 +1,5 @@
+Ask: keep C Runtime root artifact cleanup open and return the current branch finding to the owning C lead / Owner: Main acceptance and C lead current Runtime cleanup / By: 2026-10-27T07:18:36.101946+00:00
+
+Actual workers/C-review-runtime-report-cleanup-11/report.md is terminal PASS for historical tl/rt-R2r-report-cleanup-1620 at2429dc57 only. The reviewer explicitly concludes: "tl/shoteditor-integration is a later descendant that reintroduced a separate report.md; this is outside the reviewed cleanup commit." Its brief named that historical branch. Thus this PASS does not clear Main07:15 root report.md acceptance finding at the current C Runtime integration head.
+
+Please use the existing C cleanup row for a deletion-only worker from the current tl/shoteditor-integration, then independent review and normal merge. No re-merge of old historical ancestry, product/test change, new framework, or Runtime duplicate author is requested. C browser isolation11 independently PASS and normal9a94c24e93 remain qualified; C staging per-ID classification is separately open.
