@@ -178,12 +178,14 @@ appTest('C2 gallery drag into shot saves exactly one shot-local clip, reloads, a
   expect(afterChild).toHaveLength(beforeChild.length + 1);
   expect(parentContainsClip(after, row.id as string)).toBe(false);
 
-  const projectedClipId = row.id as string;
+  const occurrenceId = seed.occurrenceId;
+  const shotClipId = row.id as string;
+  const projectedClipId = `${occurrenceId}:${shotClipId}`;
   await dialog.getByRole('button', { name: 'Close', exact: true }).click();
   await expect(page.locator(`.clip-action[data-clip-id="${projectedClipId}"]`)).toHaveCount(0);
 
   const reloadedDialog = await reloadAndOpenShot(page, seed, after.parent_revision.revision_id);
-  await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${projectedClipId}"]`)).toHaveCount(1);
+  await expect(reloadedDialog.locator(`.clip-action[data-clip-id="${shotClipId}"]`)).toHaveCount(1);
   await reloadedDialog.getByRole('button', { name: 'Close', exact: true }).click();
 
   const undo = await commitFromGesture(page, async () => {
@@ -196,5 +198,5 @@ appTest('C2 gallery drag into shot saves exactly one shot-local clip, reloads, a
   expect(undone.internal_timeline_revisions).toEqual(before.internal_timeline_revisions);
 
   const undoneDialog = await reloadAndOpenShot(page, seed, undone.parent_revision.revision_id);
-  await expect(undoneDialog.locator(`.clip-action[data-clip-id="${projectedClipId}"]`)).toHaveCount(0);
+  await expect(undoneDialog.locator(`.clip-action[data-clip-id="${shotClipId}"]`)).toHaveCount(0);
 });
