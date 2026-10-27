@@ -58,6 +58,46 @@ function withOccurrenceRevision(
 }
 
 describe('canonical shot-composition downstream projection', () => {
+  it('keeps overlapping missing-row occurrences in occurrence order within one fallback block', () => {
+    const composition = {
+      ...prepared,
+      occurrences: prepared.occurrences.slice(0, 2).map((occurrence, index) => ({
+        ...occurrence, atMs: 0, durationMs: 2000, trackId: `missing-row-${index}`,
+      })),
+    };
+    const projection = projectCanonicalComposition(composition, {
+      output: { resolution: '1920x1080', fps: 30, file: 'fallback.mp4' },
+      tracks: [{ id: 'parent', kind: 'visual', label: 'Parent' }],
+      clips: [], registry: {},
+    });
+    expect(projection.config.tracks.filter((track) => track.kind === 'visual').map((track) => track.id))
+      .toEqual(['occ-1~video', 'occ-2~video', 'parent']);
+    expect(projection.warnings).toEqual(composition.occurrences.map((occurrence) => ({
+      severity: 'warning', code: 'timeline-patch/target-not-found',
+      message: `shot-layering: track "${occurrence.trackId}" not found — placing occurrence "${occurrence.occurrenceId}" at top of stack`,
+    })));
+    expect(projection.config.clips.filter((clip) => clip.track.endsWith('~video')).map((clip) => clip.at))
+      .toEqual([0, 0]);
+  });
+
+  it('uses a child visual declaration over an inherited parent audio declaration with the same ID', () => {
+    const child = withOccurrenceRevision(prepared, 0, (timeline) => ({
+      ...timeline,
+      tracks: [{ id: 'video', kind: 'visual', label: 'Child' }],
+      clips: [{ id: 'collision', asset: 'alpha-image', clipType: 'media', track: 'video', at: 0, from: 0, to: 2 }],
+    }));
+    const composition = { ...child, occurrences: [{
+      ...child.occurrences[0], sourceOffsetMs: 350, speed: 1.5,
+    }] };
+    const projection = projectCanonicalComposition(composition, {
+      output: { resolution: '1920x1080', fps: 30, file: 'collision.mp4' },
+      tracks: [{ id: 'video', kind: 'audio', label: 'Parent' }], clips: [], registry: {},
+    });
+    expect(projection.config.clips[0]).toMatchObject({
+      id: 'occ-1:collision', track: 'occ-1~video', from: 0.35, to: 2.35, speed: 1.5,
+    });
+  });
+
   it.each([
     { transform: { opacity: 0.5 } },
     { transform: { x: 0 } },

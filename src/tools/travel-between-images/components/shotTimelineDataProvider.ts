@@ -26,6 +26,7 @@ import type {
 import type { ShotCompositionContract } from '@/tools/video-editor/data/shotComposition.ts';
 import { StaleWriteError } from '@/tools/video-editor/data/shotComposition.ts';
 import { projectCanonicalComposition } from '@/tools/video-editor/data/shotCompositionProjection.ts';
+import { projectOutputTimelineConfig } from '@/tools/video-editor/data/timelineOutputProjection.ts';
 import { recordShotTimelinePhase } from '@/tools/video-editor/lib/shot-timeline-timing.ts';
 import {
   enqueueCanonicalShotPublish,
@@ -128,6 +129,7 @@ function createShotTimelineConfig(config: ResolvedTimelineConfig): TimelineConfi
     output: config.output,
     clips: config.clips,
     tracks: config.tracks,
+    ...(config.effects !== undefined ? { effects: config.effects } : {}),
     ...(config.theme ? { theme: config.theme } : {}),
     ...(config.theme_overrides ? { theme_overrides: config.theme_overrides } : {}),
     ...(config.generation_defaults ? { generation_defaults: config.generation_defaults } : {}),
@@ -256,6 +258,7 @@ function createShotLocalTimelineConfig(
     output: fallback.output,
     clips,
     tracks,
+    ...(timeline.effects !== undefined ? { effects: timeline.effects as TimelineConfig['effects'] } : {}),
     ...(timeline.theme !== undefined ? { theme: timeline.theme as TimelineConfig['theme'] } : {}),
     ...(timeline.theme_overrides !== undefined ? { theme_overrides: timeline.theme_overrides as TimelineConfig['theme_overrides'] } : {}),
     ...(timeline.generation_defaults !== undefined ? { generation_defaults: timeline.generation_defaults as TimelineConfig['generation_defaults'] } : {}),
@@ -363,6 +366,20 @@ function stripProjectedClipFields(
     ...(authoredApp && Object.keys(authoredApp).length > 0 ? { app: authoredApp } : {}),
   };
 }
+/** Render child Source visuals and inherited effects without changing authored editor data. */
+export function projectShotTimelineRenderConfig(config: ResolvedTimelineConfig): ResolvedTimelineConfig {
+  const { effects, ...local } = config;
+  return projectOutputTimelineConfig({
+    ...local,
+    tracks: config.tracks.map((track) => track.kind !== 'audio' && track.role === 'source'
+      ? { ...track, role: 'output' }
+      : track),
+    clips: config.clips.map((clip) => Array.isArray(effects) && effects.length > 0
+      ? { ...clip, effects: [...(Array.isArray(clip.effects) ? clip.effects : []), ...effects] }
+      : clip),
+  }).config;
+}
+
 /** Build first-render editor data from the already-resolved parent projection. */
 export function createShotTimelineInitialData(
   config: ResolvedTimelineConfig,
@@ -383,6 +400,7 @@ export function createShotTimelineInitialData(
   const resolvedConfig = composition && occurrenceId
     ? {
         ...config,
+        ...timelineConfig,
         clips: timelineConfig.clips.map((clip) => ({
           ...clip,
           ...(clip.asset && config.registry[clip.asset]
@@ -463,6 +481,7 @@ function createCanonicalTimeline(
   return {
     tracks: authoredTracks(config.tracks ?? [], composition, occurrenceId),
     clips,
+    ...(config.effects !== undefined ? { effects: config.effects } : {}),
     ...(config.theme ? { theme: config.theme } : {}),
     ...(config.theme_overrides ? { theme_overrides: config.theme_overrides } : {}),
     ...(config.generation_defaults ? { generation_defaults: config.generation_defaults } : {}),
@@ -1605,8 +1624,10 @@ export function createShotTimelineDataProvider(
           occurrenceId,
           canonicalTimelineConfig,
         );
+        const projected = projectCanonicalComposition({ ...latest, occurrences: [occurrence] },
+          { ...config, clips: [], tracks: [], registry: {} }, { clampToOccurrenceDuration: false }).config;
         registry = {
-          assets: Object.fromEntries(Object.entries(config.registry).map(([assetId, entry]) => ([assetId, {
+          assets: Object.fromEntries(Object.entries(projected.registry).map(([assetId, entry]) => ([assetId, {
             ...entry,
             file: entry.file ?? entry.media_id ?? entry.url,
           }]))),

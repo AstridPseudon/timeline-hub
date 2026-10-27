@@ -407,7 +407,10 @@ function isAudioClip(
   const childTrack = (Array.isArray(timeline.tracks) ? timeline.tracks : [])
     .map(record)
     .find((track) => track?.id === trackId);
-  const track = parentTrack ?? childTrack;
+  // A declared child visual belongs to its occurrence block even if an
+  // inherited audio lane uses the same ID. Keep inherited lane precedence
+  // for the other kinds, as required by the shared playback fixture.
+  const track = childTrack?.kind === 'visual' ? childTrack : parentTrack ?? childTrack;
   if (track?.kind === 'audio' || track?.kind === 'visual') return track.kind === 'audio';
 
   const clipType = text(rawClip.clip_type) ?? text(rawClip.clipType) ?? text(rawClip.type);
