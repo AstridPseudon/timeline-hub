@@ -2,9 +2,9 @@
 
 Moved unchanged from the rendering skill so the [editing skill](../SKILL.md) stays
 short. The editing skill owns every timeline write; this page covers reading
-frames, rendering, timeline transfer, worlds and shot narration. Where an older
-paragraph here mentions `TimelineSession` or `session.move`, those still work,
-but `tl.commit(fn)` in the skill is the one taught edit path.
+frames, rendering, timeline transfer, worlds and shot narration. Make every
+timeline edit with `tl.commit` or the direct CLI as the editing skill teaches;
+`TimelineSession` is a legacy low-level layer, not an edit path to use here.
 
 ## Timeline transfer
 
@@ -161,23 +161,15 @@ shared shot metadata.
 
 For a repeatable read-only pass, use canonical `timelines show`/
 `open_composition` to pin the current head and enumerate occurrence identities.
-For a supported mutation, open a `TimelineSession` and submit a registered
-command; do not turn the projection into a whole-candidate writer:
+For a change, use `tl.commit` from the [editing skill](../SKILL.md); do not
+turn the projection into a whole-candidate writer:
 
 ```python
-from astrid.sdk.timeline.sync import TimelineSession
-
 shown = client.timelines.open_composition(project, timeline, detail=True)
 assert shown.ok
-session = TimelineSession.open(project, timeline, client=client)
-receipt = session.move("parent/clip:opening", 1.5, idempotency_key="move-42")
 ```
 
-The session captures original guards, persists the exact request and retry
-identity in its real outbox, and leaves newer local commands pending until the
-first flight is acknowledged. On a stale-head or unsupported-command error,
-retain the draft/outbox and report the limitation. For a report-only pass, walk
-the ordered occurrences in `shown.data`:
+For a report-only pass, walk the ordered occurrences in `shown.data`:
 
 ```python
 report = []
@@ -520,9 +512,8 @@ python3 -m astrid timelines script <timeline> --project <project> --json
 python3 -m astrid timelines script <timeline> --project <project> --revision <parent-revision> --json
 ```
 
-For a supported edit, publish captured commands through the native session/CLI
-and its existing durable outbox, or flush a settled proposal through its
-requester. If this intent is not command-backed, refuse visibly and retain the
+For a supported edit, commit through `tl.commit` or the direct CLI, which keep
+the durable outbox, or flush a settled proposal through its requester. If this intent is not command-backed, refuse visibly and retain the
 draft rather than automatically falling back to checkout/CAS publication.
 
 `client.timelines.script(project, timeline, revision_id=None, occurrence=None)`

@@ -23,7 +23,8 @@ timelines status TL --project P   ·   timelines undo TL --project P
 ```
 `show`, `lint`, `diff`, `find` and `words` read the working copy; `--published` reads the live one.
 `timelines find TL "the conclusion"` (also `--text "Astrid."`, `--asset ROCKET`, `--line w23c`, `--cut c30`) → addresses and times.
-`timelines lines TL` (`--line w23c`: one in full) · `timelines words TL Astrid --beats` · `show --as sheet --detail`
+`timelines lines TL` (`--line w23c`: one in full) · `timelines words TL Astrid --beats` (the beats near that word; there is
+no full beat list) · `show --as sheet --detail`
 prints long values (`inset=`, `lines=`) as editable JSON instead of `…`. The sheet's element column drops `am-`
 (`footage` = `am-footage`; both are accepted).
 **Make one timeline equal another** (a finished duplicate → the film) remains a
@@ -81,7 +82,7 @@ Units are the element's own declaration (element.yaml `metadata.units`): positio
 where the connector ends. The connector leaves the card's left or right edge, whichever faces the anchor.
 
 Literal numeric moves and source trims through the CLI above, registered
-commands through `timeline.open(...).commit(...)`, and supported cut-sheet rows
+commands through `Timeline.open(...).commit(...)`, and supported cut-sheet rows
 through `timelines apply` are the Runtime write paths. Other edit forms retain
 the detached draft workflow. They change the local copy until an explicit
 document commit accepts them.
@@ -175,6 +176,7 @@ shows only lint that is new since checkout (`--all` for everything).
 > - No fade-in or entrance on our elements yet. The cookbook's `effects.fade_in` applies only to legacy `local` elements.
 > - Extending the film's content does not extend its rendered length yet, and `check` still says VALID. Look at the
 >   new end with `check TL --at <end>`: "out of range" means it does not render.
-> - With `plays-on`, the music bed does not follow a ripple (see above).
+> - A ripple (`insert_time`, `ripple_delete`, `close_gap`, each with `music=`) under `plays_on` leaves the bed exactly
+>   where it was, neither cut nor moved, so what follows moves against its beats; the default `keep_end` cuts it at a bar.
 > - `check --at` and `--verify` can be slow or fail ("frame owner closed"). Retry once; if it fails again, say so
 >   and do not publish a change you have not seen.
