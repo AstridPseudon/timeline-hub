@@ -15,6 +15,7 @@ from astrid.sdk.timeline_restructure import (
     STRUCTURE_KEY,
     _stable_id,
     assert_equivalent,
+    describe,
     differences,
     flatten,
     is_split,
@@ -277,7 +278,7 @@ def test_three_way_merge_works_on_the_stored_form(restructure_runtime):
     assert any("bed" in line for line in conflicts)  # the same film-level clip changed on both sides refuses
 
 
-def test_restructure_refuses_what_would_change_the_render():
+def test_restructure_refuses_what_would_change_the_render_after_cutting():
     flat = flat_film()
     good = split(flat)
     assert_equivalent(flat, good)
@@ -289,8 +290,84 @@ def test_restructure_refuses_what_would_change_the_render():
     short["parent"]["config"]["tracks"] = [t for t in short["parent"]["config"]["tracks"] if t["id"] != "picture"]
     assert any("track order" in line for line in differences(flat, short))
     moved = copy.deepcopy(good)
-    next(c for c in moved["parent"]["clips"] if c["id"] == "cross")["at"] = 3.6
+    cross_piece = next(c for shot in moved["shots"].values() for c in shot["internal_timeline"]["clips"]
+                       if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "cross")
+    cross_piece["at"] += 0.1
     assert differences(flat, moved)
+
+
+def test_renderer_equivalence_detects_group_order_inversion_and_piece_edits():
+    flat = flat_film()
+    good = split(flat)
+    second = good["shots"][good["placements"][1]["shot_id"]]["internal_timeline"]
+    second["tracks"] = list(reversed(second["tracks"]))
+    assert any("track order" in line for line in differences(flat, good))
+
+    good = split(flat)
+    second = good["shots"][good["placements"][1]["shot_id"]]["internal_timeline"]
+    next(track for track in second["tracks"] if track["id"] == "sprite")["opacity"] = 0.5
+    assert differences(flat, good)
+
+    good = split(flat)
+    piece = next(c for shot in good["shots"].values() for c in shot["internal_timeline"]["clips"]
+                 if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "cross"
+                 and c["app"]["astrid"]["timeline_restructure_piece"]["index"] == 1)
+    piece["asset"] = "changed-source"
+    assert differences(flat, good)
+
+
+def test_renderer_equivalence_detects_missing_piece_and_changed_source_offset():
+    flat = flat_film()
+    clips = flat["shots"]["film"]["internal_timeline"]["clips"]
+    clips.append({"id": "media-cross", "clipType": "media", "track": "plate", "asset": "P",
+                  "at": 3.5, "from": 5.0, "to": 9.0, "hold": 4.0, "speed": 1.5})
+    good = split(flat)
+    second_shot = good["shots"][good["placements"][1]["shot_id"]]["internal_timeline"]
+    second_piece = next(c for c in second_shot["clips"]
+                        if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "media-cross")
+    second_piece["from"] += 0.25
+    assert differences(flat, good)
+
+    good = split(flat)
+    second_shot = good["shots"][good["placements"][1]["shot_id"]]["internal_timeline"]
+    second_shot["clips"] = [c for c in second_shot["clips"]
+                            if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") != "media-cross"]
+    assert differences(flat, good)
+
+    good = split(flat)
+    second_shot = good["shots"][good["placements"][1]["shot_id"]]["internal_timeline"]
+    second_piece = next(c for c in second_shot["clips"]
+                        if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "media-cross")
+    second_piece["at"] += 0.1
+    assert differences(flat, good)
+
+
+def test_stills_text_and_unsupported_elements_route_without_losing_names():
+    flat = flat_film()
+    clips = flat["shots"]["film"]["internal_timeline"]["clips"]
+    clips.extend([
+        {"id": "still-cross", "clipType": "image", "track": "plate", "asset": "P", "at": 3.5,
+         "from": 5.0, "to": 6.0, "hold": 1.0, "params": {"fit": "cover"}},
+        {"id": "text-cross", "clipType": "text", "track": "type", "at": 3.5,
+         "hold": 1.0, "params": {"text": "hello"}},
+        {"id": "footage-cross", "name": "Footage", "clipType": "am-footage", "track": "sprite",
+         "at": 3.5, "hold": 1.0, "params": {"in": 4, "zoom": 2}},
+        {"id": "type-cross", "name": "Title", "clipType": "am-type", "track": "type",
+         "at": 3.5, "hold": 1.0, "params": {"text": "legacy", "keyframes": [{"frame": 1}] }},
+    ])
+    stored = split(flat)
+    chapter_clips = [c for shot in stored["shots"].values() for c in shot["internal_timeline"]["clips"]]
+    sources = {c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id")
+               for c in chapter_clips}
+    assert {"still-cross", "text-cross"} <= sources
+    still_pieces = [c for c in chapter_clips
+                    if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "still-cross"]
+    assert [(c["from"], c["to"]) for c in still_pieces] == [(5.0, 5.5), (5.0, 5.5)]
+    assert {c["id"] for c in stored["parent"]["clips"]} == {"bed", "footage-cross", "type-cross"}
+    report = "\n".join(describe(flat))
+    assert "footage-cross (Footage) [am-footage]" in report
+    assert "type-cross (Title) [am-type]" in report
+    assert differences(flat, stored)  # the specified -over fallback changes active layer order in this fixture
 
 
 def test_walls_come_from_the_chapter_labels():
@@ -762,6 +839,7 @@ def test_flatten_takes_the_films_track_definition_when_a_shot_copy_has_another_l
 def shared_asset_film(digest: str):
     """A chapter film whose shots carry handle and source on asset R; the film-level copy of R lacks them."""
     stored = published(split(flat_film()))
+    stored["parent"]["registry"].setdefault("assets", {})["R"] = {"media_id": "m-r"}
     for shot in stored["shots"].values():
         held = shot["internal_timeline"]["registry"]["assets"]
         if "R" in held:
@@ -967,7 +1045,7 @@ def test_restructure_drops_the_label_list_after_cutting():
     assert [c["name"] for c in intent.chapters(published(stored))] == ["01 ONE", "02 TWO", "03 THREE"]
 
 
-def test_split_routes_a_new_clip_by_placement_and_a_wall_crosser_to_the_film():
+def test_split_routes_new_clips_by_placement_and_cuts_wall_crossers_into_shots():
     stored = published(split(flat_film()))
     tl = Checkout(stored)
     doc = tl.bundle
@@ -978,8 +1056,12 @@ def test_split_routes_a_new_clip_by_placement_and_a_wall_crosser_to_the_film():
     held = {out["shots"][r["shot_id"]]["payload"]["name"]: {c["id"] for c in out["shots"][r["shot_id"]]["internal_timeline"]["clips"]}
             for r in out["placements"]}
     assert "added" in held["02 TWO"]
-    assert "wide" not in set().union(*held.values())
-    assert "wide" in {c["id"] for c in out["parent"]["clips"]}
+    wide_pieces = [c for shot in out["shots"].values() for c in shot["internal_timeline"]["clips"]
+                   if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == "wide"]
+    assert len(wide_pieces) == 2
+    assert [c["app"]["astrid"]["timeline_restructure_piece"]["index"] for c in wide_pieces] == [0, 1]
+    assert wide_pieces[0]["id"] == _stable_id("chapter-piece", "t", "wide", "02 TWO", 4000, 0)
+    assert "wide" not in {c["id"] for c in out["parent"]["clips"]}
     assert intent.film_chapter_labels(out) == []
 
 
