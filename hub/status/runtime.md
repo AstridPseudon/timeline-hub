@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T03:13:15Z | dispatcher heartbeat 7s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 7m -->
-# runtime board, 2026-10-27T03:05:39.993254+00:00
+<!-- main | 2026-10-27T03:17:48Z | dispatcher heartbeat 20s | live 0 (sol 0, luna 0, other 0) | busy30 0 | status age 0m -->
+# runtime board, 2026-10-27T03:17:43.326826+00:00
 
 F-final delivered. Main records delivery to the owner; independent artifact PASS remains qualified at its documented scope.
 
@@ -108,9 +108,9 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | C2 save and fork | Retain qualified provider persistence proof | C Luna and independent Luna | C App provider and review | merged | C proof8 and independent review8 | Independent PASS; central58 PASS. Exact-one-clip and shared-shot fork covered. Browser drag/reload/undo remains unverified. | App 98784a1d |
 
-| C2 browser journey | Receive real browser behavior proof | C Luna and independent Luna | Central Chromium startup | blocked:main | C author8 and review8 terminal | Spec sound and collection1; Vite heap retry builds, Chromium SIGTRAP before body. [Evidence](rounds/20261027T025902Z-pass.json). | App 1d4ebbb55b |
+| C2 browser journey | Receive real browser behavior proof | C Luna and Main Sol | Main render repair | blocked:main | diag-renderlane-0310; C spec and review8 | Spec sound; Chromium SIGTRAP before body. Main03:12 names shared render/browser repair. Behavior remains NOTRUN. | App 1d4ebbb55b |
 
-| B5 audit receiving | Receive finite B correction findings | Main and B Luna | Original audit report | review | diag-audit-B5-0212; existing B/C leads | UNSOUND: projected clip save fields and App/Agent role mismatch. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T021520Z-B5-audit-terminal-UNSOUND.md). | No Runtime change |
+| B5 audit receiving | Receive B audit corrections | B Sol and Luna | Main03:12 audit direction | doing | B-T4-role-parity-app-6; B role Agent and Runtime6 | App fix running; Agent and Runtime authors exit0, B independent reviews owed. Original UNSOUND findings retained. | B project branches |
 
 | H one head | Retain later consolidation gate | Main and H Luna manager | A B C accepted and Main START | gated:A-B-C | No Runtime worker | [Runbook section 1c](../../followups/leads/RUNBOOK.md). Combines owner pins and A B C; independent reviews and full suites precede acceptance. | Later phase |
 
@@ -122,11 +122,11 @@ F-final delivered. Main records delivery to the owner; independent artifact PASS
 
 | Follow-up ZIP | Retain final pipeline delivery gate | Main | P accepted | gated:P | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). One final archive against owner pins after P acceptance. Prior delivered archive remains unchanged. | Later phase |
 
-| A stand-in environment | Receive central render blocker | Main kit and A Luna | Real renderer and local preview | blocked:main | Main kit allocator; A review r8 PASS | A author stopped before render on Runtime import and environment errors. [Main handoff](../../design/peer-runtime-to-orchestrator-20261027T022524Z-standin-environment-blocker.md). | No render or parity proof |
+| A stand-in environment | Receive central render repair | Main Sol and A Luna | Main03:12 kit assignment | blocked:main | diag-renderlane-0310 | Shared A/B render and C2 browser repair started03:09. Real preview/export parity remains unmeasured. | No render proof |
 
-Blockers: Main owns A/B render prerequisites, C2 Chromium startup and B5 audit corrections. C owns App B-parent ancestry and the merged browser spec; Main owns the browser environment. C3 synthetic timing wait is clear. D130 holds.
+Blockers: Main diag-renderlane-0310 owns A/B renderer and C2 browser prerequisites. B lead6 owns audit corrections and independent reviews. C App B-parent ancestry remains absent. C3 is closed at step1; no optimization wait. D130 holds.
 Next ready: None for the old Runtime lane. C0, U1, R2r, R5 and P5 retain their completed evidence. New-phase tasks belong to leads A, B and C under Main. H, D and P remain gated by recorded acceptance and START markers; no duplicate dispatch.
-live 0 / cap 6; ready-undispatched 0. Free 6289559552 bytes. All 36 retained Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Follow-up work stays with existing A/B/C leads.
+live 0 / cap 6; ready-undispatched 0. Free 5206810624 bytes. All 36 retained Runtime trees remain 31 KEEP or 5 dirty; no eligible recycle. Follow-up work stays with existing A/B/C leads and Main render owner.
 
 Final archive: [timeline-delivery-20261026T183845Z.zip](../../delivery/timeline-delivery-20261026T183845Z.zip), 16036421 bytes.
 SHA256: `5bf110face517d044e7d94f7476936af5eb99e76b3d33aebae0f4cea06406d9a`. Actual archive, sidecar and published receipt match.
@@ -137,4 +137,4 @@ Current tuple: Runtime 95d98f03 / Agent ec0a9f5b / App abac6c80 / Composition 63
 
 All prior own failures, original proof tuples, custody limits, protected raw KEEP data and deferred sources remain as recorded in the linked row evidence and [prior complete board](rounds/20261026T185156Z-prior-status.md). No historical proof is retargeted. Original 8912 remains cancelled while queued; 19479 remains held unstarted. Farm missing original inputs and dropped paired kit remain unchanged.
 
-Current pass: 2026-10-27T03:05:39.993254+00:00. Inbox, HEADER and owner board hashes are unchanged from 02:59. Worker census completed with no live Runtime worker; no ready Runtime task. App B-parent ancestry remains absent; Runtime ancestry passes. A/B render prerequisites, C2 Chromium startup and B5 audit findings remain with existing Main/C owners. H/D/P START markers remain absent. Guarded sweep and compact exited 0 and reclaimed nothing; sweep printed internal broken-pipe diagnostics, with no safety or permission refusal. All 31 KEEP and 5 dirty Runtime trees retained. [Pass evidence](rounds/20261027T030539Z-pass.json).
+Current pass: 2026-10-27T03:17:43.326826+00:00. Inbox and HEADER unchanged; A/B/C owner boards now include Main03:12 decisions. Main Sol diag-renderlane-0310 started03:09 for all three renderer/browser blockers. B audit correction authors are active or terminal under B lead6; B owns their independent reviews. C3 accepted at step1 with optimization later only on a real slow sample. App B-parent ancestry remains absent. H/D/P START markers absent. Runtime census2717 rows, no live Runtime worker or ready task. All36 Runtime trees remain31 KEEP or5 dirty; no eligible recycle. Guarded maintenance earlier this round reclaimed0; no new refusal. [Pass evidence](rounds/20261027T031743Z-pass.json).

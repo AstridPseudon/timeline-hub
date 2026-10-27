@@ -106,7 +106,13 @@ if [ -z "$RUN" ]; then
   EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
   for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
   [ -n "$EXT" ] && EXT=$(for o in agent runtime app composition; do [ $o = $repo ] || echo "$o=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null)"; done | tr '\n' ' ')
-  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+  KIT_KEY=
+  case "$suite" in browser-toolchain|browser-journey|render-proof|preview-vs-export|real-pack-host-integration)
+    KIT_KEY=$(sha256sum "$SELF_DIR/renderlane.py" "$SELF_DIR/renderlane-capture.mjs" | sha256sum)
+    KIT_KEY+=$(for dependency in agent runtime; do git -C /home/user/work/$dependency rev-parse HEAD; done)
+    ;;
+  esac
+  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT${KIT_KEY:+ $KIT_KEY}" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
   if [ $nocache = 0 ] && [ -f $C/$KEY ] && SRC=$O/tests/$(cat $C/$KEY) && [ -f $SRC/summary ]; then
     cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
     basename $SRC > $D/cached_from; cp $SRC/status $D/status; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
@@ -354,7 +360,7 @@ case $repo in
     for module in "$SHARED_NM"/.[!.]* "$SHARED_NM"/*; do
       [ -e "$module" ] || continue
       name=$(basename "$module")
-      case "$name" in .vite|.cache) continue;; esac
+      case "$name" in .vite|.vite-temp|.cache) continue;; esac
       if [[ $name = @* && -d $module ]]; then
         mkdir -p "$SNAP/node_modules/$name"
         for scoped in "$module"/.[!.]* "$module"/*; do
@@ -369,6 +375,7 @@ case $repo in
     COMPOSITION_ARCHIVE=$(sed -n 's/.*"@banodoco\/timeline-composition": "file:\([^"]*\)".*/\1/p' "$SNAP/package.json")
     [ -n "$COMPOSITION_ARCHIVE" ] && [ -f "$SNAP/$COMPOSITION_ARCHIVE" ] || bad "staging Composition archive missing"
     mkdir -p "$SNAP/node_modules/@banodoco/timeline-composition"
+    [ "$(realpath "$SNAP/node_modules/@banodoco/timeline-composition")" = "$SNAP/node_modules/@banodoco/timeline-composition" ] || bad "Composition overlay resolves outside snapshot"
     tar -xzf "$SNAP/$COMPOSITION_ARCHIVE" --strip-components=1 -C "$SNAP/node_modules/@banodoco/timeline-composition"
     ;;
   agent)
@@ -380,7 +387,7 @@ case $repo in
     for module in "$REMOTION_NM"/.[!.]* "$REMOTION_NM"/*; do
       [ -e "$module" ] || continue
       name=$(basename "$module")
-      case "$name" in .vite|.cache) continue;; esac
+      case "$name" in .vite|.vite-temp|.cache) continue;; esac
       if [[ $name = @* && -d $module ]]; then
         mkdir -p "$SNAP/remotion/node_modules/$name"
         for scoped in "$module"/.[!.]* "$module"/*; do
@@ -395,6 +402,7 @@ case $repo in
     COMPOSITION_ARCHIVE=$(sed -n 's/.*"@banodoco\/timeline-composition": "file:\([^"]*\)".*/\1/p' "$SNAP/remotion/package.json")
     [ -n "$COMPOSITION_ARCHIVE" ] && [ -f "$SNAP/remotion/$COMPOSITION_ARCHIVE" ] || bad "staging Remotion Composition archive missing"
     mkdir -p "$SNAP/remotion/node_modules/@banodoco/timeline-composition"
+    [ "$(realpath "$SNAP/remotion/node_modules/@banodoco/timeline-composition")" = "$SNAP/remotion/node_modules/@banodoco/timeline-composition" ] || bad "Remotion Composition overlay resolves outside snapshot"
     tar -xzf "$SNAP/remotion/$COMPOSITION_ARCHIVE" --strip-components=1 -C "$SNAP/remotion/node_modules/@banodoco/timeline-composition"
     ;;
   composition) [ -e "$SNAP/node_modules" ] || ln -s "$(readlink -f "$NM")" "$SNAP/node_modules";;
