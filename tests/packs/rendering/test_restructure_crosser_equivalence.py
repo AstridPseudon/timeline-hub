@@ -11,10 +11,10 @@ from pathlib import Path
 
 import pytest
 
+import astrid.sdk.timeline_restructure as restructure
 from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.timeline.cuts import clip_duration
 from astrid.core.timeline.shot_composition_projection import project_runtime_parent_composition
-import astrid.sdk.timeline_restructure as restructure
 from astrid.sdk.timeline_restructure import _cut_clip, differences, plan, split
 from tests.sdk.test_timeline_restructure import flat_film
 
@@ -76,7 +76,8 @@ def _active_source_clip(projected, source_id, frame):
     active = [
         clip for clip in _source_clips(projected, source_id)
         if _js_round(float(clip.get("at", 0)) * FPS) <= frame
-        < _js_round((float(clip.get("at", 0)) + clip_duration(clip)) * FPS)
+        < _js_round(float(clip.get("at", 0)) * FPS)
+        + max(1, _js_round(clip_duration(clip) * FPS))
     ]
     assert len(active) == 1, (source_id, frame, active)
     return active[0]
@@ -87,7 +88,7 @@ def _node_renderer_samples(before, after, source_id):
     first = _source_clips(before, source_id)
     assert len(first) == 1
     start = _js_round(float(first[0].get("at", 0)) * FPS)
-    end = _js_round((float(first[0].get("at", 0)) + clip_duration(first[0])) * FPS)
+    end = start + max(1, _js_round(clip_duration(first[0]) * FPS))
     frames = list(range(start, end))
     cases = []
     for frame in frames:
@@ -103,7 +104,8 @@ const samples = cases.map(({side, frame, clip}) => {
   const trim = computeMediaTrim(clip, fps);
   const clipStart = Math.round(clip.at * fps);
   const sourceFrame = trim.trimBefore + Math.round((frame - clipStart) * (clip.speed ?? 1));
-  return {side, frame, sourceFrame};
+  const continuousSourcePhase = trim.trimBefore + (frame - clipStart) * (clip.speed ?? 1);
+  return {side, frame, sourceFrame, continuousSourcePhase};
 });
 process.stdout.write(JSON.stringify(samples));
 """
@@ -172,9 +174,13 @@ def test_fractional_media_trim_has_the_same_pinned_renderer_source_sample_each_f
     frames, samples = _node_renderer_samples(before, after, source["id"])
     before_samples = [row["sourceFrame"] for row in samples if row["side"] == "before"]
     after_samples = [row["sourceFrame"] for row in samples if row["side"] == "after"]
+    before_phases = [row["continuousSourcePhase"] for row in samples if row["side"] == "before"]
+    after_phases = [row["continuousSourcePhase"] for row in samples if row["side"] == "after"]
 
     assert len(before_samples) == len(after_samples) == len(frames)
     assert before_samples == after_samples, list(zip(frames, before_samples, after_samples))
+    assert len(before_phases) == len(after_phases) == len(frames)
+    assert before_phases == after_phases, list(zip(frames, before_phases, after_phases))
 
 
 def test_unsafe_clock_crossers_are_preserved_on_the_over_row_after_projection():

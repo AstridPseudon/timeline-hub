@@ -48,13 +48,13 @@ def test_fractional_source_frame_crosser_keeps_exact_source_sample_on_named_over
     assert over["track"] == "picture-over"
     assert source_at_global_4 == 0.75
     assert source_at_global_4 * 30 == 22.5
-    assert "renderer source sample" in report
+    assert "fractional renderer source offset" in report
     assert source["id"] in report and "[media] -> picture-over" in report
     assert not _clips_by_source(planned.chapters, source["id"])
 
 
 @pytest.mark.parametrize("case", ["entrance", "exit", "fractional-source", "fractional-original-trim",
-                                  "non-frame-aligned-start"])
+                                  "non-frame-aligned-start", "continuous-source-phase"])
 def test_differences_rejects_complete_unsafe_legacy_groups(case, monkeypatch):
     flat = flat_film()
     source = {"id": f"legacy-{case}", "clipType": "media", "track": "sprite", "asset": "R",
@@ -67,6 +67,8 @@ def test_differences_rejects_complete_unsafe_legacy_groups(case, monkeypatch):
         source.update({"from": 0.0, "to": 1.0, "speed": 1.5})
     elif case == "non-frame-aligned-start":
         source["at"] = 3.55
+    elif case == "continuous-source-phase":
+        source.update({"from": 0.25, "to": 1.75, "speed": 1.5})
     else:
         source.update({"from": 0.25, "to": 1.75, "speed": 1.5})
     flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
@@ -78,6 +80,30 @@ def test_differences_rejects_complete_unsafe_legacy_groups(case, monkeypatch):
               if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == source["id"]]
     assert len(pieces) == 2
     assert differences(flat, legacy)
+
+
+def test_fractional_piece_offset_is_rejected_even_when_rounded_samples_can_match():
+    flat = flat_film()
+    source = {"id": "fractional-piece-offset", "clipType": "media", "track": "sprite", "asset": "R",
+              "at": 3.5, "hold": 1.0, "from": 0.0, "to": 1.0, "speed": 1.5}
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
+
+    planned = plan(flat)
+    fallback = next(clip for clip in planned.film_clips if clip["id"] == source["id"])
+    assert fallback["track"].endswith("-over")
+    assert "fractional renderer source offset" in "\n".join(describe(flat))
+
+
+def test_continuous_source_phase_rejects_fractional_original_trim():
+    flat = flat_film()
+    source = {"id": "continuous-phase", "clipType": "media", "track": "sprite", "asset": "R",
+              "at": 3.5, "hold": 1.0, "from": 0.25, "to": 1.75, "speed": 1.5}
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(source)
+
+    planned = plan(flat)
+    fallback = next(clip for clip in planned.film_clips if clip["id"] == source["id"])
+    assert fallback["track"].endswith("-over")
+    assert "continuous renderer source phase" in "\n".join(describe(flat))
 
 
 def test_differences_rejects_legacy_manually_cut_fractional_media_group(monkeypatch):

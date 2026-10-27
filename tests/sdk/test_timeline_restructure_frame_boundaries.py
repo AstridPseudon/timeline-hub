@@ -9,7 +9,6 @@ from astrid.sdk import timeline_restructure
 from astrid.sdk.timeline_restructure import differences, plan, split
 from tests.sdk.test_timeline_restructure import flat_film
 
-
 FPS = 30
 
 
