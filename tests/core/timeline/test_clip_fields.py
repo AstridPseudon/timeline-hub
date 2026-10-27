@@ -216,8 +216,6 @@ def test_public_setter_serializes_canonical_package_refs_at_timeline_fps(field, 
     assert cf.describe(clip, fps=24)[field] == human
 
 
-@pytest.mark.xfail(strict=True,
-                   reason="P1 requires refusing top-level type-on because the package clip hook has no text")
 def test_public_setter_serializes_top_level_type_on_legacy_expectation():
     clip: dict = {}
     cf.write(clip, "entrance", "type-on 5f", fps=24)

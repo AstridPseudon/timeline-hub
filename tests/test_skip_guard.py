@@ -88,6 +88,23 @@ def test_an_xfail_fails_the_run(run) -> None:
     result.stdout.fnmatch_lines(["*an xfail hides the result*"])
 
 
+def test_p1_exception_is_exact_and_strict(pytester: pytest.Pytester, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("PYTHONPATH", str(REPO))
+    pytester.makeconftest(HOOKS)
+    directory = pytester.path / "tests" / "core" / "timeline"
+    directory.mkdir(parents=True)
+    test_file = directory / "test_clip_fields.py"
+    node = "test_public_setter_serializes_top_level_type_on_legacy_expectation"
+    test_file.write_text(f"def {node}():\n    assert False\n\ndef test_other():\n    pass\n")
+    result = pytester.runpytest_subprocess("-p", "no:cacheprovider", "-o", "addopts=", str(test_file))
+    assert result.ret == 0
+    result.stdout.fnmatch_lines(["*1 xfailed*"])
+    test_file.write_text(f"def {node}():\n    assert True\n\ndef test_other():\n    pass\n")
+    result = pytester.runpytest_subprocess("-p", "no:cacheprovider", "-o", "addopts=", str(test_file))
+    assert result.ret != 0
+    result.stdout.fnmatch_lines(["*XPASS(strict)*"])
+
+
 def test_a_declared_platform_skip_passes_and_is_listed_by_test_id(run) -> None:
     other = "windows_native" if sys.platform != "win32" else "posix_native"
     result = run(f"import pytest\n\n@pytest.mark.{other}\ndef test_x():\n    assert False\n\ndef test_y():\n    pass\n")

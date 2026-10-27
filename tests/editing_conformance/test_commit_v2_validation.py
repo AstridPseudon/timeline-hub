@@ -221,3 +221,46 @@ def test_unchanged_selected_known_params_use_only_consumed_retained_schema(
                                  schema_inputs=[(verified, {})])
     validate_final_candidate(value, baseline=baseline, **{
         key: options[key] for key in ("realm_id", "schema_inputs")})
+
+
+@pytest.mark.parametrize("owner", ["parent", "child"])
+@pytest.mark.parametrize("field,reference", [
+    ("entrance", {"id": "unknown-animation"}),
+    ("entrance", {"id": "fade", "params": {"ignored": 1}}),
+    ("exit", {"id": "fade", "params": {"easing": "bounce"}}),
+    ("entrance", {"id": "fade", "durationFrames": 1.5}),
+    ("transition", {"id": "unknown-transition"}),
+    ("transition", {"id": "fade", "params": {"easing": "out"}}),
+    ("transition", {"id": "fade", "align": "center"}),
+    ("transition", {"id": "fade", "incomingPolicy": "other"}),
+    ("transition", {"id": "fade", "duration": 0.001}),
+])
+def test_final_candidate_refuses_undrawable_visual_fields(owner, field, reference):
+    value = candidate()
+    timeline = value["parent"] if owner == "parent" else value["shots"]["chapter-shot"]["internal_timeline"]
+    timeline["clips"][0][field] = reference
+    if owner == "parent":
+        value["parent"]["config"]["clips"] = copy.deepcopy(timeline["clips"])
+    with pytest.raises(AuthoringBundleError):
+        validate_final_candidate(value)
+
+
+def test_scoped_animation_uses_retained_declaration_and_preserves_params(monkeypatch):
+    from astrid.sdk.timeline import validation
+
+    calls = []
+    def schema(clip, **kwargs):
+        calls.append(clip["elementRef"])
+        return {"type": "object", "properties": {"strength": {"type": "number", "maximum": 2}}}
+    monkeypatch.setattr(validation, "_schema_for_selected", schema)
+    value = candidate()
+    ref = {"id": "project-animation", "packId": "project-pack", "kind": "animation",
+           "revision": "sha256:" + "a" * 64, "params": {"strength": 1, "opaque": True}}
+    value["parent"]["clips"][0]["entrance"] = ref
+    value["parent"]["config"]["clips"] = copy.deepcopy(value["parent"]["clips"])
+    validate_final_candidate(value)
+    assert calls and value["parent"]["clips"][0]["entrance"] == ref
+    ref["params"]["strength"] = 3
+    value["parent"]["config"]["clips"] = copy.deepcopy(value["parent"]["clips"])
+    with pytest.raises(AuthoringBundleError, match="maximum|greater"):
+        validate_final_candidate(value)
