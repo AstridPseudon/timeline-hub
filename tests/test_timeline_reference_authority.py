@@ -15,6 +15,8 @@ from astrid_runtime_client import ApiError, WorkspaceClient
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, RetiredRouteError
 from runtime_protocol.service import RuntimeService
+from runtime_protocol.store import RealmStore
+from runtime_protocol.timeline_commit_store import TimelineCommitStore
 from runtime_protocol.util import now
 from precut_realm_fixture import load_precut_realm_fixture
 from test_shot_composition_runtime import restore_provider as actual_provider  # noqa: F401 (fixture)
@@ -92,6 +94,43 @@ def http_case(tmp_path, actual_provider):
                               client=WorkspaceClient(daemon.endpoint, daemon.token))
     finally:
         daemon.stop()
+
+
+def test_admission_verifies_snapshot_when_source_wal_closes(tmp_path, monkeypatch):
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    service = RuntimeService(root)
+    reader = None
+    try:
+        project = service.create_project({"slug": "snapshot", "name": "Snapshot"})["id"]
+        service.create_timeline(project, "main", idempotency_key="timeline")
+        service._timeline_commits()[0].bootstrap(project, "main", authorize=lambda: None)
+        reader = sqlite3.connect(root / "realm.sqlite3")
+        reader.execute("SELECT * FROM realm").fetchall()
+        service.close()
+        wal = root / "realm.sqlite3-wal"
+        assert wal.exists()
+        physical_version = TimelineCommitStore._physical_version
+        calls = 0
+
+        def close_source_reader(commits):
+            nonlocal calls
+            calls += 1
+            if calls == 2:
+                # The source's last reader can close after snapshot capture,
+                # including when an old SQLite handle is garbage-collected.
+                reader.close()
+                assert not wal.exists()
+            return physical_version(commits)
+
+        monkeypatch.setattr(TimelineCommitStore, "_physical_version", close_source_reader)
+        report = RealmStore.inspect_realm(root)
+        assert report["ok"], report
+        assert calls >= 2
+    finally:
+        if reader is not None:
+            reader.close()
+        service.close()
 
 
 def snapshot(service):
