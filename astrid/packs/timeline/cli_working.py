@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 import re
 import shlex
@@ -20,6 +21,66 @@ from astrid.core.cli.domain_output import print_result
 from astrid.packs.timeline.cli_common import (
     VerbError, clips_changed, draft_name, guard, need_project, working_banner, working_copy, working_copy_view,
 )
+
+
+def _connected_outbox(parsed: argparse.Namespace, project_id: str, timeline_id: str):
+    """Return this authenticated session's persisted outbox, without creating one."""
+    client = getattr(parsed, "client", None)
+    try:
+        transport = client._remote._transport
+        handshake = transport._last_handshake or {}
+        identity = {"realm_id": handshake.get("realm_id"), "actor_id": handshake.get("actor_id")}
+        if not all(isinstance(value, str) and value for value in identity.values()):
+            return None, None
+        from astrid.sdk.storage_root import resolve_runtime_data_root
+        from astrid.sdk.timeline.outbox import Outbox, request_bytes
+
+        scope = {**identity, "project_id": project_id, "timeline_id": timeline_id}
+        name = hashlib.sha256(request_bytes(scope)).hexdigest() + ".json"
+        path = resolve_runtime_data_root() / "timeline-outbox" / name
+        if not path.is_file():
+            return None, None
+        outbox = Outbox(path)
+        state = outbox.read()
+        if not isinstance(state, dict) or state.get("scope") != scope:
+            return outbox, {"status": "invalid"}
+        flight = state.get("flight")
+        if flight is not None:
+            count = flight.get("count") if isinstance(flight, Mapping) else None
+            return outbox, {
+                "status": "in_flight",
+                "outcome": "unknown",
+                "key": flight.get("key") if isinstance(flight, Mapping) else None,
+                "command_count": count,
+            }
+        if state.get("pending"):
+            return outbox, {"status": "pending", "command_count": len(state["pending"])}
+        if state.get("rejected"):
+            rejected = state["rejected"]
+            commands = rejected.get("commands") if isinstance(rejected, Mapping) else None
+            return outbox, {"status": "rejected", "command_count": len(commands or [])}
+        return outbox, {"status": "clear"}
+    except (AttributeError, OSError, ValueError, TypeError):
+        return None, None
+
+
+def _discard_recoverable_outbox(outbox) -> str:
+    """Clear local intent only when no request may already have reached Runtime."""
+    if outbox is None:
+        return "unavailable"
+    with outbox.locked():
+        state = outbox.read()
+        if not isinstance(state, dict):
+            return "invalid"
+        if state.get("flight") is not None:
+            return "in_flight"
+        changed = bool(state.get("pending") or state.get("rejected"))
+        state["pending"] = []
+        for key in ("conflict", "commit_options", "evaluation", "rationale", "media_input", "rejected"):
+            state.pop(key, None)
+        if changed:
+            outbox.write(state)
+        return "cleared" if changed else "clear"
 
 
 def _cmd_lint(parsed: argparse.Namespace) -> int:
@@ -441,14 +502,46 @@ def _print_line(tl: Any, parsed: argparse.Namespace) -> int:
 
 @guard(1)
 def _cmd_discard(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline import store
+
+    project_id, timeline_id, _head = store.resolve_ids(
+        need_project(parsed), parsed.ref, client=parsed.client
+    )
+    outbox, session_status = _connected_outbox(parsed, project_id, timeline_id)
+    # A scope mismatch is not recoverable local intent: do not let discard
+    # mutate an outbox that belongs to another realm, actor, project, or
+    # timeline.  The status path reports it as invalid instead.
+    discard_state = (
+        "invalid"
+        if session_status and session_status.get("status") == "invalid"
+        else _discard_recoverable_outbox(outbox)
+    )
+    retained_flight = discard_state == "in_flight"
+    invalid_outbox = discard_state == "invalid" or bool(
+        session_status and session_status.get("status") == "invalid"
+    )
+    cleared_session = discard_state == "cleared"
     tl, _ = working_copy(parsed, create=False)
     name = draft_name(parsed)
     if tl is None:
-        print(f"no working copy \"{name}\" to discard · next: timelines checkout {parsed.ref} --project {parsed.project}")
+        print(f"no working copy \"{name}\" to discard")
+        if cleared_session:
+            print("discarded recoverable connected-session commands")
+        if retained_flight:
+            print("connected-session request retained: its commit outcome is unknown; discard did not undo it")
+        elif invalid_outbox:
+            print("connected-session outbox could not be verified and was left untouched")
+        print(f"next: timelines checkout {parsed.ref} --project {parsed.project}")
         return 0
     dropped = len(tl.edits().get("changes") or [])
     tl.discard()
     print(f'discarded working copy "{name}" of {parsed.ref} ({clips_changed(dropped)}, dropped)')
+    if cleared_session:
+        print("discarded recoverable connected-session commands")
+    if retained_flight:
+        print("connected-session request retained: its commit outcome is unknown; discard did not undo it")
+    elif invalid_outbox:
+        print("connected-session outbox could not be verified and was left untouched")
     print(f"next: timelines checkout {parsed.ref} --project {parsed.project}")
     return 0
 
@@ -523,7 +616,10 @@ def _configure_restructure(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_discard(subparser: argparse.ArgumentParser) -> None:
-    subparser.description = "Drop a working copy (its unpublished edits) without publishing."
+    subparser.description = (
+        "Drop the working copy and recoverable unsent session intent. A request with an unknown commit outcome "
+        "is retained; discard does not undo a possibly accepted commit."
+    )
     _timeline_args(subparser, project_required=False)
     subparser.set_defaults(handler=_cmd_discard)
 

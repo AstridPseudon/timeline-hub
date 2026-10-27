@@ -119,6 +119,52 @@ def test_ordinary_edit_literal_move_retries_the_persisted_flight(command, capsys
     assert generated.calls[0] == generated.calls[1]
 
 
+def test_status_and_discard_preserve_lost_ack_flight_truthfully(command, capsys):
+    run, generated = command
+    generated.lose_ack = True
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--json") == 1
+    capsys.readouterr()
+    before = json.loads(generated.path.read_bytes())
+    assert before["flight"] is not None
+
+    assert run("status", "t", "--project", "p", "--json") == 0
+    status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
+    assert status == {
+        "status": "in_flight", "outcome": "unknown", "key": before["flight"]["key"],
+        "command_count": before["flight"]["count"],
+    }
+
+    assert run("discard", "t", "--project", "p") == 0
+    output = capsys.readouterr().out
+    assert "outcome is unknown" in output
+    assert "did not undo it" in output
+    after = json.loads(generated.path.read_bytes())
+    assert after["flight"] == before["flight"]
+    assert after["pending"] == before["pending"]
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--json") == 0
+    capsys.readouterr()
+    assert generated.calls[0] == generated.calls[1]
+
+
+def test_discard_clears_unsent_connected_commands(command, capsys):
+    run, generated = command
+    # Establish the connected outbox through the real session path, then
+    # model a command that was queued before transport was attempted.
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5",
+               "--dry-run", "--json") == 0
+    capsys.readouterr()
+    state = json.loads(generated.path.read_bytes())
+    state["pending"] = [{"op": "clip.move", "select": "parent/clip:a", "args": {"on": 5.0}}]
+    generated.path.write_text(json.dumps(state), encoding="utf-8")
+    generated.calls.clear()
+
+    assert run("discard", "t", "--project", "p") == 0
+    assert "discarded recoverable connected-session commands" in capsys.readouterr().out
+    saved = json.loads(generated.path.read_bytes())
+    assert saved["pending"] == [] and saved["flight"] is None
+    assert generated.calls == []
+
+
 def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, monkeypatch):
     run, generated = command
 

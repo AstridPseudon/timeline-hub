@@ -387,6 +387,32 @@ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(con
     assert json.loads(path.read_bytes()) == state
 
 
+def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(connected):
+    session = open_session(connected)
+    _, generated, path = connected
+    rejected = session.queue_move("parent/clip:a", 5)
+    generated.refusal = ApiError(409, "refused", "edit is not allowed",
+                                 details={"status": "refused", "reason": "policy"})
+
+    with pytest.raises(CommitConflict):
+        session.flush(idempotency_key="rejected-edit")
+
+    state = json.loads(path.read_bytes())
+    assert state["flight"] is None
+    assert state["pending"] == []
+    assert state["rejected"]["commands"] == [rejected]
+    assert state["rejected"]["flight"]["key"] == "rejected-edit"
+    assert state["rejected"]["failure"]["details"]["status"] == "refused"
+
+    # A refusal no longer wedges the session; later intent gets its own request.
+    generated.refusal = None
+    later = open_session(connected).queue_move("parent/clip:b", 7)
+    open_session(connected).flush(idempotency_key="later-edit")
+    assert json.loads(generated.calls[-1][0])["commands"] == [later]
+    assert generated.calls[-1][1] == "later-edit"
+    assert json.loads(path.read_bytes())["rejected"]["commands"] == [rejected]
+
+
 def test_preview_remains_unsent_and_acceptance_and_inverse_get_fresh_keys(connected):
     session = open_session(connected)
     _, generated, path = connected
