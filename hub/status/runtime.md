@@ -1,5 +1,5 @@
-<!-- main | 2026-10-27T17:26:19Z | dispatcher heartbeat 16s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
-# runtime board, 2026-10-27T17:25:09.795675+00:00
+<!-- main | 2026-10-27T17:36:43Z | dispatcher heartbeat 10s | live 0 (sol 0, luna 0, other 0) | busy30 2 | status age 1m -->
+# runtime board, 2026-10-27T17:35:11.015224+00:00
 
 Original Runtime delivery is complete. Main started phase H and handed B and C remaining work to its existing lead.
 
@@ -32,16 +32,16 @@ Original Runtime delivery is complete. Main started phase H and handed B and C r
 | D E10 split | Retain friendly split and undo | D Luna and lead | E3 merged | merged | D-E10-r1 | Central target 150 PASS, including function commit and immediate undo; D merged at 16:34Z. | Agent c638b4e5f6 |
 | D E11 duplicate | Retain merged duplicate wrapper | D Luna and lead | E4 merged | merged | D-E11-r1; lead-D-r2 | Related set 20 PASS, duplicate focus 2 PASS, Ruff and diff PASS. Broader unrelated restructure failures retained. | Agent13aae7ae28 |
 | D E5 qualification | Retain merged audio checks | D Sol and Luna splits | Matching central results | merged | lead-D-r2; D-E5-r2 | Central 125 PASS and matching native integration 16 PASS. Merged in E3 then E7 then E5 order. | Agent39b92c96ef |
-| D next editing | Complete media functions and flat edits | D Sol and Luna splits | E5 merged | doing | D-E6-r1 and D-E8-r2 | E8 target172 PASS, but merge held for required named Luna splits. D resumed same branch for that qualification. | Candidate work |
+| D next editing | Complete media functions and flat edits | D Sol and Lunas | E5 and E8 merged | doing | D-E6-r2; D-E9-r1; D-E8-combined-r1 | E8 merged at0505a8. E6 author ended; D owns review and merge. E9 and combined checks are active. | Agent0505a8b576 |
 | P perception | Retain perception gate | Main and P lead | D accepted and Main START | gated:D | No Runtime worker | [Pipeline](../../followups/PIPELINE.md). P START absent. | Later phase |
 | Follow-up ZIP | Retain final delivery gate | Main | P accepted | gated:P | No Runtime worker | One final archive against owner pins after P acceptance. Existing delivered archive unchanged. | Later phase |
-| OPS headroom | Keep guarded maintenance moving | Runtime manager | Supported tools and KEEP guards | doing | Runtime manager | [Guards](rounds/20261027T1722Z-guards-before.json): 182 prior markers exact. Four new markers added after startup. Three dirty trees retained. | No source change |
+| OPS headroom | Complete guarded maintenance | Runtime manager | Supported tools and KEEP guards | doing | Runtime manager | [Pass](rounds/20261027T173328Z-pass.json): 187 prior markers exact; 14 prospective additions. Sweep active; three dirty trees intact. | No source change |
 
 Blockers: H owns final comparisons and audit corrections. App final20036 PASS and10 FAIL, baseline-matched per H. Composition86 PASS. Runtime routing diagnosis cleared with historical limits.
 Blockers: H owns full qualification. Alleged Runtime source mismatch is cleared by independent routing review; historical import remains inferred, not directly captured.
 Blockers: H owns 23 Agent regressions exposed by repaired lane. D E5 and E11 merged; E6 and E8 are active. D final acceptance still needs H.
 Next ready: None for Runtime. H and D own their phase tasks; Runtime source diagnosis and independent review are complete.
-live 0 / cap 3; ready-undispatched 0. Free 3921281024 bytes. Follow-up physical disk policy applies; H and D workers separately managed.
+live 0 / cap 3; ready-undispatched 0. Free 3526381568 bytes. Follow-up physical disk policy applies; H and D workers separately managed.
 
 Full historical board and every prior row: [preserved board](rounds/20261027T114133Z-prior-status.md). All original failures, proof tuples, custody limits, refusals, raw KEEP data, D130 holds and deferred sources remain as recorded there. No historical proof is retargeted.
 
@@ -51,6 +51,6 @@ Artifact review passed within its documented scope: four fresh git am commands a
 
 Delivered tuple: Runtime95d98f03 / Agentec0a9f5b / Appabac6c80 / Composition635f4de0. App basefc24f849; other basesfa9cd546 /64197afa /67b8aa3d as receipted. Deferred App candidate remains uninstalled.
 
-Current pass: 2026-10-27T17:25:09.795675+00:00. No new Runtime inbox bytes after 1941564. Worker table has 2719 historical entries and no live rt worker. Prior source author and independent review are terminal PASS_SOURCE_MAP; routing is closed with historical import inferred, no direct module-origin capture, and failed results unchanged. H round four and D round two are active with recent logs. H owns the layer-order decision and final full qualifications. New Runtime full7448 and App full13630 are running; Agent render target9966 and D E8 target2581 are running. Four missing test KEEP markers were added prospectively at17:24:44Z; no startup custody claim. All prior182 marker hashes and modes match. Normal recycle refused three dirty historical Runtime worktrees and left them intact. Sweep3 and compact-scratch are running through supported tools. No ready Runtime task, product edit, manager merge, duplicate suite, new permission refusal or P START.
+Current pass: 2026-10-27T17:35:11.015224+00:00. No new Runtime inbox bytes after1941564; header unchanged. No ready Runtime source task. H round four and D round two are alive with recent logs. D has started E9 and merged-tree checks; E6 author ended and stays with D for qualification and merge. H owns the active App and Runtime full suites and the layer-order decision. All187 prior test KEEP hashes and modes match;14 missing markers were added prospectively. Normal recycle refused the same three dirty historical Runtime trees; all are intact. Sweep is active. No product edit, manager merge, duplicate suite, safety or permission refusal, or P START. [Pass evidence](rounds/20261027T173328Z-pass.json).
 
-Round handoff: Runtime has no ready work. H and D retain sole ownership of their active phase rows. P and the follow-up ZIP remain gated. Current maintenance results will be recorded before this round ends.
+Round continuity: Runtime has no ready work. H and D retain sole ownership of their phase rows and next dispatches. P and the follow-up ZIP remain gated. Original delivered archive and all historical proof limitations are unchanged.
