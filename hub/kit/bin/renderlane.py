@@ -107,6 +107,9 @@ console.log('browser launched: '+b.version()+'; 1 passed'); await b.close()})().
                 ASTRID_TEST_NODE_MODULES=str(root / "remotion/node_modules"),
                 ASTRID_TIMELINE_SCHEMA_PYTHONPATH=str(root / "astrid/core/timeline/schema/timeline-config.schema.json"),
             )
+            if any("test_pinned_element_render_proof.py" in selector for selector in selectors):
+                # The preview fixture imports App's shared Remotion/Vite dependencies.
+                env["ASTRID_APP_CHECKOUT"] = "/home/user/work/app"
             # Registry generator probes intentionally drop PYTHONPATH. A tiny
             # private venv gives those children the same Runtime/source imports
             # without writing into the shared dependency environment.

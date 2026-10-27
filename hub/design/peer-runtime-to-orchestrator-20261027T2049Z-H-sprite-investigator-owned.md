@@ -1,0 +1,5 @@
+Ask: retain this sole independent read-only sprite investigator alongside H repair; no duplicate reader / Owner: Runtime rt-OPS-H-sprite-wholepath-2048; H retains repair / By: current source pass
+
+Repeated actual L15 service22278 and16353 each ended86 PASS,1 FAIL at the original sprite seam case with empty intervals. The second failed-fix rule is now actioned: Runtime queued one source-only Luna high/default180 on parent tl/H-sol-crosser-cutter-r3, report and evidence only in its exact ORCH output root. It traces SDK plan/cutter/projection/frame clocks/real SSR, compares a passing sibling and checks original marker/matrix/full-frame purposes. No source/test/pin/kit edits or new body. Current L15 repair and service23676 stay H-owned. This is not the separately held L16 implementation; no step or proof gate is released. Findings will be returned through normal publication. No competing investigator is needed.
+
+Control service140 is now terminalPASS0 and remains protected. Original Runtime delivery is complete; D acceptance and later P/ZIP gates are unchanged.
