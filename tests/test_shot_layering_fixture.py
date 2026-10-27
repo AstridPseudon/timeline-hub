@@ -156,6 +156,7 @@ def test_shared_fixture_groups_source_role_visual_track() -> None:
     assert "occ-vision~source-plate" in expected["track_order"]
     assert {
         "id": "occ-vision~source-plate",
+        "role": "output",
         "app": {"group": {"id": "occ-vision", "sourceTrack": "source-plate"}},
     } in expected["group_tracks"]
     assert expected["clip_tracks"][source_clip["id"]] == "occ-vision~source-plate"
