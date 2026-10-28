@@ -95,6 +95,23 @@ def _voice_file(path, *, seconds=2):
     return path
 
 
+def _sequential_births(bundle, specs):
+    """Capture each birth on the bundle the previous births produce.
+
+    A birth guards the ordered occurrence collection it observed, so a list of
+    births is valid only when each is captured against its predecessor's result.
+    """
+    from astrid.sdk.timeline.commands import execute
+    from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
+
+    commands = []
+    for spec in specs:
+        command = capture_occurrence_create(bundle, **spec)
+        commands.append(command)
+        bundle = execute(bundle, [command]).bundle
+    return commands
+
+
 @pytest.mark.parametrize("lost_ack", [False, True])
 def test_e14_twenty_real_occurrences_arrange_once_and_exact_undo(
     editing_case, tmp_path, capsys, monkeypatch, lost_ack,
@@ -420,10 +437,10 @@ def test_e14_mixed_recut_previews_then_applies_exact_literal_list_once(editing_c
     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 
     bundle = bundle_from_document(_snapshot(timeline))
-    occurrences = [capture_occurrence_create(
-        bundle, f"recut-occ-{index}", f"recut-shot-{index}", name=f"Recut shot {index}",
+    occurrences = _sequential_births(bundle, [dict(
+        occurrence_id=f"recut-occ-{index}", shot_id=f"recut-shot-{index}", name=f"Recut shot {index}",
         track="V1", on=index * 3, duration=2,
-    ) for index in range(2)]
+    ) for index in range(2)])
     history_before_occurrences = _history(client, project)
     occurrence_setup = timeline.commit(occurrences, label="Seed recut occurrences", key="e14-seed-recut-occurrences")
     assert occurrence_setup["receipt"]["receipt_id"]
@@ -540,9 +557,10 @@ def test_e14_create_with_picture_audio_content_and_fps_undoes_to_bootstrap(editi
         project, voice.read_bytes(), media_type="audio/wav", filename=voice.name,
         idempotency_key="e14-create-voice",
     )
-    assert picture_upload.get("object_id") and voice_upload.get("object_id")
-    picture_id = picture_upload["object_id"]
-    voice_id = voice_upload["object_id"]
+    # The workspace transport returns the stable {data, receipt} envelope.
+    assert picture_upload["data"].get("object_id") and voice_upload["data"].get("object_id")
+    picture_id = picture_upload["data"]["object_id"]
+    voice_id = voice_upload["data"]["object_id"]
     config = {
         "tracks": [{"id": "picture", "kind": "visual"}, {"id": "voice", "kind": "audio"}],
         "theme_overrides": {"visual": {"canvas": {"width": 640, "height": 360, "fps": 24}}},
@@ -589,10 +607,10 @@ def test_e14_duplicate_uses_complete_fresh_identity_maps_and_separate_setup_rece
     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 
     bundle = bundle_from_document(_snapshot(timeline))
-    births = [capture_occurrence_create(
-        bundle, f"duplicate-occ-{index}", f"duplicate-shot-{index}",
+    births = _sequential_births(bundle, [dict(
+        occurrence_id=f"duplicate-occ-{index}", shot_id=f"duplicate-shot-{index}",
         name=f"Duplicate shot {index}", track="V1", on=index * 3, duration=2,
-    ) for index in range(3)]
+    ) for index in range(3)])
     setup_history = _history(client, project)
     setup = timeline.commit(births, label="Seed duplicate source", key="e14-seed-duplicate")
     assert setup["receipt"]["receipt_id"]
@@ -648,10 +666,10 @@ def test_e14_duplicate_unknown_copy_retry_reuses_destination_and_receipt(
     from astrid_runtime_client import ApiError
 
     bundle = bundle_from_document(_snapshot(timeline))
-    births = [capture_occurrence_create(
-        bundle, f"retry-occ-{index}", f"retry-shot-{index}",
+    births = _sequential_births(bundle, [dict(
+        occurrence_id=f"retry-occ-{index}", shot_id=f"retry-shot-{index}",
         name=f"Retry shot {index}", track="V1", on=index * 2, duration=1,
-    ) for index in range(2)]
+    ) for index in range(2)])
     setup_history = _history(client, project)
     setup = timeline.commit(births, label="Seed duplicate retry", key="e14-seed-duplicate-retry")
     assert setup["receipt"]["receipt_id"]
@@ -701,7 +719,12 @@ def test_e14_function_conflict_reruns_but_literal_list_conflict_stays_fixed(
     from astrid.sdk.timeline.sync import CommitConflict
     from tests.editing_conformance.test_commit_runtime_m1 import open_client
 
-    peer_client = open_client(daemon, actor="e14-peer")
+    # The Runtime derives the handshake actor from the presented credential.
+    _, peer_credential = daemon.credentials.provision("e14-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="e14-peer", credential=peer_credential)
     peer = type(timeline).open(project, "film", client=peer_client, outbox_path=tmp_path / "peer.json")
     generated = client._remote._transport._generated
     original = generated.commit_timeline
