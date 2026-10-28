@@ -408,3 +408,50 @@ def test_read_only_root_context_matches_capture_without_launch(capture_host, tmp
         assert raised.value is failure
     assert host.events == ["server-enter", "stage", "server-exit"]
     assert_cleaned(host, tmp_path)
+
+
+def _occurrence_timeline(host, *occurrences):
+    host.raw["app"]["astrid_shot_composition"] = {"occurrences": list(occurrences)}
+    host.timeline_path.write_text(json.dumps(host.raw))
+
+
+@pytest.mark.parametrize("persistent", [False, True])
+def test_frame_capture_composition_reaches_occurrence_only_extent(
+    capture_host, tmp_path, persistent
+):
+    """A frame inside an occurrence window with no clips must be in range."""
+    host = capture_host
+    # The only clip ends at 3.75 s; the last placed occurrence ends at 140 s.
+    _occurrence_timeline(
+        host,
+        {"occurrence_id": "occ-00", "at": 0, "hold": 2},
+        {"occurrence_id": "occ-19", "at": 138, "hold": 2},
+    )
+    seen = []
+
+    def observe(props, frames):
+        seen.append(props.get("astridCompositionDurationInFrames"))
+
+    capture(
+        host,
+        tmp_path,
+        on_scene_props=observe,
+        frame_session=host.session if persistent else None,
+    )
+    fps = 2997 / 100
+    assert seen == [int(140 * fps + 0.5)]
+    assert seen[0] > int(3.75 * fps + 0.5)
+
+
+def test_frame_capture_keeps_clip_composition_when_clips_cover_occurrences(
+    capture_host, tmp_path
+):
+    host = capture_host
+    _occurrence_timeline(host, {"occurrence_id": "occ-00", "at": 1.25, "hold": 1})
+    seen = []
+    capture(
+        host,
+        tmp_path,
+        on_scene_props=lambda props, frames: seen.append("astridCompositionDurationInFrames" in props),
+    )
+    assert seen == [False]
