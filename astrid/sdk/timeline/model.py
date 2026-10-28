@@ -320,7 +320,7 @@ class Clip(_Suggest):
         self._tl._place_on(self, moment)
         self._tl.retime()  # its end follows its rule (until / for / its cut) right away
         cut = intent.cut_of(self.data)
-        span = self._tl._cut_spans().get(cut) if cut and not self._tl._is_picture(self) else None
+        span = self._tl._own_cut_span(self) if cut and not self._tl._is_picture(self) else None
         if span is not None:
             lo, hi = span[0], span[1] if span[1] is not None else self._tl.duration
             if not lo - 0.5 / self._tl.fps <= self.start < hi - 0.5 / self._tl.fps:
