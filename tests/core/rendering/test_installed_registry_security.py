@@ -68,7 +68,8 @@ def test_installed_generator_must_preserve_isolation(tmp_path, monkeypatch):
         runtime._settle_registries(tmp_path, {'host': {}}, sys.executable)
 
 
-def test_installed_native_readiness_context_must_match_projected_context(tmp_path, monkeypatch):
+@pytest.mark.parametrize('node', [None, '/selected/node'])
+def test_installed_native_readiness_context_must_match_projected_context(tmp_path, monkeypatch, node):
     from astrid.core.execution import generic_host as host_module
     from astrid.core.subprocess_env import _SAFE_BASE_ENV
     from tests.test_generic_host import _write_manifest
@@ -76,6 +77,9 @@ def test_installed_native_readiness_context_must_match_projected_context(tmp_pat
     monkeypatch.setenv('ASTRID_HOST_EXECUTION_PROFILE', 'installed')
     environment = {'HOME': str(tmp_path), 'LANG': 'C', 'PATH': '/usr/bin',
                    'ASTRID_HOST_EXECUTION_PROFILE': 'installed'}
+    monkeypatch.delenv('ASTRID_NODE_EXECUTABLE', raising=False)
+    if node:
+        environment['ASTRID_NODE_EXECUTABLE'] = node
     if schema_path := os.environ.get('ASTRID_TIMELINE_SCHEMA_PYTHONPATH'):
         environment['ASTRID_TIMELINE_SCHEMA_PYTHONPATH'] = schema_path
     for name in _SAFE_BASE_ENV - environment.keys():
@@ -98,6 +102,7 @@ def test_installed_native_readiness_context_must_match_projected_context(tmp_pat
     _, secrets = host._child_environment(record, tmp_path / 'attempt', readiness_worker_kind='native')
     secrets.clear()
     assert observed and observed[0] in contexts
+    assert observed[0].get('ASTRID_NODE_EXECUTABLE') == node
 
 
 @pytest.mark.parametrize('field', ['runtime_origin', 'generator_origin', 'runtime_dependency_origins'])
@@ -225,13 +230,17 @@ def test_installed_preflight_refuses_before_product_imports(tmp_path, monkeypatc
 
 
 @pytest.mark.parametrize('kind', ['native', 'command'])
-def test_installed_actual_worker_environment_matches_launch_projection(tmp_path, monkeypatch, kind):
+@pytest.mark.parametrize('node', [None, '/selected/node'])
+def test_installed_actual_worker_environment_matches_launch_projection(tmp_path, monkeypatch, kind, node):
     from astrid.core.execution import generic_host as host_module
     from astrid.core.subprocess_env import _SAFE_BASE_ENV
     from tests.test_generic_host import _write_manifest
 
     environment = {'HOME': str(tmp_path), 'LANG': 'C', 'PATH': '/usr/bin',
                    'ASTRID_HOST_EXECUTION_PROFILE': 'installed'}
+    monkeypatch.delenv('ASTRID_NODE_EXECUTABLE', raising=False)
+    if node:
+        environment['ASTRID_NODE_EXECUTABLE'] = node
     if schema_path := os.environ.get('ASTRID_TIMELINE_SCHEMA_PYTHONPATH'):
         environment['ASTRID_TIMELINE_SCHEMA_PYTHONPATH'] = schema_path
     for name in _SAFE_BASE_ENV - environment.keys():
@@ -264,6 +273,7 @@ def test_installed_actual_worker_environment_matches_launch_projection(tmp_path,
     assert len(observed) == 1
     actual = observed[0]
     candidate = projected[1 if kind == 'native' else 2]
+    assert actual.get('ASTRID_NODE_EXECUTABLE') == candidate.get('ASTRID_NODE_EXECUTABLE') == node
     assert 'PYTHONPATH' not in actual and 'ASTRID_PACKS_PATH' not in actual
     assert runtime.probe_context(environment=actual, python_executable=sys.executable) == runtime.probe_context(
         environment=candidate, python_executable=sys.executable)
