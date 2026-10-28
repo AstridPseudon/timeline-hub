@@ -15,7 +15,14 @@ E=(env -i HOME=$SB/home PATH=$(dirname "$NODE"):/usr/bin:/bin TMPDIR=/tmp XDG_CO
    ASTRID_RUNTIME_DATA_ROOT=$D ASTRID_RUNTIME_CREDENTIAL=$D/credentials/astrid.json)
 # alive = our own `run` process exists (it is the service-manager mode: the daemon lives as long as this process)
 # 21:45Z fix: the live process is "<venv>/python <venv>/astrid-runtime run ...", so match the script path anywhere (the anchored match never matched and relaunched every 60 s, breaking discovery)
-pgrep -f "$R run .*--data-root $D" >/dev/null && exit 0
+PID=$(pgrep -f "$R run .*--data-root $D" | head -1)
+# 21:52Z: a failed bootstrap by any client (CLI without ASTRID_RUNTIME_ENDPOINT) deletes the live owner's discovery.json
+# (product gap 12). Alive + discovery present = healthy; alive + discovery missing = stop it gracefully and start fresh.
+if [ -n "$PID" ]; then
+  [ -f $D/runtime/discovery.json ] && exit 0
+  echo "$(date -u +%FT%TZ) ux-runtime-host: daemon $PID alive but discovery.json missing; SIGTERM and restart" >> $LOG
+  kill -TERM $PID; for i in $(seq 1 30); do kill -0 $PID 2>/dev/null || break; sleep 1; done
+fi
 cd /tmp; echo "$(date -u +%FT%TZ) ux-runtime-host: starting $R run (data root $D)" >> $LOG
 nohup setsid "${E[@]}" $R run --profile astrid --source-manifest $PROFILE --data-root $D --door-port 39053 --json >> $LOG 2>&1 < /dev/null &
 for i in $(seq 1 60); do [ -f $D/runtime/discovery.json ] && "${E[@]}" $R status --data-root $D --json 2>/dev/null | grep -q '"ok": *true' && break; sleep 2; done
