@@ -3995,7 +3995,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
     "componentPath": "packs/astrid_motion/rendering/elements/effects/am-type/component.tsx",
     "defaults": {
       "align": "left",
-      "color": "#25241F",
+      "color": "#FAFAFA",
       "font": "display",
       "lineHeight": 0.95,
       "reveal": "slideUp",
