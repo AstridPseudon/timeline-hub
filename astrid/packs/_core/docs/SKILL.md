@@ -22,7 +22,7 @@ Choose the route by the requested result. Read only that route's guidance:
 | --- | --- |
 | Generate with the user's own ComfyUI: "my ComfyUI", "my saved workflow", local generation | [Run on your own ComfyUI](../../vibecomfy/docs/SKILL.md#run-on-your-own-comfyui) |
 | Find a project, inspect a run, or open a render | The CLI recipes below |
-| Change timing, text, layout, effects, or existing timeline clips, then publish and point the user to the editor (render only if asked) | [Timeline editing](../../rendering/docs/SKILL.md) |
+| **Edit a timeline** (clips, timing, text, layout, effects), then publish and point the user to the editor (render only if asked) | [Timeline editing](../../rendering/docs/SKILL.md) |
 | Generate images, video, or audio (including Foley); understand, assemble, compare, or publish work | [Creative work](creative-work/SKILL.md), then the relevant pack |
 | Reuse a character or other saved subject | [References](../../media/docs/references.md) |
 | Build your own reusable tool, workflow, or visual element | [Pack builder](pack-builder/SKILL.md) |
@@ -60,6 +60,8 @@ Synced skills use the absolute path of Astrid's own Python, so their
 commands work from a terminal without changing PATH.
 
 ## Start here
+
+Timeline editing skill: `astrid/packs/rendering/docs/SKILL.md` (the `timeline` package is CLI code with no skill).
 
 Before acting on a project from a terminal, run `python3 -m astrid projects current`.
 If no project is selected, ask the user which project to use. Always name the
