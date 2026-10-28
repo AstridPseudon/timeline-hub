@@ -25,6 +25,17 @@ def _key(env):
     return runtime._registry_context(env, generator=False)
 
 
+@pytest.mark.parametrize('generator', [False, True])
+def test_explicit_node_executable_is_preserved_and_changes_context(tmp_path, generator):
+    base = _env(tmp_path)
+    configured = _env(tmp_path, ASTRID_NODE_EXECUTABLE='/opt/node/bin/node')
+    context = runtime._registry_context(configured, generator=generator)
+    assert context['ASTRID_NODE_EXECUTABLE'] == '/opt/node/bin/node'
+    assert context != runtime._registry_context(base, generator=generator)
+    assert context != runtime._registry_context(
+        _env(tmp_path, ASTRID_NODE_EXECUTABLE='/other/node'), generator=generator)
+
+
 def _installed_observation(tmp_path, python):
     root = tmp_path / 'site-packages'
     astrid = root / 'astrid'
@@ -72,7 +83,8 @@ def _completed_probe_receipt():
 
 def test_installed_registry_probe_uses_selected_interpreter_and_neutral_context(tmp_path, monkeypatch):
     python = '/selected/venv/bin/python'
-    environment = _env(tmp_path, ASTRID_HOST_EXECUTION_PROFILE='installed')
+    environment = runtime._registry_context(_env(tmp_path, ASTRID_HOST_EXECUTION_PROFILE='installed',
+                                                ASTRID_NODE_EXECUTABLE='/selected/node'), generator=False)
     captured = {}
     observation = _installed_observation(tmp_path, python)
     _bind_installed_fixture(tmp_path, monkeypatch)
@@ -90,6 +102,7 @@ def test_installed_registry_probe_uses_selected_interpreter_and_neutral_context(
     assert '-I' in captured['argv']
     assert REPO_ROOT.as_posix() not in captured['argv']
     assert captured['kwargs']['cwd'] == tmp_path
+    assert captured['kwargs']['env']['ASTRID_NODE_EXECUTABLE'] == '/selected/node'
     assert 'PYTHONPATH' not in captured['kwargs']['env']
     assert 'ASTRID_PACKS_PATH' not in captured['kwargs']['env']
 
