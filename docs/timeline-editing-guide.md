@@ -1,257 +1,323 @@
-# Code-driven timeline editing
+# Timeline editing guide
 
 For cross-product ownership and the canonical path, see [Timeline architecture](architecture/timeline.md).
+The agent-facing summary is the [timeline editing skill](../astrid/packs/rendering/docs/SKILL.md);
+this guide is the longer version with worked examples. The two must agree.
 
-The default flow is **inspect → capture a command → validate/preview → commit**.
-Read the pinned Runtime head, then use a registered native command through a
-`TimelineSession` or the matching CLI command. The session captures original
-read/expect guards once, persists the exact request and retry identity in its
-real outbox, and commits through Runtime's `/v1` door. Rendering,
-visualization, and reopening the accepted closure are separate checks; a normal
-edit does not require a render.
+## The model in one paragraph
 
-If the user says **“show me the preview, then save”**, preserve that order:
-run the supported read-only visual preview for the pinned head, inspect/deliver
-its actual output, then commit the command. A dry-run command validates
-semantics but is not a visual preview. If the required preview is unavailable,
-report that and do not claim visual proof.
+A timeline is tracks of clips placed in seconds. The connected Runtime keeps
+every revision. An edit is submitted as one commit; Runtime accepts or
+refuses it as a whole; an accepted commit gets one receipt and one undo.
+Nothing ripples unless you call a ripple helper. Media files are imported
+into the project catalog by content and stay there after undo.
 
-## Accepted undo and unsent draft edits
+## One path per task
 
-Accepted history lives in Runtime. Keep the publication ID returned by a native
-command commit. Python and CLI undo send a guarded inverse through the same
-crash-safe outbox; redo reverses the **undo publication**, using its new ID:
+| Task | Path |
+|---|---|
+| One small, named change | `timelines edit` (media add, literal move, source trim) |
+| Rows of a table | `timelines show --as sheet --native`, edit, `timelines apply` |
+| Logic, loops, ripple, mixed changes | `tl.commit(fn)` |
+| Reviewed exact changes | `tl.commit(list)` from a preview |
+
+A function is intent: on a clash it is evaluated again on the newer
+timeline. A list is a decision: it is applied exactly or refused. Previewing a
+function and applying its list is one Python path; do not mix the CLI, the
+sheet and Python in one task.
+
+## Opening and reading
 
 ```python
-from astrid.sdk import timeline
+from astrid.sdk.timeline.api import CommitConflict, Timeline, TimelineEditError
 
-tl = timeline.open(project_id, timeline_ref, client=client)
-undone = tl.undo(publications=[receipt_id], idempotency_key="undo-42")
-redone = tl.redo(publications=[undone["receipt"]["receipt_id"]], idempotency_key="redo-42")
+tl = Timeline.open(project, timeline)          # configured runtime connection
+tl.clips(track="V1")                           # a filterable list
+tl.clip("intro")                               # one clip, or a refusal listing candidates
+tl.clips(asset="ROCKET")                       # by the asset key `show` prints
+tl.words(between=(10, 20))                     # spoken words with times
+tl.word("Meanwhile", n=1)
+tl.duration                                    # where the last picture ends, on any video track
+max(c.end for c in tl.clips(track="V1"))       # where V1 ends
+```
+
+`timeline` is the slug or id that `timelines list --project <project>` prints;
+never guess one from a display title. Pass a `client=` to `Timeline.open` only
+when you already hold an authenticated SDK client; never recover credentials
+from Runtime storage. Shot occurrence ids for `arrange` are
+`[p["occurrence_id"] for p in tl.bundle["placements"]]`. That list comes in
+the bundle's stored order, which is not promised to be time or editorial
+order; build the order you pass to `arrange` yourself. A placement's start is
+`at_ms`, or `placement.start_ms` when `at_ms` is absent (milliseconds), so
+time order is:
+
+```python
+def start_ms(p):
+    return p["at_ms"] if p.get("at_ms") is not None else (p.get("placement") or {}).get("start_ms", 0)
+by_time = [p["occurrence_id"] for p in sorted(tl.bundle["placements"], key=start_ms)]
+```
+
+`tl.clip(name)` matches a clip id or id prefix, an address, a layer name, an
+asset key, an element id or on-screen text. When several clips match, it
+refuses and lists them; pass the exact id from `show`.
+
+`timelines history <timeline> --project <project> --json` lists commits newest
+first in `data.revisions`. Each row's `message` is the commit label,
+`publication_id` is the same id a commit returns as `receipt["receipt_id"]`
+(what undo takes) and `created_at` its time. To undo a known edit whose
+receipt you lost, find its label there. When `data.complete` is false,
+Runtime could list only the head.
+
+## The four owner cases
+
+These are the acceptance cases for this editing surface. Each makes one
+authored commit, and one undo restores the prior content and order.
+
+```python
+# 1. Twenty media items in time order.
+def place_twenty(t):
+    assert len(items) == 20
+    for n, (path, at, hold) in enumerate(sorted(items, key=lambda x: x[1]), 1):
+        t.add(path, at=at, hold=hold, track="V1", id=f"shot-{n:02d}")
+r = tl.commit(place_twenty, label="Place twenty files", idempotency_key="place-20")
+tl.undo(publications=[r["receipt"]["receipt_id"]])
+
+# 2. Arrange twenty real shot occurrences, back to back.
+assert len(order) == len(set(order)) == 20
+r = tl.commit(lambda t: t.arrange(order, at=0, gap=0), label="Arrange shots")
+
+# 3. New picture and audio tracks with content.
+def picture_and_voice(t):
+    t.track("V2", above="V1")
+    t.add("picture.mp4", at=0, track="V2", id="pic").trim(0, 4)
+    t.add("voice.wav", at=0, track="A2", id="vo")
+r = tl.commit(picture_and_voice, label="Picture and voice")
+
+# 4. Several kinds of change together, previewed first.
+def recut(t):
+    f = t.clip("footage").trim(1, 5).on(2)
+    t.clip("cutaway").split(8, id="cutaway-right")
+    t.clip("title").hold_for(2).on(f.end + 0.25)
+    t.track("titles").rename("Opening")
+    t.arrange(order, at=12, gap=0.5)
+    t.clip("old-intro").remove()
+    t.add_text("Chapter one", at=12, hold=3, track="titles", id="ch1")
+preview = tl.commit(recut, label="Recut", dry_run=True)
+r = tl.commit(preview["data"]["commands"], label="Recut")
+```
+
+Case 1 imports up to twenty files and case 3 imports two; the imports are
+listed in a preview and survive undo. Name the `track` for `t.add`: it
+creates a missing track once, as an audio or a picture track to match the
+verified file; an existing track of the wrong kind refuses.
+
+## Helpers
+
+- **`t.add(path, at=, hold=, track=, id=)`**: image, video or audio, at `at`
+  timeline seconds. With `hold=N` a still lasts N seconds and a video or
+  audio file plays source seconds 0 to N (read it back);
+  without `hold` a video or audio file plays its verified duration.
+  `.trim(in, out)` then sets the source window.
+- **`t.add_text(text, at=, hold=, track="titles", id=)`**: plain text at `at`
+  timeline seconds for `hold` seconds. A missing track is created as a
+  picture track; an existing track is used where it is, never moved. It takes
+  no position or style arguments. Give it an `id` and adjust it with `t.clip(id)`.
+- **`t.track(id, above=, kind=)`**, **`.rename(label)`**: create a track or
+  select the existing one (never a second), optionally place it above another,
+  and label it. Moving an existing track is not supported. `kind` is `"visual"` (default) or `"audio"`; `t.track("music",
+  kind="audio")` makes the audio track a music bed needs.
+- **`clip.on(t)`, `clip.trim(in, out)`, `clip.hold_for(s)`, `clip.end`**:
+  timing. `trim` is in source seconds and keeps the start. `hold_for` sets a
+  literal length on any clip; on video or audio the source window keeps its
+  in-point and a length the file cannot fill is refused. A plain number given
+  to `on` is always timeline seconds. On a plain timeline it also clears any
+  moment string the clip had. On a narrated film, where a clip belongs
+  to a cut, it is stored relative to that cut's start, so the clip follows
+  its cut when the narration is re-flowed; to follow a word, give a moment
+  string.
+- **`clip.split(at, id=)`**: cuts at timeline seconds through native split and
+  returns the left half, which keeps the original id; the right half gets `id`
+  (`t.clip(id)`). Requires registry-backed parent media, an interior cut, an
+  explicit source window for moving media, and no timing anchors,
+  animation or parent transitions.
+- **`clip.swap_asset(path_or_key)`**: plays another file (imported) or
+  catalog key in place; the start stays. An image or video keeps its length; an audio clip that played
+  its whole file plays the whole replacement file. Swapping a music clip that
+  has a beat grid to a file without one may refuse until a grid is attached
+  (`clip.set_beats`).
+- **`clip.set_track`, `clip.set_look`, `clip.remove`** (`remove` leaves a gap).
+- **`t.arrange(ids, at=, gap=)`**: shot occurrences in caller order, from
+  `at`, `gap` apart (both timeline seconds). It keeps
+  their ids, lengths and source windows, leaves their old slots empty,
+  refuses unknown lengths and collisions with occurrences you did not select,
+  and never ripples.
+
+## Words, beats and ripple
+
+Words are numbers you can compute with (`w.start`, `w.end`). A moment string
+(`'after "Astrid"'`, `'beat 2 after "Astrid"'`, `'"tool" in v20a #2'`) is
+stored on the clip and re-resolved when the narration moves; the grammar is
+in [the editing front door](../astrid/packs/rendering/docs/references/editing.md#moments).
+A word said more than once must name its line and number, as `timelines words
+<timeline> <word>` prints them. Beats are reachable through moment strings;
+`timelines words <timeline> <word> --beats` prints the beats near one word.
+There is no full beat list.
+
+Ripple helpers work on flat timelines inside a function, one commit and one
+undo each:
+
+```python
+tl.commit(lambda t: t.insert_time(4, 2), label="Open 2 s at 4 s")
+tl.commit(lambda t: t.ripple_delete(4, 6), label="Remove 4–6 s")
+tl.commit(lambda t: t.close_gap(before=t.word("Meanwhile"), keep=0),
+          label="Close gap before Meanwhile")
+```
+
+Clips after the point move on every track, text included; picture spanning it
+is held longer or shortened; clips wholly inside a removed window are deleted.
+Other audio spanning a removed window is split at the edit point. The **music
+bed** is any audio clip on the track whose id is `music`, or with a beat grid.
+A bed that spans the edit is not cut at the edit point; the `music=` policy
+below decides what happens to it instead. To make a bed count, put it on
+`music`: `t.add(path, track="music")` creates a missing `music` track as an
+audio track, and `t.track("music", kind="audio")` creates one for
+`clip.set_track("music")` (`kind` defaults to `"visual"`). On a flat timeline a ripple refuses to move a clip that
+carries a moment string, animation or transition. Closing a hole on one track
+only is not supported.
+
+Cutting a film to 15 seconds with `t.ripple_delete(15, t.duration)` removes
+everything after 15 s on every track, including an end card. To keep the
+card, remove only up to it, `t.ripple_delete(15, t.clip("end-card").start)`:
+the card then starts at 15 s and the film ends one card later.
+
+`insert_time`, `ripple_delete` and `close_gap` each take `music=`:
+`"keep_end"` (default) cuts a spanning bed at a nearby bar, not at the edit
+point, with a crossfade so it still ends with the film; `"plays_on"`, as in
+`t.ripple_delete(4, 6, music="plays_on")`, leaves a spanning bed where it was
+and makes what follows move against its beats. Both modes are supported
+choices. Only a bed that begins at or inside the edit is unsettled, in either
+mode (including a bed that begins at the window's start under `plays_on`).
+Do not promise such a bed stays whole; read the bed's clips back after the
+commit and tell the person what changed.
+`close_gap` measures the silence from the end of the
+previous word. Within one function each call sees the previous one, so times
+after a ripple have already moved.
+
+## Preview and apply
+
+`tl.commit(fn, dry_run=True)` returns Runtime's commands
+(`["data"]["commands"]`) and a readable diff (`["data"]["diff"]`), with
+`receipt` `None`. It may import media and lists those imports. It takes no
+key and leaves nothing waiting to be sent. Applying the returned list keeps
+its exact references, media identities and the expectations it captured; it
+never selects again. Calling the function again re-evaluates it and may
+produce something other than what was reviewed. Keep the list until the person
+answers; if it is lost, preview again and show the new diff.
+
+## Conflicts with a person
+
+Runtime merges disjoint changes from different authors. When a change
+clashes:
+
+1. a function is evaluated again on the new head, at most three evaluations
+   in total;
+2. a list is refused at once;
+3. either way, `CommitConflict` is then raised. Stop, report which edit did
+   not land, and leave the decision to the person.
+
+The refused changes are kept for review. Run `timelines discard <timeline>
+--project <project>` before the next edit or preview on that timeline.
+`CommitConflict` is a subclass of `TimelineEditError`, so an `except` for it
+must come first.
+
+Function commits are guarded broadly: any concurrent commit can count as a
+clash. Precise read tracking is a planned follow-on, so expect reruns while
+someone is actively editing.
+
+## Keys, retries, status and undo
+
+`idempotency_key=` is optional and explicit; nothing derives one for you. A
+keyed function call whose key already landed returns the original receipt
+without evaluating the function or importing anything, even if the function
+is different, so name the task and timeline in every key. After a lost reply,
+call again with the same key, or simply call again in the same session: the
+saved request is replayed byte for byte. A final refusal releases the
+saved request and any queued edits, so the next edit is not blocked.
+
+`timelines status` shows the head and any request with an unknown outcome;
+`timelines discard` drops unsent work but keeps a request that may have
+landed (it cannot undo one whose reply was lost).
+
+```python
+tl.undo(publications=[receipt_id], idempotency_key="undo-42")
+tl.redo(publications=[undo_receipt_id], idempotency_key="redo-42")
 ```
 
 ```sh
-astrid timelines undo TL --project PROJECT --commit RECEIPT_ID --idempotency-key undo-42
-astrid timelines redo TL --project PROJECT --commit UNDO_RECEIPT_ID --idempotency-key redo-42
+python3 -m astrid timelines undo TL --project PROJECT --commit RECEIPT_ID --idempotency-key undo-42
+python3 -m astrid timelines redo TL --project PROJECT --commit UNDO_RECEIPT_ID --idempotency-key redo-42
 ```
 
-Both commands accept `--dry-run`, `--idempotency-key`, and `--json`. Repeat
-`--commit` oldest first to reverse a group. Runtime checks intervening
-writes and retains the original revisions. Reopen the timeline to read the new
-head; publication undo leaves detached working copies untouched.
+Undo restores the fields and order the commit changed, so unrelated later
+edits survive. It refuses when a later commit overlaps; undo that one first.
+Repeating an undo without its key can be refused by the same guard. A refused
+commit made no revision, so "undo my last edit" means the last receipt that
+landed. Whole revision restore is a deliberate rollback, not undo.
 
-`checkout.undo()` / `redo()` without publication IDs, and the CLI equivalents
-without `--commit`, operate on unsent draft edits. Their snapshots stop at
-the draft's published base, so an old file is never used to restore accepted
-history. New unsent edits on that base remain locally undoable.
+## Series and variants
 
-The legacy cut sheet still edits a detached draft. `apply_sheet(checkout, text,
-client=client)` can recover an older sheet's basis from retained Runtime
-revisions; local snapshots and exported copies are used only within the current
-base. It does not publish or restore an accepted revision. `timelines apply`
-uses the native adapter for supported clip and track rows when connected to
-Runtime; unsupported sheets remain detached-draft operations. The remaining
-sheet three-way merge and detached-draft publication are held for migration;
-do not use them as the general timeline writer.
-
-## Shared timeline and shot contracts
-
-`@banodoco/timeline-schema` owns `TimelineConfig` and timeline clip semantics.
-Workspace Runtime's `contract/schemas/shot-composition.json` owns the outer
-shot publication envelope (revision identity, head/CAS, dependencies, and
-occurrences) and references the generated canonical config schema for nested
-timelines. The Runtime schema also marks its managed-media registry as a
-Runtime-owned extension. Consumers project these contracts into their local
-views; they do not define a competing `TimelineConfig`.
-
-Shot audio is optional. Child timeline audio clips and their bindings are the
-playback authority; a legacy aggregate `audio` descriptor may be read when
-present, but is neither required nor synthesized. Shot payloads remain open to
-unknown fields so app-specific data survives a lossless read/edit/publication
-round trip. New writes use top-level `name`; readers may fall back through
-legacy provenance/metadata names and finally the stable shot identity. Media
-kind comes from Runtime's managed-media metadata and stays `unknown` when that
-identity is missing or unrecognized; a missing kind never implies `image`.
-
-Visible clip duration is the selected source duration divided once by positive
-`speed`: `hold`, transport `duration_ms`, or source trim `to - from` supplies
-the source duration. Parent occurrence `duration_ms` caps the resulting visible
-interval. Source trims remain in source units, and the renderer owns final frame
-rounding against the shared conformance vectors.
-
-The Astrid App editor reads the exact canonical Runtime head. Empty canonical
-compositions remain canonical; a failed read shows an error and never routes to
-legacy shot groups. Legacy mode is explicit and is selected only when the
-canonical adapter is absent. Retry refreshes the pinned Runtime snapshot while
-preserving the separate local draft, and publication uses expected-head CAS.
-
-`open_composition` is a read-only inspection projection. Native editing uses a
-`TimelineSession` opened for the same project/timeline; it resolves the exact
-base head, captures original guards, and persists the in-flight request in the
-session's outbox. Whole-bundle mutation remains a held legacy capability while
-the remaining edit families migrate.
-
-## Extension data and repeatable passes
-
-The shared schema provides open maps for application data, so a timeline can
-carry a small processing ledger without a parallel document or a new schema.
-Use the narrowest scope that matches the meaning of the value:
-
-- timeline-wide structure: `candidate["parent"]["config"]["app"]["structure"]`
-- one shot/revision: `candidate["shots"][shot_id]["payload"]["metadata"]`
-- one occurrence: `candidate["placements"][i]["provenance"]`
-- one internal clip or effect: its `app` or `params` map
-
-`config.app.structure` is the schema's intentional timeline extension point. A
-direct `config.structure` field is rejected by `TimelineConfig`. Shot payloads
-are open so application metadata survives a lossless read/edit/publication
-round trip, while the common timeline schema still governs known structure and
-timing fields. The editor may not display arbitrary keys until a UI projection
-is added. Keep agent-owned values under a namespace such as
-`metadata["delivery"]`; if one shot revision is reused by two placements, put
-different delivery state under each placement's `provenance`.
-
-### Example: inspect every placement
-
-`timelines show` (or `client.timelines.open_composition`) is the canonical
-current-head read. It gives ordered occurrence IDs, names, timing, tracks, and
-the pinned head. The read projection is not editable. Keep extension maps in
-the projection only until the relevant native command exists; the current
-command registry does not make arbitrary metadata writes command-backed.
+Run one function per timeline, with one key and one receipt each:
 
 ```python
-shown = client.timelines.open_composition(project_id, timeline_ref, detail=True)
-assert shown.ok
-inspection = shown.data
-report = []
-for placement in inspection["placements"]:
-    shot = inspection["shots"][placement["shot_id"]]
-    for clip in shot["internal_timeline"].get("clips", []):
-        report.append({
-            "occurrence_id": placement["occurrence_id"],
-            "clip_id": clip["id"],
-            "track": clip.get("track"),
-            "at": clip.get("at"),
-            "from": clip.get("from"),
-            "to": clip.get("to"),
-        })
+import json
+
+def swap_sponsor(t):
+    t.clip("sponsor-card").swap_asset("sponsor-2026.png")
+
+def record(ep, **row):
+    with open("sponsor-ledger.jsonl", "a") as f:
+        f.write(json.dumps({"timeline": ep, **row}) + "\n")
+
+for ep in episodes:
+    try:
+        tl = Timeline.open(project, ep)
+        if not any(c.id == "sponsor-card" for c in tl.clips()):
+            record(ep, status="skipped")             # every outcome gets a row
+            continue
+        r = tl.commit(swap_sponsor, label="Swap sponsor", idempotency_key=f"sponsor-{ep}")
+        record(ep, status=r["data"]["status"], receipt=r["receipt"]["receipt_id"])
+    except CommitConflict as exc:                    # before the general case
+        record(ep, status="conflict", detail=str(exc))
+    except Exception as exc:                         # refused, or no verified reply
+        record(ep, status="error", detail=str(exc))
 ```
 
-For a supported native edit, use the session or its CLI adapter. `move` captures
-the original selection/read/expect guards once; the persisted flight keeps the
-same request and idempotency key across a lost acknowledgement or restart:
+Each outcome is written as it happens, so a crash loses nothing. Continue
+past a clash and report failures individually. Backoff is bounded: after
+the loop, `discard` each clashed timeline, wait 30 s or more, retry it once, then
+stop and report; never retry in a tight loop. Rerunning the loop is safe:
+landed keys return their receipts, and an unknown outcome is settled by the
+same key; discard a clashed timeline first. For "the end of V1", compute
+it from V1's clips; `t.duration` also counts V2 and titles. There is no
+transaction across timelines. A preview list belongs to one timeline: apply
+the reviewed literal list to the approved episode rather than rerunning its
+function. Run the function for the other episodes (or preview each if each
+needs approval).
 
-```python
-from astrid.sdk.timeline.sync import TimelineSession
+`tl.duplicate(as_="variant-01")` creates the destination timeline, then
+copies the head into it with fresh shot and occurrence ids while keeping the
+source's clip ids, so the same names find the same clips (runtime behavior
+read it back). It returns
+`destination_setup` and `copy_receipt` separately. The source is only read.
+Its operation key comes from the project, source and name, so a retry never
+creates a second destination. `timelines archive variant-01 --project
+<project>` removes an unwanted copy and `timelines recover variant-01
+--project <project>` restores it. The CLI form is `timelines duplicate
+<timeline> --project <project> --slug variant-01`.
 
-session = TimelineSession.open(project_id, timeline_ref, client=client)
-result = session.move("parent/clip:opening", 1.5, idempotency_key="edit-42")
-publication_id = result["receipt"]["receipt_id"]
-```
-
-For a registered command that is already captured, use `session.commit(command)`
-or `session.commit_many(commands)`. Supplied claims are verified against the
-original base; they are never refreshed from a newer head. A stale or
-unsupported command stays in the outbox for inspection rather than becoming a
-whole-document fallback.
-
-Producers do not write the timeline directly. After Runtime settles a proposal
-and returns its requester/attempt pin, the requesting client queues that exact
-proposal and flushes it through the same outbox:
-
-```python
-session.queue_proposal(settled_proposal)
-result = session.flush(idempotency_key="proposal-42", via="producer")
-```
-
-`queue_proposal` preserves the proposal's original target, guards, rationale,
-and command identities. It refuses a different project/timeline or pending
-local intent. A proposal artifact or dry run is not a publication receipt.
-
-### Renderer and skill boundary
-
-Remotion is a visual proof path, not a timeline authority. Use the pinned
-native head with `timelines visualize`; it does not turn an unsupported
-candidate mutation into a supported write. Production orchestrators remain in
-`video_editing`; canonical timeline authoring, visualization, effects, and
-Remotion rendering remain in `timeline_editing`. The source directory and
-runtime capability IDs stay `rendering` for compatibility.
-
-## Read the live timeline first
-
-Use the connected Runtime for discovery and readback. `timelines show` is the
-native structural/text operation. For declared visual placement, use its
-sibling native Runtime operation:
+## Direct CLI and the sheet
 
 ```bash
-python3 -m astrid projects current --json
-python3 -m astrid timelines show [--project <project>] [<timeline>] --json
-python3 -m astrid timelines visualize [<timeline>] [--project <project>] \
-  --mode inputs --format md --format png --occurrence <occurrence-id> --json
-```
-
-Explicit scope wins. If it is omitted, the Runtime uses the workspace current
-project and that project's `metadata.default_timeline_id`; it does not infer a
-timeline from names or list order. A missing selection is an actionable error.
-
-Pin the head returned by `show`, then carry the exact `occurrence_id` returned
-by the live response into any input view or later focused inspection. Do not replace
-it with a shot name, ordinal, fixture alias, seed-map entry, or a nearby
-occurrence. The input view describes declared placement and timing; it does
-not prove source pixels or a composited render.
-
-`timelines visualize` is the one visual-inspection operation. Its default
-`auto` mode reuses a fresh matching render or captures the requested composed
-frames from the pinned composition when no render exists. Use `--mode inputs`
-for declared inputs without any renderer work. `--mode composed` requests
-composed pixels; `--frame N` selects one exact frame, and `--revision-id ID`
-keeps historical/current authority explicit. The returned evidence reports
-whether frames were reused, freshly captured, or served from cache. Agent conclusions must come from live
-Runtime responses and returned artifacts, never from fixture/evaluator JSON,
-baseline exports, or prior result files.
-
-For Python callers, open an authenticated client and a `TimelineSession` in the
-same connected environment as the shell command. Importing the SDK does not
-connect it. Use the supplied connection explicitly; never guess credentials or
-inspect private Runtime storage to recover them. The session's default outbox
-is durable; pass `outbox_path` only when a separate, explicitly scoped outbox
-is required.
-
-```python
-from astrid.sdk.timeline.sync import TimelineSession
-
-session = TimelineSession.open(project_id, timeline_ref, client=client)
-result = session.trim(
-    "parent/clip:opening", out_s=3.0, idempotency_key="trim-opening-42"
-)
-assert result["receipt"]["command_kind"] == "timeline.commit"
-print(result["data"]["show_command"])
-```
-
-Important defaults are explicit:
-
-- Clip intervals are half-open `[start, end)` in the containing timeline.
-- Use `quantize_interval(start, end, fps, policy=...)` when boundaries are not exactly representable; it reports requested/applied frames and rejects collapsed intervals.
-- Absolute placement does not move neighbours. Ripple is never implicit.
-- If shifting following visual clips is intended, group a `clip.trim` endpoint
-  change with recorded `clip.move` commands for later siblings on that track.
-  Leave audio, voice, music, and other tracks unchanged, and state the
-  parent-duration extension policy in the command group.
-- `duplicate`, broad `replace_media`, reorder, arbitrary metadata, and
-  whole-occurrence transforms remain authoring-bundle capabilities, not
-  command-backed writes on this base. Keep those changes as a draft and report
-  the limitation; do not publish them through a whole-document writer.
-- Media import/list/open use the existing Runtime media services. Source viewing
-  and composed preview are separate, read-only actions. Unsupported renderer
-  capabilities and missing assets must be reported before commit.
-
-## CLI native edits and legacy working-copy checks
-
-Native edits use the command registry and the same guarded session/outbox as
-Python. Read the exact selector from `show` first:
-
-```bash
-python3 -m astrid timelines show <timeline> --project <project> --json
 python3 -m astrid timelines edit <timeline> --project <project> \
   --add-layer media --layer-asset /path/to/video.mp4 --on 0 --for 3 --track V1 --id opening \
   --idempotency-key first-video-42 --json
@@ -262,124 +328,92 @@ python3 -m astrid timelines edit <timeline> --project <project> \
   --idempotency-key trim-42 --json
 ```
 
-The media add works before any shot or clip exists. It imports local image/video
-files through Runtime's managed catalog and commits a parent clip, matching the
-editor's empty drop. Existing timeline asset keys and unambiguous managed media
-handles are accepted too. A new visual track and the clip share one commit.
-`--on` and `--for` (or `--until`) use literal seconds; no checkout is needed.
-The receipt records `source.via: cli`. Commit or discard an existing detached
-working copy before using this direct write. `--add-media` remains the separate
-legacy audio draft verb.
+These three forms commit directly; each is one commit and one undo.
+`parent/clip:<id>` addresses a clip by its `show` id (`parent/clip:` is
+literal); `--on` is timeline seconds and `--trim-in`/`--trim-out` are file
+seconds. A still image has no source window; change its length with `--for`.
+Add audio and text with a Python function (`--add-media` is the legacy draft
+verb). Symbolic moments and the other `edit` flags still edit a detached
+working copy; prefer a Python function for those changes.
 
-Video adds retain Runtime's verified source duration in the media registry, so
-the new clip can immediately be source-trimmed.
-Still images have no source window; adjust their hold instead of source-trimming.
+For a table of cuts, `timelines show <timeline> --as sheet --native --range
+c10..c12 > cut.sheet`, edit the rows, then `timelines apply <timeline>
+cut.sheet --idempotency-key sheet-42`. Supported clip and track rows commit
+natively; anything else is refused rather than half applied.
 
-Media adds, literal numeric moves and source trims with these forms capture original
-guards and use a caller key for a new intent. Repeating the same command with
-the same key retries the persisted request; it does not recapture against a
-newer head. `--dry-run` validates without accepting a publication. Symbolic
-moments such as `--on 'after "Astrid"'` continue through the detached editor.
+## Results and errors
 
-The remaining detached working-copy surface is retained for capabilities that
-have not migrated:
+A commit result has `data.status` (`accepted`, `merged`, `rebased`, `preview`) and
+`receipt.receipt_id`. CLI `--json` wraps the same data in
+`ok`/`data`/`error`/`receipt`/`idempotency_key`. Report the label, receipt,
+imports and how to undo.
 
-```bash
-python3 -m astrid timelines status <timeline> --project <project>
-python3 -m astrid timelines checkout <timeline> --project <project>
-python3 -m astrid timelines edit <timeline> --project <project> --replace-line vo-1 --take vo/vo-1.wav --words vo/vo-1.words.json
-python3 -m astrid timelines edit <timeline> --project <project> --insert-line vo-2 --after vo-1 --take vo/vo-2.wav --words vo/vo-2.words.json
-python3 -m astrid timelines edit <timeline> --project <project> --from-script script.json --takes vo/
-python3 -m astrid timelines check <timeline> --project <project>
-```
+Every refusal should read as a headline (what went wrong), a detail (where:
+the clip, time or receipt) and a fix (what to do next). Ambiguous names list
+their candidates. `CommitConflict` is a `TimelineEditError`; its `failure`
+carries Runtime's `message` and `details` (including `status` and the
+`current` head on a clash). Other `TimelineEditError`s mean nothing landed,
+except one saying no reply could be verified: repeat that call with its key.
+Never describe an unknown outcome as a failure, a retry as a redo, or a
+preview as reserved.
 
-`status` reads the current published head and, if present, the selected
-working copy's base, changed paths, and validation result. It does not create a
-working copy or render. There is no passive timeline-scoped latest-render
-reader in this CLI, so `status` does not claim render state. A working copy
-based on an older head is reported with `head_moved: true` and should be
-reviewed before committing; Runtime merges disjoint guarded changes and refuses
-conflicts.
+## Looking at the result
 
-`checkout --fresh` refreshes the selected working copy from the current head.
-If that copy has edits, the CLI refuses to replace it; choose a new name with
-`--draft recovered --fresh` to keep the old draft available. `edit` can also
-apply `--replace-line`, `--insert-line`, or a JSON `--from-script` using the
-existing SDK operations and local take/word-timing files. `--takes` supplies
-the take directory for script application. Repeat
-`--gap-after LINE=SECONDS` to declare multiple line gaps.
+Structure and timing can be read back; appearance cannot. Unless the person
+asks for frames or a render, give them the editor link and the times to check,
+and say the look is unverified. The link is
+`https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-id>`:
+`<project-id>` is the `project_id` that `projects show <project> --json` prints
+(`<project>` may be the slug), and `<timeline-id>` is the `timeline_id` that
+`timelines list --project <project> --json` prints. When they ask, the frame commands are in
+[render, inspect, transfer and worlds](../astrid/packs/rendering/docs/references/render-inspect-transfer.md).
+The final perception guidance (project P) will replace this section.
 
-After checking the draft, save an explicit candidate file with its original
-revision/publication pair, then commit it through Runtime:
+## Not possible yet
 
-```python
-from astrid.sdk.timeline_checkout import Checkout
-Checkout.draft("PROJECT", "TL").save("candidate.json", quiet=True)
-```
+- Public beat list (only beats near one word); a CLI word-anchor adapter.
+- Changing an existing clip's text in place (`clip.set(text=...)`): not
+  available.
+- Ripple on one track only.
+- Grouping existing clips into a shot; regrouping beyond `timelines restructure`.
+- Cross-timeline transactions and group undo.
+- Aspect-ratio variants.
+- A portable `--changes` file for the CLI.
+- Creating a timeline and its content in one public call: create with
+  `timelines create`, then add the content in one commit.
 
-```bash
-python3 -m astrid timelines commit TL --project PROJECT --file candidate.json \
-  -m "Edit timeline" --idempotency-key edit-42
-```
-
-The `edit` command also prints candidate export and commit commands. New intent
-needs a new key; retry the exact file and key after an ambiguous outcome.
-Unsupported document changes are refused by the command emitter. There is no
-separate whole-document overwrite or force path.
+## Checks and the journal
 
 ```bash
 python3 -m astrid timelines check <timeline> --project <project> --sweep
-python3 -m astrid timelines edit <timeline> --project <project> --clip <clip> --nudge-frames 1 --sweep
 python3 -m astrid timelines log <timeline> --project <project> --verify --json
 ```
 
-`check --sweep` validates a saved working copy and compares bounded samples across every cut. Sweep status is 0 for expected results, 1 for unexpected picture changes, and 2 when capture was not made; a validation failure returns 1. Without a saved working copy, `check` prints a checkout hint and does not sweep.
-
-A changed edit saves the working copy before sweeping. The sweep runs after a reflow, when more than three cuts changed, or with `--sweep`. `--no-sweep` suppresses it, including when both flags are supplied. An unchanged edit reports no change, returns 3, and does not sweep. These bounded samples do not prove every-frame or audio identity.
+`check --sweep` validates a saved working copy and compares bounded samples across every cut. Sweep status is 0 for expected results, 1 for unexpected picture changes, and 2 when capture was not made; a validation failure returns 1. Without a saved working copy, `check` prints a checkout hint and does not sweep. `--no-sweep` suppresses it. These bounded samples do not prove every-frame or audio identity.
 
 `log --verify` checks the journal hash chain. A broken chain returns 1; JSON reports `error.code: validation_error`. A missing journal is reported as “no journal yet” and returns 0. Journal queries accept `--since`, `--actor`, `--op`, `--cut`, `--clip`, and `--outcome`; a query validation error is printed to stderr and returns 2.
 
-## Preview before a native edit
+## Shared timeline and shot contracts
 
-Use the pinned read-only visualizer when a composed preview is requested, then
-commit the unchanged native command. A native `--dry-run` is useful for command
-validation, but it does not render pixels or create a publication:
+`@banodoco/timeline-schema` owns `TimelineConfig` and timeline clip semantics.
+Workspace Runtime's `contract/schemas/shot-composition.json` owns the outer
+shot publication envelope (revision identity, head/CAS, dependencies, and
+occurrences) and references the generated canonical config schema for nested
+timelines. Consumers project these contracts into their local views; they do
+not define a competing `TimelineConfig`.
 
-```bash
-python3 -m astrid timelines visualize <timeline> --project <project> \
-  --revision-id <revision> --mode composed --json
-python3 -m astrid timelines edit <timeline> --project <project> \
-  --clip parent/clip:<id> --on 1.5 --dry-run --json
-python3 -m astrid timelines edit <timeline> --project <project> \
-  --clip parent/clip:<id> --on 1.5 --idempotency-key move-42 --json
-```
-
-The detached authoring-bundle preview/render helpers remain available for
-inspection and specific render workflows. Accepted edits must carry the original
-revision/publication pair through the Runtime commit boundary; a frozen candidate
-digest alone does not supply those guards. If a required
-preview is unavailable, report that limitation before committing.
+Visible clip duration is the selected source duration divided once by positive
+`speed`: `hold`, transport `duration_ms`, or source trim `to - from` supplies
+the source duration. Parent occurrence `duration_ms` caps the resulting visible
+interval. Source trims remain in source units, and the renderer owns final frame
+rounding against the shared conformance vectors.
 
 ## Opening sources and returned artifacts
 
 Keep these identities distinct: a clip's `asset`/`asset_id` is a timeline-local
 registry alias; a managed media ID identifies a project media record; a
 `source_object_id` identifies managed bytes; an artifact handle identifies a
-returned view or run output. Resolve the selected clip through its owning
-registry or returned source metadata. Never pass a display alias to an API
-that asks for a managed ID, or construct an artifact URL from an alias/digest.
-
-For a returned, non-null source object, the connected SDK can retrieve bytes
-with `client.media.read_bytes(source_object_id)`. Read/open only the selected
-source needed for the task. Media metadata alone does not prove that its bytes
-were viewed or played. A missing source object is an explicit access gap.
-
-CLI responses can use `ok/data/error/receipt` envelopes, while bound authoring
-helpers return plain candidate/receipt data. Check success and inspect the
-documented payload level before selecting nested fields; do not assume every
-operation returns the same top-level shape. Use returned verified local paths
-with the host's file/image/audio tools when available. An `artifact://` value
-is not a filesystem path, and a host's numeric artifact reader may not accept
-Astrid's digest-based artifact handle. If no compatible opening action or
-materialized path is returned, report that access limitation; do not invent a
-URL or claim to have inspected the artifact.
+returned view or run output. Never pass a display alias to an API that asks
+for a managed ID, or construct an artifact URL from an alias/digest.
+For a returned, non-null source object, `client.media.read_bytes(source_object_id)`
+retrieves its bytes; media metadata alone does not prove that they were viewed.

@@ -10,7 +10,7 @@ import pytest
 from astrid.core.timeline.authoring_bundle import open_authoring_bundle
 from astrid.sdk.timeline import commands
 from astrid.sdk.timeline._command_state import CommandError, State
-from astrid.sdk.timeline._common import TimelineEditError
+from astrid.sdk.timeline._common import PARENT_SHOT, TimelineEditError
 from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.model import Clip
 from astrid.sdk.timeline.sync import TimelineSession
@@ -32,12 +32,26 @@ def test_friendly_split_stages_native_command_for_function_commit():
         def command(self, command, *, label):
             calls.append((copy.deepcopy(command), label))
 
-    clip = Clip(StagingTimeline(), 'parent', {'id': 'clip-a', 'clipType': 'media'})
+    clip = Clip(StagingTimeline(), PARENT_SHOT, {'id': 'clip-a', 'clipType': 'media'})
     assert clip.split(2, id='right') is clip
     assert calls == [({
         'schema_version': 1, 'op': 'clip.split', 'version': '1',
         'select': 'parent/clip:clip-a', 'args': {'on': 2, 'right_id': 'right'},
+        'created': ['parent/clip:right'],
     }, 'Split clip')]
+
+
+def test_friendly_split_refuses_shot_owned_clips():
+    calls = []
+
+    class StagingTimeline:
+        def command(self, command, *, label):
+            calls.append((command, label))
+
+    clip = Clip(StagingTimeline(), 'shot-1', {'id': 'clip-a', 'clipType': 'media'})
+    with pytest.raises(TimelineEditError, match='attached parent media clips'):
+        clip.split(2, id='right')
+    assert calls == []
 
 
 def test_parent_publish_rebases_original_capture_reloads_and_undoes(connected):

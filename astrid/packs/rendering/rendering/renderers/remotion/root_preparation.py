@@ -123,7 +123,12 @@ def _prepared_remotion_root(*args: Any, **kwargs: Any) -> Iterator[Any]:
     )
     from astrid.packs.rendering.rendering.renderers.remotion import run as backend
 
-    config = backend._serialize_timeline(args[0] if args else kwargs["timeline_path"])
+    if kwargs.get("window") is not None and kwargs.get("frame_numbers") is not None:
+        raise ValueError("native render windows cannot be combined with frame_numbers")
+    try:
+        config = backend._serialize_timeline(args[0] if args else kwargs["timeline_path"])
+    except FileNotFoundError:
+        config = {}  # the selected preparation refuses a missing timeline after its own admission checks
     require_project_snapshots(config)
     if not selections(config):
         with _prepared_remotion_root_selected(*args, **kwargs) as prepared:

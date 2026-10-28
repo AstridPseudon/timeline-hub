@@ -2,22 +2,28 @@
 import copy
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 
 import pytest
 
-from astrid.core.rendering.node_pin import resolve_pinned_node
 from astrid.core.rendering import scene_answers
+from astrid.core.rendering.node_pin import resolve_pinned_node
+from astrid.core.timeline.cuts import clip_duration
 from astrid.core.timeline.shot_composition_projection import project_shot_composition
 from astrid.packs.rendering.shared.rendering_backend import _serialize_timeline
 from astrid.sdk.timeline.units import from_canvas
+from astrid.sdk.timeline_restructure import Chapter, _cut_sprite, plan
 from tests.packs.rendering.test_scene_host import BASIS, ROOT, props
+from tests.sdk.test_timeline_restructure import flat_film
 
 
-def prepared_props(tmp_path, clips, assets=None):
+def prepared_props(tmp_path, clips, assets=None, *, duration_ms=None):
     graph = json.loads((ROOT / 'tests/fixtures/timeline/shot_composition.json').read_text())
     graph['occurrences'] = graph['occurrences'][:1]
+    if duration_ms is not None:
+        graph['occurrences'][0]['duration_ms'] = duration_ms
     revision = graph['shot_revisions'][1]
     revision['internal_timeline_revision']['timeline'] = {
         'tracks': [{'id': 'sprite', 'kind': 'visual', 'label': 'Sprites'}], 'clips': clips,
@@ -136,6 +142,90 @@ def test_sprite_registered_ssr_preserves_drawing(sprite_ssr, tmp_path):
         p = prepared_props(tmp_path, [sprite(params)], {'R': asset()})
         hashes.append([hashlib.sha256(html.encode()).hexdigest() for html in sprite_ssr(p, [0, 1, 2, 5, 6, 8, 12])])
     assert hashlib.sha256(json.dumps(hashes).encode()).hexdigest() == "963140ecb235706a8f4c0ab57f5ba8f17984bad9ed58fa4f3647a128d888ca2b"
+
+
+@pytest.mark.parametrize("host_project", ["0.0.13"], indirect=True)
+def test_cut_sprite_ssr_matches_the_original_across_each_chapter_seam(sprite_ssr, tmp_path):
+    def strip_clip_identity(html):
+        return re.sub(r' data-clip-id="[^"]*"', '', html)
+
+    cases = [(1.0, step, enter) for step in (2, 3) for enter in ("cut", "stamp", "slideIn")]
+    cases += [(speed, step, enter) for speed in (.5, 1.5, 2.0) for step in (2, 3)
+              for enter in ("cut", "stamp", "slideIn")]
+    cases = [(speed, step, enter, 3.5) for speed, step, enter in cases]
+    cases.append((1.0, 3, "cut", 109 / 30))
+    for case_index, (speed, step, enter, start) in enumerate(cases):
+        flat = flat_film()
+        params = {"x": 12, "y": 20, "flipX": False, "stepFrames": step, "frameOffset": 3,
+                  "keyframes": [{"frame": 2, "x": 14, "y": 20}, {"frame": 8, "x": 18, "y": 22},
+                                {"frame": 17, "y": 25}, {"frame": 40, "x": 24, "y": 22, "flipX": True}],
+                  "enter": enter, "slideFrom": "left", "blinkAt": [14, 15, 90],
+                  "frames": {"frameWidth": 8, "frameHeight": 16, "count": 4, "fps": 12,
+                             "sequence": [0, 2, 1, 3]},
+                  "silhouette": {"until": 100}, "outline": {"px": 1, "pulse": 6}}
+        if start != 3.5:
+            params["frameOffset"] = 0
+            params["keyframes"] = [{"frame": 10, "x": 25}, {"frame": 8, "x": 18, "y": 22},
+                                   {"frame": 2, "x": 14, "y": 20}, {"frame": 40, "x": 24, "flipX": True}]
+        original = sprite(params, at=start, hold=5.0 * speed, id=f"sprite-seam-{case_index}", speed=speed)
+        flat["shots"]["film"]["internal_timeline"]["clips"].append(original)
+        chapters = plan(flat).chapters
+        pieces = []
+        for chapter in chapters:
+            for clip in chapter.clips:
+                if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == original["id"]:
+                    piece = copy.deepcopy(clip)
+                    piece["at"] += chapter.start_ms / 1000
+                    pieces.append(piece)
+        intervals = sorted((chapter.start_ms / 1000 + clip["at"],
+                            chapter.start_ms / 1000 + clip["at"] + clip_duration(clip))
+                           for chapter in chapters for clip in chapter.clips
+                           if clip.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id") == original["id"])
+        assert intervals[0][0] == pytest.approx(start)
+        assert intervals[-1][1] == pytest.approx(start + 5)
+        assert all(left[1] == pytest.approx(right[0]) for left, right in zip(intervals, intervals[1:])), (speed, intervals)
+        before = prepared_props(tmp_path, [original], {"R": asset()}, duration_ms=10000)
+        after = prepared_props(tmp_path, pieces, {"R": asset()}, duration_ms=10000)
+        assert len(before['timeline']['clips']) == 1
+        assert len(after['timeline']['clips']) >= 2
+        frames = list(range(round(start * 30), round((start + 5) * 30)))
+        before_html = sprite_ssr(before, frames)
+        after_html = sprite_ssr(after, frames)
+        assert any('transform:scale(6)' in html for html in before_html)
+        assert any('transform:scale(6)' in html for html in after_html)
+        assert [strip_clip_identity(html) for html in before_html] == [strip_clip_identity(html) for html in after_html]
+
+
+@pytest.mark.parametrize("host_project", ["0.0.13"], indirect=True)
+def test_cut_sprite_uses_renderer_rounding_at_half_frame_seam(sprite_ssr, tmp_path):
+    original = sprite({"x": 8, "keyframes": [{"frame": 32, "x": 24}]},
+                      at=3.5, hold=1.516667, id="half-frame-seam")
+    later = _cut_sprite(original, 4.55, 5.016667, Chapter("B", 4550, 5017), piece_id="half-frame-later", fps=30)
+    later["at"] += 4.55
+
+    assert later["params"]["sourceClock"]["offsetFrames"] == 32
+    assert later["params"]["x"] == 24
+    assert later["params"]["keyframes"] == []
+
+    flat = flat_film()
+    plates = {clip["id"]: clip for clip in flat["shots"]["film"]["internal_timeline"]["clips"]
+              if clip["id"] in {"p1", "p2", "p3"}}
+    plates["p1"]["hold"] = 4.55
+    plates["p2"]["at"] = 4.55
+    plates["p2"]["hold"] = 3.45
+    flat["shots"]["film"]["internal_timeline"]["clips"].append(original)
+    planned = plan(flat)
+    assert planned is not None
+    fallback = next(clip for clip in planned.film_clips if clip["id"] == original["id"])
+    assert fallback["track"].endswith("-over")
+
+    before = prepared_props(tmp_path, [original], {"R": asset()}, duration_ms=6000)
+    after = prepared_props(tmp_path, [fallback], {"R": asset()}, duration_ms=6000)
+    frames = list(range(105, 151))
+
+    before_html = [re.sub(r' data-clip-id="[^"]*"', '', html) for html in sprite_ssr(before, frames)]
+    after_html = [re.sub(r' data-clip-id="[^"]*"', '', html) for html in sprite_ssr(after, frames)]
+    assert before_html == after_html
 
 
 def test_public_sprite_offcanvas_run_in_mixedscale_and_integrity_addresses(native_host, sprite_ssr, tmp_path):

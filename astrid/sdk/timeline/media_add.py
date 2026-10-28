@@ -14,6 +14,24 @@ from .capture import number
 from .outbox import request_bytes
 
 
+def existing_selectors(transport, project, digest):
+    """Return the one catalog variant already holding this digest, else None.
+
+    Zero or several matches return None so the caller falls back to the
+    idempotent managed import instead of guessing between variants.
+    """
+    from astrid.sdk.pagination import paged_rows
+
+    matches = []
+    for generation in paged_rows(transport.list_generations, project) or []:
+        for variant in paged_rows(transport.list_variants, generation['generation_id']) or []:
+            if variant.get('object_id') == digest:
+                matches.append({'asset': variant['variant_id'],
+                                'generation_id': generation['generation_id'],
+                                'variant_id': variant['variant_id']})
+    return matches[0] if len(matches) == 1 else None
+
+
 def _selection(session, bundle, source):
     from astrid.core.media import MediaProbeError
     from astrid.sdk.authoring_media import _metadata
@@ -66,7 +84,8 @@ def _selection(session, bundle, source):
     return _verified(transport, project, pin)
 
 
-def _placement_commands(bundle, pin, verified, *, on, duration, track, clip_id, values=None):
+def _placement_commands(bundle, pin, verified, *, on, duration, track, clip_id, values=None,
+                        asset_alias=None):
     """Build the shared native track and media placement recipe."""
     kind = verified['media_type'].split('/', 1)[0]
     if kind not in ('image', 'video', 'audio'):
@@ -96,7 +115,7 @@ def _placement_commands(bundle, pin, verified, *, on, duration, track, clip_id, 
         raise TimelineEditError(f'track {track!r} is not active; use --track {suggestion}')
     row = {'id': clip_id or 'clip-' + uuid.uuid4().hex,
            'clipType': 'audio' if kind == 'audio' else 'media', 'track': track,
-           'asset': pin['asset'], 'at': on, 'hold': duration, **dict(values or {})}
+           'asset': asset_alias or pin['asset'], 'at': on, 'hold': duration, **dict(values or {})}
     if kind in ('video', 'audio'):
         row.update({'from': 0, 'to': duration, 'speed': 1})
     commands = []

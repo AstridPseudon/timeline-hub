@@ -282,7 +282,7 @@ class Clip(_Suggest):
         for moving media. It refuses timing dependencies or animation and any
         parent transitions. The command also refuses ID collisions atomically.
         """
-        if self.shot_id != "parent":
+        if self.shot_id not in (PARENT_SHOT, "parent"):
             raise TimelineEditError("split is available for attached parent media clips")
         command = getattr(self, "_command", None)
         if callable(command):
@@ -291,7 +291,8 @@ class Clip(_Suggest):
         if callable(stage):
             stage({"schema_version": 1, "op": "clip.split", "version": "1",
                    "select": f"parent/clip:{self.id}",
-                   "args": {"on": at, "right_id": id}}, label="Split clip")
+                   "args": {"on": at, "right_id": id},
+                   "created": [f"parent/clip:{id}"]}, label="Split clip")
             return self
         raise TimelineEditError("split is available for attached parent media clips")
 
@@ -319,7 +320,7 @@ class Clip(_Suggest):
         self._tl._place_on(self, moment)
         self._tl.retime()  # its end follows its rule (until / for / its cut) right away
         cut = intent.cut_of(self.data)
-        span = self._tl._cut_spans().get(cut) if cut and not self._tl._is_picture(self) else None
+        span = self._tl._own_cut_span(self) if cut and not self._tl._is_picture(self) else None
         if span is not None:
             lo, hi = span[0], span[1] if span[1] is not None else self._tl.duration
             if not lo - 0.5 / self._tl.fps <= self.start < hi - 0.5 / self._tl.fps:

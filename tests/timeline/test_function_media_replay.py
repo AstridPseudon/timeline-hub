@@ -8,6 +8,7 @@ import pytest
 from PIL import Image
 
 from astrid.sdk.timeline.commit_session import Timeline
+from astrid.sdk.timeline.sync import CommitOutcomeUnknown
 from tests.timeline.test_audio_import_runtime import realm, session_for, wav  # noqa: F401
 
 
@@ -94,7 +95,7 @@ def test_conflict_then_lost_ack_restart_replays_original_media_bytes(
         evaluations.append(t.head)
         t.add(source, at=0, hold=1, id='voice')
 
-    with pytest.raises(ConnectionError, match='lost function acknowledgement'):
+    with pytest.raises(CommitOutcomeUnknown, match='No reply could be verified'):
         tl.commit(place, idempotency_key='logical-place')
     assert len(evaluations) == 2 and len(imports) == 1
     state = json.loads(path.read_bytes())
@@ -127,6 +128,89 @@ def test_conflict_then_lost_ack_restart_replays_original_media_bytes(
     assert replay['imports'] == result['imports']
     assert latest.head == latest_head and latest.bundle == latest_bundle
     assert len(evaluations) == 2 and len(imports) == 1
+
+
+def test_conflict_reevaluation_reuses_generated_clip_identity(realm, tmp_path, monkeypatch):  # noqa: F811
+    service, writer, candidate = realm
+    session = session_for(service, writer, candidate, tmp_path / 'outbox.json')
+    tl = opened(session)
+    imports = watch_imports(session, monkeypatch)
+    source = wav(tmp_path / 'voice.wav')
+    original_send = writer.commit_timeline
+    sent, generated_ids, generated_assets, evaluations = [], [], [], []
+    original_append = Timeline._append
+
+    def capture_append(self, commands, **kwargs):
+        generated_ids.extend(command['args']['row']['id'] for command in commands
+                             if command.get('op') == 'clip.add-media')
+        generated_assets.extend(command['args']['row']['asset'] for command in commands
+                                if command.get('op') == 'clip.add-media')
+        return original_append(self, commands, **kwargs)
+
+    def send(project, timeline, body, **kwargs):
+        if kwargs['idempotency_key'] == 'peer-edit':
+            return original_send(project, timeline, body, **kwargs)
+        sent.append(copy.deepcopy(body))
+        if len(sent) == 1:
+            peer = session_for(service, writer, candidate, tmp_path / 'peer.json')
+            peer.commit({'schema_version': 1, 'op': 'track.create', 'version': '1',
+                         'select': 'parent', 'args': {'row': {'id': 'peer', 'kind': 'visual'}}},
+                        idempotency_key='peer-edit')
+        result = original_send(project, timeline, body, **kwargs)
+        if len(sent) == 2:
+            raise ConnectionError('lost generated-media acknowledgement')
+        return result
+
+    monkeypatch.setattr(Timeline, '_append', capture_append)
+    monkeypatch.setattr(writer, 'commit_timeline', send)
+
+    def place(t):
+        evaluations.append(t.head)
+        t.add(source, at=0, hold=1)
+
+    with pytest.raises(CommitOutcomeUnknown, match='No reply could be verified'):
+        tl.commit(place, idempotency_key='generated-media')
+    assert len(sent) == len(evaluations) == 2
+    assert len(generated_ids) == 2 and generated_ids[0] == generated_ids[1]
+    assert len(generated_assets) == 2 and generated_assets[0] == generated_assets[1]
+    for body, identity, asset in zip(sent, generated_ids, generated_assets):
+        command = next(command for command in body['commands'] if command['op'] == 'clip.add-media')
+        assert command['args']['row']['id'] == identity
+        assert command['args']['row']['asset'] == asset
+
+    accepted_request = copy.deepcopy(sent[-1])
+    restarted = opened(session_for(service, writer, candidate, tmp_path / 'outbox.json'))
+
+    def forbidden(*args, **kwargs):
+        pytest.fail('restart replay evaluated generated media intent')
+
+    monkeypatch.setattr(writer, 'commit_timeline', original_send)
+    result = restarted.commit(forbidden, idempotency_key='generated-media')
+    assert result['receipt']['receipt_id']
+    assert writer.requests[-1] == accepted_request
+    assert len(evaluations) == len(generated_ids) == 2
+    assert len(imports) == 1
+
+
+def test_repeated_media_after_undo_keeps_fresh_clip_ids(realm, tmp_path):  # noqa: F811
+    from PIL import Image
+
+    _service, _writer, candidate = realm
+    session = session_for(_service, _writer, candidate, tmp_path / 'outbox.json')
+    tl = opened(session)
+    source = tmp_path / 'frame.png'
+    Image.new('RGB', (16, 12), 'red').save(source)
+
+    first = tl.commit(lambda t: [t.add(source, at=index * 2, hold=1, id=f'first-{index}')
+                                 for index in range(20)], key='first')
+    first_asset = first['data']['canonical_document']['parent_revision']['payload']['clips'][0]['asset']
+    tl.undo(publications=[first['receipt']['receipt_id']])
+    second = tl.commit(lambda t: [t.add(source, at=1000 + index * 2, hold=1, id=f'second-{index}')
+                                  for index in range(20)], key='second')
+    assert second['receipt']['receipt_id']
+    clips = second['data']['canonical_document']['parent_revision']['payload']['clips']
+    assert {row['asset'] for row in clips} == {clips[0]['asset']}
+    assert clips[0]['asset'] != first_asset
 
 
 def test_restart_at_conflict_reuses_saved_content_import(realm, tmp_path, monkeypatch):  # noqa: F811
