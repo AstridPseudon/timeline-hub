@@ -75,9 +75,10 @@ def test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry(
     if not function:
         edit(current)
     for attempt in range(2):
-        with pytest.raises(WorkspaceClientError, match="Runtime acceptance boundary"):
+        with pytest.raises(WorkspaceClientError, match="No reply could be verified") as unknown:
             current.commit(edit if function else "Rename film", reads=reads,
                            dry_run=dry_run, idempotency_key="joined-patch")
+        assert unknown.value.cause["message"] == "Runtime acceptance boundary"
         frozen = json.loads(path.read_text())
         assert frozen["flight"]["key"] == "joined-patch"
         assert json.loads(frozen["flight"]["body"]) == sent[-1][0]

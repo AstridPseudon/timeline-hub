@@ -18,9 +18,9 @@ connected = test_timeline_sync.connected
 
 @pytest.mark.parametrize("accepted_before_failure", [False, True], ids=["before-dispatch", "after-acceptance"])
 @pytest.mark.parametrize("failure,code", [
-    (TimeoutError("read timed out"), "transport_timeout"),
-    (URLError(TimeoutError("read timed out")), "transport_timeout"),
-    (ConnectionError("response connection closed"), "transport_error"),
+    (TimeoutError("read timed out"), "timeline_outcome_unknown"),
+    (URLError(TimeoutError("read timed out")), "timeline_outcome_unknown"),
+    (ConnectionError("response connection closed"), "timeline_outcome_unknown"),
 ], ids=["timeout", "wrapped-timeout", "connection-loss"])
 def test_undo_transport_failure_retains_exact_flight(
     connected: Any, accepted_before_failure: bool, failure: Exception, code: str,

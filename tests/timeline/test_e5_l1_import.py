@@ -5,6 +5,7 @@ import hashlib
 
 import pytest
 
+from astrid.sdk.workspace_client import WorkspaceClientError
 from tests.timeline.test_audio_import_runtime import realm, session_for, wav  # noqa: F401
 
 
@@ -59,9 +60,10 @@ def test_lost_wav_acknowledgement_replays_original_request_and_import_disclosure
         raise ConnectionError('lost acknowledgement after acceptance')
 
     monkeypatch.setattr(writer, 'commit_timeline', accept_then_lose_ack)
-    with pytest.raises(ConnectionError, match='lost acknowledgement'):
+    with pytest.raises(WorkspaceClientError, match='No reply could be verified') as unknown:
         session.add_media(source, on=0, duration=1, clip_id='voice',
                           idempotency_key='l1-lost-wav-ack')
+    assert unknown.value.cause['message'] == 'lost acknowledgement after acceptance'
 
     flight = session.outbox.read()['flight']
     original_request = writer.requests[-1]

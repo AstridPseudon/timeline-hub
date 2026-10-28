@@ -158,12 +158,12 @@ def test_proposal_uses_existing_outbox_original_base_reason_and_exact_flight(con
         bodies.append((copy.deepcopy(body), idempotency_key))
         raise ConnectionError('outcome unknown')
     generated.commit_timeline = lost_ack
-    with pytest.raises(WorkspaceClientError, match='outcome unknown'):
+    with pytest.raises(WorkspaceClientError, match='No reply could be verified'):
         session.flush()
     flight = session.outbox.read()['flight']
     assert flight['key'].startswith('timeline-edit-')
     session = TimelineSession.open('p', 't', client=client, outbox_path=path)
-    with pytest.raises(WorkspaceClientError, match='outcome unknown'):
+    with pytest.raises(WorkspaceClientError, match='No reply could be verified'):
         session.flush()
     assert bodies[0] == bodies[1]
     body = bodies[0][0]
