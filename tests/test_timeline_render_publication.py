@@ -340,14 +340,21 @@ def test_prepared_checkpoint_cannot_publish_after_cancel_or_stale_fence(requeste
     _assembly(cancelled, settle=False)
     with pytest.raises(WorkspaceClientError):
         _publish(cancelled)
-    checkpoint = cancelled.session._state()["flight"].copy()
+    # A refused publication releases its flight into ``rejected`` (Agent f31564fd0,
+    # bca403b02); the prepared checkpoint is retained there, not as a live flight.
+    assert cancelled.session._state()["flight"] is None
+    checkpoint = cancelled.session._state()["rejected"]["flight"].copy()
     cancelled.service.cancel_task_canonical(cancelled.attempt["task_id"], {}, idempotency_key="cancel-at-seam")
     before = _state(cancelled.service)
     with pytest.raises(LeaseError):
         _produce(cancelled, cancelled.attempt)
     with pytest.raises(WorkspaceClientError):
         _publish(cancelled)
-    assert cancelled.session._state()["flight"] == checkpoint
+    assert cancelled.session._state()["flight"] is None
+    # The refused retry rebuilds the same request under a fresh random fence.
+    retried = cancelled.session._state()["rejected"]["flight"]
+    assert {key: value for key, value in retried.items() if key != "fence"} == {
+        key: value for key, value in checkpoint.items() if key != "fence"}
     assert _state(cancelled.service) == before
     assert cancelled.service.store.conn.execute(
         "SELECT COUNT(*) FROM tasks WHERE capability='rendering.render'",
@@ -389,7 +396,8 @@ def test_prepared_checkpoint_resumes_on_retried_attempt_after_runtime_restart(re
         raise WorkspaceClientError(503, "unavailable", "lost commit acknowledgement", {})
 
     monkeypatch.setattr(transport, "commit_timeline", commit_then_lose_ack)
-    with pytest.raises(WorkspaceClientError, match="lost commit acknowledgement"):
+    # The client reports an unverifiable commit outcome in its own words (Agent ae620ee55).
+    with pytest.raises(WorkspaceClientError, match="No reply could be verified; this edit may or may not have been committed"):
         _publish(world)
     flight = world.session._state()["flight"].copy()
     assert flight["key"] == "publish"
@@ -418,6 +426,12 @@ def test_prepared_checkpoint_resumes_on_retried_attempt_after_runtime_restart(re
             f"astrid timelines show main --project {world.project} --published --revision-id "
             f"{retry_raw['data']['accepted_revision_id']}"
         ),
+        # The client now reports a confirmed retry as a structured outcome (Agent f31564fd0).
+        "confirmed": True,
+        "replayed": False,
+        "summary": (f'Confirmed "Assemble timeline" as {retry_raw["receipt"]["receipt_id"]}; '
+                    "the earlier request was applied once."),
+        "undo": {"publications": [retry_raw["receipt"]["receipt_id"]]},
     }
     assert set(result) == {"ok", "data", "error", "receipt", "idempotency_key", "render", "render_task_id"}
     assert result["ok"] is True
@@ -433,7 +447,10 @@ def test_prepared_checkpoint_resumes_on_retried_attempt_after_runtime_restart(re
         "publication_id": result["receipt"]["receipt_id"],
         "content_digest": result["data"]["canonical_document"]["parent_revision"]["content_digest"],
     }
-    assert _publish(world) == result
+    # Re-reading the settled publication is no longer a confirmation of a lost reply.
+    assert _publish(world) == {**result, "data": {
+        **result["data"], "confirmed": False,
+        "summary": f'Committed "Assemble timeline" as {result["receipt"]["receipt_id"]}.'}}
     assert world.service.store.conn.execute(
         "SELECT COUNT(*) FROM timeline_commit_history WHERE publication_id=?", (result["receipt"]["receipt_id"],),
     ).fetchone()[0] == 1

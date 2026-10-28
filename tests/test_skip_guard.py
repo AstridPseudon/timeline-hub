@@ -87,7 +87,8 @@ def test_xfail_reason_does_not_authorize_a_different_node_or_contract(sandbox, v
 
 
 def test_xfail_declarations_are_immutable_and_semantic():
-    assert len(lanes.DECLARED_XFAILS) == 8
+    # Nine: 09a106f0 declared p1-top-level-text-hook as the ninth strict xfail.
+    assert len(lanes.DECLARED_XFAILS) == 9
     assert all(spec.strict is True and spec.nodeids and spec.reason and spec.raises for spec in lanes.DECLARED_XFAILS.values())
 
 

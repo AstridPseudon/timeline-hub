@@ -968,7 +968,11 @@ def test_retained_occurrence_order_forgeries_refuse_losslessly(retained_occurren
         validate(**inputs)
     assert error.value.failure["details"]["reason"] == "invalid_records"
     if mutation in {"duplicate", "missing", "foreign", "shot", "pin", "payload", "unknown", "malformed", "absent"}:
-        assert str(error.value) == "inverse stage occurrence order is not a row-preserving permutation"
+        # The source of this undo is itself an inverse whose shot removals make it an
+        # inherited stage (a5fc9ddf), so its exact reversed source captures are compared
+        # before the per-write permutation check can run. The forgery is refused earlier.
+        assert str(error.value) == (
+            "inherited inverse native captures or effects differ from authenticated history")
     assert inputs == before
 
 
