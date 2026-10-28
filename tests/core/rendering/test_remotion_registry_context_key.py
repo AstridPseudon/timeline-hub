@@ -25,6 +25,16 @@ def _key(env):
     return runtime._registry_context(env, generator=False)
 
 
+@pytest.mark.parametrize('generator', [False, True])
+def test_registry_context_preserves_explicit_node_without_path(tmp_path, generator):
+    node = str(tmp_path / 'node')
+    env = {'HOME': str(tmp_path), 'ASTRID_NODE_EXECUTABLE': node}
+    context = runtime._registry_context(env, generator=generator)
+    assert context['ASTRID_NODE_EXECUTABLE'] == node
+    assert 'PATH' not in context
+    assert context != runtime._registry_context({**env, 'ASTRID_NODE_EXECUTABLE': node + '-other'}, generator=generator)
+
+
 def _installed_observation(tmp_path, python):
     root = tmp_path / 'site-packages'
     astrid = root / 'astrid'

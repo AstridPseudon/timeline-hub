@@ -492,7 +492,7 @@ def _registry_context(environment: Mapping[str, str], *, generator: bool) -> dic
     from astrid.core.subprocess_env import _SAFE_BASE_ENV, _WINDOWS_BASE_ENV
     if _installed_registry_profile(environment) and any(environment.get(name) for name in ('PYTHONPATH', ASTRID_PACKS_PATH)):
         raise RemotionValidationError('installed registry discovery refuses explicit import or pack roots')
-    keys = set(_SAFE_BASE_ENV) | {'ASTRID_HOST_EXECUTION_PROFILE', 'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV}
+    keys = set(_SAFE_BASE_ENV) | {'ASTRID_HOST_EXECUTION_PROFILE', 'ASTRID_PACKS_PATH', TIMELINE_SCHEMA_PYTHONPATH_ENV, NODE_EXECUTABLE_ENV}
     if sys.platform == 'win32':
         keys.update(_WINDOWS_BASE_ENV)
     if not generator:
