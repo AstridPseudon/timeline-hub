@@ -64,6 +64,7 @@ def render_registry_block(
     *,
     deep: bool = False,
     view_root: Path | None = None,
+    selected: set[str] | None = None,
 ) -> str:
     """Render the managed registry block (markers included, no trailing newline).
 
@@ -91,10 +92,10 @@ def render_registry_block(
     for descriptor in rows:
         summary = (descriptor.short_description or descriptor.description or "").replace("|", "\\|")
         if descriptor.skill is not None:
-            summary = (
-                f"{summary}; available: `astrid skills install {descriptor.pack_id} "
-                f"--skill {descriptor.skill}`"
+            status = "selected" if selected and descriptor.skill_id in selected else (
+                f"available: `astrid skills install {descriptor.pack_id} --skill {descriptor.skill}`"
             )
+            summary = f"{summary}; {status}"
         skill_path = _repo_relative(descriptor.skill_md, view_root=view_root)
         path_cell = f"`{skill_path}`"
         if deep:
@@ -154,6 +155,7 @@ def regenerate(
     deep: bool = False,
     view_root: Path | None = None,
     dry_run: bool = False,
+    selected: set[str] | None = None,
 ) -> bool:
     """Regenerate the managed registry block in *skill_md_path*.
 
@@ -162,7 +164,7 @@ def regenerate(
     """
     target = skill_md_path or CORE_SKILL_MD
     original = target.read_text(encoding="utf-8")
-    block = render_registry_block(descriptors, deep=deep, view_root=view_root)
+    block = render_registry_block(descriptors, deep=deep, view_root=view_root, selected=selected)
     updated = _splice_block(original, block)
     if updated == original:
         return False
@@ -177,6 +179,7 @@ def is_current(
     descriptors: list[SkillDescriptor] | None = None,
     deep: bool = False,
     view_root: Path | None = None,
+    selected: set[str] | None = None,
 ) -> bool:
     """Return ``True`` when the registry block is already up to date."""
     return not regenerate(
@@ -184,6 +187,7 @@ def is_current(
         descriptors=descriptors,
         deep=deep,
         view_root=view_root,
+        selected=selected,
         dry_run=True,
     )
 
