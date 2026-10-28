@@ -368,6 +368,35 @@ def test_show_as_sheet_reads_an_explicit_working_copy_with_a_banner(tmp_path, mo
     assert any(line.startswith("lines") for line in lines)
 
 
+def test_an_explicit_draft_name_reads_that_working_copy_when_two_share_a_base(tmp_path, monkeypatch, capsys):
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2] / "fixtures" / "timeline_editing"
+    tiny = json.loads((root / "tiny.json").read_text(encoding="utf-8"))
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "data"))
+    monkeypatch.setattr(tc, "resolve_ids", lambda project, timeline, client=None: ("p", "t", "rev-0"))
+    monkeypatch.setattr(tc, "fetch_bundle", lambda project, timeline, revision_id=None, client=None: copy.deepcopy(tiny))
+    assert _run("checkout", "t", "--project", "P", "--draft", "a") == 0
+    assert _run("checkout", "t", "--project", "P", "--draft", "b") == 0
+    capsys.readouterr()
+    assert _run_with_client("show", "t", "--project", "P", "--as", "sheet", "--draft", "a") == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[1].startswith("WORKING COPY a ·") and lines[1].endswith("base revision rev-0")
+
+
+@pytest.mark.xfail(strict=True, reason="P5 refuse rule: with two working copies on one base, a draft that is "
+                                       "not named must refuse with a clear error, not pick the current one; "
+                                       "store.find_draft has no such check yet")
+def test_an_unnamed_draft_read_refuses_when_two_working_copies_share_a_base(tmp_path, monkeypatch):
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "data"))
+    monkeypatch.setattr(tc, "resolve_ids", lambda project, timeline, client=None: ("p", "t", "rev-0"))
+    monkeypatch.setattr(tc, "fetch_bundle", lambda project, timeline, revision_id=None, client=None: copy.deepcopy(bundle()))
+    assert _run("checkout", "t", "--project", "P", "--draft", "a") == 0
+    assert _run("checkout", "t", "--project", "P", "--draft", "b") == 0
+    with pytest.raises(TimelineEditError, match=r"'a'.*'b'"):
+        tc.find_draft("P", "t")
+
+
 def test_show_published_flag_and_address_parse():
     parsed = _parse("show", "t", "c30.cover", "--project", "P", "--published", "--keys", "x,y", "--full")
     assert parsed.address == "c30.cover" and parsed.published and parsed.keys == "x,y" and parsed.full

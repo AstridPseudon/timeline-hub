@@ -62,6 +62,16 @@ class FakeTimelines:
         return SimpleNamespace(ok=True, data={"bundle": {"base_parent": {"revision_id": "rev-head"}}})
 
 
+class AdvancingTimelines(FakeTimelines):
+    """The head moves on after the first read of the published timeline."""
+    head = "rev-head"
+
+    def open_bundle(self, project, ref, revision_id=None):
+        result = super().open_bundle(project, ref, revision_id)
+        self.head = "rev-next"
+        return result
+
+
 class FakeClient:
     def __init__(self):
         self.timelines = FakeTimelines()
@@ -196,14 +206,6 @@ def test_unselected_visualize_ignores_a_conflicting_draft(draft, capsys):
 
 
 def test_visualize_keeps_the_revision_pinned_when_head_advances(draft, capsys):
-    class AdvancingTimelines(FakeTimelines):
-        head = "rev-head"
-
-        def open_bundle(self, project, ref, revision_id=None):
-            result = super().open_bundle(project, ref, revision_id)
-            self.head = "rev-next"
-            return result
-
     client = FakeClient()
     client.timelines = AdvancingTimelines()
 
@@ -213,6 +215,19 @@ def test_visualize_keeps_the_revision_pinned_when_head_advances(draft, capsys):
     assert client.timelines.head == "rev-next"
     assert result["source_identity"] == {"kind": "revision", "revision_id": "rev-head"}
     assert client.timelines.visualize_calls[0]["revision_id"] == "rev-head"
+
+
+@pytest.mark.xfail(strict=True, reason="P5 'says so': a pinned read whose head has moved on must name the "
+                                       "superseding head instead of only the revision it read")
+def test_visualize_pinned_read_says_when_its_revision_was_superseded(draft, capsys):
+    client = FakeClient()
+    client.timelines = AdvancingTimelines()
+
+    assert _visualize(["--json"], client) == 0
+    source = json.loads(capsys.readouterr().out)["data"]["outputs"]["source_identity"]
+
+    assert source["revision_id"] == "rev-head"
+    assert source.get("superseded_by") == "rev-next"
 
 
 def test_changed_cut_line_pages_explicitly():
