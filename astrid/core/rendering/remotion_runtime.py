@@ -820,10 +820,11 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
         environment = {**environment, 'ASTRID_HOST_EXECUTION_PROFILE': 'installed'}
     else:
         script_directory = REPO_ROOT / 'scripts' if generator else Path(run.__file__).resolve().parents[2]
-        # Match both real script launchers: replace -c's cwd search entry with
-        # the script directory, and insert checkout only when not already present.
+        # Bind imports to the caller's product tree even when it is already
+        # later on sys.path (for example, an installed wheel behind a checkout
+        # supplied in PYTHONPATH). Keep the remaining discovery paths intact.
         source = ('import sys,json; sys.path[0]=sys.argv[2]; '
-                  'sys.path.insert(0,sys.argv[1]) if sys.argv[1] not in sys.path else None; '
+                  'sys.path[:]=[sys.argv[1]]+[p for p in sys.path if p != sys.argv[1]]; '
                   'from astrid.core.rendering.remotion_runtime import _registry_observation; '
                   'print(json.dumps(_registry_observation(),sort_keys=True))')
         cwd = REPO_ROOT if generator else script_directory

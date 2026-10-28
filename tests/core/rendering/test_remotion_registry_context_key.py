@@ -2,6 +2,8 @@
 import hashlib
 import json
 import os
+import subprocess
+import sys
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -79,6 +81,35 @@ def _completed_probe_receipt():
         'retained_set_final_census_complete': True,
         'custody_admitted': True,
     }
+
+
+@pytest.mark.parametrize('generator', [False, True])
+def test_source_probe_prefers_caller_tree_already_on_search_path(tmp_path, monkeypatch, generator):
+    selected, checkout = tmp_path / 'site-packages', tmp_path / 'checkout'
+    for root in (selected, checkout):
+        for package in ('astrid', 'astrid/core', 'astrid/core/rendering'):
+            init = root / package / '__init__.py'
+            init.parent.mkdir(parents=True, exist_ok=True)
+            init.write_text('')
+        module = root / 'astrid/core/rendering/remotion_runtime.py'
+        module.write_text(
+            'import sys\n'
+            'def _registry_observation():\n'
+            f'    return {{"runtime_origin": __file__, "startup": {{"executable": sys.executable}}, '
+            f'"state": {{"hash": "a", "content_hashes": {dict.fromkeys(runtime._REGISTRY_KINDS, "b" * 64)!r}}}}}\n'
+        )
+    (selected / 'scripts').mkdir()
+    monkeypatch.delenv('ASTRID_HOST_EXECUTION_PROFILE', raising=False)
+    monkeypatch.setattr(runtime, 'REPO_ROOT', selected)
+    monkeypatch.setattr(runtime, '__file__', str(selected / 'astrid/core/rendering/remotion_runtime.py'))
+
+    def owned(argv, *, cwd, env, phase):
+        return subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True), _completed_probe_receipt()
+
+    monkeypatch.setattr(runtime, '_owned_registry_probe', owned)
+    environment = {'PYTHONPATH': os.pathsep.join((str(checkout), str(selected)))}
+    observation, _ = runtime._registry_probe(environment, sys.executable, generator=generator)
+    assert observation['runtime_origin'] == runtime.__file__
 
 
 def test_installed_registry_probe_uses_selected_interpreter_and_neutral_context(tmp_path, monkeypatch):
