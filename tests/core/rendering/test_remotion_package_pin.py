@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import tarfile
 from pathlib import Path
 
 from astrid.core.foundation.paths import REPO_ROOT
@@ -17,6 +18,18 @@ def test_composition_package_pin_matches_remotion_lock():
 
     assert package["dependencies"][_remotion_package._COMPOSITION_PACKAGE_NAME] == entry["resolved"]
     assert entry["version"] == _remotion_package._COMPOSITION_PACKAGE_VERSION
+
+
+def test_composition_package_admission_accepts_the_saved_pinned_tarball():
+    remotion = REPO_ROOT / "remotion"
+    package = json.loads((remotion / "package.json").read_text(encoding="utf-8"))
+    dependency = package["dependencies"][_remotion_package._COMPOSITION_PACKAGE_NAME]
+    assert dependency.startswith("file:")
+    with tarfile.open(remotion / dependency.removeprefix("file:")) as archive:
+        manifest = json.load(archive.extractfile("package/package.json"))
+
+    assert manifest["name"] == _remotion_package._COMPOSITION_PACKAGE_NAME
+    assert manifest["version"] == _remotion_package._COMPOSITION_PACKAGE_VERSION
 
 
 def test_composition_package_admission_rejects_wrong_name_and_version(tmp_path: Path):
