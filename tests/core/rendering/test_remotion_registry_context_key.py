@@ -25,6 +25,18 @@ def _key(env):
     return runtime._registry_context(env, generator=False)
 
 
+@pytest.mark.parametrize('generator', [False, True])
+def test_explicit_node_executable_is_preserved_and_changes_context(tmp_path, generator):
+    base = _env(tmp_path)
+    configured = _env(tmp_path, ASTRID_NODE_EXECUTABLE='/opt/node/bin/node')
+    context = runtime._registry_context(configured, generator=generator)
+
+    assert context['ASTRID_NODE_EXECUTABLE'] == '/opt/node/bin/node'
+    assert context != runtime._registry_context(base, generator=generator)
+    assert context != runtime._registry_context(
+        _env(tmp_path, ASTRID_NODE_EXECUTABLE='/other/node'), generator=generator)
+
+
 def _installed_observation(tmp_path, python):
     root = tmp_path / 'site-packages'
     astrid = root / 'astrid'
