@@ -7,7 +7,8 @@ import {
   useTheme,
   type AnimationPhase,
 } from '@banodoco/timeline-composition/theme-api';
-import { secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
+import { clipOpacity } from '@banodoco/timeline-composition/evaluation';
+import { getEffectValue, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { DynamicEffectRegistry } from '@/tools/video-editor/effects/DynamicEffectRegistry.ts';
 import { EffectErrorBoundary } from '@/tools/video-editor/effects/EffectErrorBoundary.tsx';
 import {
@@ -221,6 +222,17 @@ const PackageAnimation: FC<{
   }, frame)}</>;
 };
 
+// `effects.fade_in` / `fade_out` ramp the clip's opacity exactly as the installed
+// package does at export; `clip.opacity` is applied by the clip body itself.
+const ClipFade: FC<{ clip: ResolvedTimelineClip; fps: number; children: ReactNode }> = ({ clip, fps, children }) => {
+  const opacity = clipOpacity({ ...clip, opacity: undefined } as never, useCurrentFrame(), fps);
+  return <div style={{ position: 'absolute', inset: 0, opacity }}>{children}</div>;
+};
+
+const hasClipFade = (clip: ResolvedTimelineClip): boolean => (
+  getEffectValue(clip.effects, 'fade_in') !== null || getEffectValue(clip.effects, 'fade_out') !== null
+);
+
 type PackageAnimationResolution = 'supported' | 'wrong-phase' | 'unknown';
 
 const resolvePackageAnimation = (
@@ -341,5 +353,5 @@ export const wrapWithClipEffects = (
     });
   }
 
-  return wrapped;
+  return hasClipFade(clip) ? <ClipFade clip={clip} fps={fps}>{wrapped}</ClipFade> : wrapped;
 };

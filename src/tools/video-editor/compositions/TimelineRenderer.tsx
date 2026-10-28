@@ -306,7 +306,10 @@ const resolveAstridComponentAssetEntry = (
 const ElementClipEffects: FC<{ clip: ResolvedTimelineClip; fps: number; children: ReactNode }> = ({ clip, fps, children }) => {
   const registry = useOptionalEffectRegistryContext();
   const content = <ClipTransition clip={clip} fps={fps}>{children}</ClipTransition>;
-  return <>{wrapWithClipEffects(content, clip, getClipDurationInFrames(clip, fps), fps, registry?.snapshot)}</>;
+  const wrapped = wrapWithClipEffects(content, clip, getClipDurationInFrames(clip, fps), fps, registry?.snapshot);
+  // The package applies `clip.opacity` to element clips; media and text apply it in their own body.
+  if (clip.opacity === undefined || clip.opacity === 1) return <>{wrapped}</>;
+  return <div style={{ position: 'absolute', inset: 0, opacity: Math.min(1, Math.max(0, clip.opacity)) }}>{wrapped}</div>;
 };
 
 const ThemePackageComponent: FC<{
