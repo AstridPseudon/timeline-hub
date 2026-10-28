@@ -112,7 +112,7 @@ def test_audio_creates_a_missing_audio_lane_with_verified_kind(tmp_path):
     _add(session, source)
 
     assert session.last_commands[0]['op'] == 'track.create'
-    assert session.last_commands[0]['args']['row'] == {'id': 'A2', 'kind': 'audio'}
+    assert session.last_commands[0]['args']['row'] == {'id': 'A2', 'kind': 'audio', 'label': 'A2'}
 
 
 def test_omitted_visual_track_keeps_v1_default(tmp_path, monkeypatch):
@@ -125,7 +125,7 @@ def test_omitted_visual_track_keeps_v1_default(tmp_path, monkeypatch):
 
     _add(session, source)
 
-    assert session.last_commands[0]['args']['row'] == {'id': 'V1', 'kind': 'visual'}
+    assert session.last_commands[0]['args']['row'] == {'id': 'V1', 'kind': 'visual', 'label': 'V1'}
     assert session.last_commands[1]['args']['row']['track'] == 'V1'
 
 

@@ -169,7 +169,8 @@ class _LookupMixin:
         if row is None:
             if kind not in {"visual", "audio"}:
                 raise TimelineEditError("track kind must be 'visual' or 'audio'")
-            row = {"id": track, "kind": kind, "role": "output"}
+            # The timeline schema requires a label; a new track is labelled with its id.
+            row = {"id": track, "kind": kind, "label": track, "role": "output"}
             command = getattr(self, "command", None)
             if callable(command):
                 command({"schema_version": 1, "op": "track.create", "version": "1",
