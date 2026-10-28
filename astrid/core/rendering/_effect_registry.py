@@ -539,6 +539,7 @@ def _generate_effect_registry(
     # existing editor ref through their clip props, so no composition schema
     # or second dispatch identity is needed for retained owner candidates.
     owners: dict[str, dict[str, str]] = {effect_id: {} for effect_id in effect_ids}
+    pinned_owners = False
     for effect_id, effect in public_effects.items():
         pack_id = effect.meta.get("pack_id") or effect.scope.removeprefix("pack:")
         owners[effect_id][pack_id] = (
@@ -564,6 +565,7 @@ def _generate_effect_registry(
             symbol = f"OwnerElement{len(imports)}"
             imports.append(f"import {symbol} from '{_import_path(plugin)}';")
         revision = element.metadata.get("render_revision")
+        pinned_owners = pinned_owners or bool(revision)
         owner_key = f"{pack_id}@{revision}" if revision else pack_id
         owners[element.id].setdefault(owner_key, symbol)
     registry_entries = [
@@ -603,13 +605,24 @@ def _generate_effect_registry(
         ),
         "",
         "function selectOwnedEffect(id: string, winner: EffectComponent, owners: Record<string, EffectComponent>): EffectComponent {",
-        "  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string; revision?: string}}): EffectComponent & SceneCapableComponent => {",
-        "    const ref = clip.elementRef;",
-        "    if (!ref || ref.kind !== 'effect' || ref.id !== id || !('packId' in ref)) return winner;",
-        "    const pinnedOwner = `${ref.packId}@${ref.revision}`;",
-        "    const pinned = Object.keys(owners).some((key) => key.startsWith(`${ref.packId}@`));",
-        "    const owner = pinned ? pinnedOwner : ref.packId;",
-        "    const component = typeof owner === 'string' && Object.prototype.hasOwnProperty.call(owners, owner) ? owners[owner] : undefined;",
+        *(
+            [
+                "  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string; revision?: string}}): EffectComponent & SceneCapableComponent => {",
+                "    const ref = clip.elementRef;",
+                "    if (!ref || ref.kind !== 'effect' || ref.id !== id || !('packId' in ref)) return winner;",
+                "    const pinnedOwner = `${ref.packId}@${ref.revision}`;",
+                "    const pinned = Object.keys(owners).some((key) => key.startsWith(`${ref.packId}@`));",
+                "    const owner = pinned ? pinnedOwner : ref.packId;",
+                "    const component = typeof owner === 'string' && Object.prototype.hasOwnProperty.call(owners, owner) ? owners[owner] : undefined;",
+            ]
+            if pinned_owners
+            else [
+                "  const select = (clip: {elementRef?: {id: string; kind: string; packId?: string}}): EffectComponent & SceneCapableComponent => {",
+                "    const ref = clip.elementRef;",
+                "    if (!ref || ref.kind !== 'effect' || ref.id !== id || !('packId' in ref)) return winner;",
+                "    const component = typeof ref.packId === 'string' && Object.prototype.hasOwnProperty.call(owners, ref.packId) ? owners[ref.packId] : undefined;",
+            ]
+        ),
         "    if (!component) throw new Error(`Unknown effect owner ${String(ref.packId)} for ${id}`);",
         "    return component;",
         "  };",
