@@ -6,7 +6,7 @@ copy for the remaining authoring operations. Times are timeline seconds;
 **positions are canvas px** for every element.
 *When* things happen is written as **moments** (`on "viral"`), so a new take moves everything with its words.
 
-Every `timelines` below is short for **`python -m astrid timelines`** (venv active, from the `Astrid` install dir,
+Every `timelines` below is short for **`python3 -m astrid timelines`** (venv active, from the `Astrid` install dir,
 `ASTRID_RUNTIME_DATA_ROOT` set as your install says). A bare `timelines` is not on PATH.
 
 ## The loop
@@ -72,7 +72,7 @@ A NEW cut: a header `┃ c05b on "word"` with a `plate` line (its picture) and a
 Or `timelines edit TL --project P --split c33 --on MOMENT` (or `--add-cut --on M [--after c33]`; Python
 `tl.cut("c33").split(on=…)`, `tl.add_cut(…)`): later layers move with it, spanning ones carry over it.
 `…` values in a sheet are kept as they are.
-`tl.add("am-type", at='"Building" in v27', layer="title", hold=1.2)` joins the cut on screen as `cNN.title`.
+`tl.add("am-type", at='"Building" in v27', hold=1.2)` joins the cut on screen; read its address back (`cNN.NAME`).
 `x=ƒ(MARK ±px)` follows a slot's mark: a plain number replaces it (and says so). `k=…` is unchanged, `~k` is info.
 The `sound` section lists the music bed and other audio in no cut: edit its asset, `for`, `volume=` there.
 A cut's notes: `why: …` and `hold: deliberate` (lint's HOLD/STILL leave it; `hold: off` clears), or
@@ -100,8 +100,8 @@ result = tl.commit(lambda t: t.clip("c30.cover").until("Astrid"),
 ```
 
 Python functions are the taught edit path; see the [editing skill](../SKILL.md).
-The detached `Checkout` surface below edits the local copy. Save an explicit
-candidate, then commit it through Runtime:
+The detached `Checkout` surface below edits the local copy. This candidate-file route is supported
+(CLI only; a Python preview or reviewed list is not a file). Save an explicit candidate, then commit it through Runtime:
 
 ```python
 from astrid.sdk.timeline_checkout import Checkout

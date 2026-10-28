@@ -121,8 +121,9 @@ narration is re-flowed. To follow a word, give a moment string (below).
 
 **`t.add`:** `at` is timeline seconds. With `hold=N` a still lasts N seconds and video or
 audio plays source seconds 0–N (read it back); without `hold` they play whole. Name the `track`: a missing one is created to match
-the file, a track of the wrong kind refuses. Helpers chain, `t.add("a.mp4",
-at=0, track="V1", id="a").trim(0, 4)`; give new clips an explicit `id`.
+the file, a track of the wrong kind refuses. Adding or moving onto an occupied span is not documented: read back
+`tl.clips(track=...)`; an unexpected overlap is a stop. Helpers chain, `t.add("a.mp4", at=0, track="V1",
+id="a").trim(0, 4)`; give new clips an explicit `id`.
 
 ### Words and beats
 
@@ -156,9 +157,8 @@ stays whole; read it back and say what changed. Put a bed on `music` with
 `"visual"`) and `clip.set_track("music")`. A flat ripple refuses to move clips with a
 moment string, animation or transition.
 
-A 15-second cut, `t.ripple_delete(15, t.duration)`, removes everything after
-15 s, an end card included. To keep the card, delete up to it:
-`t.ripple_delete(15, t.clip("end-card").start)`; the film ends one card later.
+A 15-second cut, `t.ripple_delete(15, t.duration)`, removes everything after 15 s,
+an end card included. To keep it, delete up to it: `t.ripple_delete(15, t.clip("end-card").start)`.
 
 ## Preview, then apply the reviewed list
 
@@ -173,8 +173,8 @@ r = tl.commit(changes, label="Recut", idempotency_key="recut-ep01")   # after ap
 ```
 
 The list applies exactly what was reviewed, on that one timeline; `tl.commit(recut)`
-re-evaluates on the newest timeline and may differ. Keep `changes` until the person
-answers; if it is lost, preview again. For a series, apply the reviewed list (not a
+re-evaluates on the newest timeline and may differ. The list is Python only and held by the caller; the SDK does not
+persist it. Keep `changes` until the person answers; if it is lost, run the preview again. For a series, apply the reviewed list (not a
 rerun) to the approved episode; run the function for the others.
 
 ## When someone else edits
@@ -185,7 +185,7 @@ Runtime merges changes that do not touch the same things (`status` is then
 - **A function reruns** on the newer timeline, up to three evaluations in total.
   Other refusals do not rerun it.
 - **A list never reruns**: a clash raises `CommitConflict` at once; so does
-  a function's third clash. Do not retry in a loop (a series gets one bounded retry, below); tell the person which
+  a function's third clash. Do not retry in a loop (a series gets one bounded retry, below; otherwise only if the person asks); tell the person which
   edit did not land, then run `timelines discard <timeline> --project
   <project>` (the refused changes stay saved) before you edit or preview again.
   Say what happened: "applied after one rerun because the timeline moved".
@@ -272,7 +272,7 @@ it says no reply could be verified. Messages read *what went wrong*, *where*, *w
 | No pending timeline edits | The function changed nothing; record it as skipped |
 | No clip/word matches a name | Check `show`; in a loop, skip that timeline |
 | The source file is too short for this length | Trim in, or choose a shorter hold |
-| The timeline changed (a list, or a third clash) | `timelines discard`; retry only when the person asks |
+| The timeline changed (a list, or a third clash) | `timelines discard`; one bounded retry in a series, otherwise only when the person asks |
 | A previous request has an unknown outcome | Repeat the same call with the same key |
 
 ## Looking at the result
@@ -291,8 +291,8 @@ the person asks for frames or a render, give them the times to check and the edi
   changing existing text in place (`clip.set(text=...)`).
 - Ripple on one track only; grouping existing clips into a new shot (beyond
   `timelines restructure`); aspect-ratio variants (a copy keeps the canvas).
-- A commit or undo across several timelines (loop per timeline); a portable
-  change file for the CLI (previews and lists are Python only).
+- A commit or undo across several timelines (loop per timeline); a preview
+  or list as a file (Python only; the front door's `Checkout` candidate file is a different route).
 - Creating a timeline with content in one call (`timelines create`, then
   commit); finding content by what it shows (get asset keys from an
   understanding tool, then `t.clips(asset=...)`).

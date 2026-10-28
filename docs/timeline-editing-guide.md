@@ -254,8 +254,8 @@ tl.redo(publications=[undo_receipt_id], idempotency_key="redo-42")
 ```
 
 ```sh
-astrid timelines undo TL --project PROJECT --commit RECEIPT_ID --idempotency-key undo-42
-astrid timelines redo TL --project PROJECT --commit UNDO_RECEIPT_ID --idempotency-key redo-42
+python3 -m astrid timelines undo TL --project PROJECT --commit RECEIPT_ID --idempotency-key undo-42
+python3 -m astrid timelines redo TL --project PROJECT --commit UNDO_RECEIPT_ID --idempotency-key redo-42
 ```
 
 Undo restores the fields and order the commit changed, so unrelated later
@@ -269,6 +269,8 @@ landed. Whole revision restore is a deliberate rollback, not undo.
 Run one function per timeline, with one key and one receipt each:
 
 ```python
+import json
+
 def swap_sponsor(t):
     t.clip("sponsor-card").swap_asset("sponsor-2026.png")
 
