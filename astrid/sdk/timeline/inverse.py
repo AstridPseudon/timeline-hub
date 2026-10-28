@@ -389,6 +389,7 @@ def coalesce(records, state=None, *, cache_stages=None):
         writes = copy.deepcopy(record['writes'])
         resolver = getattr(records, 'address_resolver', None)
         aggregate = None
+        projecting = isinstance(records, AcceptedRecords) and resolver is not None
         for raw, projected in zip(record['writes'], writes):
             if raw['ref'] == 'parent' and raw['path'] == ['occurrences']:
                 aggregate = projected if isinstance(records, AcceptedRecords) and resolver is not None else None
@@ -416,6 +417,44 @@ def coalesce(records, state=None, *, cache_stages=None):
                     rows.pop(indices[0])
                 else:
                     rows[indices[0]] = copy.deepcopy(raw['after']['value'])
+            elif (projecting and raw['ref'].startswith('occurrence:')
+                    and '/' not in raw['ref'] and raw['path']):
+                # A nested field of an aggregate row (for example its timing) is
+                # part of the state the landing guard observes. Fold it into the
+                # row; leave fields owned elsewhere (shot payload) untouched.
+                identity = raw['ref'].removeprefix('occurrence:')
+                address = resolver(raw, raw['ref'], raw['path'])
+                prefix = ('occurrences', ('occurrence_id', identity))
+                if address[0] != 'parent' or tuple(address[1][:2]) != prefix or len(address[1]) <= 2:
+                    continue
+                # Within the aggregate's own record, project onto that write;
+                # in a later record, onto the aggregate accepted so far.
+                target = aggregate if aggregate is not None else next(
+                    (old for old in result if old['ref'] == 'parent' and old['path'] == ['occurrences']), None)
+                if target is None:
+                    continue
+                rows = target['after'].get('value')
+                if (target['after']['state'] != 'present' or not isinstance(rows, list)
+                        or any(not isinstance(row, dict) or not isinstance(row.get('occurrence_id'), str)
+                               for row in rows)
+                        or len({row['occurrence_id'] for row in rows}) != len(rows)):
+                    raise CommandError('occurrence aggregate binding is unavailable', kind='history_unavailable')
+                indices = [i for i, row in enumerate(rows) if row['occurrence_id'] == identity]
+                if len(indices) != 1:
+                    raise CommandError('occurrence aggregate alias changed', kind='history_unavailable',
+                                       ref=raw['ref'])
+                field = address[1][2:]
+                node, current = rows[indices[0]], None
+                for token in field:
+                    if not isinstance(token, str) or not isinstance(node, dict) or token not in node:
+                        node = ABSENT
+                        break
+                    node = node[token]
+                current = ABSENT if node is ABSENT else present(node)
+                if not equal(current, raw['before']):
+                    raise CommandError('occurrence aggregate alias changed', kind='history_unavailable',
+                                       ref=raw['ref'])
+                rows[indices[0]] = _patch(present(rows[indices[0]]), field, raw['after'])['value']
         aliases = []
         for write in writes:
             aliases.append(write)
