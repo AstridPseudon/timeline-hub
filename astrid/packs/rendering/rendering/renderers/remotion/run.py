@@ -1321,7 +1321,10 @@ def _execute_remotion_locked(
                 frames=frame_numbers,
                 resolution=frame_resolution,
                 port=remotion_port,
-                environment=remotion_env_additions,
+                # The host-validated projectDir already names the project; the
+                # admitted environment has no project-directory entry.
+                environment={key: value for key, value in remotion_env_additions.items()
+                             if key != "ASTRID_REMOTION_PROJECT_DIR"},
                 identity=frame_session_identity or render_hash,
             )
             frame_session.retain_staged_public_root(staged_public_root)
