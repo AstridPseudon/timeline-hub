@@ -5,11 +5,11 @@
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch; L=$O/followups/leads
 # H (one head) and D (editing) start only when main has written followups/leads/<folder>/START (gates: A, B, C accepted; then H accepted).
 for spec in A:A-zoom:agent:tl/zoom-integration B:B-shotlayer:agent:tl/shotlayer-integration C:C-shoteditor:app:tl/shoteditor-integration H:H-onehead:agent:tl/one-head D:D-editing:agent:tl/editing-integration P:P-perception:agent:tl/perception-integration U:U-uxtrial:agent:tl/ux-integration; do
-  IFS=: read X P R B <<<"$spec"
+  IFS=: read X P R B <<<"$spec"; NETF=; [ $X = U ] && NETF=--net   # 28 Oct: the U lead runs the sandbox smoke itself (needs sockets)
   case $X in H|D|P|U) [ -f $L/$P/START ] || continue; [ -f $L/$P/STOP ] && continue;; esac
   case $X in A|B|C) { [ -f $L/$P/ACCEPTED ] || [ -f $L/$P/HANDED-TO-H ]; } && continue;; esac   # 27 Oct: finished projects are not restarted
   last=$(ls -d $O/workers/lead-$X-r* 2>/dev/null | sed "s#.*/lead-$X-r##" | sort -n | tail -1)
-  if [ -z "$last" ]; then case $X in H|D|P|U) out=$($O/bin/request lead-$X-r1 --repo $R --base $B --model gpt-6-luna --effort high --timeout 120 --brief $L/$P/LEAD-BRIEF.md 2>&1); echo "$(date -u +%FT%TZ) lead-roll: $out" | tee -a $L/lead-roll.log;; esac; continue; fi
+  if [ -z "$last" ]; then case $X in H|D|P|U) out=$($O/bin/request lead-$X-r1 --repo $R --base $B --model gpt-6-luna --effort high --timeout 120 $NETF --brief $L/$P/LEAD-BRIEF.md 2>&1); echo "$(date -u +%FT%TZ) lead-roll: $out" | tee -a $L/lead-roll.log;; esac; continue; fi
   D=$O/workers/lead-$X-r$last; [ -f $D/ended ] || continue
   ls $O/queue/pending/lead-$X-r* >/dev/null 2>&1 && continue
   le=$(date -d "$(cat $D/ended)" +%s); go=0
@@ -20,6 +20,6 @@ for spec in A:A-zoom:agent:tl/zoom-integration B:B-shotlayer:agent:tl/shotlayer-
   # 27 Oct 05:15Z: a new main note (STATUS.md changed over a minute after the round ended) also starts the next round
   [ -f $L/$P/STATUS.md ] && [ $(stat -c %Y $L/$P/STATUS.md) -gt $((le + 60)) ] && go=1
   [ $go = 1 ] || continue
-  N=$((last+1)); LM=gpt-5.6-luna; case $X in H|D|P|U) LM=gpt-6-luna;; esac; out=$($O/bin/request lead-$X-r$N --repo $R --base $B --model $LM --effort high --timeout 120 --brief $L/$P/LEAD-BRIEF.md 2>&1)
+  N=$((last+1)); LM=gpt-5.6-luna; case $X in H|D|P|U) LM=gpt-6-luna;; esac; out=$($O/bin/request lead-$X-r$N --repo $R --base $B --model $LM --effort high --timeout 120 $NETF --brief $L/$P/LEAD-BRIEF.md 2>&1)
   echo "$(date -u +%FT%TZ) lead-roll: $out" | tee -a $L/lead-roll.log
 done
