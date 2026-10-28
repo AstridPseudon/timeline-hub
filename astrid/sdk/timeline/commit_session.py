@@ -114,7 +114,7 @@ class Timeline(Checkout):
         from astrid.sdk.timeline_media_replacement import _verified
 
         from .capture import number
-        from .media_add import _placement_commands, _selection
+        from .media_add import _placement_commands, _selection, existing_selectors
         from .model import Clip
 
         if id is not None and clip_id is not None:
@@ -150,7 +150,18 @@ class Timeline(Checkout):
             if "sha256:" + hashlib.sha256(payload).hexdigest() != cache_key:
                 raise TimelineEditError("local media changed during import; retry after the file is saved")
             cached = self._media_cache.get(cache_key)
-        if cached is None:
+        reused = None
+        if cached is None and cache_key is not None:
+            # Reuse media this project already imported (keyed by project + digest).
+            transport = self.session.client._remote._transport
+            reused = existing_selectors(transport, self.session.project_id, cache_key)
+        if reused is not None:
+            from astrid.sdk.timeline_media_replacement import _plain
+
+            pin = _plain(self.session.client._remote._transport.get_project_media_selection(
+                self.session.project_id, reused))
+            pin, verified = _verified(self.session.client._remote._transport, self.session.project_id, pin)
+        elif cached is None:
             pin, verified = _selection(self.session, self.bundle, source)
         else:
             pin = copy.deepcopy(cached["pin"])
@@ -188,7 +199,7 @@ class Timeline(Checkout):
                 "pin": copy.deepcopy(pin), "sources": [],
                 "imports": [{"object_id": pin["object_id"], "generation_id": pin["generation_id"],
                              "variant_id": pin["variant_id"], "catalog_write": True,
-                             "retained_on_undo": True}],
+                             "retained_on_undo": True}] if reused is None else [],
             })
             if source_path not in entry.setdefault("sources", []):
                 entry["sources"].append(source_path)

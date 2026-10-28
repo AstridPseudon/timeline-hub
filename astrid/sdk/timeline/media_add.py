@@ -14,6 +14,24 @@ from .capture import number
 from .outbox import request_bytes
 
 
+def existing_selectors(transport, project, digest):
+    """Return the one catalog variant already holding this digest, else None.
+
+    Zero or several matches return None so the caller falls back to the
+    idempotent managed import instead of guessing between variants.
+    """
+    from astrid.sdk.pagination import paged_rows
+
+    matches = []
+    for generation in paged_rows(transport.list_generations, project) or []:
+        for variant in paged_rows(transport.list_variants, generation['generation_id']) or []:
+            if variant.get('object_id') == digest:
+                matches.append({'asset': variant['variant_id'],
+                                'generation_id': generation['generation_id'],
+                                'variant_id': variant['variant_id']})
+    return matches[0] if len(matches) == 1 else None
+
+
 def _selection(session, bundle, source):
     from astrid.core.media import MediaProbeError
     from astrid.sdk.authoring_media import _metadata

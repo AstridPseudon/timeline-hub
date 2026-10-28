@@ -333,6 +333,50 @@ def test_e14_twenty_ordered_media_one_receipt_exact_undo_and_timings(editing_cas
     )
 
 
+def test_e14_media_reuse_adds_existing_media_without_second_upload_and_undoes_exactly(
+    editing_case, tmp_path, monkeypatch,
+):
+    _daemon, client, project, timeline = editing_case
+    transport = client._remote._transport
+    uploads = []
+    original_import = transport.import_project_media
+
+    def counting_import(*args, **kwargs):
+        uploads.append(kwargs.get("expected_digest"))
+        return original_import(*args, **kwargs)
+
+    monkeypatch.setattr(transport, "import_project_media", counting_import)
+    source = _media_file(tmp_path / "reused.png")
+    history_before = _history(client, project)
+
+    first = timeline.commit(
+        lambda t: t.add(source, at=0, hold=1, track="V1", id="reuse-first"),
+        label="Place media",
+        key="e14-reuse-first",
+    )
+    assert first["receipt"]["receipt_id"]
+    assert len(uploads) == 1
+    before_second = _snapshot(timeline)
+    history_after_first = _history(client, project)
+    assert len(history_after_first) == len(history_before) + 1
+
+    second = timeline.commit(
+        lambda t: t.add(source, at=2, hold=1, track="V1", id="reuse-second"),
+        label="Reuse placed media",
+        key="e14-reuse-second",
+    )
+    assert second["receipt"]["receipt_id"]
+    assert len(uploads) == 1  # The second clip reuses the already-imported media object.
+    clips = {row["id"]: row for row in second["data"]["canonical_document"]["parent_revision"]["payload"]["clips"]}
+    assert clips["reuse-first"]["at"] == 0
+    assert clips["reuse-second"]["at"] == 2
+    assert len(_history(client, project)) == len(history_after_first) + 1
+
+    undone = timeline.undo(publications=[second["receipt"]["receipt_id"]])
+    assert undone["data"]["canonical_document"] == before_second
+    assert len(_history(client, project)) == len(history_after_first) + 2
+
+
 def _seed_flat_editing(timeline, picture, voice, *, music_at=None):
     """Author a real flat parent fixture; this receipt is setup, not an acceptance edit."""
     client = getattr(timeline.session.client, "_remote", timeline.session.client)
