@@ -654,6 +654,29 @@ def _renderer_notes(renderer: Any) -> list[str]:
     return taken
 
 
+def materialized_timeline_matches(timeline_path: Path, config: Mapping[str, Any]) -> bool:
+    """Return whether the materialized timeline file is the retained capture config.
+
+    Both sides are compared at the JSON boundary, the form that is written to disk:
+    ``Timeline.load`` stores a clip's ``from`` trim under ``from_`` in memory while
+    ``from_config`` keeps ``from``, so comparing in-memory configs rejects valid files.
+    """
+    from astrid.core.timeline import Timeline
+
+    return (Timeline.load(timeline_path).to_json_data()
+            == Timeline.from_config(config).to_json_data())
+
+
+def visualized_duration_frames(config: Mapping[str, Any], fps: float) -> int:
+    """Return the composition frame count the visualizer reviews for a saved config."""
+    from astrid.core.timeline.duration import (
+        timeline_duration_frames,
+        timeline_occurrence_extent_frames,
+    )
+
+    return max(timeline_duration_frames(config, fps), timeline_occurrence_extent_frames(config, fps))
+
+
 def snapshot_wants_bounds(snapshot: Mapping[str, Any]) -> bool:
     """True when the snapshot's timeline config sets the top-level ``app.astrid_bounds`` flag.
 
@@ -697,8 +720,6 @@ class RemotionFrameProvider:
         self._scene_clips = self.snapshot.get("metadata", {}).get("scene_clips")
         self.source_identity = self.snapshot.get("metadata", {}).get("capture_identity", "")
         if self._scene_clips is not None:
-            from astrid.core.timeline import Timeline
-            from astrid.core.timeline.duration import timeline_duration_frames
             from astrid.packs.rendering.shared.rendering_backend import (
                 _canonical_profile,
                 _load_registry_mapping,
@@ -714,7 +735,7 @@ class RemotionFrameProvider:
             ).encode()).hexdigest()
             if identity != self.source_identity or not authority.get("parent_revision_id"):
                 raise ValueError("capture source identity mismatch")
-            if Timeline.load(self.timeline_path).to_config() != Timeline.from_config(self.snapshot["config"]).to_config():
+            if not materialized_timeline_matches(self.timeline_path, self.snapshot["config"]):
                 raise ValueError("materialized timeline differs from retained capture source")
             from astrid.core.timeline.astrid_ns import read_app
 
@@ -746,7 +767,7 @@ class RemotionFrameProvider:
             # including rational fps and partial-override field defaults.
             fps = self.profile.fps_rational[0] / self.profile.fps_rational[1]
             snapshot["fps_rational"] = list(self.profile.fps_rational)
-            snapshot["duration_frames"] = timeline_duration_frames(self.snapshot["config"], fps)
+            snapshot["duration_frames"] = visualized_duration_frames(self.snapshot["config"], fps)
             self.snapshot["fps_rational"] = snapshot["fps_rational"]
             self.snapshot["duration_frames"] = snapshot["duration_frames"]
             self.snapshot["resolved_theme"] = self._theme
