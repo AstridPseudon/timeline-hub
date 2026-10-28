@@ -436,10 +436,13 @@ def test_e14_mixed_recut_previews_then_applies_exact_literal_list_once(editing_c
     from astrid.sdk.timeline.commit import bundle_from_document
     from astrid.sdk.timeline.native_occurrence_create import capture_occurrence_create
 
+    shots_track = timeline.commit(lambda t: t.track("Shots", kind="visual"),
+                                  label="Seed recut occurrence track", key="e14-seed-recut-track")
+    assert shots_track["receipt"]["receipt_id"]
     bundle = bundle_from_document(_snapshot(timeline))
     occurrences = _sequential_births(bundle, [dict(
         occurrence_id=f"recut-occ-{index}", shot_id=f"recut-shot-{index}", name=f"Recut shot {index}",
-        track="V1", on=index * 3, duration=2,
+        track="Shots", on=index * 3, duration=2,
     ) for index in range(2)])
     history_before_occurrences = _history(client, project)
     occurrence_setup = timeline.commit(occurrences, label="Seed recut occurrences", key="e14-seed-recut-occurrences")
@@ -679,7 +682,9 @@ def test_e14_duplicate_unknown_copy_retry_reuses_destination_and_receipt(
     sent = []
 
     def lose_copy_response(project_id, timeline_id, body, **kwargs):
-        if timeline_id == "variant-e14-retry":
+        # Only the copy publication loses its reply; destination setup is a separate commit.
+        if timeline_id == "variant-e14-retry" and any(
+                command.get("op") == "timeline.duplicate" for command in body.get("commands", ())):
             sent.append((copy.deepcopy(body), kwargs["idempotency_key"]))
             result = original(project_id, timeline_id, body, **kwargs)
             if len(sent) == 1:
