@@ -9,8 +9,8 @@ while true; do
   for w in $O/workers/diag-*/ended $O/workers/H-sol-*/ended $O/workers/P-P1-critical*/ended; do [ -f "$w" ] || continue; n=$(basename $(dirname $w))
     case $n in diag-base-*|diag-deep-*|diag-cdelta-b-*|diag-agentlane-pin-*|diag-agentlane-head-*|diag-oe-*) touch "${w%ended}.seen"; continue;; esac
     [ ! -f "${w%ended}.seen" ] && { echo "finished: $n"; touch "${w%ended}.seen"; }; done
-  for p in H-onehead D-editing P-perception; do s=$L/$p/STATUS.md; [ -f $s ] || continue
+  for p in H-onehead D-editing P-perception U-uxtrial; do s=$L/$p/STATUS.md; [ -f $s ] || continue
     sed -n '/## Blocked/,/## Next round/p' $s | grep -iE 'main (must|should|needs to)|please|advise|needs main:' | cut -c1-200 | while read -r l; do k="$p|$(echo "$l" | md5sum | cut -c1-10)"; grep -qxF "$k" $L/.asks-seen 2>/dev/null || { echo "$p asks main: $l"; echo "$k" >> $L/.asks-seen; }; done
-    grep -qE '^(PHASE|PROJECT) [HDP] DONE' $s && [ ! -f $L/$p/.done-seen ] && { echo "$p: STAGE DONE reported"; touch $L/$p/.done-seen; }; done
+    grep -qE '^(PHASE|PROJECT) [HDPU] DONE' $s && [ ! -f $L/$p/.done-seen ] && { echo "$p: STAGE DONE reported"; touch $L/$p/.done-seen; }; done
   sleep 120
 done

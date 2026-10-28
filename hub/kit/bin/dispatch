@@ -16,9 +16,9 @@ while [ $# -gt 0 ]; do case $1 in
 # 09:55Z LOOPS #60: a "-sol-" worker name is the manager's explicit HARD intent, so it is never downgraded. A Sol model without a HARD: line or -sol- name is still downgraded, but loudly: the note goes into the owning manager's INBOX, not only a log nobody reads.
 case $M in *sol*) { grep -qE '^(SUPER-)?HARD:' "$BRIEF" 2>/dev/null || [[ $N == *-sol-* ]]; } || { echo "$(date -u +%FT%TZ) $N: $M -> gpt-5.6-luna (no HARD: line in brief)" >> $O/model-downgrades.log
     for a in runtime app agent viewing app2 farm; do case $N in rt-*) [ $a = runtime ];; app-*) [ $a = app ];; agt-*) [ $a = agent ];; vw-*) [ $a = viewing ];; ap2-*) [ $a = app2 ];; tf-*) [ $a = farm ];; *) false;; esac && [ -d $O/managers/$a ] && printf '\n## %s dispatch: %s DOWNGRADED Sol -> Luna (brief has no HARD: line). If it needs Sol, stop it and re-dispatch with a HARD: line.\n' "$(date -u +%FT%TZ)" "$N" >> $O/managers/$a/INBOX.md; done
-    M=gpt-5.6-luna; case $N in D-*|H-*|P-*) M=gpt-6-luna;; esac; };; esac
+    M=gpt-5.6-luna; case $N in D-*|H-*|P-*|U-*) M=gpt-6-luna;; esac; };; esac
 # 27 Oct 21:00Z (owner): three tiers for follow-up workers (names D-*, H-*, P-*): brief first line "SUPER-HARD:" -> Sol (gpt-6.1-sol); "HARD:" -> Terra (gpt-6.1-terra); neither -> Luna (gpt-6-luna). A Sol request with only HARD: becomes Terra; a Terra request without HARD:/SUPER-HARD: becomes Luna.
-case $N in D-*|H-*|P-*)
+case $N in D-*|H-*|P-*|U-*)   # 28 Oct: project U uses the same tiers
   FL=$(head -1 "$BRIEF" 2>/dev/null)
   case $M in *sol*) case $FL in SUPER-HARD:*) ;; HARD:*) echo "$(date -u +%FT%TZ) $N: $M -> gpt-6.1-terra (HARD: line, not SUPER-HARD:)" >> $O/model-downgrades.log; M=gpt-6.1-terra;; *) M=gpt-6-luna;; esac;;
     *terra*) case $FL in SUPER-HARD:*|HARD:*) ;; *) echo "$(date -u +%FT%TZ) $N: $M -> gpt-6-luna (no HARD:/SUPER-HARD: line)" >> $O/model-downgrades.log; M=gpt-6-luna;; esac;; esac;;
