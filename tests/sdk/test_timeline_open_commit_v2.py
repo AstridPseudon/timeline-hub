@@ -14,6 +14,7 @@ import pytest
 
 from astrid.sdk import timeline
 from astrid.sdk.timeline import api, commit_session
+from astrid.sdk.timeline.commit_session import _changed_ranges
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commands import execute
 from astrid.sdk.timeline.commit import bundle_from_document
@@ -85,6 +86,49 @@ def test_native_edits_commit_once_with_label_and_steps(connected):
                        "publication_id": result["receipt"]["receipt_id"]}
     assert json.loads(path.read_text())["pending"] == []
     assert tl._journal == []
+
+
+def test_accepted_move_reports_exact_revision_pair_and_old_new_ranges(connected):
+    tl = opened(connected)
+    preview = tl.commit(lambda working: working.move("parent/clip:a", 3), dry_run=True)
+    assert "changed_ranges" not in preview and "changed_ranges" not in preview["data"]
+
+    accepted = tl.commit(preview["data"]["commands"], label="Move clip")
+    data = accepted["data"]
+    assert data["previous_revision_id"] == "r0"
+    assert data["accepted_revision_id"] == accepted["data"]["canonical_document"]["parent_revision"]["revision_id"]
+    assert accepted["changed_ranges"] == data["changed_ranges"] == [
+        {"start": 0.0, "end": 1.0}, {"start": 3.0, "end": 4.0},
+    ]
+
+
+def test_accepted_removal_reports_the_removed_span(connected):
+    tl = opened(connected)
+    accepted = tl.commit([{"schema_version": 1, "op": "clip.delete", "version": "1",
+                           "select": "parent/clip:a", "args": {}}], label="Remove clip")
+    assert accepted["data"]["changed_ranges"] == [{"start": 0.0, "end": 1.0}]
+
+
+def test_shortened_effect_reports_its_before_and_after_window():
+    before = {"parent": {"config": {"output": {"fps": 30}}, "clips": [
+        {"id": "shot", "track": "picture", "at": 2, "hold": 5,
+         "exit": {"type": "fade", "duration": 2}},
+    ]}}
+    after = copy.deepcopy(before)
+    after["parent"]["clips"][0]["exit"]["duration"] = 0.5
+    assert _changed_ranges(before, after) == [{"start": 5.0, "end": 7.0}]
+
+
+def test_occurrence_move_reports_its_old_and_new_spans():
+    before = {"placements": [
+        {"occurrence_id": "occ", "placement": {"start_ms": 1000}, "duration_ms": 2000},
+    ]}
+    after = {"placements": [
+        {"occurrence_id": "occ", "placement": {"start_ms": 5000}, "duration_ms": 2000},
+    ]}
+    assert _changed_ranges(before, after) == [
+        {"start": 1.0, "end": 3.0}, {"start": 5.0, "end": 7.0},
+    ]
 
 
 @pytest.mark.parametrize("selected", [None, ["step-2"]])
@@ -170,7 +214,7 @@ def test_function_reads_each_returned_head_and_recomputes_with_new_keys(connecte
     result = tl.commit(increment, idempotency_key="first-evaluation")
     assert [value for _, value in evaluations] == [0, 10, 20]
     assert [head["revision_id"] for head, _ in evaluations] == ["r0", "other-10", "other-20"]
-    assert client.reads == ["r0", "r0", "other-10", "other-20"]
+    assert client.reads == ["r0", "r0", "other-10", "other-20", "other-20"]
     assert len({key for _, key in sent}) == 3
     assert sent[0][1] == "first-evaluation"
     assert [body["base_revision_id"] for body, _ in sent] == ["r0", "other-10", "other-20"]

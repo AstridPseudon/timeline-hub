@@ -218,8 +218,37 @@ def _lane_names(item) -> list[str]:
     return seen
 
 
-_P1_TYPE_ON_NODE = "tests/core/timeline/test_clip_fields.py::test_public_setter_serializes_top_level_type_on_legacy_expectation"
-_P1_TYPE_ON_REASON = "P1 must restore top-level type-on text-hook behavior"
+_CLIP_FIELDS = "tests/core/timeline/test_clip_fields.py::"
+_P1_SHAPE = "P1 stores animation refs as package {id, durationFrames}; the {type, duration seconds} write shape is gone"
+_P1_LINEAR = "P1 stores explicit linear easing: the package default is spring, so omitting it draws differently"
+_P1_FRAMES = "P1 accepts durationFrames, the package's own duration key, on animation refs"
+_P1_ID = "P1 accepts the package {id, durationFrames} animation shape"
+_P1_PARAMS = "P1 refuses animation params the installed package ignores (only easing is drawn)"
+
+# Pre-P1 expectations that a P1 requirement changes on purpose. Each is a strict xfail on an exact test id (a key
+# without "[" covers every parameter of that test); the P1 behaviour has its own test in the same file.
+P1_XFAILS: dict[str, str] = {
+    _CLIP_FIELDS + "test_public_setter_serializes_top_level_type_on_legacy_expectation": "P1 must restore top-level type-on text-hook behavior",
+    _CLIP_FIELDS + "test_entrance_fade_8f_at_30fps": _P1_SHAPE,
+    _CLIP_FIELDS + "test_entrance_fade_seconds_and_bare_seconds": _P1_SHAPE,
+    _CLIP_FIELDS + "test_entrance_durationless_and_dict_and_none": _P1_SHAPE,
+    _CLIP_FIELDS + "test_exit_only_animation_is_refused_as_entrance": _P1_SHAPE,
+    _CLIP_FIELDS + "test_fade_in_visual_is_an_entrance_and_audio_is_params_fadein_seconds": _P1_SHAPE,
+    _CLIP_FIELDS + "test_fade_out_visual_is_exit_and_audio_is_params_fadeout": _P1_SHAPE,
+    _CLIP_FIELDS + "test_write_visual_entrance_and_read_back": _P1_SHAPE,
+    _CLIP_FIELDS + "test_describe_round_trips_through_coerce[entrance-fade 8f-stored1-fade 8f]": _P1_SHAPE,
+    _CLIP_FIELDS + "test_describe_round_trips_through_coerce[exit-fade 8f-stored2-fade 8f]": _P1_SHAPE,
+    _CLIP_FIELDS + "test_legacy_inout_is_described_as_in_out_and_round_trips": _P1_SHAPE,
+    _CLIP_FIELDS + "test_easing_forms_store_params_only_when_not_linear": _P1_LINEAR,
+    _CLIP_FIELDS + "test_easing_describe_round_trips[entrance-fade 12f ease=linear-fade 12f]": _P1_LINEAR,
+    _CLIP_FIELDS + "test_entrance_dict_with_unknown_key_refused": _P1_FRAMES,
+    _CLIP_FIELDS + "test_composition_and_string_entrance_shapes_are_refused[shape0]": _P1_ID,
+    _CLIP_FIELDS + "test_params_easing_is_kept_alongside_other_params": _P1_PARAMS,
+}
+
+
+def _p1_xfail_reason(nodeid: str) -> str | None:
+    return P1_XFAILS.get(nodeid) or P1_XFAILS.get(nodeid.partition("[")[0])
 
 
 def _declared_skip(name: str) -> pytest.MarkDecorator:
@@ -249,8 +278,7 @@ class _SkipGuard:
 
     def _judge(self, report, where: str, item=None) -> None:
         if hasattr(report, "wasxfail"):
-            if (where == _P1_TYPE_ON_NODE and item is not None
-                    and report.wasxfail == _P1_TYPE_ON_REASON):
+            if item is not None and report.wasxfail == _p1_xfail_reason(where):
                 return
             del report.wasxfail  # pytest does not count a failed report that still carries it
             report.outcome = "failed"
@@ -479,8 +507,8 @@ def pytest_configure(config):
 @pytest.hookimpl(tryfirst=True)
 def pytest_collection_modifyitems(config, items):
     for item in items:
-        if item.nodeid == _P1_TYPE_ON_NODE:
-            item.add_marker(pytest.mark.xfail(strict=True, reason=_P1_TYPE_ON_REASON))
+        if (reason := _p1_xfail_reason(item.nodeid)) is not None:
+            item.add_marker(pytest.mark.xfail(strict=True, reason=reason))
         needs_checkout = set(getattr(getattr(item, "module", None), "INTEGRATION_FIXTURES", ()))
         if needs_checkout & set(getattr(item, "fixturenames", ())):
             item.add_marker(pytest.mark.integration)

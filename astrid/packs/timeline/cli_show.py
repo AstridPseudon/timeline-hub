@@ -1,7 +1,7 @@
 """``timelines show``'s editor views: the cut table, ``--as sheet``, one address, ``--summary``, ``--at``.
 
-The working copy is what ``show`` reads unless ``--published`` or an exact revision is asked for. Each view is
-a projection of the bundle (astrid.sdk.timeline_cuts / timeline_views / timeline_sheet / timeline_address).
+Published current is the default. A named working copy or exact revision must be selected explicitly. Each view is
+a projection of the selected bundle (astrid.sdk.timeline_cuts / timeline_views / timeline_sheet / timeline_address).
 """
 from __future__ import annotations
 
@@ -52,22 +52,27 @@ def _readback_error(data: Mapping[str, Any], requested_revision: str | None) -> 
 
 
 def show_checkout(parsed: argparse.Namespace, bundle_opener: Any) -> tuple[Any, str] | int:
-    """The timeline ``show`` reads, as a Checkout: the working copy (unless --published/--revision-id)
-    or the published head; with the banner line that says which. An int is an exit code."""
+    """Read the explicitly selected draft, exact revision, or published current."""
     from astrid.sdk.timeline_checkout import Checkout, find_draft
 
-    if not getattr(parsed, "published", False) and not getattr(parsed, "revision_id", None):
+    if getattr(parsed, "draft", None) and (getattr(parsed, "published", False)
+                                            or getattr(parsed, "revision_id", None)):
+        print("error: --draft cannot be combined with --published or --revision-id", file=sys.stderr)
+        return 2
+    if getattr(parsed, "draft", None):
         try:
-            path = find_draft(parsed.project, parsed.ref, getattr(parsed, "draft", None),
+            path = find_draft(parsed.project, parsed.ref, parsed.draft,
                               client=getattr(parsed, "client", None))
-        except Exception as exc:  # noqa: BLE001 - say so and show the head
-            print(f"working copy: not checked ({exc}); showing the published head", file=sys.stderr)
-            path = None
+        except Exception as exc:  # noqa: BLE001 - an explicit source must not fall back
+            print(f"error: could not read working copy {parsed.draft!r}: {exc}", file=sys.stderr)
+            return 1
         if path is not None:
             tl = Checkout.load(path)
             n = len(tl.edits().get("changes") or [])
-            return tl, (f"WORKING COPY · {clips_changed(n)} vs published "
-                        f"{short_rev(tl.base_revision)} · --published for the live version")
+            return tl, (f"WORKING COPY {parsed.draft} · {clips_changed(n)} · base revision "
+                        f"{tl.base_revision}")
+        print(f"error: working copy {parsed.draft!r} does not exist", file=sys.stderr)
+        return 1
     opened = bundle_opener(parsed.project, parsed.ref, revision_id=getattr(parsed, "revision_id", None))
     if not opened.ok or not isinstance(opened.data, Mapping):
         return print_result(opened, as_json=False)
@@ -86,7 +91,7 @@ def show_checkout(parsed: argparse.Namespace, bundle_opener: Any) -> tuple[Any, 
 
 
 def print_sheet(parsed: argparse.Namespace, bundle_opener: Any) -> int:
-    """``show --as sheet``: the cut sheet of the working copy (or the published head)."""
+    """``show --as sheet``: the selected published revision or named working copy."""
     from astrid.sdk.timeline_address import AddressError, resolve
     from astrid.sdk.timeline_sheet import SheetError, moment_range, range_cuts, render_sheet
 
@@ -202,6 +207,11 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
     )
     from astrid.sdk.timeline_views import render_at, render_clips
 
+    if getattr(parsed, "draft", None) and (getattr(parsed, "published", False)
+                                            or getattr(parsed, "revision_id", None)):
+        print("error: --draft cannot be combined with --published or --revision-id")
+        return 2
+
     opened = bundle_opener(parsed.project, parsed.ref, revision_id=getattr(parsed, "revision_id", None))
     if not opened.ok or not isinstance(opened.data, Mapping):
         return print_result(opened, as_json=bool(parsed.json))
@@ -216,22 +226,25 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
         return print_result(readback_error, as_json=bool(parsed.json))
     loaded_revision = _loaded_revision(data)
     assert loaded_revision is not None
-    # The working copy (unpublished draft) is what show reads unless --published or an exact revision is asked for.
+    # A draft is read only when named explicitly; otherwise this immutable bundle is published current.
     working = None
-    if not getattr(parsed, "published", False) and not getattr(parsed, "revision_id", None):
+    if getattr(parsed, "draft", None):
         working = working_copy_view(parsed)
+        if working is None:
+            print(f"error: working copy {parsed.draft!r} does not exist", file=sys.stderr)
+            return 1
     bundle = working["bundle"] if working else bundle
     table = build_cut_table(bundle)
     changes = working["changes"] if working else []
     changed = {str(change.get("clip_id")) for change in changes if change.get("clip_id")}
     working_info = None if working is None else {
-        "draft": working["path"], "base_revision": working["base_revision"], "edits": len(changes),
+        "name": parsed.draft, "draft": working["path"], "base_revision": working["base_revision"], "edits": len(changes),
     }
     banner: list[str] = []
     if working_info is not None:
         banner = [
-            f"WORKING COPY · {clips_changed(len(changes))} vs published {working['base_revision']} · "
-            "--published for the live version"
+            f"WORKING COPY {parsed.draft} · {clips_changed(len(changes))} · base revision "
+            f"{working['base_revision']}"
         ]
     head_revision_id = data.get("head_revision_id")
     is_current_head = (
@@ -244,7 +257,7 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
         payload.update({
             "project_id": data.get("project_id"),
             "timeline_id": data.get("timeline_id"),
-            "revision_id": loaded_revision,
+            "revision_id": None if working_info is not None else loaded_revision,
             "publication_id": data.get("publication_id"),
             "is_current_head": is_current_head,
             "head_revision_id": data.get("head_revision_id"),
@@ -262,10 +275,18 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
         state = f"saved revision (current head is {head_revision_id})"
     else:
         state = "saved revision (current head is unavailable)"
-    title = f"Timeline {data.get('timeline_id')} · project {parsed.project or data.get('project_id')} · {state}\n  revision {revision}"
+    if working_info is not None:
+        state = f"working copy {parsed.draft} · base revision {working['base_revision']}"
+        revision = ""
+    title = f"Timeline {data.get('timeline_id')} · project {parsed.project or data.get('project_id')} · {state}"
+    if revision:
+        title += f"\n  revision {revision}"
     project = str(parsed.project or data.get("project_id"))
     timeline = str(parsed.ref or data.get("timeline_id"))
     show_base = ["python3", "-m", "astrid", "timelines", "show", timeline, "--project", project]
+    source_args = (["--draft", str(parsed.draft)] if working_info is not None
+                   else ["--revision-id", revision])
+    show_base += source_args
 
     if getattr(parsed, "at", None):
         from astrid.sdk.timeline_address import AddressError, resolve
@@ -344,8 +365,7 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
     if info is not None:
         lines.insert(len(lines) - 1, paging_hint(table, rows, shown, info))
     visual = ["python3", "-m", "astrid", "timelines", "visualize", timeline, "--project", project]
-    if is_current_head is not True:
-        visual += ["--revision-id", revision]
+    visual += source_args
     if shown and (getattr(parsed, "range", None) or getattr(parsed, "shot", None) or info is not None):
         low, high = shown[0]["start"], shown[-1]["end"]
         lines.append("see these cuts: " + shlex.join(visual + ["--view", "contact", "--range", f"{low:.2f}..{high:.2f}"]))

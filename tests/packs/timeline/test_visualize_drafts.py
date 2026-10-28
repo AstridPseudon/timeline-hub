@@ -1,4 +1,4 @@
-"""Offline checks: visualize and render read the working copy (draft) by default.
+"""Offline checks: visualize defaults to a pinned publication and accepts a named draft explicitly.
 
 Runtime, checkout and render are monkeypatched; nothing here touches the workspace.
 """
@@ -57,6 +57,9 @@ class FakeTimelines:
         self.visualize_calls.append({"project": project, "ref": ref, "options": dict(options or {}),
                                      "revision_id": revision_id})
         return DomainResult.success({"pack_root": "/tmp/unused", "formats": []})
+
+    def open_bundle(self, project, ref, revision_id=None):
+        return SimpleNamespace(ok=True, data={"bundle": {"base_parent": {"revision_id": "rev-head"}}})
 
 
 class FakeClient:
@@ -130,21 +133,23 @@ def test_visualize_summary_uses_rendered_snapshot_label_for_candidate_and_unavai
     assert '  revision unavailable' in unavailable.splitlines()
 
 
-def test_visualize_reads_the_working_copy_with_banner_and_changed_cuts(draft, capsys, monkeypatch):
+def test_visualize_reads_an_explicit_working_copy_with_banner_and_changed_cuts(draft, capsys, monkeypatch):
     import astrid.core.timeline.authoring_bundle as ab
 
     monkeypatch.setattr(ab, "preview_authoring_candidate", lambda doc: {"kind": "authoring-candidate-preview", "candidate": doc})
     client = FakeClient()
-    code = _visualize([], client)
+    code = _visualize(["--draft", "main"], client)
     out = capsys.readouterr().out
     assert code == 0
     assert out.splitlines()[0] == (
-        "WORKING COPY · 3 clips changed vs published rev-publ · --published for the live version"
+        "WORKING COPY main · 3 clips changed · base revision rev-published-1"
     )
     assert out.splitlines()[1].startswith("showing the 3 cuts you changed (12, 13, 22) · --every-cut for all cuts")
     assert "[✎ c12, c13, c22]" in out.splitlines()[1]
     options = client.timelines.visualize_calls[0]["options"]
     assert options["authoring_preview"]["kind"] == "authoring-candidate-preview"  # frames come from the working copy
+    assert options["authoring_preview"]["label"] == "working copy main · base revision rev-published-1"
+    assert client.timelines.visualize_calls[0]["revision_id"] == "rev-published-1"
     assert options["cuts"] == "12,13,22" and options["view"] == "contact"
 
 
@@ -153,7 +158,7 @@ def test_visualize_every_cut_drops_the_changed_cut_selection(draft, capsys, monk
 
     monkeypatch.setattr(ab, "preview_authoring_candidate", lambda doc: {"kind": "authoring-candidate-preview"})
     client = FakeClient()
-    _visualize(["--every-cut"], client)
+    _visualize(["--draft", "main", "--every-cut"], client)
     out = capsys.readouterr().out
     assert "showing every cut of the working copy" in out
     assert "you changed" not in out
@@ -168,6 +173,7 @@ def test_published_bypasses_the_draft(draft, capsys):
     assert envelope["data"]["outputs"]["working_copy"] is None
     assert len(client.timelines.visualize_calls) == 1
     assert "cuts" not in client.timelines.visualize_calls[0]["options"]
+    assert client.timelines.visualize_calls[0]["revision_id"] == "rev-head"
 
 
 def test_no_draft_reads_the_published_head(no_draft, capsys):
@@ -177,6 +183,36 @@ def test_no_draft_reads_the_published_head(no_draft, capsys):
     assert code == 0
     assert envelope["data"]["outputs"]["working_copy"] is None
     assert len(client.timelines.visualize_calls) == 1
+    assert client.timelines.visualize_calls[0]["revision_id"] == "rev-head"
+
+
+def test_unselected_visualize_ignores_a_conflicting_draft(draft, capsys):
+    client = FakeClient()
+    assert _visualize(["--json"], client) == 0
+    result = json.loads(capsys.readouterr().out)["data"]["outputs"]
+    assert result["working_copy"] is None
+    assert result["source_identity"] == {"kind": "revision", "revision_id": "rev-head"}
+    assert client.timelines.visualize_calls[0]["revision_id"] == "rev-head"
+
+
+def test_visualize_keeps_the_revision_pinned_when_head_advances(draft, capsys):
+    class AdvancingTimelines(FakeTimelines):
+        head = "rev-head"
+
+        def open_bundle(self, project, ref, revision_id=None):
+            result = super().open_bundle(project, ref, revision_id)
+            self.head = "rev-next"
+            return result
+
+    client = FakeClient()
+    client.timelines = AdvancingTimelines()
+
+    assert _visualize(["--json"], client) == 0
+    result = json.loads(capsys.readouterr().out)["data"]["outputs"]
+
+    assert client.timelines.head == "rev-next"
+    assert result["source_identity"] == {"kind": "revision", "revision_id": "rev-head"}
+    assert client.timelines.visualize_calls[0]["revision_id"] == "rev-head"
 
 
 def test_changed_cut_line_pages_explicitly():

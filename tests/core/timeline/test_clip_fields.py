@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import dataclasses
 import copy
+import dataclasses
 
 import jsonschema
 import pytest
@@ -68,19 +68,19 @@ def test_opacity_range_and_type_errors(raw):
 
 
 def test_entrance_fade_8f_at_30fps():
-    assert cf.coerce("entrance", "fade 8f") == ("entrance", {"id": "fade", "durationFrames": 8})
+    assert cf.coerce("entrance", "fade 8f") == ("entrance", {"type": "fade", "duration": 0.2667})
 
 
 def test_entrance_fade_seconds_and_bare_seconds():
-    assert cf.coerce("entrance", "fade 0.4s") == ("entrance", {"id": "fade", "durationFrames": 12})
-    assert cf.coerce("entrance", "fade 0.4") == ("entrance", {"id": "fade", "durationFrames": 12})
+    assert cf.coerce("entrance", "fade 0.4s") == ("entrance", {"type": "fade", "duration": 0.4})
+    assert cf.coerce("entrance", "fade 0.4") == ("entrance", {"type": "fade", "duration": 0.4})
 
 
 def test_entrance_durationless_and_dict_and_none():
-    assert cf.coerce("entrance", "fade") == ("entrance", {"id": "fade"})
+    assert cf.coerce("entrance", "fade") == ("entrance", {"type": "fade"})
     assert cf.coerce("entrance", {"type": "fade", "duration": 0.4}) == (
         "entrance",
-        {"id": "fade", "durationFrames": 12},
+        {"type": "fade", "duration": 0.4},
     )
     assert cf.coerce("entrance", "none") == ("entrance", None)
 
@@ -98,27 +98,21 @@ def test_entrance_unknown_animation_lists_the_valid_entrance_ids():
 def test_exit_only_animation_is_refused_as_entrance():
     with pytest.raises(ClipFieldError, match="slide-up"):
         cf.coerce("entrance", "slide-up 8f")
-    assert cf.coerce("exit", "slide-up 8f")[1]["id"] == "slide-up"
+    assert cf.coerce("exit", "slide-up 8f")[1]["type"] == "slide-up"
 
 
-@pytest.mark.parametrize("field", ["entrance", "exit"])
-def test_top_level_type_on_is_refused(field):
-    with pytest.raises(ClipFieldError, match="type-on requires a text element"):
-        cf.coerce(field, "type-on 18f")
-
-
-def test_entrance_dict_with_conflicting_units_refused():
-    with pytest.raises(ClipFieldError, match="not both"):
-        cf.coerce("entrance", {"type": "fade", "duration": 0.25, "durationFrames": 8})
+def test_entrance_dict_with_unknown_key_refused():
+    with pytest.raises(ClipFieldError, match="unknown key"):
+        cf.coerce("entrance", {"type": "fade", "durationFrames": 8})
 
 
 def test_fade_in_visual_is_an_entrance_and_audio_is_params_fadein_seconds():
-    assert cf.coerce("fade_in", "8f") == ("entrance", {"id": "fade", "durationFrames": 8})
+    assert cf.coerce("fade_in", "8f") == ("entrance", {"type": "fade", "duration": 0.2667})
     assert cf.coerce("fade_in", "8f", audio=True) == ("params.fadeIn", 0.2667)
 
 
 def test_fade_out_visual_is_exit_and_audio_is_params_fadeout():
-    assert cf.coerce("fade_out", "8f") == ("exit", {"id": "fade", "durationFrames": 8})
+    assert cf.coerce("fade_out", "8f") == ("exit", {"type": "fade", "duration": 0.2667})
     assert cf.coerce("fade_out", "0.5", audio=True) == ("params.fadeOut", 0.5)
 
 
@@ -184,62 +178,6 @@ def test_transition_unknown_name_refused():
         cf.coerce("transition", "swirl 8f")
 
 
-@pytest.mark.parametrize(
-    "transition, message",
-    [
-        ({"id": "cross-fade", "type": "fade", "durationFrames": 8}, "id and type must agree"),
-        ({"id": "cross-fade", "duration": 0.2, "durationFrames": 8}, "not both"),
-        ({"id": "cross-fade", "durationFrames": 8.5}, "whole frame"),
-        ({"id": "cross-fade", "params": {"easing": "out"}}, "params"),
-    ],
-)
-def test_transition_refs_refuse_conflicts_and_unsupported_values(transition, message):
-    with pytest.raises(ValueError, match=message):
-        validate_timeline({"tracks": [], "clips": [{"id": "c", "at": 0, "track": "v", "transition": transition}]}, strict=False)
-
-
-@pytest.mark.parametrize(
-    "field, raw, expected, human",
-    [
-        ("entrance", "fade-up 0.5s ease=out", {"id": "fade-up", "durationFrames": 12, "params": {"easing": "out"}}, "fade-up 12f ease=out"),
-        ("entrance", "scale-in 8f", {"id": "scale-in", "durationFrames": 8}, "scale-in 8f"),
-        ("entrance", "slide-left 8f", {"id": "slide-left", "durationFrames": 8}, "slide-left 8f"),
-        ("exit", "fade 7f", {"id": "fade", "durationFrames": 7}, "fade 7f"),
-        ("exit", "slide-up 0.25s", {"id": "slide-up", "durationFrames": 6}, "slide-up 6f"),
-        ("transition", "crossfade 0.25s", {"id": "cross-fade", "durationFrames": 6}, "crossfade 6f"),
-    ],
-)
-def test_public_setter_serializes_canonical_package_refs_at_timeline_fps(field, raw, expected, human):
-    clip: dict = {}
-    cf.write(clip, field, raw, fps=24)
-    assert clip["entrance" if field == "entrance" else "exit" if field == "exit" else field] == expected
-    assert cf.read(clip, field) == expected
-    assert cf.describe(clip, fps=24)[field] == human
-
-
-def test_public_setter_serializes_top_level_type_on_legacy_expectation():
-    clip: dict = {}
-    cf.write(clip, "entrance", "type-on 5f", fps=24)
-    assert clip["entrance"] == {"id": "type-on", "durationFrames": 5}
-    assert cf.read(clip, "entrance", fps=24) == {"id": "type-on", "durationFrames": 5}
-    # P1 must restore top-level type-on text-hook behavior across storage, read, and describe.
-    assert cf.describe(clip, fps=24)["entrance"] == "type-on 5f"
-
-
-@pytest.mark.parametrize(
-    "field, raw",
-    [
-        ("entrance", "slide-up 8f"),
-        ("exit", "fade-up 8f"),
-        ("entrance", {"type": "fade", "params": {"distance": 4}}),
-        ("transition", {"id": "cross-fade", "params": {"easing": "out"}}),
-    ],
-)
-def test_public_setter_refuses_unsupported_phase_or_parameters(field, raw):
-    with pytest.raises(ClipFieldError):
-        cf.coerce(field, raw)
-
-
 def test_bad_duration_forms_refused():
     with pytest.raises(ClipFieldError, match="duration"):
         cf.coerce("fade_in", "soon")
@@ -270,7 +208,7 @@ def test_fieldspec_is_frozen_and_methods_match_coerce():
     with pytest.raises(dataclasses.FrozenInstanceError):
         spec.name = "x"  # type: ignore[misc]
     assert spec.to_stored("fade 8f", fps=30) == cf.coerce("entrance", "fade 8f", fps=30)[1]
-    assert spec.from_stored({"id": "fade", "durationFrames": 8}, fps=30) == "fade 8f"
+    assert spec.from_stored({"type": "fade", "duration": 0.2667}, fps=30) == "fade 8f"
 
 
 def test_fadein_fieldspec_exposes_visual_and_audio_paths():
@@ -302,9 +240,9 @@ def test_every_stored_key_is_a_clip_allowed_key():
 
 
 def test_read_returns_stored_values_and_key_paths():
-    clip = {"entrance": {"id": "fade", "durationFrames": 8}, "params": {"fadeIn": 0.2667}, "cropLeft": 0.1}
-    assert cf.read(clip, "entrance") == {"id": "fade", "durationFrames": 8}
-    assert cf.read(clip, "fade_in") == {"id": "fade", "durationFrames": 8}
+    clip = {"entrance": {"type": "fade", "duration": 0.2667}, "params": {"fadeIn": 0.2667}, "cropLeft": 0.1}
+    assert cf.read(clip, "entrance") == {"type": "fade", "duration": 0.2667}
+    assert cf.read(clip, "fade_in") == {"type": "fade", "duration": 0.2667}
     assert cf.read(clip, "fade_in", audio=True) == 0.2667
     assert cf.read(clip, "crop_left") == 0.1
     assert cf.read(clip, "opacity") is None
@@ -313,8 +251,8 @@ def test_read_returns_stored_values_and_key_paths():
 def test_write_visual_entrance_and_read_back():
     clip: dict = {}
     cf.write(clip, "entrance", "fade 8f")
-    assert clip == {"entrance": {"id": "fade", "durationFrames": 8}}
-    assert cf.read(clip, "entrance") == {"id": "fade", "durationFrames": 8}
+    assert clip == {"entrance": {"type": "fade", "duration": 0.2667}}
+    assert cf.read(clip, "entrance") == {"type": "fade", "duration": 0.2667}
 
 
 def test_write_audio_fade_nested_in_params():
@@ -325,7 +263,7 @@ def test_write_audio_fade_nested_in_params():
 
 
 def test_write_none_removes_the_key():
-    clip = {"entrance": {"id": "fade", "durationFrames": 8}, "params": {"fadeIn": 0.2667}}
+    clip = {"entrance": {"type": "fade", "duration": 0.2667}, "params": {"fadeIn": 0.2667}}
     cf.write(clip, "entrance", None)
     assert "entrance" not in clip
     cf.write(clip, "fade_in", "none", audio=True)
@@ -357,8 +295,8 @@ def test_write_volume_and_speed_store_plain_values():
     "name, raw, stored, human",
     [
         ("opacity", "0.6", 0.6, "0.6"),
-        ("entrance", "fade 8f", {"id": "fade", "durationFrames": 8}, "fade 8f"),
-        ("exit", "fade 8f", {"id": "fade", "durationFrames": 8}, "fade 8f"),
+        ("entrance", "fade 8f", {"type": "fade", "duration": 0.2667}, "fade 8f"),
+        ("exit", "fade 8f", {"type": "fade", "duration": 0.2667}, "fade 8f"),
         ("crop_left", "0.1", 0.1, "0.1"),
         ("speed", "0.5x", 0.5, "0.5x"),
         ("volume", "-3dB", 0.7079, "-3.0dB"),
@@ -379,7 +317,7 @@ def test_describe_round_trips_through_coerce(name, raw, stored, human):
 def test_describe_examples_from_the_brief():
     clip = {
         "opacity": 0.6,
-        "entrance": {"id": "fade", "durationFrames": 8},
+        "entrance": {"type": "fade", "duration": 0.2667},
         "volume": 0.7079,
         "cropLeft": 0.1,
         "params": {"fadeOut": 0.5},
@@ -466,33 +404,16 @@ def test_render_status_defaults_to_pinned_union_composition():
 # ---------------------------------------------------------------- validator
 
 
-def test_canonical_entrance_shape_passes_validate_timeline(_builtin_text_is_not_an_element):
-    validate_timeline(_one_clip({"id": "fade", "durationFrames": 8}), strict=False)
-    validate_timeline(_one_clip({"id": "fade", "durationFrames": 8}))
-
-
-@pytest.mark.parametrize(
-    "phase, animation_id",
-    [
-        ("entrance", "fade"), ("exit", "fade"), ("entrance", "fade-up"),
-        ("entrance", "scale-in"), ("entrance", "slide-left"), ("exit", "slide-up"),
-        ("entrance", "type-on"),
-    ],
-)
-def test_package_animation_ids_validate_in_their_declared_phases(phase, animation_id, _builtin_text_is_not_an_element):
-    timeline = _one_clip(_MISSING)
-    timeline["clips"][0][phase] = {"id": animation_id}
-    validate_timeline(timeline, strict=False)
+def test_stored_entrance_shape_passes_validate_timeline(_builtin_text_is_not_an_element):
+    validate_timeline(_one_clip({"type": "fade", "duration": 0.2667}), strict=False)
+    validate_timeline(_one_clip({"type": "fade", "duration": 0.2667}))
 
 
 @pytest.mark.parametrize(
     "shape",
-    [{"type": "fade", "duration": 0.2667}, "fade"],
+    [{"id": "fade", "durationFrames": 8}, "fade"],
 )
-def test_legacy_animation_shape_validates_but_bare_string_is_refused(shape, _builtin_text_is_not_an_element):
-    if isinstance(shape, dict):
-        validate_timeline(_one_clip(shape), strict=False)
-        return
+def test_composition_and_string_entrance_shapes_are_refused(shape, _builtin_text_is_not_an_element):
     with pytest.raises((ValueError, jsonschema.ValidationError)):
         validate_timeline(_one_clip(shape), strict=False)
 
@@ -507,25 +428,25 @@ def test_clip_without_entrance_passes_validate_timeline(_builtin_text_is_not_an_
 @pytest.mark.parametrize(
     "name, raw, stored",
     [
-        ("entrance", "fade 12f ease=out", {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}}),
-        ("entrance", "fade ease=in-out", {"id": "fade", "params": {"easing": "in-out"}}),
-        ("entrance", "fade 0.4s ease=in", {"id": "fade", "durationFrames": 12, "params": {"easing": "in"}}),
-        ("entrance", "fade 12f ease=step", {"id": "fade", "durationFrames": 12, "params": {"easing": "step"}}),
-        ("entrance", "fade 12f ease=linear", {"id": "fade", "durationFrames": 12, "params": {"easing": "linear"}}),
-        ("entrance", "fade 12f ease=inOut", {"id": "fade", "durationFrames": 12, "params": {"easing": "in-out"}}),
-        ("entrance", "fade 12f ease=in_out", {"id": "fade", "durationFrames": 12, "params": {"easing": "in-out"}}),
-        ("entrance", "fade 12f ease=OUT", {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}}),
-        ("exit", "fade 12f ease=in", {"id": "fade", "durationFrames": 12, "params": {"easing": "in"}}),
+        ("entrance", "fade 12f ease=out", {"type": "fade", "duration": 0.4, "params": {"easing": "out"}}),
+        ("entrance", "fade ease=in-out", {"type": "fade", "params": {"easing": "in-out"}}),
+        ("entrance", "fade 0.4s ease=in", {"type": "fade", "duration": 0.4, "params": {"easing": "in"}}),
+        ("entrance", "fade 12f ease=step", {"type": "fade", "duration": 0.4, "params": {"easing": "step"}}),
+        ("entrance", "fade 12f ease=linear", {"type": "fade", "duration": 0.4}),
+        ("entrance", "fade 12f ease=inOut", {"type": "fade", "duration": 0.4, "params": {"easing": "in-out"}}),
+        ("entrance", "fade 12f ease=in_out", {"type": "fade", "duration": 0.4, "params": {"easing": "in-out"}}),
+        ("entrance", "fade 12f ease=OUT", {"type": "fade", "duration": 0.4, "params": {"easing": "out"}}),
+        ("exit", "fade 12f ease=in", {"type": "fade", "duration": 0.4, "params": {"easing": "in"}}),
         ("entrance", {"type": "fade", "duration": 0.4, "params": {"easing": "out"}},
-         {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}}),
-        ("entrance", {"type": "fade", "params": {"easing": "inOut"}}, {"id": "fade", "params": {"easing": "in-out"}}),
-        ("entrance", {"type": "fade", "params": {"easing": "linear"}}, {"id": "fade", "params": {"easing": "linear"}}),
-        ("fade_in", "8f ease=out", {"id": "fade", "durationFrames": 8, "params": {"easing": "out"}}),
-        ("fade_out", "8f ease=in", {"id": "fade", "durationFrames": 8, "params": {"easing": "in"}}),
-        ("fade_in", "ease=step", {"id": "fade", "params": {"easing": "step"}}),
+         {"type": "fade", "duration": 0.4, "params": {"easing": "out"}}),
+        ("entrance", {"type": "fade", "params": {"easing": "inOut"}}, {"type": "fade", "params": {"easing": "in-out"}}),
+        ("entrance", {"type": "fade", "params": {"easing": "linear"}}, {"type": "fade"}),
+        ("fade_in", "8f ease=out", {"type": "fade", "duration": 0.2667, "params": {"easing": "out"}}),
+        ("fade_out", "8f ease=in", {"type": "fade", "duration": 0.2667, "params": {"easing": "in"}}),
+        ("fade_in", "ease=step", {"type": "fade", "params": {"easing": "step"}}),
     ],
 )
-def test_easing_forms_preserve_explicit_params(name, raw, stored):
+def test_easing_forms_store_params_only_when_not_linear(name, raw, stored):
     path = {"entrance": "entrance", "exit": "exit", "fade_in": "entrance", "fade_out": "exit"}[name]
     assert cf.coerce(name, raw) == (path, stored)
 
@@ -561,9 +482,9 @@ def test_easing_is_refused_on_audio_fades():
         cf.write({"params": {}}, "fade_out", "8f ease=in", audio=True)
 
 
-def test_unsupported_animation_params_refuse():
-    with pytest.raises(ClipFieldError, match="not supported by the installed animations"):
-        cf.coerce("entrance", {"type": "fade-up", "duration": 0.4, "params": {"easing": "out", "distance": 60}})
+def test_params_easing_is_kept_alongside_other_params():
+    stored = cf.coerce("entrance", {"type": "fade-up", "duration": 0.4, "params": {"easing": "out", "distance": 60}})
+    assert stored[1] == {"type": "fade-up", "duration": 0.4, "params": {"easing": "out", "distance": 60}}
 
 
 @pytest.mark.parametrize(
@@ -572,7 +493,7 @@ def test_unsupported_animation_params_refuse():
         ("entrance", "fade 12f ease=out", "fade 12f ease=out"),
         ("entrance", "fade ease=in-out", "fade ease=in-out"),
         ("exit", "fade 12f ease=step", "fade 12f ease=step"),
-        ("entrance", "fade 12f ease=linear", "fade 12f ease=linear"),
+        ("entrance", "fade 12f ease=linear", "fade 12f"),
     ],
 )
 def test_easing_describe_round_trips(name, raw, human):
@@ -608,10 +529,161 @@ def test_legacy_inout_is_described_as_in_out_and_round_trips():
     assert cf.describe(clip) == {"entrance": "fade 12f ease=in-out"}
     again: dict = {}
     cf.write(again, "entrance", "fade 12f ease=in-out")
-    assert again == {"entrance": {"id": "fade", "durationFrames": 12, "params": {"easing": "in-out"}}}
+    assert again == {"entrance": {"type": "fade", "duration": 0.4, "params": {"easing": "in-out"}}}
 
 
 def test_easing_stored_shapes_pass_validate_timeline(_builtin_text_is_not_an_element):
+    for shape in (
+        {"type": "fade", "duration": 0.4, "params": {"easing": "out"}},
+        {"type": "fade", "params": {"easing": "step"}},
+        {"type": "fade", "duration": 0.4, "params": {"easing": "in-out"}},
+    ):
+        validate_timeline(_one_clip(shape), strict=False)
+        validate_timeline(_one_clip(shape))
+
+
+# ---------------------------------------------------------------- canonical package refs (P1)
+# The tests above keep the pre-P1 expectations; the ones P1 changes on purpose are strict xfails registered in
+# tests/lanes.py (P1_XFAILS). The tests below state the P1 behaviour: animations are stored as package
+# {id, durationFrames} references.
+
+
+def test_entrance_fade_8f_at_30fps_canonical_refs():
+    assert cf.coerce("entrance", "fade 8f") == ("entrance", {"id": "fade", "durationFrames": 8})
+
+
+def test_entrance_fade_seconds_and_bare_seconds_canonical_refs():
+    assert cf.coerce("entrance", "fade 0.4s") == ("entrance", {"id": "fade", "durationFrames": 12})
+    assert cf.coerce("entrance", "fade 0.4") == ("entrance", {"id": "fade", "durationFrames": 12})
+
+
+def test_entrance_durationless_and_dict_and_none_canonical_refs():
+    assert cf.coerce("entrance", "fade") == ("entrance", {"id": "fade"})
+    assert cf.coerce("entrance", {"type": "fade", "duration": 0.4}) == (
+        "entrance",
+        {"id": "fade", "durationFrames": 12},
+    )
+    assert cf.coerce("entrance", "none") == ("entrance", None)
+
+
+def test_exit_only_animation_is_refused_as_entrance_canonical_refs():
+    with pytest.raises(ClipFieldError, match="slide-up"):
+        cf.coerce("entrance", "slide-up 8f")
+    assert cf.coerce("exit", "slide-up 8f")[1]["id"] == "slide-up"
+
+
+def test_fade_in_visual_is_an_entrance_and_audio_is_params_fadein_seconds_canonical_refs():
+    assert cf.coerce("fade_in", "8f") == ("entrance", {"id": "fade", "durationFrames": 8})
+    assert cf.coerce("fade_in", "8f", audio=True) == ("params.fadeIn", 0.2667)
+
+
+def test_fade_out_visual_is_exit_and_audio_is_params_fadeout_canonical_refs():
+    assert cf.coerce("fade_out", "8f") == ("exit", {"id": "fade", "durationFrames": 8})
+    assert cf.coerce("fade_out", "0.5", audio=True) == ("params.fadeOut", 0.5)
+
+
+def test_fieldspec_is_frozen_and_methods_match_coerce_canonical_refs():
+    spec = FIELDS["entrance"]
+    with pytest.raises(dataclasses.FrozenInstanceError):
+        spec.name = "x"  # type: ignore[misc]
+    assert spec.to_stored("fade 8f", fps=30) == cf.coerce("entrance", "fade 8f", fps=30)[1]
+    assert spec.from_stored({"id": "fade", "durationFrames": 8}, fps=30) == "fade 8f"
+
+
+def test_read_returns_stored_values_and_key_paths_canonical_refs():
+    clip = {"entrance": {"id": "fade", "durationFrames": 8}, "params": {"fadeIn": 0.2667}, "cropLeft": 0.1}
+    assert cf.read(clip, "entrance") == {"id": "fade", "durationFrames": 8}
+    assert cf.read(clip, "fade_in") == {"id": "fade", "durationFrames": 8}
+    assert cf.read(clip, "fade_in", audio=True) == 0.2667
+    assert cf.read(clip, "crop_left") == 0.1
+    assert cf.read(clip, "opacity") is None
+
+
+def test_write_visual_entrance_and_read_back_canonical_refs():
+    clip: dict = {}
+    cf.write(clip, "entrance", "fade 8f")
+    assert clip == {"entrance": {"id": "fade", "durationFrames": 8}}
+    assert cf.read(clip, "entrance") == {"id": "fade", "durationFrames": 8}
+
+
+def test_write_none_removes_the_key_canonical_refs():
+    clip = {"entrance": {"id": "fade", "durationFrames": 8}, "params": {"fadeIn": 0.2667}}
+    cf.write(clip, "entrance", None)
+    assert "entrance" not in clip
+    cf.write(clip, "fade_in", "none", audio=True)
+    assert "fadeIn" not in clip["params"]
+    cf.write(clip, "transition", "cut")
+    assert "transition" not in clip
+
+
+@pytest.mark.parametrize(
+    "name, raw, stored, human",
+    [
+        ("opacity", "0.6", 0.6, "0.6"),
+        ("entrance", "fade 8f", {"id": "fade", "durationFrames": 8}, "fade 8f"),
+        ("exit", "fade 8f", {"id": "fade", "durationFrames": 8}, "fade 8f"),
+        ("crop_left", "0.1", 0.1, "0.1"),
+        ("speed", "0.5x", 0.5, "0.5x"),
+        ("volume", "-3dB", 0.7079, "-3.0dB"),
+        ("transition", "crossfade 10f", {"id": "cross-fade", "durationFrames": 10}, "crossfade 10f"),
+        ("transition", "dip 8f", {"id": "fade", "durationFrames": 8}, "dip 8f"),
+    ],
+)
+def test_describe_round_trips_through_coerce_canonical_refs(name, raw, stored, human):
+    clip: dict = {}
+    cf.write(clip, name, raw)
+    assert cf.coerce(name, raw)[1] == stored
+    assert cf.describe(clip) == {name: human}
+    again: dict = {}
+    cf.write(again, name, cf.describe(clip)[name])
+    assert again == clip
+
+
+def test_describe_examples_from_the_brief_canonical_refs():
+    clip = {
+        "opacity": 0.6,
+        "entrance": {"id": "fade", "durationFrames": 8},
+        "volume": 0.7079,
+        "cropLeft": 0.1,
+        "params": {"fadeOut": 0.5},
+    }
+    assert cf.describe(clip, fps=30) == {
+        "opacity": "0.6",
+        "entrance": "fade 8f",
+        "volume": "-3.0dB",
+        "crop_left": "0.1",
+        "fade_out": "15f",
+    }
+
+
+@pytest.mark.parametrize(
+    "name, raw, human",
+    [
+        ("entrance", "fade 12f ease=out", "fade 12f ease=out"),
+        ("entrance", "fade ease=in-out", "fade ease=in-out"),
+        ("exit", "fade 12f ease=step", "fade 12f ease=step"),
+        ("entrance", "fade 12f ease=linear", "fade 12f ease=linear"),
+    ],
+)
+def test_easing_describe_round_trips_canonical_refs(name, raw, human):
+    clip: dict = {}
+    cf.write(clip, name, raw)
+    described = cf.describe(clip)
+    assert described[name] == human
+    again: dict = {}
+    cf.write(again, name, described[name])
+    assert again == clip
+
+
+def test_legacy_inout_is_described_as_in_out_and_round_trips_canonical_refs():
+    clip = {"entrance": {"type": "fade", "duration": 0.4, "params": {"easing": "inOut"}}}
+    assert cf.describe(clip) == {"entrance": "fade 12f ease=in-out"}
+    again: dict = {}
+    cf.write(again, "entrance", "fade 12f ease=in-out")
+    assert again == {"entrance": {"id": "fade", "durationFrames": 12, "params": {"easing": "in-out"}}}
+
+
+def test_easing_stored_shapes_pass_validate_timeline_canonical_refs(_builtin_text_is_not_an_element):
     for shape in (
         {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}},
         {"id": "fade", "durationFrames": 12, "params": {"easing": "linear"}},
@@ -620,6 +692,142 @@ def test_easing_stored_shapes_pass_validate_timeline(_builtin_text_is_not_an_ele
     ):
         validate_timeline(_one_clip(shape), strict=False)
         validate_timeline(_one_clip(shape))
+
+
+@pytest.mark.parametrize("field", ["entrance", "exit"])
+def test_top_level_type_on_is_refused(field):
+    with pytest.raises(ClipFieldError, match="type-on requires a text element"):
+        cf.coerce(field, "type-on 18f")
+
+
+@pytest.mark.parametrize("key", ["bogus", "intensity"])
+def test_entrance_dict_with_unknown_key_still_refused(key):
+    # durationFrames is now canonical (the xfail above); keys the package never reads must still refuse.
+    with pytest.raises(ClipFieldError, match="unsupported key"):
+        cf.coerce("entrance", {"type": "fade", key: 1})
+
+
+def test_entrance_dict_with_conflicting_units_refused():
+    with pytest.raises(ClipFieldError, match="not both"):
+        cf.coerce("entrance", {"type": "fade", "duration": 0.25, "durationFrames": 8})
+
+
+@pytest.mark.parametrize(
+    "transition, message",
+    [
+        ({"id": "cross-fade", "type": "fade", "durationFrames": 8}, "id and type must agree"),
+        ({"id": "cross-fade", "duration": 0.2, "durationFrames": 8}, "not both"),
+        ({"id": "cross-fade", "durationFrames": 8.5}, "whole frame"),
+        ({"id": "cross-fade", "params": {"easing": "out"}}, "params"),
+    ],
+)
+def test_transition_refs_refuse_conflicts_and_unsupported_values(transition, message):
+    with pytest.raises(ValueError, match=message):
+        validate_timeline({"tracks": [], "clips": [{"id": "c", "at": 0, "track": "v", "transition": transition}]}, strict=False)
+
+
+@pytest.mark.parametrize(
+    "field, raw, expected, human",
+    [
+        ("entrance", "fade-up 0.5s ease=out", {"id": "fade-up", "durationFrames": 12, "params": {"easing": "out"}}, "fade-up 12f ease=out"),
+        ("entrance", "scale-in 8f", {"id": "scale-in", "durationFrames": 8}, "scale-in 8f"),
+        ("entrance", "slide-left 8f", {"id": "slide-left", "durationFrames": 8}, "slide-left 8f"),
+        ("exit", "fade 7f", {"id": "fade", "durationFrames": 7}, "fade 7f"),
+        ("exit", "slide-up 0.25s", {"id": "slide-up", "durationFrames": 6}, "slide-up 6f"),
+        ("transition", "crossfade 0.25s", {"id": "cross-fade", "durationFrames": 6}, "crossfade 6f"),
+    ],
+)
+def test_public_setter_serializes_canonical_package_refs_at_timeline_fps(field, raw, expected, human):
+    clip: dict = {}
+    cf.write(clip, field, raw, fps=24)
+    assert clip["entrance" if field == "entrance" else "exit" if field == "exit" else field] == expected
+    assert cf.read(clip, field) == expected
+    assert cf.describe(clip, fps=24)[field] == human
+
+
+def test_public_setter_serializes_top_level_type_on_legacy_expectation():
+    clip: dict = {}
+    cf.write(clip, "entrance", "type-on 5f", fps=24)
+    assert clip["entrance"] == {"id": "type-on", "durationFrames": 5}
+    assert cf.read(clip, "entrance", fps=24) == {"id": "type-on", "durationFrames": 5}
+    # P1 must restore top-level type-on text-hook behavior across storage, read, and describe.
+    assert cf.describe(clip, fps=24)["entrance"] == "type-on 5f"
+
+
+@pytest.mark.parametrize(
+    "field, raw",
+    [
+        ("entrance", "slide-up 8f"),
+        ("exit", "fade-up 8f"),
+        ("entrance", {"type": "fade", "params": {"distance": 4}}),
+        ("transition", {"id": "cross-fade", "params": {"easing": "out"}}),
+    ],
+)
+def test_public_setter_refuses_unsupported_phase_or_parameters(field, raw):
+    with pytest.raises(ClipFieldError):
+        cf.coerce(field, raw)
+
+
+def test_canonical_entrance_shape_passes_validate_timeline(_builtin_text_is_not_an_element):
+    validate_timeline(_one_clip({"id": "fade", "durationFrames": 8}), strict=False)
+    validate_timeline(_one_clip({"id": "fade", "durationFrames": 8}))
+
+
+@pytest.mark.parametrize(
+    "phase, animation_id",
+    [
+        ("entrance", "fade"), ("exit", "fade"), ("entrance", "fade-up"),
+        ("entrance", "scale-in"), ("entrance", "slide-left"), ("exit", "slide-up"),
+        ("entrance", "type-on"),
+    ],
+)
+def test_package_animation_ids_validate_in_their_declared_phases(phase, animation_id, _builtin_text_is_not_an_element):
+    timeline = _one_clip(_MISSING)
+    timeline["clips"][0][phase] = {"id": animation_id}
+    validate_timeline(timeline, strict=False)
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [{"type": "fade", "duration": 0.2667}, "fade"],
+)
+def test_legacy_animation_shape_validates_but_bare_string_is_refused(shape, _builtin_text_is_not_an_element):
+    if isinstance(shape, dict):
+        validate_timeline(_one_clip(shape), strict=False)
+        return
+    with pytest.raises((ValueError, jsonschema.ValidationError)):
+        validate_timeline(_one_clip(shape), strict=False)
+
+
+@pytest.mark.parametrize(
+    "name, raw, stored",
+    [
+        ("entrance", "fade 12f ease=out", {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}}),
+        ("entrance", "fade ease=in-out", {"id": "fade", "params": {"easing": "in-out"}}),
+        ("entrance", "fade 0.4s ease=in", {"id": "fade", "durationFrames": 12, "params": {"easing": "in"}}),
+        ("entrance", "fade 12f ease=step", {"id": "fade", "durationFrames": 12, "params": {"easing": "step"}}),
+        ("entrance", "fade 12f ease=linear", {"id": "fade", "durationFrames": 12, "params": {"easing": "linear"}}),
+        ("entrance", "fade 12f ease=inOut", {"id": "fade", "durationFrames": 12, "params": {"easing": "in-out"}}),
+        ("entrance", "fade 12f ease=in_out", {"id": "fade", "durationFrames": 12, "params": {"easing": "in-out"}}),
+        ("entrance", "fade 12f ease=OUT", {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}}),
+        ("exit", "fade 12f ease=in", {"id": "fade", "durationFrames": 12, "params": {"easing": "in"}}),
+        ("entrance", {"type": "fade", "duration": 0.4, "params": {"easing": "out"}},
+         {"id": "fade", "durationFrames": 12, "params": {"easing": "out"}}),
+        ("entrance", {"type": "fade", "params": {"easing": "inOut"}}, {"id": "fade", "params": {"easing": "in-out"}}),
+        ("entrance", {"type": "fade", "params": {"easing": "linear"}}, {"id": "fade", "params": {"easing": "linear"}}),
+        ("fade_in", "8f ease=out", {"id": "fade", "durationFrames": 8, "params": {"easing": "out"}}),
+        ("fade_out", "8f ease=in", {"id": "fade", "durationFrames": 8, "params": {"easing": "in"}}),
+        ("fade_in", "ease=step", {"id": "fade", "params": {"easing": "step"}}),
+    ],
+)
+def test_easing_forms_preserve_explicit_params(name, raw, stored):
+    path = {"entrance": "entrance", "exit": "exit", "fade_in": "entrance", "fade_out": "exit"}[name]
+    assert cf.coerce(name, raw) == (path, stored)
+
+
+def test_unsupported_animation_params_refuse():
+    with pytest.raises(ClipFieldError, match="not supported by the installed animations"):
+        cf.coerce("entrance", {"type": "fade-up", "duration": 0.4, "params": {"easing": "out", "distance": 60}})
 
 
 def test_omitted_easing_stays_omitted_and_top_level_easing_normalizes():

@@ -111,8 +111,14 @@ def snapshot_label(
             }
         if ref["source_kind"] == "working_copy":
             base = ref["working_copy"]["base_revision_id"]
+            metadata = snapshot.get("metadata") if isinstance(snapshot, Mapping) else None
+            marker = (metadata.get("authoring_preview") if isinstance(metadata, Mapping) else None)
+            if not isinstance(marker, Mapping) and isinstance(snapshot, Mapping):
+                marker = snapshot.get("authoring_preview")
+            label = marker.get("label") if isinstance(marker, Mapping) else None
+            label = label if isinstance(label, str) and label else f"unsaved candidate based on committed revision {base}"
             return {
-                "status": "candidate", "label": f"unsaved candidate based on committed revision {base}",
+                "status": "candidate", "label": label,
                 "actual_revision_id": None, "base_revision_id": base,
             }
         raise ValueError("snapshot label requires an admitted revision or working copy")
@@ -129,10 +135,15 @@ def snapshot_label(
     capture = metadata.get("capture_authority")
     capture = capture if isinstance(capture, Mapping) else {}
     markers = _candidate_markers(metadata, canonical, capture)
+    root_marker = snapshot.get("authoring_preview") if isinstance(snapshot, Mapping) else None
+    if isinstance(root_marker, Mapping) and root_marker not in markers:
+        markers.append(root_marker)
     if _is_candidate(metadata, canonical) or _is_candidate(metadata, capture) or markers:
         base, contradictory = _candidate_base_revision(markers)
         draft = _first_string(*(marker.get("candidate_parent_revision_id") for marker in markers))
-        label = "UNCERTIFIED unsaved candidate" + (f" {draft}" if draft else "")
+        label = _first_string(*(marker.get("label") for marker in markers)) or "UNCERTIFIED unsaved candidate"
+        if draft and label == "UNCERTIFIED unsaved candidate":
+            label += f" {draft}"
         if contradictory:
             label += " (base revision unavailable: contradictory markers)"
         else:
