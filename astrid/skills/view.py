@@ -79,6 +79,7 @@ class _ViewLinks:
     core_dir: Path  # physical source directory of the core skill
     packs: dict[str, Path]  # composed pack id -> physical pack skill directory
     materialised: frozenset[str]  # view-relative core files written into the view
+    extras: tuple[Path, ...] = ()
 
     def target(self, raw: str, *, source: Path, dest: Path) -> object:
         path, tail = split_target(raw)
@@ -86,16 +87,24 @@ class _ViewLinks:
             return None
         dest_dir = dest.parent
         source_target = Path(os.path.normpath(source.parent / path))
+        crosses_unit = any(
+            _relative_within(source, extra) is not None and _relative_within(source_target, extra) is None
+            for extra in self.extras
+        )
 
         # 1. The link means a file in the checkout: a composed pack skill or a
         #    core file that the view materialises.
         for pack_id, skill_dir in self.packs.items():
             inner = _relative_within(source_target, skill_dir)
             if inner is not None:
-                return _relative_target(self.root / "packs" / pack_id / inner, dest_dir, tail)
+                mapped = self.root / "packs" / pack_id / inner
+                if crosses_unit:
+                    return _format_target(str(mapped.absolute()), tail)
+                return _relative_target(mapped, dest_dir, tail)
         core_rel = _relative_within(source_target, self.core_dir)
         if core_rel is not None and core_rel in self.materialised:
-            return _relative_target(self.root / core_rel, dest_dir, tail)
+            mapped = self.root / core_rel
+            return _format_target(str(mapped.absolute()), tail) if crosses_unit else _relative_target(mapped, dest_dir, tail)
 
         # 2. Any other real file in the checkout is linked absolutely.
         if os.path.exists(source_target):
@@ -106,9 +115,11 @@ class _ViewLinks:
         pack_rel = _relative_within(view_target, self.root / "packs")
         if pack_rel is not None:
             pack_id = pack_rel.split("/", 1)[0]
-            return None if pack_id in self.packs else DROP
+            if pack_id not in self.packs:
+                return DROP
+            return _format_target(str(view_target.absolute()), tail) if crosses_unit else None
         if _relative_within(view_target, self.root) in self.materialised:
-            return None
+            return _format_target(str(view_target.absolute()), tail) if crosses_unit else None
 
         # 4. Unresolvable: point at the absolute location so the link check
         #    reports exactly where it was expected.
@@ -190,6 +201,8 @@ def compose_view(
     packs: list[SkillDescriptor],
     *,
     dry_run: bool = False,
+    refresh: set[str] | None = None,
+    extras: list[SkillDescriptor] | None = None,
 ) -> tuple[SkillDescriptor, list[PlannedStep], list[SkillDescriptor]]:
     """Compose one harness view and return ``(gateway, steps, view_packs)``.
 
@@ -208,6 +221,7 @@ def compose_view(
         core_dir=core_dir,
         packs={d.pack_id: Path(os.path.realpath(d.skill_dir)) for d in packs},
         materialised=frozenset(materialised),
+        extras=tuple(Path(os.path.realpath(d.skill_dir)) for d in (extras or [])),
     )
 
     view_packs = view_descriptors(root, packs)
@@ -231,7 +245,33 @@ def compose_view(
         source = next(item.skill_dir for item in packs if item.pack_id == descriptor.pack_id)
         steps.append(PlannedStep(f"materialise {target} from {source}", target=target))
         if not dry_run:
-            _materialise_pack(target, source, links, managed=descriptor.pack_id in previous_ids)
+            pack_extras = [d for d in (extras or []) if d.pack_id == descriptor.pack_id]
+            if refresh is None or not target.is_dir():
+                _materialise_pack(target, source, links, managed=descriptor.pack_id in previous_ids)
+            else:
+                if descriptor.pack_id in refresh:
+                    preserved = {d.skill for d in pack_extras}
+                    for child in target.iterdir():
+                        if child.name in preserved:
+                            continue
+                        if child.is_dir() and not child.is_symlink():
+                            shutil.rmtree(child)
+                        else:
+                            child.unlink()
+                    for child in source.iterdir():
+                        if child.name in preserved:
+                            continue
+                        dest = target / child.name
+                        if child.is_dir():
+                            shutil.copytree(child, dest)
+                        else:
+                            shutil.copy2(child, dest)
+                    for md in iter_markdown_files(source):
+                        if md.relative_to(source).parts[0] not in preserved:
+                            _materialise(md, target / md.relative_to(source), links)
+                for extra in pack_extras:
+                    if extra.skill_id in refresh:
+                        _materialise_pack(target / extra.skill, extra.skill_dir, links, managed=True)
 
     if not dry_run:
         root.mkdir(parents=True, exist_ok=True)

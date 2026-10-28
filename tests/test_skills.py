@@ -538,3 +538,141 @@ class GenerationSkillDiscoveryTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_view_sync_retains_selection_and_migrates_old_installs():
+    import json
+
+    fx = _Tmp()
+    try:
+        old = state._empty_state()
+        old.pop("skills")
+        old["installs"]["claude"]["foley"] = {"target": "old", "mechanism": "symlink"}
+        fx.state_path.write_text(json.dumps(old), encoding="utf-8")
+        skills.sync(harness_names=["claude"], state_path=fx.state_path)
+        data = state.load(fx.state_path)
+        assert data["skills"]["claude"]["skills"]["foley"]["selected"]
+        assert (fx.home / ".claude/skills/astrid-foley").is_symlink()
+        view = fx.tmp / "skills/claude/packs"
+        assert (view / "chiptune/SKILL.md").is_file()
+        skills.uninstall(["chiptune"], ["claude"], state_path=fx.state_path)
+        skills.sync(harness_names=["claude"], state_path=fx.state_path)
+        assert not (view / "chiptune").exists()
+    finally:
+        fx.close()
+
+
+def test_extra_selective_refresh_and_uninstall():
+    from dataclasses import replace
+
+    fx = _Tmp()
+    try:
+        core = next(d for d in discovery.list_skills() if d.pack_id == "_core")
+        main = _write_fake_descriptor(fx.tmp, "fixture")
+        extras = []
+        for name in ("a", "b"):
+            directory = main.skill_dir / name
+            directory.mkdir()
+            md = directory / "SKILL.md"
+            md.write_text(f"---\nname: {name}\ndescription: test\n---\n[ref](../references/x.md)\n", encoding="utf-8")
+            extras.append(replace(main, skill=name, skill_dir=directory, skill_md=md))
+        reference = main.skill_dir / "references/x.md"
+        reference.parent.mkdir()
+        reference.write_text("reference", encoding="utf-8")
+        with mock.patch.object(skills, "list_skills", return_value=[core, main]), mock.patch.object(discovery, "list_extras", return_value=extras):
+            skills.install(["fixture"], ["claude"], all_skills=True, state_path=fx.state_path)
+            view = fx.tmp / "skills/claude/packs/fixture"
+            before = (view / "b/SKILL.md").read_bytes()
+            for extra in extras:
+                extra.skill_md.write_text(extra.skill_md.read_text() + "changed\n")
+            report = skills.sync(harness_names=["claude"], state_path=fx.state_path, refresh_ids={"fixture-a"})
+            assert report["actions"][0]["outdated"] == ["fixture-a", "fixture-b"]
+            assert report["actions"][0]["changed"] == ["fixture-a"]
+            assert (view / "b/SKILL.md").read_bytes() == before
+            listing = skills.list_state(state_path=fx.state_path)
+            b_row = next(row for row in listing["packs"] if row["id"] == "fixture-b")
+            assert b_row["role"] == "extra"
+            assert b_row["harnesses"]["claude"]["selected"]
+            assert b_row["harnesses"]["claude"]["outdated"]
+            registry_text = (fx.tmp / "skills/claude/creative-work/references/packs.md").read_text()
+            assert "fixture / a" in registry_text and "selected" in registry_text
+            link = fx.home / ".claude/skills/astrid-fixture-a/SKILL.md"
+            assert str(reference).replace(str(main.skill_dir), str(view)) in link.read_text()
+            skills.uninstall(["fixture"], ["claude"], skill_names=["a"], state_path=fx.state_path)
+            assert not link.exists()
+            assert (fx.home / ".claude/skills/astrid-fixture-b").is_symlink()
+            import errno
+            original_symlink = Path.symlink_to
+
+            def no_extra_symlink(path, *args, **kwargs):
+                if path.name == "astrid-fixture-a":
+                    raise OSError(errno.EPERM, "symlinks unavailable")
+                return original_symlink(path, *args, **kwargs)
+
+            with mock.patch.object(Path, "symlink_to", no_extra_symlink):
+                skills.install(["fixture"], ["claude"], skill_names=["a"], state_path=fx.state_path)
+            assert link.is_file() and not link.parent.is_symlink()
+            assert str(view / "references/x.md") in link.read_text()
+            skills.uninstall(["fixture"], ["claude"], skill_names=["a"], state_path=fx.state_path)
+            skills.sync(harness_names=["claude"], deep=True, state_path=fx.state_path)
+            assert link.is_file()
+    finally:
+        fx.close()
+
+
+def test_concurrent_installs_keep_both_selections(tmp_path):
+    import os
+    import subprocess
+    import sys
+
+    home = tmp_path / "claude"
+    home.mkdir()
+    env = {**os.environ, "CLAUDE_CONFIG_DIR": str(home), "ASTRID_STATE_HOME": str(tmp_path / "state")}
+    commands = [
+        subprocess.Popen([sys.executable, "-m", "astrid", "skills", "install", pack, "--harness", "claude"],
+                         env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        for pack in ("foley", "chiptune")
+    ]
+    for process in commands:
+        stdout, stderr = process.communicate(timeout=120)
+        assert process.returncode == 0, (stdout, stderr)
+    syncs = [
+        subprocess.Popen([sys.executable, "-m", "astrid", "skills", "sync", "--harness", "claude"],
+                         env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        for _ in range(2)
+    ]
+    for process in syncs:
+        stdout, stderr = process.communicate(timeout=120)
+        assert process.returncode == 0, (stdout, stderr)
+    data = state.load(tmp_path / "state/astrid/skills.json")
+    assert all(data["skills"]["claude"]["skills"][pack]["selected"] for pack in ("foley", "chiptune"))
+
+
+def test_hermes_external_directory_reports_visibility():
+    fx = _Tmp()
+    try:
+        report = skills.install(["foley"], ["hermes"], mechanism="external-dir", state_path=fx.state_path)
+        assert report["actions"][0]["visibility"] == "external-dir: all skills visible"
+        listing = skills.list_state(state_path=fx.state_path)
+        foley = next(row for row in listing["packs"] if row["id"] == "foley")
+        assert foley["harnesses"]["hermes"]["visibility"] == "external-dir: all skills visible"
+    finally:
+        fx.close()
+
+
+def test_install_survives_normal_view_sync():
+    fx = _Tmp()
+    try:
+        skills.install(["foley"], ["claude"], state_path=fx.state_path)
+        skills.sync(harness_names=["claude"], state_path=fx.state_path)
+        assert state.load(fx.state_path)["skills"]["claude"]["skills"]["foley"]["selected"]
+        assert (fx.home / ".claude/skills/astrid-foley").is_symlink()
+    finally:
+        fx.close()
+
+
+def test_update_alias_accepts_pack_and_skill():
+    args = skills_cli.build_parser().parse_args(["update", "rendering", "--skill", "worlds"])
+    assert args.handler is skills_cli._cmd_sync
+    assert args.pack == "rendering"
+    assert args.skill == ["worlds"]

@@ -322,7 +322,7 @@ def unit_digest(descriptor: SkillDescriptor, extras: list[SkillDescriptor]) -> s
     import hashlib
 
     if descriptor.skill is None:
-        root = descriptor.skill_dir.parent
+        root = descriptor.skill_dir
         extra_roots = {
             extra.skill_dir.resolve()
             for extra in extras
