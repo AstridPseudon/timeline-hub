@@ -45,7 +45,7 @@ def present_failure(failure: dict, *, unknown: bool = False) -> dict:
     if unknown:
         headline = "No reply could be verified; this edit may or may not have been committed"
         detail = "The exact request is saved. No new request will be sent until it is confirmed."
-        fix = "Call the same tl.commit(...) again to confirm it, using the original key."
+        fix = "Call tl.commit() again with no arguments to confirm the saved request; the edit is not re-run blindly."
     else:
         headline, fix = _REASONS.get(reason, _STATUS.get(status, _STATUS["invalid"]))
         message = cause.get("message")

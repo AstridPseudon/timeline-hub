@@ -32,7 +32,27 @@ _SOURCE_BOUND_PAYLOAD_KEYS = ("text_bindings", "internal_timeline_revision_id")
 
 
 class _CopyOutcomeUnknown(TimelineEditError):
-    """The durable copy flight must be reconciled before destination cleanup."""
+    """The durable copy flight must be reconciled before destination cleanup.
+
+    Presented exactly like an unknown commit: same headline and detail as
+    CommitOutcomeUnknown, outcome "unknown", and a fix naming the duplicate call.
+    """
+
+    def __init__(self, timeline: str, cause: BaseException):
+        from astrid.sdk.timeline._commit_wording import present_failure
+
+        failure = {"code": getattr(cause, "code", type(cause).__name__),
+                   "message": str(cause), "details": copy.deepcopy(getattr(cause, "details", {}))}
+        self.presentation = present_failure(failure, unknown=True)
+        self.presentation["fix"] = ("Call timeline.duplicate(...) again with the same name to confirm "
+                                    "the saved request; the edit is not re-run blindly.")
+        self.headline = self.presentation["headline"]
+        self.detail = self.presentation["detail"]
+        self.fix = self.presentation["fix"]
+        self.outcome = "unknown"
+        self.cause = self.presentation["cause"]
+        self.timeline = timeline
+        super().__init__(f"{self.headline}. {self.fix}")
 
 
 def _duplicate_key(project: str, source: str, slug: str) -> str:
@@ -70,9 +90,7 @@ def _commit_bundle(project: str, timeline: str, desired: Mapping[str, Any], *, l
             with session.session.outbox.locked():
                 pending = session.session._state()
             if pending["flight"] is not None and not pending.get("conflict"):
-                raise _CopyOutcomeUnknown(
-                    f"copy outcome is unknown for timeline {timeline!r}; destination and pending request "
-                    "retained; reopen with timeline.open(...).session.flush() to retry the exact request") from exc
+                raise _CopyOutcomeUnknown(timeline, exc) from exc
             raise
     return {"old_head": result["data"].get("previous_revision_id"),
             "new_head": result["data"].get("accepted_revision_id"),

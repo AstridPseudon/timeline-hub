@@ -66,7 +66,7 @@ class CommitOutcomeUnknown(TimelineEditError, WorkspaceClientError):
         self.outcome = "unknown"
         self.cause = self.presentation["cause"]
         if key:
-            self.fix = f'Call the same tl.commit(...) again with key "{key}" to confirm the saved request.'
+            self.fix = f'Call tl.commit(key="{key}") again with no other arguments to confirm the saved request.'
             self.presentation["fix"] = self.fix
         message = f"{self.headline}. {self.fix}"
         WorkspaceClientError.__init__(self, 0, "timeline_outcome_unknown", message,
@@ -84,6 +84,13 @@ def _flight_kind(flight):
     if flight["kind"] == "assembly-admission":
         return "assembly-admission"
     raise TimelineEditError("invalid in-flight request kind; original intent retained")
+
+
+def _display_key(flight):
+    """The caller-visible key of a flight; generated keys are never shown as the caller's key."""
+    if flight.get("logical_key") is not None:
+        return flight["logical_key"]
+    return flight["key"] if flight.get("explicit_key") else None
 
 
 def _connection(client):
@@ -524,7 +531,8 @@ class TimelineSession:
         result = _response(self.client.timelines.commit(
             self.project_id, self.timeline_id, body, idempotency_key=flight['key']))
         data, receipt = _ack(result, body, flight, self.identity)
-        return self._present(result, data, receipt, imports=flight.get('imports', ()), replayed=True)
+        return self._present(result, data, receipt, imports=flight.get('imports', ()), replayed=True,
+                             label=body.get("label"))
 
     def resolve_acknowledged(self, key, *, dry_run=False, via='python'):
         """Return a keyed function's acknowledged receipt without evaluating it.
@@ -780,11 +788,11 @@ class TimelineSession:
                         self.outbox.write(state)
                 raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
                                      timeline_id=self.timeline_id, project_id=self.project_id) from exc
-            raise CommitOutcomeUnknown(exc, key=flight["key"]) from exc  # Keep the durable flight byte-for-byte retryable.
+            raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc  # Keep the durable flight byte-for-byte retryable.
         try:
             data, receipt = _ack(result, body, flight, self.identity)
         except TimelineEditError as exc:
-            raise CommitOutcomeUnknown(exc, key=flight["key"]) from exc
+            raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc
         with self.outbox.locked():
             state = self._state()
             # A duplicate send may finish after another send acknowledged this
@@ -812,15 +820,16 @@ class TimelineSession:
                 state.pop("conflict", None)
                 self.outbox.write(state)
         return self._present(result, data, receipt, imports=flight.get('imports', ()),
-                             confirmed=confirmed)
+                             confirmed=confirmed, label=body.get("label"))
 
-    def _present(self, result, data, receipt, *, imports=(), replayed=False, confirmed=False):
+    def _present(self, result, data, receipt, *, imports=(), replayed=False, confirmed=False, label=None):
         result = copy.deepcopy(result)
         result["data"] = copy.deepcopy(data)
         if imports:
             result['imports'] = copy.deepcopy(list(imports))
         status = data.get("status")
-        label = data.get("label", "Timeline edit")
+        # Runtime previews carry no label; the caller's label is the one to show.
+        label = data.get("label") or label or "Timeline edit"
         receipt_id = receipt.get("receipt_id") if isinstance(receipt, dict) else None
         if replayed and receipt_id:
             summary = f'Already committed as {receipt_id}; nothing was run or changed now.'
