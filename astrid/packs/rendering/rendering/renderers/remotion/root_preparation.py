@@ -114,6 +114,40 @@ def _accounted_attempt_root(
     return attempt
 
 
+def _occurrence_extent_composition_frames(
+    backend: Any,
+    timeline_data: Mapping[str, Any],
+    timeline_path: Path,
+    assets_path: Path,
+    theme_path: Path | None,
+) -> int | None:
+    """Return the longer composition length when placed occurrences outlast the clips.
+
+    Returns None when the clips already cover every occurrence, or when the
+    timeline carries a render clock or source window that owns its own length.
+    """
+    app = timeline_data.get("app")
+    if not isinstance(app, Mapping) or "astrid_render_clock" in app:
+        return None
+    composition = app.get("astrid_shot_composition")
+    if not isinstance(composition, Mapping) or not composition.get("occurrences"):
+        return None
+    metadata = timeline_data.get("metadata")
+    if isinstance(metadata, Mapping) and "source_window_start_seconds" in metadata:
+        return None
+    from astrid.core.timeline.duration import (
+        timeline_duration_frames,
+        timeline_occurrence_extent_frames,
+    )
+
+    profile = backend._canonical_profile(
+        timeline_path, backend._load_registry_mapping(assets_path), theme_path,
+    )
+    fps = profile.fps_rational[0] / profile.fps_rational[1]
+    extent = timeline_occurrence_extent_frames(timeline_data, fps)
+    return extent if extent > timeline_duration_frames(timeline_data, fps) else None
+
+
 @contextmanager
 def _prepared_remotion_root(*args: Any, **kwargs: Any) -> Iterator[Any]:
     from astrid.core.rendering.project_elements import (
@@ -271,6 +305,14 @@ def _prepared_remotion_root_selected(
             }
             if composition_duration_frames is not None:
                 merged_props["astridCompositionDurationInFrames"] = composition_duration_frames
+            elif frame_numbers is not None:
+                # A visualize frame may sit inside a shot occurrence that holds no
+                # clips; the composition must still reach the end of that window.
+                extent = _occurrence_extent_composition_frames(
+                    backend, timeline_data, timeline_path, assets_path, theme_path,
+                )
+                if extent is not None:
+                    merged_props["astridCompositionDurationInFrames"] = extent
             # Batch 4 (layer stack): the service stamps
             # ``metadata.astrid_layer.alpha = z > 0`` onto the materialized
             # timeline of z-layer segments.  When the stamp says alpha, emit
