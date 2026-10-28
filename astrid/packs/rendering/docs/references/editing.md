@@ -6,7 +6,7 @@ copy for the remaining authoring operations. Times are timeline seconds;
 **positions are canvas px** for every element.
 *When* things happen is written as **moments** (`on "viral"`), so a new take moves everything with its words.
 
-Every `timelines` below is short for **`python -m astrid timelines`** (venv active, from the `Astrid` install dir,
+Every `timelines` below is short for **`python3 -m astrid timelines`** (venv active, from the `Astrid` install dir,
 `ASTRID_RUNTIME_DATA_ROOT` set as your install says). A bare `timelines` is not on PATH.
 
 ## The loop
@@ -19,11 +19,13 @@ timelines edit TL --project P --clip parent/clip:ID --trim-out 3.0 --idempotency
 timelines edit TL --project P --clip c30.cover --until Astrid --verify    # detached draft edit
 timelines check TL --project P --at '"Astrid" in n21'                      # look at any moment (fast; no queue)
 timelines check TL --project P --at 33.9 --zoom c08.loras   # + both sides cropped around a layer, full resolution
-timelines status TL --project P   ·   timelines undo TL --project P
+timelines status TL --project P   ·   timelines undo TL --project P   # local draft edits
+timelines undo TL --project P --commit RECEIPT_ID --idempotency-key undo-42   # an accepted commit
 ```
 `show`, `lint`, `diff`, `find` and `words` read the working copy; `--published` reads the live one.
 `timelines find TL "the conclusion"` (also `--text "Astrid."`, `--asset ROCKET`, `--line w23c`, `--cut c30`) → addresses and times.
-`timelines lines TL` (`--line w23c`: one in full) · `timelines words TL Astrid --beats` · `show --as sheet --detail`
+`timelines lines TL` (`--line w23c`: one in full) · `timelines words TL Astrid --beats` (the beats near that word; there is
+no full beat list) · `show --as sheet --detail`
 prints long values (`inset=`, `lines=`) as editable JSON instead of `…`. The sheet's element column drops `am-`
 (`footage` = `am-footage`; both are accepted).
 **Make one timeline equal another** (a finished duplicate → the film) remains a
@@ -70,7 +72,7 @@ A NEW cut: a header `┃ c05b on "word"` with a `plate` line (its picture) and a
 Or `timelines edit TL --project P --split c33 --on MOMENT` (or `--add-cut --on M [--after c33]`; Python
 `tl.cut("c33").split(on=…)`, `tl.add_cut(…)`): later layers move with it, spanning ones carry over it.
 `…` values in a sheet are kept as they are.
-`tl.add("am-type", at='"Building" in v27', layer="title", hold=1.2)` joins the cut on screen as `cNN.title`.
+`tl.add("am-type", at='"Building" in v27', hold=1.2)` joins the cut on screen; read its address back (`cNN.NAME`).
 `x=ƒ(MARK ±px)` follows a slot's mark: a plain number replaces it (and says so). `k=…` is unchanged, `~k` is info.
 The `sound` section lists the music bed and other audio in no cut: edit its asset, `for`, `volume=` there.
 A cut's notes: `why: …` and `hold: deliberate` (lint's HOLD/STILL leave it; `hold: off` clears), or
@@ -81,7 +83,7 @@ Units are the element's own declaration (element.yaml `metadata.units`): positio
 where the connector ends. The connector leaves the card's left or right edge, whichever faces the anchor.
 
 Literal numeric moves and source trims through the CLI above, registered
-commands through `timeline.open(...).commit(...)`, and supported cut-sheet rows
+commands through `Timeline.open(...).commit(...)`, and supported cut-sheet rows
 through `timelines apply` are the Runtime write paths. Other edit forms retain
 the detached draft workflow. They change the local copy until an explicit
 document commit accepts them.
@@ -91,14 +93,15 @@ document commit accepts them.
 timelines edit TL --project P --clip c30.cover --until Astrid   # symbolic moments edit a detached working copy
 ```
 ```python
-from astrid.sdk import timeline
-tl = timeline.open("P", "TL", client=client)
-tl.move("parent/clip:c30-cover", 33.9)
-result = tl.commit("Move clip", idempotency_key="move-42")
+from astrid.sdk.timeline.api import Timeline
+tl = Timeline.open("P", "TL")
+result = tl.commit(lambda t: t.clip("c30.cover").until("Astrid"),
+                   label="Cover until Astrid", idempotency_key="cover-42")
 ```
 
-The detached `Checkout` surface below edits the local copy. Save an explicit
-candidate, then commit it through Runtime:
+Python functions are the taught edit path; see the [editing skill](../SKILL.md).
+The detached `Checkout` surface below edits the local copy. This candidate-file route is supported
+(CLI only; a Python preview or reviewed list is not a file). Save an explicit candidate, then commit it through Runtime:
 
 ```python
 from astrid.sdk.timeline_checkout import Checkout
@@ -119,12 +122,11 @@ file/key for a retry.
 
 ## Python: the method table
 ```
-session = TimelineSession.open(P, TL, client=client)
-session.move("parent/clip:c30-cover", 33.9, idempotency_key="move-42")
-session.trim("parent/clip:c30-cover", out_s=3.0, idempotency_key="trim-42")
-session.commit(command, idempotency_key="command-42")
-session.commit_many(commands, idempotency_key="batch-42")
-session.undo([publication_id], idempotency_key="undo-42")
+tl = Timeline.open(P, TL)
+tl.commit(fn, label="…", idempotency_key="edit-42")          # one commit, reruns on a clash
+tl.commit(fn, label="…", dry_run=True)                       # preview: data.commands + data.diff
+tl.commit(preview["data"]["commands"], label="…")            # apply the reviewed list exactly
+tl.undo(publications=[receipt_id], idempotency_key="undo-42")
 
 # Read/check methods remain projection operations:
 tl = Checkout.draft(P, TL)   tl.find("the conclusion")  tl.time('end of c30')  tl.words()
@@ -132,6 +134,7 @@ tl.check().brief()  tl.changes()
 ```
 `on`/`until` a word mean its START (`after "word"` = its end); `until c30b` = when c30b STARTS; `until end of c30`
 ends with that cut. Clip methods return the clip, so they chain: `tl.clip("c30.cover").on('"x"').hold_for(1.2)`.
+`on(33.9)` with a plain number is timeline seconds; on a clip in a cut it is stored as an offset from that cut's start (`+0.8s`, `+2f`), so it moves with the cut.
 `Checkout.draft(P, TL)` opens the detached working copy if one exists;
 its mutation/save methods stay local until an explicit commit. `--verify`/`check --at`
 write only their page and frames, in the fast lane's cache in the temp dir. In check,
@@ -152,14 +155,15 @@ A cut's `why`/`hold` belong to the cut (they stay when its picture changes). `di
 `--script-gaps` uses the script's gaps) · `--line ID --take … --words …` · `--insert-line` · `--remove-line`.
 These forms edit the detached draft; check it, save `candidate.json`, and use
 the explicit `timelines commit` command above to accept supported changes.
-Everything after a change moves; clips on words follow them; the music bed stays whole. A removed line's
+Everything after a change moves; clips on words follow them; the music bed follows the policy below. A removed line's
 clips are kept as **orphans** (status, sheet and check list them; publish waits): `--cut c07 --on '"word" in w05'`
 moves an orphaned cut's picture to a new moment, `--clip X --on …` one layer, `--keep` accepts it in place,
 `--remove` drops it.
 
 **What sets the film's length:** the end of its last cut (`Checkout.duration` is the latest cut end). The music bed
-is one clip and does NOT follow a ripple: after a removal it can end before the film (the re-flow report then says
-`music: the bed ends at …`). Fix it with `for` in the `sound` section (a known gap, below).
+follows the re-flow's music policy: `keep-end` (default) cuts it at a bar with a crossfade so it still ends with the
+film; `plays-on` (`--music plays-on`, Python `music="plays_on"`) leaves it whole, so after a removal it can end
+before the film (the re-flow report then says `music: the bed ends at …`). Fix that with `for` in the `sound` section.
 
 The native session never overwrites a change published after its original
 capture: Runtime rebases disjoint commands and refuses real clashes. Its outbox
@@ -174,6 +178,8 @@ shows only lint that is new since checkout (`--all` for everything).
 > - No fade-in or entrance on our elements yet. The cookbook's `effects.fade_in` applies only to legacy `local` elements.
 > - Extending the film's content does not extend its rendered length yet, and `check` still says VALID. Look at the
 >   new end with `check TL --at <end>`: "out of range" means it does not render.
-> - The music bed does not follow a ripple (see above).
+> - A ripple (`insert_time`, `ripple_delete`, `close_gap`, each with `music=`) under `plays_on` leaves a bed that spans
+>   the edit where it was, so what follows moves against its beats; the default `keep_end` cuts it at a bar, not at the
+>   edit point. A bed that begins at or inside the edit is unsettled in both modes; do not promise it stays whole.
 > - `check --at` and `--verify` can be slow or fail ("frame owner closed"). Retry once; if it fails again, say so
 >   and do not publish a change you have not seen.
