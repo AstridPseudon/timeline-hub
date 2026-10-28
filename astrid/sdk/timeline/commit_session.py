@@ -523,7 +523,7 @@ class Timeline(Checkout):
         if isinstance(rejected_details, Mapping) and rejected_details.get("status") == "conflict":
             rejected_eval = rejected.get("evaluation") if isinstance(rejected, Mapping) else None
             attempts = rejected_eval.get("count") if isinstance(rejected_eval, Mapping) and rejected_eval.get("kind") == "function" else None
-            raise CommitConflict(rejected_failure, attempts=attempts,
+            raise CommitConflict(rejected_failure, attempts=attempts, fixed_list=True,
                                  label=label_or_fn if isinstance(label_or_fn, str) else label,
                                  timeline_id=self.session.timeline_id,
                                  project_id=self.session.project_id)

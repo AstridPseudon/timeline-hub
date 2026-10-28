@@ -705,3 +705,30 @@ def test_conflict_replacement_preserves_later_pending_dependents(connected, monk
         tl.session.submit(state["pending"][:1], label="Replacement", steps=[], expected_state=state,
                           base=generated.head)
     assert path.read_bytes() == before
+
+
+def test_saved_fixed_list_conflict_blocks_later_commits_and_says_discard(connected, monkeypatch):
+    tl = opened(connected)
+    client, generated, path = connected
+    preview = tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True)
+    commands = copy.deepcopy(preview["data"]["commands"])
+
+    def refuse(*args, **kwargs):
+        raise conflict(generated)
+
+    monkeypatch.setattr(generated, "commit_timeline", refuse)
+    with pytest.raises(CommitConflict) as first:
+        tl.commit(commands, label="Fixed")
+    assert "timelines discard" in first.value.fix
+    assert json.loads(path.read_text())["rejected"]["failure"]["details"]["status"] == "conflict"
+
+    again = timeline.open("p", "t", client=client, outbox_path=path)
+    for attempt in (
+        lambda: again.commit(lambda working: working.move("parent/clip:a", 7), dry_run=True),
+        lambda: again.commit(lambda working: working.move("parent/clip:a", 7)),
+        lambda: again.commit(commands, label="Fixed again"),
+        lambda: again.commit(commands, label="Fixed again", dry_run=True),
+    ):
+        with pytest.raises(CommitConflict) as second:
+            attempt()
+        assert "timelines discard t --project p" in second.value.fix, second.value.fix

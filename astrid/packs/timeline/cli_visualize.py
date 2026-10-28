@@ -913,7 +913,7 @@ def cmd_visualize(parsed: argparse.Namespace) -> int:
         {"kind": "revision", "revision_id": getattr(parsed, "_source_revision_id", None)}
         if not is_diff_view else None
     )
-    if getattr(parsed, "compare_with", None) and not parsed.json:
+    if getattr(parsed, "compare_with", None) and working is None and not parsed.json:
         print("no working copy: nothing to compare (showing the published head)")
     if getattr(parsed, "plan", False):
         return _visualize_plan(parsed, inputs)

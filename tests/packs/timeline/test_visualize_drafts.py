@@ -325,3 +325,21 @@ def test_render_audio_target_maps_to_delivery_audio():
     assert cli._delivery_audio(parsed) == {"lufs": -16.0, "true_peak": -1.0}
     parsed = cli.build_parser(object()).parse_args(["render", "--project", "P", "tl"])
     assert cli._delivery_audio(parsed) is None
+
+
+def test_compare_published_with_a_working_copy_does_not_claim_there_is_none(draft, capsys, monkeypatch):
+    import astrid.core.timeline.authoring_bundle as ab
+
+    monkeypatch.setattr(ab, "preview_authoring_candidate", lambda doc: {"kind": "authoring-candidate-preview"})
+    client = FakeClient()
+    code = _visualize(["--draft", "main", "--compare", "published"], client)
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "── PUBLISHED" in out and "── WORKING COPY" in out
+    assert "no working copy" not in out
+
+
+def test_compare_published_without_a_working_copy_still_says_so(no_draft, capsys):
+    client = FakeClient()
+    _visualize(["--compare", "published"], client)
+    assert "no working copy: nothing to compare" in capsys.readouterr().out

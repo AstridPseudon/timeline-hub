@@ -261,8 +261,8 @@ edit the rows, then `timelines apply <timeline> cut.sheet --idempotency-key shee
 
 A commit returns `r["data"]["status"]` (`accepted`; `merged` or `rebased` when
 other edits landed first; `preview`) and `r["receipt"]["receipt_id"]` (`None`
-for a preview). Report the label, receipt, imported files (only a preview lists
-them yet) and how to undo. Catch `CommitConflict` before `TimelineEditError`
+for a preview). Report the label, receipt, imported files (a preview and a committed
+result both list them) and how to undo. Catch `CommitConflict` before `TimelineEditError`
 (`exc.failure` holds Runtime's details); any other means nothing landed, unless
 it says no reply could be verified. Messages read *what went wrong*, *where*, *what to do*:
 
@@ -293,8 +293,8 @@ moments you looked at, the times to check and the editor link,
   `timelines restructure`); aspect-ratio variants (a copy keeps the canvas).
 - A commit or undo across several timelines (loop per timeline); a preview
   or list as a file (Python only; `Checkout` candidate files are another route).
-- Creating a timeline with content in one call (`timelines create`, then
-  commit); finding content by what it shows (get asset keys from an
-  understanding tool, then `t.clips(asset=...)`).
+- Finding content by what it shows (get asset keys from an understanding tool,
+  then `t.clips(asset=...)`). Creating with content in one call is possible from
+  Python: `client.timelines.create_empty(project=, config=...)`; `timelines create` makes an empty one.
 
 If a task needs one of these, say so and stop; do not build it from lower-level writes.

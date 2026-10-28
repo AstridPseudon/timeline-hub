@@ -649,7 +649,8 @@ class TimelineSession:
             if isinstance(rejected_details, dict) and rejected_details.get("status") == "conflict":
                 if state["pending"]:
                     raise TimelineEditError("pending dependent commands require revalidation before discarding the rejected conflict")
-                raise CommitConflict(rejected_failure)
+                raise CommitConflict(rejected_failure, fixed_list=True,
+                                     timeline_id=self.timeline_id, project_id=self.project_id)
             if state["pending"] or state["flight"] is not None:
                 if state.get("conflict", {}).get("details", {}).get("status") != "conflict":
                     raise TimelineEditError("retry the original in-flight request before another edit")
