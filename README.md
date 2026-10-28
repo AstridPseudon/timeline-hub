@@ -88,6 +88,15 @@ fields while validating known fields; request shapes remain unchanged.
 
 ## Run it
 
+Install the Runtime and Astrid Agent wheels into the same Python environment.
+`astrid-runtime workspace create` selects those installed packages automatically
+when no profile manifest exists; `astrid-runtime up --wait` then starts the
+workspace. The launcher checks the package origins against their installed
+distribution records on each start. Editable source installations instead need
+an explicit source profile, selected with `--source-manifest` or stored at
+`runtime/source-profiles/astrid.json` under the data root. An existing manifest
+takes precedence and must be valid.
+
 For an existing configured workspace, `astrid-runtime up --wait` starts or
 reconnects Astrid and returns after its browser door is ready. Open
 https://astrid.haus. A service manager should execute `astrid-runtime run`:

@@ -10,12 +10,16 @@ from __future__ import annotations
 from dataclasses import dataclass, field, replace
 import errno
 import hashlib
+import importlib.metadata
+import importlib.util
 import json
 from runtime_protocol.dirfd import filesystem as os
 from pathlib import Path
 import secrets
 import shutil
 import stat
+import sys
+import sysconfig
 import time
 from contextlib import contextmanager
 from typing import Any, Mapping, Protocol, Sequence
@@ -135,6 +139,7 @@ class SourceProfile:
     source_digest: str = ""
     lock_digest: str = ""
     service_declaration: str | None = None
+    kind: str = "source"
 
     @classmethod
     def from_mapping(cls, value: Mapping[str, Any], *, expected_profile: str = "astrid") -> "SourceProfile":
@@ -145,6 +150,7 @@ class SourceProfile:
             "worker_profile",
             "runtime_command", "protocol_version", "schema_version", "capability_digest",
             "source_digest", "lock_digest", "service_declaration",
+            "kind",
         }
         unknown = sorted(set(value) - allowed)
         if unknown:
@@ -155,6 +161,9 @@ class SourceProfile:
         profile = str(value.get("profile", ""))
         if profile != expected_profile:
             raise BootstrapError(f"Source profile must be {expected_profile!r}, got {profile!r}.")
+        kind = value.get("kind", "source")
+        if kind not in ("source", "installed"):
+            raise BootstrapError("Source profile kind is unsupported.")
         if "runtime_checkout" not in value:
             raise BootstrapError(
                 "Source profile is incomplete; configure the pinned runtime_checkout "
@@ -195,6 +204,7 @@ class SourceProfile:
             source_digest=str(value.get("source_digest", "")),
             lock_digest=str(value.get("lock_digest", "")),
             service_declaration=declaration,
+            kind=kind,
         )
 
     @classmethod
@@ -224,6 +234,7 @@ class SourceProfile:
             "source_digest": self.source_digest,
             "lock_digest": self.lock_digest,
             **({"service_declaration": self.service_declaration} if self.service_declaration is not None else {}),
+            **({"kind": self.kind} if self.kind != "source" else {}),
         }
 
     @property
@@ -256,7 +267,11 @@ class BootstrapConfig:
         if self.source_profile is not None:
             return self.source_profile
         manifest = self.source_manifest or (paths.source_profiles_dir / f"{self.profile}.json")
-        return SourceProfile.load(manifest, expected_profile=self.profile)
+        if self.source_manifest is not None or manifest.exists() or manifest.is_symlink():
+            source = SourceProfile.load(manifest, expected_profile=self.profile)
+            _validate_source_profile(source, expected_profile=self.profile)
+            return source
+        return _installed_profile(self.profile)
 
 
 @dataclass(frozen=True)
@@ -340,10 +355,50 @@ def _has_symlink_component(path: Path) -> bool:
     return False
 
 
+def _installed_profile(profile: str) -> SourceProfile:
+    """Identify wheel-installed packages in this interpreter, never a checkout."""
+    if profile != "astrid":
+        raise BootstrapError(f"Installed profile is unsupported: {profile!r}.")
+    sites = {Path(sysconfig.get_path(key)).resolve() for key in ("purelib", "platlib")}
+    prefix = Path(sys.prefix).resolve()
+    roots = []
+    for distribution_name, module_name in (("astrid-runtime", "astrid_runtime"),
+                                           ("astrid-runtime", "runtime_protocol"),
+                                           ("astrid", "astrid")):
+        try:
+            distribution = importlib.metadata.distribution(distribution_name)
+            direct = json.loads(distribution.read_text("direct_url.json") or "{}")
+            spec = importlib.util.find_spec(module_name)
+            if direct.get("dir_info", {}).get("editable") or spec is None or not spec.origin:
+                raise ValueError("editable or missing package")
+            origin = Path(spec.origin).absolute()
+            records = distribution.files or ()
+            if (not origin.is_file() or _has_symlink_component(origin)
+                    or not any(origin == Path(distribution.locate_file(record)).absolute() for record in records)):
+                raise ValueError("package origin is not owned by distribution")
+            root = origin.parent.parent
+            if root not in sites or not root.is_relative_to(prefix):
+                raise ValueError("package origin is outside the installed environment")
+            roots.append(str(root))
+        except (importlib.metadata.PackageNotFoundError, OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+            raise BootstrapError(f"Installed {distribution_name} package identity is invalid; install the Runtime and Agent wheels in the same environment or configure a source manifest.") from exc
+    if roots[0] != roots[1]:
+        raise BootstrapError("Installed Runtime packages do not share an origin.")
+    return SourceProfile(profile, roots[0], roots[2], kind="installed")
+
+
 def _validate_source_profile(source: SourceProfile, *, expected_profile: str = "astrid") -> None:
     """Reject source metadata that attempts to become runtime authority."""
     if not isinstance(source, SourceProfile) or source.profile != expected_profile:
         raise BootstrapError(f"Source profile must be {expected_profile!r}.")
+    if source.kind not in ("source", "installed"):
+        raise BootstrapError("Source profile kind is unsupported.")
+    if source.kind == "installed":
+        installed = _installed_profile(expected_profile)
+        if (source.runtime_checkout != installed.runtime_checkout
+                or source.source_checkout != installed.source_checkout
+                or source.runtime_environment is not None):
+            raise BootstrapError("Installed profile does not match the current installed package origins.")
     checkout = str(source.runtime_checkout or "")
     checkout_path = Path(checkout).expanduser()
     source_path = Path(str(source.source_checkout or "")).expanduser()

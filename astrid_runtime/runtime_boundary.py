@@ -23,7 +23,7 @@ import urllib.request
 from typing import Any, Mapping
 from urllib.parse import urlsplit
 
-from .bootstrap import BootstrapCustodyUncertain, BootstrapError, SourceProfile
+from .bootstrap import BootstrapCustodyUncertain, BootstrapError, SourceProfile, _validate_source_profile
 from .loopback_http import urlopen_loopback
 from .custody_broker import (
     ACTIVE_CAPABILITY_NAME,
@@ -195,6 +195,7 @@ class LocalRuntimeBoundary:
         checkout path is provenance for the editable source profile, never an
         import or launch fallback for the neutral runtime.
         """
+        _validate_source_profile(source)
         runtime_checkout = Path(source.runtime_checkout).expanduser()
         if not runtime_checkout.is_absolute():
             raise BootstrapError("Source profile must provide an absolute pinned runtime_checkout.")
