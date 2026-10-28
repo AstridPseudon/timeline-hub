@@ -16,6 +16,7 @@ from . import list_state
 from . import sync as sync_fn
 from . import uninstall as uninstall_fn
 from .harnesses import ADAPTERS
+from .runtime_record import publish
 
 HARNESS_CHOICES = ("claude", "codex", "hermes", "all")
 
@@ -156,6 +157,8 @@ def _cmd_install(args: argparse.Namespace) -> int:
         dry_run=args.dry_run,
         skill_names=args.skill, all_skills=args.all_skills,
     )
+    if not args.dry_run:
+        report["runtime_record"] = publish()
     return _emit_report(report, args)
 
 
@@ -163,6 +166,8 @@ def _cmd_uninstall(args: argparse.Namespace) -> int:
     pack_ids = _resolve_packs(args)
     harness_names = _resolve_harness_arg(args)
     report = uninstall_fn(pack_ids=pack_ids, harness_names=harness_names, dry_run=args.dry_run, skill_names=args.skill, all_skills=args.all_skills)
+    if not args.dry_run:
+        report["runtime_record"] = publish()
     return _emit_report(report, args)
 
 
@@ -188,6 +193,8 @@ def _cmd_sync(args: argparse.Namespace) -> int:
         deep=args.deep,
         dry_run=args.dry_run,
     )
+    if not args.dry_run:
+        report["runtime_record"] = publish()
     rc = _emit_report(report, args)
     broken = report.get("broken_links", [])
     if not args.json:
@@ -280,6 +287,7 @@ def _emit_report(report: dict[str, Any], args: argparse.Namespace) -> int:
     if not report["actions"]:
         if registry is None:
             print("no detected harnesses; nothing to do")
+        _print_runtime_record(report)
         return 0
     for action in report["actions"]:
         print(f"[{action['harness']}]")
@@ -290,7 +298,17 @@ def _emit_report(report: dict[str, Any], args: argparse.Namespace) -> int:
                 print(f"  {key}: {', '.join(action[key]) or '(none)'}")
         if action.get("visibility"):
             print(f"  {action['visibility']}")
+    _print_runtime_record(report)
     return 0
+
+
+def _print_runtime_record(report: dict[str, Any]) -> None:
+    result = report.get("runtime_record")
+    if not isinstance(result, dict):
+        return
+    status = result.get("status", "pending")
+    reason = result.get("reason")
+    print(f"[runtime_record] {status}" + (f": {reason}" if reason else ""))
 
 
 __all__ = ["build_parser", "main"]

@@ -223,3 +223,12 @@ def _sandboxed_home_and_projects(
     monkeypatch.setenv(paths.PROJECTS_ROOT_ENV, str(projects_root))
     yield
     _clear_task_env()
+
+
+@pytest.fixture(autouse=True)
+def _skills_tests_do_not_publish(request, monkeypatch):
+    """Keep the skills unit suite isolated from a developer's selected Runtime."""
+    if request.node.path.name.startswith("test_skills"):
+        from astrid.skills import cli as skills_cli
+
+        monkeypatch.setattr(skills_cli, "publish", lambda **_kwargs: {"status": "published"})
