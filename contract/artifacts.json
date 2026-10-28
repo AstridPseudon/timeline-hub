@@ -11,6 +11,7 @@
     "conformance/fixtures/project.json": "sha256:b526be614ff35276608630c602213078edc8a291eb5241dd14b82bcffad71e29",
     "conformance/fixtures/settlement.json": "sha256:f9cd0958061a2a2a25def05966b5c9ffd5837a1f7197eec2b1f1cd482ac09086",
     "conformance/fixtures/shot-composition-compatibility.json": "sha256:9d5201dd62121c278bd51037863afb59508794b96b06e1bf3f89d7b300e19fc2",
+    "conformance/fixtures/shot-layering-v1.json": "sha256:4900be369f31bd03736b7eadaf2f8595a7ce48df5218296d405162cb13cfc16c",
     "conformance/fixtures/task.json": "sha256:7dc2f5d3f82219b439f1c1147aa230f39e706a3c3b24a7d177efc1b975f543b9",
     "conformance/fixtures/visual-boundary-v1.json": "sha256:1fc778b42f7a5ef91a1fd8620fd92417131e44f97dd5c6a238c78f13bcabfc55",
     "conformance/fixtures/visual-seam-cases-v1.json": "sha256:1f8363394e0b7049096365d38d00bf2dfed888eab30c3b2bce95cd44537a02e7",
@@ -84,5 +85,5 @@
     "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:8f08363dfcb7a66313e1fd84af3d41e1acde1e9ff94d8d1b3e1bbf6765abb265"
+  "version": "sha256:4dc5853d69dbb9ecfcc8e0193cdf104c2f26e85880797239be547738a3e321c2"
 }

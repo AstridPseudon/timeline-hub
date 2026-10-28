@@ -1057,7 +1057,9 @@ class RealmStore:
                 connection.row_factory = sqlite3.Row
                 inspector = object.__new__(cls)
                 inspector.root = root
-                inspector.db_path = db_path
+                # Timeline verification must track the snapshot's SQLite files;
+                # the source WAL may disappear when its last reader closes.
+                inspector.db_path = snapshot_root / "realm.sqlite3"
                 inspector.cas_root = root / "cas" / "sha256"
                 inspector.conn = connection
                 inspector._mutex = threading.RLock()
