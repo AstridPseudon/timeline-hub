@@ -731,7 +731,13 @@ class RemotionFrameProvider:
                     "source_clip_id": source_id, "occurrence_id": source.get("occurrence_id"),
                 }:
                     raise ValueError("capture projected source/occurrence mapping mismatch")
+            # The host adds a per-entry ``file`` locator when it materializes
+            # managed media. It is a host-side detail, not part of the retained
+            # source identity, so it is left out of this comparison.
             self._registry = _load_registry_mapping(self.assets_path)
+            for entry in self._registry.get("assets", {}).values():
+                if isinstance(entry, dict):
+                    entry.pop("file", None)
             if self._registry != self.snapshot["registry"]:
                 raise ValueError("materialized registry differs from retained capture source")
             self.profile = _canonical_profile(self.timeline_path, self._registry, self.theme_path)
@@ -773,6 +779,7 @@ class RemotionFrameProvider:
         self.wants_bounds = snapshot_wants_bounds(snapshot)
 
     def _observe_scene(self, props: Mapping[str, Any], frames: Sequence[int]) -> None:
+        from astrid.core.rendering.assets import managed_asset_digest
         from astrid.core.rendering.profile import resolve_render_profile
         from astrid.core.rendering.scene_answers import SceneQueryUnavailable
 
@@ -807,7 +814,12 @@ class RemotionFrameProvider:
             if not path.is_relative_to(self.materialized_root.resolve()) or not path.is_file():
                 raise SceneQueryUnavailable("capture asset outside materialized source")
             expected = self._registry["assets"][key]
-            digest = expected.get("digest") or expected.get("content_sha256") or expected.get("sha256") or expected.get("hash")
+            try:
+                digest = managed_asset_digest(expected)
+            except ValueError:
+                digest = None
+            if not isinstance(digest, str):
+                raise SceneQueryUnavailable("capture materialized asset has no media record digest")
             if "sha256:" + hashlib.sha256(path.read_bytes()).hexdigest() != "sha256:" + digest.removeprefix("sha256:"):
                 raise SceneQueryUnavailable("capture materialized asset digest mismatch")
         if registry != self._registry:
