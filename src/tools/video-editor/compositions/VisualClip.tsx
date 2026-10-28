@@ -11,7 +11,7 @@ import {
   getSanitizedVolume,
   parseResolution,
 } from '@/tools/video-editor/lib/config-utils.ts';
-import { wrapWithClipEffects } from '@/tools/video-editor/effects/index.tsx';
+import { ClipFadeOpacity, wrapWithClipEffects } from '@/tools/video-editor/effects/index.tsx';
 import { ClipTransition, clipSequenceTiming } from './ClipTransition.tsx';
 import {
   useOptionalEffectRegistryContext,
@@ -504,7 +504,9 @@ export const VisualClip: FC<VisualClipProps> = ({
 
   const content: ReactNode = (
     <ClipTransition clip={clip} fps={fps}>
-      <VisualAsset clip={clip} track={track} fps={fps} />
+      <ClipFadeOpacity clip={clip} fps={fps} fadeOnly>
+        <VisualAsset clip={clip} track={track} fps={fps} />
+      </ClipFadeOpacity>
       {renderUnsupportedShaderExport && shader ? (
         <UnsupportedClipShaderExportBody clipId={clip.id} shaderId={shader.shaderId} />
       ) : null}

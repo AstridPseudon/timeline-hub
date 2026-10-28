@@ -1,9 +1,25 @@
 import { test, expect } from '@playwright/test';
 import { createServer } from 'vite';
 import { createRequire } from 'node:module';
-import { mkdir, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { join } from 'node:path';
+
+// Runtime's published visual-field readback (P-P1c-L3r5 handoff). Its authored
+// fields are drawn as published, on the same 24 fps basis the Runtime accepted.
+const HANDOFF_PATH = 'tests/e2e/local/support/p1-runtime-visual-fields-readback.json';
+const HANDOFF_SHA256 = 'ae2da01b8d63d5e5b2fc4c8e4568a469676da8a761fb68c542657354fdc4a06a';
+const FIXTURE_FPS = 24;
+
+// One set of bytes feeds both products: the Player gets them inline as
+// data:image/svg+xml;base64 URIs, and the installed package (which resolves
+// non-http asset files through Remotion staticFile and cannot read data: URIs)
+// gets the same bytes as files in the bundle's public dir.
+const SOLID_COLORS = { 'solid.svg': '#e85030', 'second.svg': '#3080d0' } as const;
+const solidSvg = (color: string) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="${color}"/></svg>`;
+const solidImage = (color: string) => `data:image/svg+xml;base64,${Buffer.from(solidSvg(color)).toString('base64')}`;
 
 test.use({ launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE } });
 
@@ -12,6 +28,13 @@ test.use({ launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXEC
 test('visual fields draw in preview and installed export', async ({ page }, testInfo) => {
   test.setTimeout(300_000);
   const root = process.cwd();
+  const handoffBytes = await readFile(join(root, HANDOFF_PATH));
+  expect(createHash('sha256').update(handoffBytes).digest('hex')).toBe(HANDOFF_SHA256);
+  const handoff = JSON.parse(handoffBytes.toString()) as { cases: Array<{
+    case_key: string;
+    authored_visual_fields: Record<string, unknown>;
+    frame_basis: { published_output: { fps: number }; setter_fps: number };
+  }> };
   const dir = testInfo.outputPath('visual-fields');
   await mkdir(dir, { recursive: true });
   const peers = '/home/user/work/runtimes/agent-remotion-0013/node_modules';
@@ -54,9 +77,11 @@ window.fixtureReady = true;
   await writeFile(join(dir, 'export.tsx'), `
 import React from 'react';
 import {Composition, registerRoot} from 'remotion';
-import {TimelineComposition, compileCanonicalTransitions, DEFAULT_THEME, toRuntimeTheme} from '@banodoco/timeline-composition';
+import {TimelineComposition, compileCanonicalTransitions, toRuntimeTheme} from '@banodoco/timeline-composition';
+import {BUNDLED_THEMES} from '@banodoco/timeline-composition/registry.generated';
 const Draw = props => {
-  const theme = {...DEFAULT_THEME, visual: {...DEFAULT_THEME.visual, color: {...DEFAULT_THEME.visual.color, bg: '#000000'}}};
+  // The bundled 2rp theme owns the registered section-hook element the Player draws and is black like the preview root.
+  const theme = BUNDLED_THEMES['2rp'];
   const tracks = props.timeline.tracks.filter(t => t.kind === 'visual').map(track => ({track, clips: props.timeline.clips.filter(c => c.track === track.id)}));
   const compiledTransitions = compileCanonicalTransitions(tracks, 24, toRuntimeTheme(theme));
   return <TimelineComposition {...props} theme={theme} compiledTransitions={compiledTransitions}/>;
@@ -66,14 +91,6 @@ registerRoot(() => <Composition id="Fields" component={Draw} durationInFrames={4
   const server = await createServer({
     configFile: join(root, 'config/vite/vite.config.ts'), cacheDir: join(dir, 'vite-cache'),
     server: { host: '127.0.0.1', port: 0, fs: { allow: [root, dir] } },
-    plugins: [{ name: 'visual-field-solid', configureServer(vite) {
-      vite.middlewares.use('/solid.svg', (req, res) => {
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        const color = req.url?.includes('second') ? '#3080d0' : '#e85030';
-        res.end(`<svg xmlns="http://www.w3.org/2000/svg" width="160" height="90"><rect width="160" height="90" fill="${color}"/></svg>`);
-      });
-    } }],
   });
   let serveUrl: string;
   try {
@@ -84,7 +101,10 @@ registerRoot(() => <Composition id="Fields" component={Draw} durationInFrames={4
     await page.setViewportSize({ width: 160, height: 90 });
     await page.goto(`${origin}/@fs${dir}/index.html`);
     await page.waitForFunction(() => (window as any).fixtureReady, undefined, { timeout: 20_000 });
-    serveUrl = await bundle({ entryPoint: join(dir, 'export.tsx'), enableCaching: false,
+    const publicDir = join(dir, 'public');
+    await mkdir(publicDir, { recursive: true });
+    for (const [file, color] of Object.entries(SOLID_COLORS)) await writeFile(join(publicDir, file), solidSvg(color));
+    serveUrl = await bundle({ entryPoint: join(dir, 'export.tsx'), enableCaching: false, publicDir,
       webpackOverride: (config: any) => ({ ...config, resolve: { ...config.resolve, alias: { ...config.resolve?.alias,
         react: join(root, 'node_modules/react'), 'react-dom': join(root, 'node_modules/react-dom'),
         remotion: join(root, 'node_modules/remotion'),
@@ -92,46 +112,63 @@ registerRoot(() => <Composition id="Fields" component={Draw} durationInFrames={4
       } } }),
     });
     const browserExecutable = process.env.ASTRID_REMOTION_BROWSER_EXECUTABLE;
-    const cases: Array<[string, 'exit' | 'entrance' | 'transition' | 'effects', unknown, number[], string?]> = [
-      ['fade-exit', 'exit', { id: 'fade', durationFrames: 12 }, [11, 18, 24]],
-      ['slide-up-exit', 'exit', { id: 'slide-up', durationFrames: 12 }, [11, 18, 24]],
-      ['slide-up-exit-legacy', 'exit', { type: 'slide-up', duration: 8 / 30 }, [15, 20, 24]],
-      ['fade-entrance-step', 'entrance', { id: 'fade', durationFrames: 12, params: { easing: 'step' } }, [0, 6, 12]],
-      ['fade-entrance-step-top-level', 'entrance', { id: 'fade', durationFrames: 8, easing: 'step' }, [0, 4, 8]],
-      ['fade-entrance-linear-params', 'entrance', { id: 'fade', durationFrames: 12, params: { easing: 'linear' } }, [0, 6, 12]],
-      ['fade-entrance-linear', 'entrance', { id: 'fade', durationFrames: 12, easing: 'linear' }, [0, 6, 12]],
-      ['fade-entrance-legacy', 'entrance', { type: 'fade', duration: 0.5 }, [0, 2, 7, 12]],
-      ['fade-up-entrance', 'entrance', { id: 'fade-up', durationFrames: 18 }, [0, 2, 9, 18]],
-      ['fade-up-entrance-legacy', 'entrance', { type: 'fade-up', duration: 8 / 30, params: { easing: 'ease-in' } }, [0, 4, 8]],
-      ['scale-in-entrance', 'entrance', { id: 'scale-in', durationFrames: 18 }, [0, 2, 9, 18]],
-      ['fade-transition', 'transition', { id: 'fade', durationFrames: 8 }, [15, 20, 24]],
-      ['fade-transition-default', 'transition', { id: 'fade' }, [15, 20, 24]],
-      ['fade-transition-legacy', 'transition', { type: 'fade', duration: 0.5 }, [11, 18, 24]],
-      ['cross-fade-transition-explicit', 'transition', { id: 'cross-fade', durationFrames: 8 }, [15, 20, 24]],
-      ['cross-fade-transition-default', 'transition', { id: 'cross-fade' }, [15, 20, 24]],
-      ['cross-fade-transition-legacy', 'transition', { type: 'crossfade', duration: 0.5 }, [11, 18, 24]],
-      ['effects-object', 'effects', { fade_in: 0.25, fade_out: 0.5 }, [0, 3, 6, 11, 18, 24]],
-      ['effects-array', 'effects', [{ fade_in: 0.25 }, { fade_out: 0.5 }], [0, 3, 6, 11, 18, 24]],
-      ['element-fade-entrance', 'entrance', { id: 'fade', durationFrames: 12, params: { easing: 'linear' } }, [0, 6, 12], 'element'],
-      ['element-fade-transition', 'transition', { id: 'fade', durationFrames: 8 }, [15, 20, 24], 'element'],
+    type Case = [string, 'exit' | 'entrance' | 'transition' | 'effects', unknown, number[], string | undefined, string | undefined];
+    // Drawn exactly as the Runtime published it (field JSON and fps basis).
+    const published = (name: string, key: string, frames: number[], variant?: string): Case => {
+      const found = handoff.cases.find(item => item.case_key === key);
+      if (!found) throw new Error(`Runtime handoff has no case ${key}`);
+      expect(found.frame_basis.published_output.fps, `${key} published fps`).toBe(FIXTURE_FPS);
+      expect(found.frame_basis.setter_fps, `${key} setter fps`).toBe(FIXTURE_FPS);
+      const [field, reference] = Object.entries(found.authored_visual_fields)[0];
+      return [name, field as Case[1], reference, frames, variant, key];
+    };
+    // Extra forms the package also draws; not part of the Runtime table.
+    const extra = (name: string, field: Case[1], reference: unknown, frames: number[], variant?: string): Case =>
+      [name, field, reference, frames, variant, undefined];
+    const cases: Case[] = [
+      published('fade-exit', 'exit.fade', [11, 18, 24]),
+      published('slide-up-exit', 'exit.slide-up', [11, 18, 24]),
+      extra('slide-up-exit-legacy', 'exit', { type: 'slide-up', duration: 8 / 30 }, [15, 20, 24]),
+      published('fade-entrance-step', 'entrance.fade', [0, 6, 12]),
+      extra('fade-entrance-step-top-level', 'entrance', { id: 'fade', durationFrames: 8, easing: 'step' }, [0, 4, 8]),
+      published('fade-entrance-linear-params', 'entrance.fade.linear', [0, 6, 12]),
+      extra('fade-entrance-linear', 'entrance', { id: 'fade', durationFrames: 12, easing: 'linear' }, [0, 6, 12]),
+      extra('fade-entrance-legacy', 'entrance', { type: 'fade', duration: 0.5 }, [0, 2, 7, 12]),
+      published('fade-up-entrance', 'entrance.fade-up', [0, 3, 6, 9, 18]),
+      extra('fade-up-entrance-legacy', 'entrance', { type: 'fade-up', duration: 8 / 30, params: { easing: 'ease-in' } }, [0, 2, 3, 6, 8]),
+      published('scale-in-entrance', 'entrance.scale-in', [0, 2, 9, 18]),
+      published('fade-transition', 'transition.fade.explicit-frames', [15, 20, 24]),
+      published('fade-transition-default', 'transition.fade.default', [15, 20, 24]),
+      extra('fade-transition-legacy', 'transition', { type: 'fade', duration: 0.5 }, [11, 18, 24]),
+      extra('cross-fade-transition-explicit', 'transition', { id: 'cross-fade', durationFrames: 8 }, [15, 20, 24]),
+      published('cross-fade-transition-default', 'transition.cross-fade.default', [15, 20, 24]),
+      published('cross-fade-transition-legacy', 'transition.cross-fade.legacy-seconds', [11, 18, 24]),
+      published('effects-object', 'effects.object', [0, 3, 6, 11, 18, 24]),
+      published('effects-array', 'effects.array', [0, 3, 6, 11, 18, 24]),
+      published('element-fade-entrance', 'entrance.fade.linear', [0, 6, 12], 'element'),
+      published('element-fade-transition', 'transition.fade.explicit-frames', [15, 20, 24], 'element'),
+      published('element-effects-object', 'effects.object', [0, 3, 6, 11, 18, 24], 'element'),
+      published('element-effects-array', 'effects.array', [0, 3, 6, 11, 18, 24], 'element'),
     ];
     const captures: object[] = [];
-    for (const [name, field, reference, frames, variant] of cases) {
+    for (const [name, field, reference, frames, variant, handoffKey] of cases) {
       const track = { id: 'picture', kind: 'visual', fit: 'contain' };
       const element = { clipType: 'section-hook', params: { title: 'Fixture', entrance: [], exit: [] } };
       const clips = [
         { id: 'first', track: 'picture', clipType: 'media', at: 0, hold: 1, asset: 'solid', ...(variant && field !== 'transition' ? element : {}), ...(field !== 'transition' ? { [field]: reference } : {}) },
         { id: 'second', track: 'picture', clipType: 'media', at: 1, hold: 1, asset: 'second', ...(variant && field === 'transition' ? element : {}), ...(field === 'transition' ? { transition: reference } : {}) },
       ];
-      const config = { output: { resolution: '160x90', fps: 24, file: 'fixture.mp4' }, theme_overrides: { visual: { color: { bg: '#000000' } } }, tracks: [track], clips,
-        registry: { assets: { solid: { file: `${origin}/solid.svg`, type: 'image/svg+xml' },
-          second: { file: `${origin}/solid.svg?second`, type: 'image/svg+xml' } } } };
+      const config = { output: { resolution: '160x90', fps: FIXTURE_FPS, file: 'fixture.mp4' }, theme_overrides: { visual: { color: { bg: '#000000' } } }, tracks: [track], clips,
+        registry: { assets: { solid: { file: solidImage(SOLID_COLORS['solid.svg']), type: 'image/svg+xml' },
+          second: { file: solidImage(SOLID_COLORS['second.svg']), type: 'image/svg+xml' } } } };
+      const exportRegistry = { assets: { solid: { file: 'solid.svg', type: 'image/svg+xml' },
+        second: { file: 'second.svg', type: 'image/svg+xml' } } };
       const baseline = { ...config, clips: clips.map(clip => {
         const copy = { ...clip } as Record<string, unknown>;
         delete copy[field];
         return copy;
       }) };
-      const inputProps = { timeline: config, assets: config.registry };
+      const inputProps = { timeline: { ...config, registry: exportRegistry }, assets: exportRegistry };
       const composition = await selectComposition({ serveUrl, id: 'Fields', browserExecutable, inputProps });
       await page.evaluate(async value => (window as any).drawFixture(value), baseline);
       for (const frame of frames) {
@@ -154,10 +191,10 @@ registerRoot(() => <Composition id="Fields" component={Draw} durationInFrames={4
         if (frame > 0 && frame !== frames[frames.length - 1] && baselineDiffers) changedInWindow = true;
         let max = 0, total = 0;
         for (let i = 0; i < left.length; i++) { const delta = Math.abs(left[i] - right[i]); max = Math.max(max, delta); total += delta; }
-        captures.push({ name, field, reference, fps: 24, frame, max, mean: total / left.length, baselineDiffers });
+        captures.push({ name, handoffKey, handoffSha256: HANDOFF_SHA256, field, reference, fps: FIXTURE_FPS, frame, max, mean: total / left.length, baselineDiffers });
         await writeFile(join(dir, 'manifest.json'), JSON.stringify(captures, null, 2));
-        expect(max, `${name} frame ${frame} maximum RGB delta`).toBeLessThanOrEqual(2);
-        expect(total / left.length, `${name} frame ${frame} mean RGB delta`).toBeLessThanOrEqual(0.25);
+        expect.soft(max, `${name} frame ${frame} maximum RGB delta`).toBeLessThanOrEqual(2);
+        expect.soft(total / left.length, `${name} frame ${frame} mean RGB delta`).toBeLessThanOrEqual(0.25);
       }
       expect(changedInWindow, `${name} must change an in-window drawing`).toBe(true);
     }

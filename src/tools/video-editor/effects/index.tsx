@@ -1,5 +1,5 @@
 import type { FC, ReactNode } from 'react';
-import { useCurrentFrame } from 'remotion';
+import { AbsoluteFill, useCurrentFrame } from 'remotion';
 import {
   composeClipAnimationPhase,
   normalizeAnimationRefs,
@@ -7,6 +7,7 @@ import {
   useTheme,
   type AnimationPhase,
 } from '@banodoco/timeline-composition/theme-api';
+import { clipOpacity } from '@banodoco/timeline-composition/evaluation';
 import { secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
 import { DynamicEffectRegistry } from '@/tools/video-editor/effects/DynamicEffectRegistry.ts';
 import { EffectErrorBoundary } from '@/tools/video-editor/effects/EffectErrorBoundary.tsx';
@@ -221,6 +222,20 @@ const PackageAnimation: FC<{
   }, frame)}</>;
 };
 
+// Applies the effects-collection fade_in/fade_out through the package's own
+// clipOpacity. `fadeOnly` drops the authored clip.opacity for content that
+// already applies it (TextClip) so it is not multiplied twice.
+export const ClipFadeOpacity: FC<{
+  clip: ResolvedTimelineClip;
+  fps: number;
+  fadeOnly?: boolean;
+  children: ReactNode;
+}> = ({ clip, fps, fadeOnly, children }) => {
+  const frame = useCurrentFrame();
+  const opacity = clipOpacity((fadeOnly ? { ...clip, opacity: undefined } : clip) as never, frame, fps);
+  return opacity === 1 ? <>{children}</> : <AbsoluteFill style={{ opacity }}>{children}</AbsoluteFill>;
+};
+
 type PackageAnimationResolution = 'supported' | 'wrong-phase' | 'unknown';
 
 const resolvePackageAnimation = (
@@ -276,12 +291,13 @@ export const wrapWithClipEffects = (
   const entranceEffect = clip.entrance;
   const entranceAnimation = entranceEffect as ClipAnimation | undefined;
   const entranceType = entranceAnimation?.id ?? entranceAnimation?.type;
-  const packageEntrance = entranceAnimation && entranceEffect
-    ? resolvePackageAnimation(entranceAnimation, 'entrance', fps)
-    : 'unknown';
   const entranceRecord = entranceEffect && effectRegistrySnapshot
     ? resolveSnapshotEffect(effectRegistrySnapshot, entranceType ?? '')
     : undefined;
+  // A provider-owned snapshot record takes precedence over the package built-in.
+  const packageEntrance = entranceAnimation && entranceEffect && !entranceRecord
+    ? resolvePackageAnimation(entranceAnimation, 'entrance', fps)
+    : 'unknown';
   const entrance = packageEntrance === 'unknown' && entranceEffect
     ? entranceRecord?.component
       ?? (legacyRegistry && entranceType ? lookupEffect(entranceEffects, entranceType) : null)
@@ -310,12 +326,13 @@ export const wrapWithClipEffects = (
   const exitEffect = clip.exit;
   const exitAnimation = exitEffect as ClipAnimation | undefined;
   const exitType = exitAnimation?.id ?? exitAnimation?.type;
-  const packageExit = exitAnimation && exitEffect
-    ? resolvePackageAnimation(exitAnimation, 'exit', fps)
-    : 'unknown';
   const exitRecord = exitEffect && effectRegistrySnapshot
     ? resolveSnapshotEffect(effectRegistrySnapshot, exitType ?? '')
     : undefined;
+  // A provider-owned snapshot record takes precedence over the package built-in.
+  const packageExit = exitAnimation && exitEffect && !exitRecord
+    ? resolvePackageAnimation(exitAnimation, 'exit', fps)
+    : 'unknown';
   const exit = packageExit === 'unknown' && exitEffect
     ? exitRecord?.component
       ?? (legacyRegistry && exitType ? lookupEffect(exitEffects, exitType) : null)

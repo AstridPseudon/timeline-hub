@@ -4,7 +4,6 @@ import { Component, createContext, memo, useContext, useMemo, useSyncExternalSto
 import type { DataProvider } from '@/tools/video-editor/data/DataProvider.ts';
 import { getAudioTracks, getVisualTracks } from '@/tools/video-editor/lib/editor-utils.ts';
 import { getClipDurationInFrames, getTimelineDurationInFrames, resolveTimelineConfig, secondsToFrames } from '@/tools/video-editor/lib/config-utils.ts';
-import { transitionReferenceFrames } from '@/tools/video-editor/lib/transition-reference.ts';
 import { BUILTIN_CLIP_TYPES } from '@/sdk/video/timeline/clipTypes.ts';
 import { clipSourceTime } from '../clip-types/sourceTime';
 import {
@@ -21,7 +20,7 @@ import { LocalFontFaces } from '@/tools/video-editor/compositions/LocalFontFaces
 import { partitionTrackGroups } from './partitionTrackGroups.ts';
 import { EffectLayerSequence } from '@/tools/video-editor/compositions/EffectLayerSequence.tsx';
 import { TextClipSequence } from '@/tools/video-editor/compositions/TextClip.tsx';
-import { wrapWithClipEffects } from '@/tools/video-editor/effects/index.tsx';
+import { ClipFadeOpacity, wrapWithClipEffects } from '@/tools/video-editor/effects/index.tsx';
 import { useOptionalEffectRegistryContext } from '@/tools/video-editor/effects/registry/index.ts';
 import { AudioReactiveColourSequence } from '@/tools/video-editor/compositions/AudioReactiveColour.tsx';
 import { VisualClip, VisualClipSequence } from '@/tools/video-editor/compositions/VisualClip.tsx';
@@ -305,7 +304,7 @@ const resolveAstridComponentAssetEntry = (
 
 const ElementClipEffects: FC<{ clip: ResolvedTimelineClip; fps: number; children: ReactNode }> = ({ clip, fps, children }) => {
   const registry = useOptionalEffectRegistryContext();
-  const content = <ClipTransition clip={clip} fps={fps}>{children}</ClipTransition>;
+  const content = <ClipTransition clip={clip} fps={fps}><ClipFadeOpacity clip={clip} fps={fps}>{children}</ClipFadeOpacity></ClipTransition>;
   return <>{wrapWithClipEffects(content, clip, getClipDurationInFrames(clip, fps), fps, registry?.snapshot)}</>;
 };
 
@@ -430,12 +429,7 @@ const AstridAnimationPreviewSequence: FC<{
   const Component = clip.elementRef
     ? resolveHostComponent(host, clip.elementRef)
     : undefined;
-  const durationInFrames = getClipDurationInFrames(clip, fps);
-  const transitionFrames = predecessor && clip.transition
-    ? transitionReferenceFrames(clip.transition, fps)
-    : 0;
-  const from = Math.max(0, secondsToFrames(clip.at, fps) - transitionFrames);
-  const effectiveDuration = durationInFrames + transitionFrames + 1;
+  const { from, effectiveDuration } = clipSequenceTiming(clip, fps, predecessor);
   if (!Component) return null;
   return (
     <Sequence
