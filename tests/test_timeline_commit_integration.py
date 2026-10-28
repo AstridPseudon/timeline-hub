@@ -318,7 +318,6 @@ def test_agent_written_visual_fields_validate_and_read_back_from_published_revis
         ("transition.fade.explicit-frames", "transition", {"id": "fade", "durationFrames": 8}, True),
         ("transition.cross-fade.legacy-seconds", "transition", {"type": "crossfade", "duration": 0.5}, False),
         ("effects.array", "effects", [{"fade_in": 0.25}, {"fade_out": 0.5}], False),
-        ("effects.object", "effects", {"fade_in": 0.25, "fade_out": 0.5}, False),
     ]
     handoff = []
     for case_key, field, value, use_agent_setter in cases:
@@ -353,6 +352,13 @@ def test_agent_written_visual_fields_validate_and_read_back_from_published_revis
             },
             "published_readback_config": copy.deepcopy(config),
         })
+    before_rows, before_head, before_history = rows(editing.service), editing.head(), editing.history()
+    with pytest.raises(RuntimeErrorBase, match="frozen schema"):
+        _commit_visual_field(editing, "effects", {"fade_in": 0.25, "fade_out": 0.5},
+                             "visual-field-effects.object", use_agent_setter=False)
+    assert editing.head() == before_head
+    assert editing.history() == before_history
+    assert rows(editing.service) == before_rows
     output_dir = os.environ.get("D66_OUTPUT_DIR")
     if output_dir:
         path = Path(output_dir) / "runtime-visual-fields-readback.json"
