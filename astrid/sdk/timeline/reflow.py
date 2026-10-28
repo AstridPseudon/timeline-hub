@@ -377,8 +377,8 @@ class _ReflowMixin:
         moved: dict[int, tuple[str, float, float]] = {}
         self._moved_ends: dict[str, tuple[float, float]] = {}
         self._mcache = None
-        groups = self._cut_groups()
-        orphan_cuts: set[str] = set()
+        groups = self._cut_groups(by_occurrence=True)  # a repeated cut id: one group (and span) per occurrence
+        orphan_cuts: set[tuple[str, str | None]] = set()  # cut occurrence keys: (cut id, shot id)
         sequences: dict[str, list[Clip]] = {}
         for clip in self.clips():
             tag = intent.sequence(clip.data)
@@ -393,24 +393,25 @@ class _ReflowMixin:
                 continue
             t = self._resolve_note(on, pic, in_point=True)
             if t is None:
-                orphan_cuts.add(g["id"])  # its word is gone: the cut keeps its place and its length
+                orphan_cuts.add(g["key"])  # its word is gone: the cut keeps its place and its length
                 continue
             if self._move_within_shot(pic, t, keep_end=True, moved=moved):
                 self._mcache = None
-        cut_span = self._cut_spans(skip=orphan_cuts)
-        for cid in orphan_cuts:
-            group = next(g for g in self._cut_groups() if g["id"] == cid)
-            cut_span[cid] = (group["start"], group["picture"].end if group["picture"] else None)
+        cut_span = self._cut_spans(skip=orphan_cuts, by_occurrence=True)
+        current = {g["key"]: g for g in self._cut_groups(by_occurrence=True)}
+        for key in orphan_cuts:
+            cut_span[key] = (current[key]["start"], current[key]["picture"].end if current[key]["picture"] else None)
         self._orphan_cuts = orphan_cuts
-        self._mcache = {"cuts": cut_span}
-        pictures = {id(g["picture"].data): g["id"] for g in groups if g["picture"] is not None}
-        picture_of = {g["id"]: g["picture"] for g in groups if g["picture"] is not None}
+        cut_key_of = {id(c.data): g["key"] for g in groups for c in g["clips"]}  # each clip's cut occurrence
+        self._mcache = {"cuts": cut_span, "cut_keys": cut_key_of}
+        pictures = {id(g["picture"].data): g["key"] for g in groups if g["picture"] is not None}
+        picture_of = {g["key"]: g["picture"] for g in groups if g["picture"] is not None}
         for seq_id, steps in sequences.items():  # 1b. a cut's sequence fills its cut, as one unit, in its ratios
             steps = sorted(steps, key=lambda c: intent.sequence(c.data)[1])
-            cid = pictures.get(id(steps[0].data))
-            if cid is None or cid in orphan_cuts or cid not in cut_span:
+            key = pictures.get(id(steps[0].data))
+            if key is None or key in orphan_cuts or key not in cut_span:
                 continue
-            lo, hi = cut_span[cid]
+            lo, hi = cut_span[key]
             until = intent.until(steps[0].data)
             if until:
                 hi = self._resolve_note(until, steps[0], start=lo)
@@ -423,10 +424,11 @@ class _ReflowMixin:
             for c, (a, b) in zip(steps, before):
                 if round(a * self.fps) != round(c.start * self.fps) or round(b * self.fps) != round(c.end * self.fps):
                     moved.setdefault(id(c.data), (c.address, a, c.start))
-        self._mcache = {"cuts": cut_span}
+        self._mcache = {"cuts": cut_span, "cut_keys": cut_key_of}
         for clip in self.clips():  # 2. every clip on its moments
             cut = intent.cut_of(clip.data)
-            if (cut in orphan_cuts and not intent.on(clip.data)) or intent.orphan(clip.data):
+            key = cut_key_of.get(id(clip.data))  # the cut occurrence this clip belongs to (None: no live cut)
+            if (key in orphan_cuts and not intent.on(clip.data)) or intent.orphan(clip.data):
                 continue  # an orphan keeps its time and length until it is re-homed
             seq = intent.sequence(clip.data)
             later_step = seq is not None and seq[1] > 0
@@ -437,17 +439,17 @@ class _ReflowMixin:
                 t = self._resolve_note(on, clip)
                 if t is not None:
                     start = t
-            elif cut and not is_picture and not later_step and not clip.is_audio and cut in cut_span:
-                start = cut_span[cut][0]
+            elif cut and not is_picture and not later_step and not clip.is_audio and key in cut_span:
+                start = cut_span[key][0]
             end = None
             if until:
                 end = self._resolve_note(until, clip, start=start)
             elif length is not None:
                 end = start + length
-            elif cut and not clip.is_audio and not later_step and cut in cut_span and (seq is None or is_picture):
-                end = cut_span[cut][1]
-                if end is None and cut in picture_of:  # the last cut has no next cut: it runs to its picture's end
-                    end = picture_of[cut].end
+            elif cut and not clip.is_audio and not later_step and key in cut_span and (seq is None or is_picture):
+                end = cut_span[key][1]
+                if end is None and key in picture_of:  # the last cut has no next cut: it runs to its picture's end
+                    end = picture_of[key].end
             if seq is not None:  # a sequence's steps were laid out as one unit (1b): never one by one
                 start, end = clip.start, None
             self._place(clip, start, end, moved)
@@ -656,14 +658,23 @@ class _ReflowMixin:
         else:
             clip._set_start(t)
 
+    def _cut_key(self, clip: "Clip") -> tuple[str, str | None] | None:
+        """The cut occurrence a clip belongs to (its key in ``_cut_groups(by_occurrence=True)``), or None."""
+        if not intent.cut_of(clip.data):
+            return None
+        keys = (self._mcache or {}).get("cut_keys")
+        if keys is None:
+            keys = {id(c.data): g["key"] for g in self._cut_groups(by_occurrence=True) for c in g["clips"]}
+        return keys.get(id(clip.data))
+
     def _own_cut_span(self, clip: "Clip") -> tuple[float, float] | None:
-        cut = intent.cut_of(clip.data)
-        if not cut:
+        key = self._cut_key(clip)  # per occurrence: a repeated cut id has one span for each shot it sits in
+        if key is None:
             return None
         spans = (self._mcache or {}).get("cuts")
         if spans is None:
-            spans = self._cut_spans()
-        span = spans.get(cut)
+            spans = self._cut_spans(by_occurrence=True)
+        span = spans.get(key)
         if span is None:
             return None
         return span[0], span[1] if span[1] is not None else self.duration

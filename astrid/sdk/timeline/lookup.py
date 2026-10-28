@@ -334,15 +334,23 @@ class _LookupMixin:
         span = (f"{plain[0]}…{plain[-1]}" if len(plain) > 1 else ", ".join(plain)) + (f" (+ {', '.join(extra)})" if extra else "")
         return f"no cut {cut_id}; cuts are {span or 'not named in this timeline'}"
 
-    def _cut_spans(self, skip: Iterable[str] = ()) -> dict[str, tuple[float, float | None]]:
+    def _cut_spans(self, skip: Iterable[Any] = (), *, by_occurrence: bool = False) -> dict[Any, tuple[float, float | None]]:
         """``{cut id: (start, end)}``: a cut runs from its start to the next cut's start (end None: the last).
-        Cuts in ``skip`` (orphans) don't end the cut before them."""
+        Cuts in ``skip`` (orphans) don't end the cut before them. With ``by_occurrence`` the keys are the
+        groups' keys ``(cut id, shot id)``: each occurrence of a repeated cut has its own span."""
         skip = set(skip) | set(getattr(self, "_orphan_cuts", set()) or ())
-        groups = [g for g in self._cut_groups() if g["id"] not in skip]
-        return {g["id"]: (g["start"], groups[k + 1]["start"] if k + 1 < len(groups) else None) for k, g in enumerate(groups)}
+        groups = [g for g in self._cut_groups(by_occurrence=by_occurrence) if g["id"] not in skip and g["key"] not in skip]
+        return {(g["key"] if by_occurrence else g["id"]):
+                (g["start"], groups[k + 1]["start"] if k + 1 < len(groups) else None) for k, g in enumerate(groups)}
 
-    def _cut_groups(self) -> list[dict[str, Any]]:
-        """Clips grouped by cut id, in time order; each group's picture is its bed clip (first step)."""
+    def _cut_groups(self, *, by_occurrence: bool = False) -> list[dict[str, Any]]:
+        """Clips grouped by cut id, in time order; each group's picture is its bed clip (first step).
+
+        Each group has a ``key``: ``(cut id, None)``. With ``by_occurrence``, a repeated shot (its copies share their
+        clip ids, so one picture clip id sits in more than one shot) splits its cut id into one group per shot, keyed
+        ``(cut id, shot id)``, so every occurrence has its own picture, start and span. A picture cut at a chapter wall
+        keeps its cut id in two shots but has distinct piece ids, so it stays one group. A clip of a split cut in a
+        shot without its picture joins the occurrence whose picture starts last before it."""
         groups: dict[str, list[Clip]] = {}
         for clip in self.clips():
             cid = intent.cut_of(clip.data)
@@ -350,12 +358,31 @@ class _LookupMixin:
                 groups.setdefault(cid, []).append(clip)
         out = []
         for cid, clips in groups.items():
-            if all(intent.orphan(c.data) for c in clips):
-                continue  # a cut kept only as orphans is not a cut until it is re-homed
             beds = sorted((c for c in clips if c.track == "plate" and not c.is_audio), key=lambda c: (c.start, c.id))
-            out.append({"id": cid, "clips": clips, "picture": beds[0] if beds else None,
-                        "start": beds[0].start if beds else min(c.start for c in clips)})
-        return sorted(out, key=lambda g: (g["start"], g["id"]))
+            first_bed: dict[str, Clip] = {}  # each shot's picture: its first bed clip
+            shots_of_bed: dict[str, set[str]] = {}  # a bed clip id -> the shots it sits in
+            for bed in beds:
+                first_bed.setdefault(bed.shot_id, bed)
+                shots_of_bed.setdefault(bed.id, set()).add(bed.shot_id)
+            repeated = by_occurrence and any(len(shots) > 1 for shots in shots_of_bed.values())
+            if repeated:
+                parts: dict[str | None, list[Clip]] = {shot: [] for shot in first_bed}
+                pictures = sorted(first_bed.values(), key=lambda c: (c.start, c.id))
+                for clip in clips:
+                    if clip.shot_id in first_bed:
+                        parts[clip.shot_id].append(clip)
+                    else:
+                        before = [p for p in pictures if p.start <= clip.start + 1e-6]
+                        parts[(before[-1] if before else pictures[0]).shot_id].append(clip)
+                split = [(shot, members, first_bed[shot]) for shot, members in parts.items()]
+            else:
+                split = [(None, clips, beds[0] if beds else None)]
+            for shot, members, picture in split:
+                if all(intent.orphan(c.data) for c in members):
+                    continue  # a cut kept only as orphans is not a cut until it is re-homed
+                out.append({"id": cid, "key": (cid, shot), "clips": members, "picture": picture,
+                            "start": picture.start if picture is not None else min(c.start for c in members)})
+        return sorted(out, key=lambda g: (g["start"], g["id"], g["key"][1] or ""))
 
     def _is_picture(self, clip: "Clip") -> bool:
         cut = intent.cut_of(clip.data)

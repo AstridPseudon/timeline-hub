@@ -1113,12 +1113,7 @@ def test_friendly_duplicate_reports_setup_and_copy_receipt_with_complete_fresh_m
     from astrid.sdk.timeline import open as open_timeline
     from astrid.sdk.timeline.commit import bundle_from_document
 
-    flat = flat_film()
-    # No wall-crossing sprite here: its chapter piece sits beside a repeated cut id, and retime() (cut ids are
-    # unique per film) collapses the repeated occurrence, so the head would be refused before the copy starts.
-    internal = flat['shots']['film']['internal_timeline']
-    internal['clips'] = [c for c in internal['clips'] if c['id'] != 'cross']
-    source = published(split(flat))
+    source = published(split(flat_film()))
     again = copy.deepcopy(source['placements'][0])
     again.update(occurrence_id='again', placement={'start_ms': 12000})
     source['placements'].append(again)
@@ -1163,6 +1158,30 @@ def test_friendly_duplicate_reports_setup_and_copy_receipt_with_complete_fresh_m
     for source_shot, copy_shot in shot_map.items():
         assert copied_content['shots'][copy_shot]['internal_timeline']['clips'] == source_content['shots'][source_shot]['internal_timeline']['clips']
     assert document('t') == original
+
+
+def test_retime_gives_each_occurrence_of_a_repeated_cut_its_own_timing(saved_source):
+    source = published(split(flat_film()))
+    first = source['placements'][0]
+    again = copy.deepcopy(first)
+    again.update(occurrence_id='again', placement={'start_ms': 12000})
+    source['placements'].append(again)
+    client, project, document, _ = saved_source(source)
+    tl = Checkout.open(project, 't', client=client)
+
+    tl.retime()
+
+    rows = {row['occurrence_id']: row for row in tl.bundle['placements']}
+    assert rows['again']['placement']['start_ms'] == 12000 and rows['again']['duration_ms'] == 4000
+    assert all(row['duration_ms'] == 4000 for row in rows.values())
+    assert all(clip.duration > 0 for clip in tl.clips() if not clip.is_audio)
+
+    def timing(occurrence):
+        shot = rows[occurrence]['shot_id']
+        return sorted((clip.element, clip.start, clip.end) for clip in tl.clips() if clip.shot_id == shot)
+
+    assert timing(first['occurrence_id']) == [('am-snap-plate', 0.0, 4.0), ('am-sprite', 3.5, 4.0)]
+    assert timing('again') == [('am-snap-plate', 12.0, 16.0), ('am-sprite', 15.5, 16.0)]
 
 
 def test_friendly_duplicate_retry_after_lost_ack_reuses_destination_and_copy(saved_source, tmp_path):
