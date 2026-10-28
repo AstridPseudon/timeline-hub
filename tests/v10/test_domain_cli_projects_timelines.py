@@ -915,7 +915,8 @@ def test_timelines_visualize_help_describes_filmstrip_navigation(
     assert "raw frames (frames/, frame-index.json) to DIR" in normalized
     assert "--include-media" in normalized
     assert "timeline_editing" in normalized
-    assert "checkout" in normalized
+    # c8fb6a027 retired the "document-checkout recipe" wording; the edit pointer is now `timelines edit`.
+    assert "`timelines edit`" in normalized
 
 
 @pytest.mark.parametrize(
