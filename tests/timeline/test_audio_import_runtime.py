@@ -21,6 +21,14 @@ def session_for(service, writer, candidate, path):
     class Transport:
         _last_handshake = {'realm_id': service.realm['id'], 'actor_id': 'author'}
 
+        def list_generations(self, project_id, *, cursor=None, limit=50):
+            page = service.list_generations(project_id, cursor=cursor, limit=limit)
+            return page['items'], page.get('next_cursor')
+
+        def list_variants(self, generation_id, *, cursor=None, limit=50):
+            page = service.list_variants(generation_id, cursor=cursor, limit=limit)
+            return page['items'], page.get('next_cursor')
+
         def import_project_media(self, project_id, payload, *, filename, **kwargs):
             return service.import_media(project_id, payload, original_name=filename,
                                         actor_id='author', **kwargs)
