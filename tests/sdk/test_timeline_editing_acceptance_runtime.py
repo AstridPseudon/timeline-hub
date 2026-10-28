@@ -14,7 +14,7 @@ import pytest
 from tests.helpers.runtime import runtime_checkout
 
 RUNTIME_CHECKOUT = str(runtime_checkout())
-RUNTIME_COMMIT = "c499992cd1eeaba530d118c4ee7f62a2b30f1aeb"
+RUNTIME_COMMIT = "106bdf8a12c6c1e953b2c5fe4a1da62628f53c8e"
 
 
 @pytest.fixture
