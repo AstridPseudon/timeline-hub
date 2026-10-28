@@ -58,7 +58,7 @@
     "contract/schemas/task.json": "sha256:2bc3a98edcd9d5c7221944a7602a342876261fb2c927f7f909528719ba757ba3",
     "contract/schemas/timeline-clip-replacement.json": "sha256:844cf65e5647f89eef6e5787371def679bd5379211b322da5489e44e0372ab31",
     "contract/schemas/timeline-commit.json": "sha256:3654ca3c68f5b3d2022ee91f532aa388b198033d6ae54cda8d8b25cecf739815",
-    "contract/schemas/timeline-config.schema.json": "sha256:f870150ffd0e42365c048965e2f7c08efc959c36db76ed4cba59de2e58ab4e08",
+    "contract/schemas/timeline-config.schema.json": "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd",
     "contract/schemas/timeline-config.schema.provenance.json": "sha256:1e3518566be46bfca8e1597998eae7f2f7c1b7970ca7439b8ee940831303a8f4",
     "contract/schemas/timeline-diff.json": "sha256:ad112dd68ca71fa349dd654109f5f67284b761263f85107c083846aa039c1d88",
     "contract/schemas/timeline-import.json": "sha256:dc275a3612867b446101ac0bca9287a7f59b43199f7fed32bfaddb28520c3bf9",
@@ -82,8 +82,8 @@
     "packages/typescript/src/operation-handle.ts": "sha256:3f8c69044a0efd5171290f925b0bc3706495c4c0da0252d0008d8056671fa460",
     "packages/typescript/src/timeline-commit-types.ts": "sha256:b567dcc623d3b3047b931c4337d9f6688efdfa590c9108c3406d0659fa152674",
     "packages/typescript/tsconfig.json": "sha256:48bc718286b70c7ff5af00d1adfea37ad7c7f8820d3050117dc9d6aea239181b",
-    "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:4a1e39613134f7c5301dbb7952ee9d40129f85454f41f957cc6fcdf69ed2fdd9"
+    "runtime_protocol/schemas/timeline-commit-bundle.json": "sha256:e4da5c0edc728869a7e78b5820b36f0a0756e1891af64a4f8c0fc37d705196e1"
   },
   "producer": "astrid-runtime",
-  "version": "sha256:f54308a5b40033886476f1a9bc3f4aea144f4b64ee2a5f874e6c407b62dc3458"
+  "version": "sha256:4dc5853d69dbb9ecfcc8e0193cdf104c2f26e85880797239be547738a3e321c2"
 }
