@@ -115,19 +115,17 @@ verified file; an existing track of the wrong kind refuses.
 
 - **`t.add(path, at=, hold=, track=, id=)`**: image, video or audio, at `at`
   timeline seconds. With `hold=N` a still lasts N seconds and a video or
-  audio file plays source seconds 0 to N (a draft rule that E14 checks);
+  audio file plays source seconds 0 to N (read it back);
   without `hold` a video or audio file plays its verified duration.
   `.trim(in, out)` then sets the source window.
 - **`t.add_text(text, at=, hold=, track="titles", id=)`**: plain text at `at`
   timeline seconds for `hold` seconds. A missing track is created as a
   picture track; an existing track is used where it is, never moved. It takes
-  no position or style arguments. Runtime behavior is pending E14.
+  no position or style arguments. Give it an `id` and adjust it with `t.clip(id)`.
 - **`t.track(id, above=, kind=)`**, **`.rename(label)`**: create a track or
   select the existing one (never a second), optionally place it above another,
-  and label it. Moving an existing track is not runtime-qualified (pending
-  E14). `kind` is `"visual"` (default) or `"audio"`; `t.track("music",
-  kind="audio")` makes the audio track a music bed needs. Track-kind behavior
-  is pending E14.
+  and label it. Moving an existing track is not supported. `kind` is `"visual"` (default) or `"audio"`; `t.track("music",
+  kind="audio")` makes the audio track a music bed needs.
 - **`clip.on(t)`, `clip.trim(in, out)`, `clip.hold_for(s)`, `clip.end`**:
   timing. `trim` is in source seconds and keeps the start. `hold_for` sets a
   literal length on any clip; on video or audio the source window keeps its
@@ -143,8 +141,7 @@ verified file; an existing track of the wrong kind refuses.
   explicit source window for moving media, and no timing anchors,
   animation or parent transitions.
 - **`clip.swap_asset(path_or_key)`**: plays another file (imported) or
-  catalog key in place; the start stays. From the source, pending E14
-  confirmation: an image or video keeps its length; an audio clip that played
+  catalog key in place; the start stays. An image or video keeps its length; an audio clip that played
   its whole file plays the whole replacement file. Swapping a music clip that
   has a beat grid to a file without one may refuse until a grid is attached
   (`clip.set_beats`).
@@ -184,8 +181,7 @@ A bed that spans the edit is not cut at the edit point; the `music=` policy
 below decides what happens to it instead. To make a bed count, put it on
 `music`: `t.add(path, track="music")` creates a missing `music` track as an
 audio track, and `t.track("music", kind="audio")` creates one for
-`clip.set_track("music")` (`kind` defaults to `"visual"`). Track-kind behavior
-is pending E14. On a flat timeline a ripple refuses to move a clip that
+`clip.set_track("music")` (`kind` defaults to `"visual"`). On a flat timeline a ripple refuses to move a clip that
 carries a moment string, animation or transition. Closing a hole on one track
 only is not supported.
 
@@ -200,9 +196,8 @@ point, with a crossfade so it still ends with the film; `"plays_on"`, as in
 `t.ripple_delete(4, 6, music="plays_on")`, leaves a spanning bed where it was
 and makes what follows move against its beats. Both modes are supported
 choices. Only a bed that begins at or inside the edit is unsettled, in either
-mode: E14 tests that case (including a bed that begins at the window's start
-under `plays_on`), and what it does today is not yet the intended behavior. Do
-not promise such a bed stays whole; read the bed's clips back after the
+mode (including a bed that begins at the window's start under `plays_on`).
+Do not promise such a bed stays whole; read the bed's clips back after the
 commit and tell the person what changed.
 `close_gap` measures the silence from the end of the
 previous word. Within one function each call sees the previous one, so times
@@ -296,7 +291,9 @@ for ep in episodes:
 ```
 
 Each outcome is written as it happens, so a crash loses nothing. Continue
-past a clash and report failures individually. Rerunning the loop is safe:
+past a clash and report failures individually. Backoff is bounded: after
+the loop, `discard` each clashed timeline, wait 30 s or more, retry it once, then
+stop and report; never retry in a tight loop. Rerunning the loop is safe:
 landed keys return their receipts, and an unknown outcome is settled by the
 same key; discard a clashed timeline first. For "the end of V1", compute
 it from V1's clips; `t.duration` also counts V2 and titles. There is no
@@ -308,7 +305,7 @@ needs approval).
 `tl.duplicate(as_="variant-01")` creates the destination timeline, then
 copies the head into it with fresh shot and occurrence ids while keeping the
 source's clip ids, so the same names find the same clips (runtime behavior
-pending E14). It returns
+read it back). It returns
 `destination_setup` and `copy_receipt` separately. The source is only read.
 Its operation key comes from the project, source and name, so a retry never
 creates a second destination. `timelines archive variant-01 --project
@@ -374,7 +371,7 @@ The final perception guidance (project P) will replace this section.
 
 - Public beat list (only beats near one word); a CLI word-anchor adapter.
 - Changing an existing clip's text in place (`clip.set(text=...)`): not
-  qualified; awaiting E14.
+  available.
 - Ripple on one track only.
 - Grouping existing clips into a shot; regrouping beyond `timelines restructure`.
 - Cross-timeline transactions and group undo.

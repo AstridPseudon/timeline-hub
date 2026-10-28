@@ -180,6 +180,6 @@ shows only lint that is new since checkout (`--all` for everything).
 >   new end with `check TL --at <end>`: "out of range" means it does not render.
 > - A ripple (`insert_time`, `ripple_delete`, `close_gap`, each with `music=`) under `plays_on` leaves a bed that spans
 >   the edit where it was, so what follows moves against its beats; the default `keep_end` cuts it at a bar, not at the
->   edit point. A bed that begins at or inside the edit is pending E14 in both modes; do not promise it stays whole.
+>   edit point. A bed that begins at or inside the edit is unsettled in both modes; do not promise it stays whole.
 > - `check --at` and `--verify` can be slow or fail ("frame owner closed"). Retry once; if it fails again, say so
 >   and do not publish a change you have not seen.
