@@ -5,6 +5,7 @@ O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/
 alive(){ ps -eo args | awk '$1=="/bin/bash" && $2 ~ /bin\/main-watch$/ {f=1} END{exit !f}'; }
 while [ $(date +%s) -lt $end ]; do
   alive || { nohup setsid $O/bin/main-watch >> $O/main-watch.log 2>&1 < /dev/null & echo "$(date -u +%FT%TZ) keepalive-u: restarted main-watch" | tee -a $O/main-watch.log; }
+  timeout 150 $O/bin/ux-runtime-host || true   # 28 Oct: the trial Runtime lives on the host, never inside a worker
   [ -f $O/CODEX_UNAVAILABLE ] && echo "$(date -u +%FT%TZ) keepalive-u: CODEX_UNAVAILABLE present"
   grep -qE '^PROJECT U DONE' $O/followups/leads/U-uxtrial/STATUS.md 2>/dev/null && { echo "PROJECT U DONE seen"; exit 0; }
   sleep 60

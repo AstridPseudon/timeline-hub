@@ -1,0 +1,24 @@
+#!/bin/bash
+# ux-runtime-host — 28 Oct (project U): keep the trial sandbox's installer Runtime running on the HOST, outside every Codex
+# worker sandbox. Codex runs each worker command in its own PID namespace, so a Runtime started inside a worker dies with that
+# command and leaves an owner record no other process can validate (the "stale owner / identity failed validation" errors).
+# Workers only CONNECT to this Runtime; they never run up/down/restart. Called every 60 s by keepalive-u. It is inert until the
+# sandbox exists and $SB/HOST_RUNTIME is present (written by the reinstall worker once `workspace create` is done).
+SB=/home/user/work/ux-sandbox; O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+[ -f $SB/HOST_RUNTIME ] && [ -f $SB/program/current ] || exit 0
+V=$(cat $SB/program/current); VR=$SB/program/versions/$V; R=$VR/py/bin/astrid-runtime; PY=$VR/py/bin/python; D=$SB/installer-data
+PROFILE=$D/runtime/source-profiles/astrid.json; LOG=$SB/host-runtime.log
+NODE=$($PY -c 'import json,sys; print(json.load(open(sys.argv[1]))["env"]["ASTRID_NODE_EXECUTABLE"])' $VR/version.json 2>/dev/null)
+E=(env -i HOME=$SB/home PATH=$(dirname "$NODE"):/usr/bin:/bin TMPDIR=/tmp XDG_CONFIG_HOME=$SB/xdg-config XDG_DATA_HOME=$SB/xdg-data
+   XDG_STATE_HOME=$SB/xdg-state ASTRID_RUNTIME_SOURCE_MANIFEST=$PROFILE ASTRID_REMOTION_PROJECT_DIR=$VR/a/remotion
+   ASTRID_TIMELINE_SCHEMA_PYTHONPATH=$VR/a/astrid/core/timeline/schema/timeline-config.schema.json ASTRID_NODE_EXECUTABLE=$NODE
+   ASTRID_RUNTIME_DATA_ROOT=$D ASTRID_RUNTIME_CREDENTIAL=$D/credentials/astrid.json)
+# alive = our own `run` process exists (it is the service-manager mode: the daemon lives as long as this process)
+pgrep -f "^$R run .*--data-root $D" >/dev/null && exit 0
+cd /tmp; echo "$(date -u +%FT%TZ) ux-runtime-host: starting $R run (data root $D)" >> $LOG
+nohup setsid "${E[@]}" $R run --profile astrid --source-manifest $PROFILE --data-root $D --door-port 39053 --json >> $LOG 2>&1 < /dev/null &
+for i in $(seq 1 60); do [ -f $D/runtime/discovery.json ] && "${E[@]}" $R status --data-root $D --json 2>/dev/null | grep -q '"ok": *true' && break; sleep 2; done
+"${E[@]}" $R status --data-root $D --json > $SB/host-runtime-status.json 2>&1
+ep=$($PY -c 'import json,sys; print(json.load(open(sys.argv[1])).get("endpoint",""))' $D/runtime/discovery.json 2>/dev/null)
+printf '{"runtime_data_root": "%s", "runtime_endpoint": "%s", "door_port": 39053, "managed_by": "ux-runtime-host on the host; workers connect only", "started": "%s"}\n' "$D" "$ep" "$(date -u +%FT%TZ)" > $O/followups/11-ux-trial/L1/runtime-endpoint.json
+echo "$(date -u +%FT%TZ) ux-runtime-host: endpoint=$ep status=$(head -c 200 $SB/host-runtime-status.json | tr '\n' ' ')" >> $LOG
