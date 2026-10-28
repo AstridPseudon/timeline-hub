@@ -578,7 +578,8 @@ if [ "$repo" = runtime ]; then
 fi
 if [ $repo = agent ]; then
   RUNTIME_SHA=$(runtime_lock_sha "$SNAP")
-  RUNTIME_SOURCE=$(git -C /home/user/work/runtime worktree list --porcelain | awk -v sha="$RUNTIME_SHA" '/^worktree / {path=$2} /^HEAD / && $2 == sha {print path; exit}')
+  # 28 Oct: skip registered worktrees whose folder is gone (a worker tmpdir once left a prunable entry that broke collection)
+  RUNTIME_SOURCE=$(git -C /home/user/work/runtime worktree list --porcelain | awk -v sha="$RUNTIME_SHA" '/^worktree / {path=$2} /^HEAD / && $2 == sha {print path}' | while read -r p; do [ -d "$p" ] && { echo "$p"; break; }; done)
   if [ -z "$RUNTIME_SOURCE" ]; then
     RUNTIME_SOURCE=/home/user/work/wt-int/runtime-${RUNTIME_SHA:0:12}
     if [ -d "$RUNTIME_SOURCE" ]; then
