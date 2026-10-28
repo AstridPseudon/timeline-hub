@@ -796,10 +796,85 @@ def _reconcile_materialized_owner_images(result, accepted):
             result[ref] = copy.deepcopy(accepted[ref])
 
 
-def step_output(boundary, step, records, accepted, original=None, authenticated=None):
+def _occurrence_order_change(record, index):
+    """Bind one native collection observation to its sealed patch change."""
+    bindings = [binding for binding in record["bindings"]
+                if binding.get("key", "").startswith("doc.patch:")
+                and binding.get("write_range") == [index, index + 1]]
+    require(record.get("command", {}).get("op") == "doc.patch" and len(bindings) == 1,
+            "provider occurrence order lacks a unique patch binding")
+    binding = bindings[0]
+    changes = record["command"]["args"]["changes"]
+    ordinal = binding.get("boundary", {}).get("change_ordinal")
+    require(type(ordinal) is int and 0 <= ordinal < len(changes)
+            and binding.get("key") == "doc.patch:" + str(ordinal)
+            and binding.get("physical_ref") == "parent" and binding.get("path") == ["occurrences"]
+            and changes[ordinal].get("ref") == "parent"
+            and value_equal(binding.get("change"), changes[ordinal])
+            and binding["change"].get("op") == "list.move",
+            "provider occurrence order differs from its sealed patch change")
+    return binding["change"]
+
+
+def _occurrence_order_observation(boundary, capture, change, identity_scope):
+    """Authenticate authored order observations, retaining the exact physical rows."""
+    rows = boundary["parent"]["payload"].get("occurrences")
+    require(isinstance(rows, list), "provider occurrence order has no physical input")
+    physical, authored = {}, []
+    for row in rows:
+        require(isinstance(row, dict) and isinstance(row.get("occurrence_id"), str)
+                and row["occurrence_id"] not in physical,
+                "provider occurrence order has ambiguous physical membership")
+        shot = boundary.get("shot-revision:" + str(row.get("shot_revision_id")), {})
+        internal_id = shot.get("internal_timeline_revision_id")
+        require(shot.get("shot_id") == row.get("shot_id")
+                and shot.get("revision_id") == row.get("shot_revision_id")
+                and isinstance(internal_id, str) and "internal-revision:" + internal_id in boundary
+                and shot.get("payload", {}).get("internal_timeline_revision_id") == internal_id,
+                "provider occurrence order has an unauthenticated physical owner")
+        physical[row["occurrence_id"]] = row
+        native = {key: copy.deepcopy(value) for key, value in row.items()
+                  if key not in {"shot_revision_id", "revision_id"}}
+        if sum(other.get("shot_id") == row["shot_id"] for other in rows) > 1:
+            require(identity_scope is not None,
+                    "provider shared occurrence order lacks an authenticated identity scope")
+            native["shot_id"] = _authoring_identity(
+                "shot-placement", *identity_scope, row["occurrence_id"], row["shot_id"])
+        authored.append(native)
+    require(value_equal(capture.get("before"), {"state": "present", "value": authored}),
+            "provider occurrence order differs from its sequential input")
+    after = capture.get("after", {})
+    ordered = after.get("value")
+    by_id = {row["occurrence_id"]: row for row in authored}
+    require(after.get("state") == "present" and isinstance(ordered, list)
+            and len(ordered) == len(rows)
+            and all(isinstance(row, dict) and isinstance(row.get("occurrence_id"), str)
+                    and row["occurrence_id"] in by_id
+                    and value_equal(row, by_id[row["occurrence_id"]]) for row in ordered)
+            and len({row["occurrence_id"] for row in ordered}) == len(rows),
+            "provider occurrence order is not a row-preserving permutation")
+    before_ids = [row["occurrence_id"] for row in rows]
+    after_ids = [row["occurrence_id"] for row in ordered]
+    identity, anchor = change.get("id"), change.get("after_id")
+    require(change.get("order_before") == before_ids and identity in physical
+            and value_equal(change.get("before"), {"state": "present", "value": physical[identity]})
+            and anchor != identity and (anchor is None or anchor in physical)
+            and [key for key in before_ids if key != identity] == [key for key in after_ids if key != identity]
+            and (after_ids.index(identity) == 0 if anchor is None else
+                 after_ids.index(identity) == after_ids.index(anchor) + 1),
+            "provider occurrence order differs from its bound move")
+    return {"state": "present", "value": [copy.deepcopy(physical[key]) for key in after_ids]}
+
+
+def step_output(boundary, step, records, accepted, original=None, authenticated=None, *, identity_scope=None):
     """Project complete authoritative effects solely to authenticate their boundaries."""
     expected = authenticated if authenticated is not None else accepted
     result = copy.deepcopy(boundary)
+    order_writes = [(record, index) for ordinal in step["command_ordinals"]
+                    for record in [records["commands"][ordinal]]
+                    for index, write in enumerate(record["writes"])
+                    if write["ref"] == "parent" and write["path"] == ["occurrences"]]
+    order_index = 0
     for effect in step["patch"]:
         ref, path = effect["ref"], normalized_path(effect["ref"], effect["path"])
         if ref != "parent" and not path:
@@ -820,7 +895,14 @@ def step_output(boundary, step, records, accepted, original=None, authenticated=
         require(ref in result, "provider effect addresses an absent root")
         payload = result[ref]["payload"]
         observed_path = stored_path(payload, ref, path)
-        if effect["op"].startswith("list."):
+        if ref == "parent" and path == ["occurrences"] and effect["op"] == "list.move":
+            require(order_index < len(order_writes), "provider occurrence order lacks a collection observation")
+            record, index = order_writes[order_index]
+            order_index += 1
+            change = _occurrence_order_change(record, index)
+            require(value_equal(effect, change), "provider occurrence order effect differs from its patch binding")
+            state = _occurrence_order_observation(result, record["writes"][index], change, identity_scope)
+        elif effect["op"].startswith("list."):
             # List operations are Agent semantics. The recorder supplies the
             # complete resulting collection; Runtime only projects that value.
             observations = [write for ordinal in step["command_ordinals"]
@@ -839,6 +921,8 @@ def step_output(boundary, step, records, accepted, original=None, authenticated=
             if mirror in payload and mirror in result[ref]["payload"].get("config", {}):
                 result[ref]["payload"][mirror] = copy.deepcopy(result[ref]["payload"]["config"].get(mirror))
         result[ref]["content_digest"] = digest(result[ref]["payload"])
+    if order_index:
+        require(order_index == len(order_writes), "provider occurrence order effects omit a collection observation")
     _align_materialized_images(result, expected)
     # Bindings of complete effect images carry the provider's generated revision
     # names. Their payload digest must agree with the projected observations.
@@ -2400,6 +2484,25 @@ def _command_manifest(manifest, record):
     return result
 
 
+def _observation_site(boundary, ref, path):
+    """Resolve a recorder capture to its physical field without folding mirrors.
+
+    SDK parent writes can observe both the legacy top-level collection and its
+    config mirror in one command. Native clip aliases use the top-level
+    collection when it exists; the explicit config path remains independent.
+    """
+    path = list(path)
+    if ref == "parent":
+        return ref, path
+    if ref.startswith("parent/clip:"):
+        payload = boundary["parent"]["payload"]
+        root = (["clips"] if isinstance(payload.get("clips"), list)
+                else ["config", "clips"])
+        identity = ref.removeprefix("parent/clip:")
+        return "parent", [*root, "id:" + identity, *path]
+    return native_site(boundary, ref, path)
+
+
 def command_output(boundary, record, following, *, accepted=None, identity_scope=None,
                    manifest=None, previous_manifest=None, step_ordinal=None,
                    command_ordinal=None):
@@ -2413,16 +2516,30 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
                        if accepted is not None else set())
     created_roots = {item.get("ref") for item in record.get("created", [])
                      if re.fullmatch(r"(?:shot|occurrence):[^/]+", item.get("ref", ""))}
+    captures = [*record["writes"], *record["derived_writes"]]
+    separate_clip_mirrors = (
+        any(capture.get("ref") == "parent" and capture.get("path") == ["clips"]
+            for capture in captures)
+        and any(capture.get("ref") == "parent" and capture.get("path") == ["config", "clips"]
+                for capture in captures)
+    )
     derived_mirrors = {}
-    for capture, is_derived in [*((capture, False) for capture in record["writes"]),
-                                *((capture, True) for capture in record["derived_writes"])]:
+    clip_mirror_observations = {}
+    for index, (capture, is_derived) in enumerate([
+            *((capture, False) for capture in record["writes"]),
+            *((capture, True) for capture in record["derived_writes"])]):
         capture_site = capture.get("ref", "") + "/" + "/".join(capture.get("path", []))
         if ((capture.get("ref") in created_roots & projected_roots and not capture.get("path"))
                 or capture_site in projected_roots):
             # The authored aggregate root was installed above through its
             # physical closure images; it has no direct Runtime image site.
             continue
-        ref, path = native_site(result, capture["ref"], capture["path"])
+        clip_capture = (capture.get("ref") == "parent"
+                        and capture.get("path") in (["clips"], ["config", "clips"]))
+        native_clip_capture = capture.get("ref", "").startswith("parent/clip:")
+        ref, path = (_observation_site(result, capture["ref"], capture["path"])
+                     if native_clip_capture or (separate_clip_mirrors and clip_capture)
+                     else native_site(result, capture["ref"], capture["path"]))
         capture_site = capture.get("ref", "") + "/" + "/".join(capture.get("path", []))
         creation_exemption_applied = (
             capture.get("ref") in created_roots & projected_roots and not capture.get("path")
@@ -2438,26 +2555,44 @@ def command_output(boundary, record, following, *, accepted=None, identity_scope
         )
         payload = result[ref]["payload"]
         path = stored_path(payload, ref, path)
-        derived_mirror_site = (ref, tuple(path))
+        observation_site = (ref, tuple(path))
         chains_derived_mirror = (
-            is_derived and "cause" in capture and ref == "parent"
-            and capture["cause"] == record.get("ordinal")
+            not separate_clip_mirrors and is_derived and "cause" in capture
+            and ref == "parent" and capture["cause"] == record.get("ordinal")
             and tuple(path) in {("config", "clips"), ("clips",)}
         )
-        if chains_derived_mirror and derived_mirror_site in derived_mirrors:
-            expected_before = derived_mirrors[derived_mirror_site]
+        chains_clip_mirror = (
+            separate_clip_mirrors and is_derived and "cause" in capture
+            and capture["cause"] == record.get("ordinal") and clip_capture
+            and observation_site in clip_mirror_observations
+        )
+        if chains_clip_mirror:
+            expected_before = clip_mirror_observations[observation_site]
+        elif chains_derived_mirror and observation_site in derived_mirrors:
+            expected_before = derived_mirrors[observation_site]
         else:
-            before_payload = boundary.get(ref, result[ref])["payload"] if "cause" in capture else payload
-            expected_before = location(before_payload, path, absent_items=True)
-        require(value_equal(expected_before, capture["before"]),
-                "provider intermediate command has a different input observation")
-        result[ref]["payload"] = project_observation(payload, path, capture["after"])
+            input_payload = boundary.get(ref, result[ref])["payload"] if "cause" in capture else payload
+            expected_before = location(input_payload, path, absent_items=True)
+        if (ref == "parent" and path == ["occurrences"]
+                and record.get("command", {}).get("op") == "doc.patch"):
+            require(not is_derived, "provider occurrence order is not an authored patch observation")
+            change = _occurrence_order_change(record, index)
+            state = _occurrence_order_observation(result, capture, change, identity_scope)
+        else:
+            require(value_equal(expected_before, capture["before"]),
+                    "provider intermediate command has a different input observation")
+            state = capture["after"]
+        result[ref]["payload"] = project_observation(payload, path, state)
+        if separate_clip_mirrors and clip_capture:
+            clip_mirror_observations[observation_site] = copy.deepcopy(capture["after"])
         if chains_derived_mirror:
-            derived_mirrors[derived_mirror_site] = copy.deepcopy(capture["after"])
+            derived_mirrors[observation_site] = copy.deepcopy(capture["after"])
         if ref == "parent":
             for mirror in ("clips", "registry"):
                 projected = result[ref]["payload"]
-                if mirror in projected and mirror in projected.get("config", {}):
+                if (mirror in projected and mirror in projected.get("config", {})
+                        and not ((separate_clip_mirrors or native_clip_capture)
+                                 and mirror == "clips")):
                     projected[mirror] = copy.deepcopy(projected["config"][mirror])
         result[ref]["content_digest"] = digest(result[ref]["payload"])
     for ref, image in list(result.items()):
@@ -3182,7 +3317,8 @@ def validate(request, prepared, source, base=None, continuations=None, history=N
             last = sequential["landing"].get(step["command_ordinals"][-1])
             if last is not None:
                 authenticated_output = images(last["output"])
-        output = step_output(boundary, step, records, accepted, original, authenticated_output)
+        output = step_output(boundary, step, records, accepted, original, authenticated_output,
+                             identity_scope=(source["project_id"], source["timeline_id"]))
         if sequential is not None:
             last = sequential["landing"].get(step["command_ordinals"][-1])
             require(last is not None and _capture_projection_equal(images(last["output"]), output),
