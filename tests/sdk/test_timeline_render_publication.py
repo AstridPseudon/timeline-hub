@@ -168,7 +168,9 @@ def test_runtime_refusal_keeps_full_structured_details_and_never_admits_render(t
         publish(session, proposal)
     assert error.value.details == details
     assert not renders and not generated.accepted
-    assert session.outbox.read()['flight'] is not None
+    state = session.outbox.read()
+    assert state['flight'] is None and state['rejected']['flight'] is not None
+    assert state['rejected']['failure']['details'] == details
 
 
 def test_video_editing_production_wrapper_uses_requester_commit(tmp_path):

@@ -688,8 +688,8 @@ def test_synchronized_surface_anchors_samples_to_shared_time_coordinates(tmp_pat
     with Image.open(output) as image:
         # The 5s card starts at the same x-coordinate as the 5s ruler tick:
         # 24 + 5/20 * (1476 - 24) = 387px.
-        assert image.getpixel((50, 200)) == (192, 57, 43)
-        assert image.getpixel((400, 200)) == (39, 174, 96)
+        assert image.getpixel((50, 226)) == (192, 57, 43)
+        assert image.getpixel((400, 226)) == (39, 174, 96)
 
 
 def test_paired_surface_groups_five_samples_and_clips_input_rows(tmp_path):

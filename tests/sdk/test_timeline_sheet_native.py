@@ -423,7 +423,9 @@ def test_detached_duration_retains_author_basis_retry_reload_and_guarded_inverse
             tl.save(quiet=True)
         state = json.loads(generated.path.read_bytes())
         assert state["base"] == artifact["basis"] and state["sheet"]["bundle"] == original
-        assert state["pending"] == expected.commands and state["flight"] and state["conflict"]
+        assert state["pending"] == [] and state["flight"] is None
+        assert state["rejected"]["commands"] == expected.commands
+        assert state["rejected"]["failure"]["details"]["status"] == "conflict"
         assert Checkout.load(tl.path).clip("c1.card").duration == 2
         assert generated.bundles["peer"] == before and not generated.accepted
         return
@@ -754,8 +756,9 @@ def test_stale_original_guards_conflict_without_refreshing(connected):  # noqa: 
     with pytest.raises(CommitConflict):
         sheet.apply(edited, session=session, dry_run=False)
     state = json.loads(path.read_bytes())
-    assert state["pending"] == [capture_move(original, "parent/clip:a", 5)]
-    assert state["flight"] is not None and state["conflict"]
+    assert state["pending"] == [] and state["flight"] is None
+    assert state["rejected"]["commands"] == [capture_move(original, "parent/clip:a", 5)]
+    assert state["rejected"]["failure"]["details"]["status"] == "conflict"
     assert generated.accepted == {}
 
 

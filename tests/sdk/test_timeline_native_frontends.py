@@ -58,7 +58,9 @@ def test_sheet_lost_ack_checkout_suffix_exact_retry_and_original_guards(connecte
     if relevant:
         with pytest.raises(CommitConflict):
             tl.flush()
-        assert json.loads(path.read_bytes())['pending'] == [suffix]
+        state = json.loads(path.read_bytes())
+        assert state['pending'] == [] and state['flight'] is None
+        assert state['rejected']['commands'] == [suffix]
         assert tl.clip('a').start == 7
     else:
         accepted = tl.flush()

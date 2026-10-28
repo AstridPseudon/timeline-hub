@@ -22,6 +22,8 @@ def test_runtime_timeline_preserves_legacy_add_dispatch(monkeypatch):
     monkeypatch.setattr(Checkout, "add", legacy_add)
     timeline = object.__new__(Timeline)
     timeline._evaluating = False
+    timeline._identity_ordinal = 0
+    timeline._identity_cache = {}
     timeline._edit_depth = 1
 
     result = timeline.add("am-text", at=0, asset="managed-key", params={"text": "Title"}, clip_id="title")
@@ -38,12 +40,15 @@ def test_media_add_refuses_file_changed_between_digest_and_import(tmp_path, monk
     before_id = "sha256:" + hashlib.sha256(before).hexdigest()
     timeline = object.__new__(Timeline)
     timeline._evaluating = True
+    timeline._identity_ordinal = 0
+    timeline._identity_cache = {}
     timeline._media_cache = {}
     timeline._verified_media = []
     timeline.bundle = {}
     timeline.session = SimpleNamespace(
         project_id="project",
-        client=SimpleNamespace(_remote=SimpleNamespace(_transport=object())),
+        client=SimpleNamespace(_remote=SimpleNamespace(_transport=SimpleNamespace(
+            list_generations=lambda *_a, **_k: ([], None)))),
     )
 
     from astrid.sdk.timeline import media_add
@@ -66,6 +71,8 @@ def test_missing_media_path_cannot_fall_back_to_an_element(tmp_path, monkeypatch
 
     timeline = object.__new__(Timeline)
     timeline._evaluating = True
+    timeline._identity_ordinal = 0
+    timeline._identity_cache = {}
     timeline._media_cache = {}
     timeline.bundle = {}
     timeline.session = object()

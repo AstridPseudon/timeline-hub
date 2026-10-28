@@ -159,7 +159,7 @@ def test_stale_head_and_concurrent_cas_reject_without_rebase(monkeypatch, config
                                   element=ref, expected_head='stale')
     assert not stale.ok and stale.error.code == 'conflict'
     owner.commit.assert_not_called()
-    owner.commit.return_value = DomainResult.failure(ErrorObject('conflict', 'CAS rejected', {}))
+    owner.commit.return_value = DomainResult.failure(ErrorObject('conflict', 'CAS rejected', {'status': 'conflict'}))
     owner.commit.side_effect = None
     rejected = update(owner, ref, duration=6)
     assert not rejected.ok and rejected.error.code == 'conflict'
@@ -395,7 +395,7 @@ def test_d69_upstream_stale_head_and_concurrent_cas_reject_without_rebase(monkey
     stale=update_parent_element(owner,'project','timeline',realm='realm',clip_id='effect',element=ref,expected_head='stale')
     assert not stale.ok
     owner.commit.assert_not_called()
-    owner.commit.return_value=DomainResult.failure(ErrorObject('conflict','CAS rejected',{}))
+    owner.commit.return_value=DomainResult.failure(ErrorObject('conflict','CAS rejected',{'status':'conflict'}))
     owner.commit.side_effect=None
     rejected=update_parent_element(owner,'project','timeline',realm='realm',clip_id='effect',element=ref,expected_head='head',duration=6)
     assert not rejected.ok and rejected.error.code=='conflict'

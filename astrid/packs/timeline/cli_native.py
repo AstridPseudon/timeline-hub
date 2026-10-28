@@ -222,6 +222,11 @@ def _render_commit_result(
     data = value.data
     if isinstance(data.get("summary"), str):
         lines = [data["summary"]]
+        if summary is not None and not dry_run:
+            clip_word = "clip" if summary[0] == 1 else "clips"
+            cut_word = "cut" if summary[1] == 1 else "cuts"
+            lines.append(f"changed: {summary[0]} {clip_word} in {summary[1]} {cut_word}")
+            lines.append(f"next: timelines edit {ref or '<timeline>'} --project {project or '<project>'}")
         if data.get("show_command"):
             lines.append(data["show_command"])
         return "\n".join(lines)

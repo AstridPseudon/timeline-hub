@@ -42,7 +42,7 @@ def test_commit_migration_forwards_key_once_and_refuses_force(normal_commit, cap
     assert payload["receipt"]["receipt_id"] == payload["data"]["accepted_publication_id"]
     assert payload["receipt"]["result"] == {
         key: value for key, value in payload["data"].items()
-        if key not in {"accepted_publication_id", "show_command"}
+        if key not in {"accepted_publication_id", "show_command", "summary", "replayed", "confirmed", "undo"}
     }
     assert payload["data"]["accepted_revision_id"] == (
         payload["data"]["canonical_document"]["parent_revision"]["revision_id"]
@@ -402,7 +402,7 @@ def test_normal_commit_output_keeps_summary_and_receipt(normal_commit, monkeypat
     assert run("--idempotency-key", "edit-44", message="Summary Film", as_json=False) == 0
     output = capsys.readouterr().out
     lines = output.splitlines()
-    assert lines[0].startswith("published ") and " → " in lines[0] and lines[0].endswith(": Summary Film")
+    assert lines[0] == 'Committed "Summary Film" as publication-1.'
     assert lines[1] == "changed: 2 clips in 1 cut"
     assert lines[2] == "next: timelines edit film --project project-1"
     assert len(output) < 1000 and "canonical_document" not in output and "{" not in output

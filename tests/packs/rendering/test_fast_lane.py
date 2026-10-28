@@ -27,13 +27,14 @@ def _snapshot(parent: str | None, *, selection: str = "explicit_historical_rende
     }
 
 
-def _candidate_marker(*, base: str | None = "R1", candidate: str = "C1"):
+def _candidate_marker(*, base: str | None = "R1", candidate: str = "C1", label: str | None = "Unpublished candidate preview"):
     marker = {
-        "label": "Unpublished candidate preview",
         "candidate_digest": "sha256:" + "a" * 64,
         "publication_digest": "sha256:" + "b" * 64,
         "candidate_parent_revision_id": candidate,
     }
+    if label is not None:
+        marker["label"] = label
     if base is not None:
         marker["base_parent"] = {"revision_id": base, "content_digest": "sha256:" + "c" * 64}
     return marker
@@ -82,7 +83,7 @@ def test_input_only_parent_closure_label_uses_immutable_parent_not_current_head(
 
 
 def test_input_only_candidate_uses_only_working_copy_base_parent():
-    marker = _candidate_marker(base="R1", candidate="R2")
+    marker = _candidate_marker(base="R1", candidate="R2", label=None)
     label = snapshot_label(
         {
             "metadata": {
@@ -117,14 +118,14 @@ def test_managed_candidate_label_uses_marker_base_not_candidate_parent():
 
     assert label == {
         "status": "uncertified",
-        "label": "UNCERTIFIED unsaved candidate C1 (base R1)",
+        "label": "Unpublished candidate preview (base R1)",
         "actual_revision_id": None,
         "base_revision_id": "R1",
     }
 
 
 def test_composed_candidate_label_uses_working_copy_base_not_capture_parent():
-    marker = _candidate_marker()
+    marker = _candidate_marker(label=None)
     label = snapshot_label(
         {
             "metadata": {
@@ -160,7 +161,7 @@ def test_candidate_with_missing_marker_base_stays_unsaved_without_fabricating_ca
 
     assert label == {
         "status": "uncertified",
-        "label": "UNCERTIFIED unsaved candidate C1 (base revision unavailable)",
+        "label": "Unpublished candidate preview (base revision unavailable)",
         "actual_revision_id": None,
         "base_revision_id": None,
     }
@@ -192,7 +193,7 @@ def test_conflicting_admitted_candidate_bases_are_unavailable():
 
     assert label == {
         "status": "uncertified",
-        "label": "UNCERTIFIED unsaved candidate C1 (base revision unavailable: contradictory markers)",
+        "label": "Unpublished candidate preview (base revision unavailable: contradictory markers)",
         "actual_revision_id": None,
         "base_revision_id": None,
     }

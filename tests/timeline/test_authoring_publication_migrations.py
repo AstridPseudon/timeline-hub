@@ -120,10 +120,11 @@ def test_reorder_emits_source_bound_list_move_and_keyed_timing_changes():
     move_occurrence_group(candidate, 'occ-b', before_occurrence_id='occ-a')
     request = authoring_commit_request(candidate, writer)
     changes = [change for command in request['commands'] for change in command['args']['changes']]
-    assert changes[0]['op'] == 'list.move'
-    assert changes[0]['order_before'] == ['occ-a', 'occ-b']
-    assert changes[0]['before']['value']['shot_id'] == 'chapter-shot'
-    assert [change['path'] for change in changes[1:]] == [
+    # feb0236f4: keyed timing edits are emitted first; the list.move follows in its own command.
+    assert changes[-1]['op'] == 'list.move'
+    assert changes[-1]['order_before'] == ['occ-a', 'occ-b']
+    assert changes[-1]['before']['value']['shot_id'] == 'chapter-shot'
+    assert [change['path'] for change in changes[:-1]] == [
         ['occurrences', 'occurrence_id:occ-b', 'placement', 'start_ms'],
         ['occurrences', 'occurrence_id:occ-a', 'placement', 'start_ms'],
     ]

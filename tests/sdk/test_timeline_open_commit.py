@@ -80,7 +80,11 @@ def test_command_reaches_current_provider_with_full_v2_request_and_frozen_retry(
                            dry_run=dry_run, idempotency_key="joined-patch")
         assert unknown.value.cause["message"] == "Runtime acceptance boundary"
         frozen = json.loads(path.read_text())
-        assert frozen["flight"]["key"] == "joined-patch"
+        if dry_run:  # 5199e67fc: a preview drops the caller's key; the flight gets a generated one
+            assert frozen["flight"]["key"].startswith("timeline-edit-")
+            assert frozen["flight"]["key"] != "joined-patch"
+        else:
+            assert frozen["flight"]["key"] == "joined-patch"
         assert json.loads(frozen["flight"]["body"]) == sent[-1][0]
         if attempt == 0:
             current = timeline.open("p", "t", client=client, outbox_path=path)

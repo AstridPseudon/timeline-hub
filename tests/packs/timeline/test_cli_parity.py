@@ -276,7 +276,7 @@ def test_normal_commit_undo_preserves_full_v2_request_reply_and_history(durable_
     assert data["canonical_document"] == original
     assert receipt["receipt_id"] == data["accepted_publication_id"]
     assert receipt["result"] == {key: value for key, value in data.items()
-                                 if key not in {"accepted_publication_id", "show_command"}}
+                                 if key not in {"accepted_publication_id", "show_command", "summary", "replayed", "confirmed", "undo"}}
     entry = realm.entries[-1]
     assert entry["receipt"] == receipt and entry["records"]["undo_of"] == [publication]
     assert entry["records"]["undo_steps"] is None

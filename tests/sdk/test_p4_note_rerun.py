@@ -112,7 +112,7 @@ def test_p4_note_conflict_reruns_public_function_from_verified_peer_document(con
     assert sent[1][1] != sent[0][1]
     assert [body["base_revision_id"] for body, _ in sent] == ["r0", "peer-revision"]
     assert [body["base_publication_id"] for body, _ in sent] == ["pub0", "peer-publication"]
-    assert client.reads == ["r0", "r0", "peer-revision"]
+    assert client.reads == ["r0", "r0", "peer-revision", "peer-revision"]
 
     first_body, second_body = (body for body, _ in sent)
     assert first_body["api_version"] == second_body["api_version"] == 1

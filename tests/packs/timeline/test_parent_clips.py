@@ -93,7 +93,7 @@ def test_one_ref_on_a_parent_clip_and_a_shot_clip_is_ambiguous():
     value["parent"]["clips"].append({"id": "extra", "clipType": "am-type", "track": "type", "at": 5.0, "hold": 1.0, "params": {}})
     with pytest.raises(TimelineEditError, match="matches 2 clips") as raised:
         Checkout(value).clip("am-type")
-    assert "extra" in str(raised.value) and "b-type" in str(raised.value)
+    assert "extra" in raised.value.detail and "b-type" in raised.value.detail
 
 
 def app_shape():
@@ -233,7 +233,7 @@ def test_edit_with_an_ambiguous_ref_across_parent_and_shot_exits_with_the_listin
     path = _file(tmp_path, value)
     assert _run("edit", "--file", str(path), "--clip", "am-type", "--set", "x=1") == 2
     err = capsys.readouterr().err
-    assert "'am-type' matches 2 clips" in err and "extra" in err and "b-type" in err
+    assert '"am-type" matches 2 clips' in err and "extra" in err and "b-type" in err
 
 
 # ---- the other commands that resolve a clip ref ----------------------------------------------

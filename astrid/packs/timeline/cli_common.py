@@ -34,6 +34,10 @@ def guard(default_code: int):
                 return exc.code
             except (TimelineEditError, SheetError) as exc:
                 print(str(exc), file=sys.stderr)
+                presentation = getattr(exc, "presentation", None)
+                detail = presentation.get("detail") if isinstance(presentation, dict) else None
+                if isinstance(detail, str) and detail:
+                    print(detail, file=sys.stderr)  # e.g. the candidate listing an ambiguous ref points to
                 return default_code
 
         run.__name__ = fn.__name__
