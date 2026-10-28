@@ -100,10 +100,12 @@ For a new reusable pack, follow the supported authoring path in
 2. Declare every public function or contribution in `pack.yaml`. Put its
    implementation and private support under only the applicable role folder;
    a path or folder is not an export by itself.
-3. Author exactly one ordinary `docs/SKILL.md` with YAML `name` and
-   `description` frontmatter and point to it from
-   `documentation: {kind: skill, path: docs/SKILL.md}`. Link adjacent guides,
-   references, templates, and assets normally; they are not extra skills.
+3. Author one main skill plus optional declared extras. Put the main skill at
+   `docs/SKILL.md` with YAML `name` and `description` frontmatter and point to it from
+   `documentation: {kind: skill, path: docs/SKILL.md}`. Add optional extra
+   skills only as declared `kind: skill` resources at
+   `docs/<name>/SKILL.md`; adjacent guides, references, templates, and assets
+   remain ordinary supporting files.
 4. For a standalone pack, keep code and declaration in the pack. For a
    wrapper, keep the external repository unchanged and use a thin adapter plus
    its normal dependency/install route; do not vendor arbitrary upstream code.
