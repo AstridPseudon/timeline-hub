@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import json
 import uuid
 from contextlib import nullcontext
 from pathlib import Path
@@ -154,21 +155,84 @@ def test_retry_returns_redrive_state_for_conflict(monkeypatch, tmp_path):
     assert "tl.commit(make_edit" in result["next"]
 
 
-def test_function_retry_reuses_label_key_and_pending_id(monkeypatch, tmp_path):
+def test_function_retry_returns_commit_result_and_reuses_label_key(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     calls = []
     def function(working):
         return None
 
-    timeline.commit = lambda *args, **kwargs: calls.append((args, kwargs)) or {
-        "data": {"publication_id": "pub9"}, "receipt": {"receipt_id": "pub9"}}
+    committed = {"status": "accepted", "data": {"publication_id": "pub9"},
+                 "receipt": {"receipt_id": "pub9"}}
+    timeline.commit = lambda *args, **kwargs: calls.append((args, kwargs)) or committed
     monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, []))
 
     result = retry_module.retry(timeline, "pc_saved", fn=function)
 
     assert calls == [((function,), {"label": "Recut", "key": "recut", "pending": "pc_saved"})]
-    assert result["status"] == "landed"
-    assert result["summary"] == 'Committed "Recut" as pub9 after re-running it on the newest timeline; pc_saved is closed.'
+    assert result is committed
+
+
+def test_function_record_probe_preserves_original_base_and_guards(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    part = timeline.session.state["pending_changes"]["pc_saved"]["parts"][0]
+    part["commit_options"] = {
+        "label": "Recut", "steps": [{"id": "s1", "reads": [
+            {"kind": "scope", "ref": "timeline", "path": []}]}], "merge": "atomic"
+    }
+    request = retry_module._request(
+        timeline.session.state["pending_changes"]["pc_saved"], part
+    )
+    captured = {}
+
+    class Timelines:
+        def commit(self, project, timeline_id, body, *, idempotency_key):
+            captured.update(body)
+            return SimpleNamespace(ok=True, as_dict=lambda: {
+                "data": {"status": "preview", "would_status": "conflict"}})
+
+    timeline.session.client.timelines = Timelines()
+    retry_module._probe(timeline.session, request)
+
+    assert captured["base_revision_id"] == BASE["revision_id"]
+    assert captured["base_publication_id"] == BASE["publication_id"]
+    assert captured["merge"] == "atomic"
+    assert captured["steps"] == part["commit_options"]["steps"]
+    assert "reads" not in captured
+
+    part["rationale"] = None
+    assert "rationale" not in retry_module._request(
+        timeline.session.state["pending_changes"]["pc_saved"], part
+    )
+
+
+def test_probe_reads_conflict_preview_before_generated_dto_rejects_it(tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    captured = {}
+
+    class Generated:
+        @staticmethod
+        def _json(payload):
+            return json.loads(payload)
+
+        @staticmethod
+        def _request(method, path, *, body, headers):
+            captured.update(method=method, path=path, body=json.loads(body), headers=headers)
+            return 200, {}, json.dumps({"data": {
+                "status": "preview", "would_status": "conflict", "conflicts": []
+            }}).encode()
+
+    timeline.session.client._remote = SimpleNamespace(
+        _transport=SimpleNamespace(_generated=Generated)
+    )
+    part = timeline.session.state["pending_changes"]["pc_saved"]["parts"][0]
+    result = retry_module._probe(
+        timeline.session,
+        retry_module._request(timeline.session.state["pending_changes"]["pc_saved"], part),
+    )
+
+    assert result["would_status"] == "conflict"
+    assert captured["method"] == "POST"
+    assert captured["path"] == "/v1/projects/project/timelines/timeline/commit"
 
 
 def test_atomic_probe_omits_unset_reads(monkeypatch, tmp_path):
