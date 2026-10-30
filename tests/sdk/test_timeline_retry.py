@@ -65,6 +65,9 @@ class FakeTimeline:
         return [(self.session.outbox.path, copy.deepcopy(record))
                 for record in self.session.state["pending_changes"].values()]
 
+    def _accepted(self, result):
+        return result
+
 
 def test_list_retry_previews_original_base_with_saved_options(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
@@ -207,6 +210,35 @@ def test_preview_rejects_stale_record_and_token(monkeypatch, tmp_path):
         retry_module.commit_preview(timeline, preview)
 
 
+def test_preview_rejects_tampered_request(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    monkeypatch.setattr(retry_module, "_probe", lambda *args: {
+        "would_status": "accepted", "evaluated_head": HEAD, "canonical_document": {}})
+    monkeypatch.setattr(retry_module, "_preview_diff", lambda *args: {"changes": []})
+    preview = retry_module.retry(timeline, "pc_saved")
+    preview["_retry_request"]["commands"][0]["args"]["on"] = 999
+
+    with pytest.raises(ValueError, match="matches its saved part"):
+        retry_module.commit_preview(timeline, preview)
+
+
+def test_commit_preview_adopts_successful_submit(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    monkeypatch.setattr(retry_module, "_probe", lambda *args: {
+        "would_status": "accepted", "evaluated_head": HEAD, "canonical_document": {}})
+    monkeypatch.setattr(retry_module, "_preview_diff", lambda *args: {"changes": []})
+    preview = retry_module.retry(timeline, "pc_saved")
+    accepted = {"status": "accepted", "receipt": {"receipt_id": "pub-accepted"}}
+    timeline.session.submit = lambda *args, **kwargs: accepted
+    adopted = []
+    timeline._accepted = lambda result: adopted.append(result) or {"adopted": result}
+
+    result = retry_module.commit_preview(timeline, preview)
+
+    assert adopted == [accepted]
+    assert result == {"adopted": accepted}
+
+
 def test_preview_diff_uses_evaluated_head_and_canonical_document(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     captured = {}
@@ -238,7 +270,8 @@ def test_group_id_conflict_means_this_actor_already_landed(monkeypatch, tmp_path
     preview = retry_module.retry(timeline, "pc_saved")
     timeline.session.submit = lambda *args, **kwargs: (_ for _ in ()).throw(
         CommitConflict({"details": {"status": "conflict"}}))
-    entry = {"group_id": "pc_saved", "publication_id": "pub-retry", "publisher": "actor-2"}
+    entry = {"group_id": "pc_saved", "publication_id": "pub-retry", "revision_id": "r3",
+             "publisher": "actor-2", "receipt": {"receipt_id": "receipt-retry"}}
     monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
 
     result = retry_module.commit_preview(timeline, preview)
@@ -247,11 +280,32 @@ def test_group_id_conflict_means_this_actor_already_landed(monkeypatch, tmp_path
     assert result["summary"].endswith("(by actor-2); pc_saved is closed. Nothing was sent.")
 
 
+def test_commit_preview_resolves_history_landed_before_stale_record_check(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    monkeypatch.setattr(retry_module, "_probe", lambda *args: {
+        "would_status": "accepted", "evaluated_head": HEAD, "canonical_document": {}})
+    monkeypatch.setattr(retry_module, "_preview_diff", lambda *args: {"changes": []})
+    preview = retry_module.retry(timeline, "pc_saved")
+    timeline.session.state["pending_changes"]["pc_saved"]["rev"] = 99
+    entry = {"group_id": "pc_saved", "publication_id": "pub-other", "revision_id": "r3",
+             "publisher": "actor-2", "receipt": {"receipt_id": "receipt-other"}}
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
+
+    result = retry_module.commit_preview(timeline, preview)
+
+    assert result["status"] == "landed"
+    assert timeline.session.submissions == []
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    assert saved["state"] == "landed"
+    assert saved["closed_by"]["actor_id"] == "actor-2"
+
+
 def test_multi_part_history_does_not_close_whole_record(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     record = timeline.session.state["pending_changes"]["pc_saved"]
     record["parts"].append(copy.deepcopy(record["parts"][0]))
-    entry = {"group_id": "pc_saved", "publication_id": "pub-part-1", "publisher": "actor-2"}
+    entry = {"group_id": "pc_saved", "publication_id": "pub-part-1", "revision_id": "r3",
+             "publisher": "actor-2", "receipt": {"receipt_id": "receipt-part-1"}}
     monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
 
     result = retry_module.retry(timeline, "pc_saved")
@@ -260,6 +314,31 @@ def test_multi_part_history_does_not_close_whole_record(monkeypatch, tmp_path):
     assert result["status"] == "part_landed"
     assert saved["state"] == "pending"
     assert saved["part"] == 1
+    assert saved["parts"][1]["base"] == {"revision_id": "r3", "publication_id": "pub-part-1"}
+    assert saved["receipts"] == ["receipt-part-1"]
+
+
+def test_multi_part_history_uses_current_part_order(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["parts"].extend(copy.deepcopy(record["parts"][0]) for _ in range(2))
+    record["part"] = 1
+    record["receipts"] = ["receipt-part-0"]
+    entries = [
+        {"group_id": "pc_saved", "publication_id": "pub-part-0", "revision_id": "r2",
+         "publisher": "actor-2", "receipt": {"receipt_id": "receipt-part-0"}},
+        {"group_id": "pc_saved", "publication_id": "pub-part-1", "revision_id": "r3",
+         "publisher": "actor-3", "receipt": {"receipt_id": "receipt-part-1"}},
+    ]
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, entries))
+
+    result = retry_module.retry(timeline, "pc_saved")
+
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    assert result["status"] == "part_landed"
+    assert saved["part"] == 2
+    assert saved["parts"][2]["base"] == {"revision_id": "r3", "publication_id": "pub-part-1"}
+    assert saved["receipts"] == ["receipt-part-0", "receipt-part-1"]
 
 
 def test_multi_part_preview_ack_advances_without_closing(monkeypatch, tmp_path):
@@ -306,7 +385,8 @@ def test_unknown_outcome_is_not_converted_to_refusal(monkeypatch, tmp_path):
 
 def test_retry_detects_prior_group_id_and_closes_cross_actor_record(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
-    entry = {"group_id": "pc_saved", "publication_id": "pub-retry", "publisher": "actor-2"}
+    entry = {"group_id": "pc_saved", "publication_id": "pub-retry", "revision_id": "r3",
+             "publisher": "actor-2", "receipt": {"receipt_id": "receipt-retry"}}
     monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
 
     result = retry_module.retry(timeline, "pc_saved")
@@ -314,4 +394,5 @@ def test_retry_detects_prior_group_id_and_closes_cross_actor_record(monkeypatch,
     saved = timeline.session.state["pending_changes"]["pc_saved"]
     assert result["status"] == "landed"
     assert saved["state"] == "landed"
-    assert saved["closed_by"] == {"actor_id": "actor-1", "publication_id": "pub-retry", "how": "retry"}
+    assert saved["closed_by"] == {"actor_id": "actor-2", "publication_id": "pub-retry", "how": "retry"}
+    assert saved["receipts"] == ["receipt-retry"]
