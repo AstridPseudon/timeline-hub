@@ -163,13 +163,47 @@ def test_function_retry_returns_commit_result_and_reuses_label_key(monkeypatch, 
 
     committed = {"status": "accepted", "data": {"publication_id": "pub9"},
                  "receipt": {"receipt_id": "pub9"}}
-    timeline.commit = lambda *args, **kwargs: calls.append((args, kwargs)) or committed
+    def commit(*args, **kwargs):
+        calls.append((args, kwargs))
+        assert timeline.session.state["base"] == HEAD
+        return committed
+
+    timeline.commit = commit
     monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, []))
 
     result = retry_module.retry(timeline, "pc_saved", fn=function)
 
     assert calls == [((function,), {"label": "Recut", "key": "recut", "pending": "pc_saved"})]
     assert result is committed
+    assert result["status"] == "accepted"
+    assert result["receipt"] == {"receipt_id": "pub9"}
+    assert result["summary"] == (
+        'Committed "Recut" as pub9 after re-running it on the newest timeline; '
+        'pc_saved is closed.'
+    )
+    assert result["data"]["summary"] == result["summary"]
+
+
+def test_function_retry_leaves_unknown_flight_for_commit_reconciliation(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    timeline.session.state["flight"] = {"key": "possibly-sent"}
+    before = copy.deepcopy(timeline.session.state)
+    committed = {"status": "accepted", "receipt": {"receipt_id": "pub9"}}
+    timeline.commit = lambda *args, **kwargs: committed
+
+    history_calls = []
+
+    def history(*args):
+        history_calls.append(args)
+        return HEAD, []
+
+    monkeypatch.setattr(retry_module.clash, "_history", history)
+
+    result = retry_module.retry(timeline, "pc_saved", fn=lambda working: None)
+
+    assert result is committed
+    assert timeline.session.state == before
+    assert len(history_calls) == 1  # Only the normal landed check ran.
 
 
 def test_function_record_probe_preserves_original_base_and_guards(monkeypatch, tmp_path):

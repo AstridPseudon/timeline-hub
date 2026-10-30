@@ -116,6 +116,24 @@ def _part(record):
     return parts[index]
 
 
+def _refresh_function_base(timeline, record):
+    """Move an exhausted function retry's empty outbox to a verified head."""
+    session = timeline.session
+    with session.outbox.locked():
+        state = session._state()
+        # A flight may have an unknown outcome. Let commit() reconcile it; never
+        # replace it with a fresh evaluation. Likewise, don't move a queued tail.
+        if state.get("flight") is not None or state.get("pending"):
+            return False
+        base = _pin(_part(record)["base"])
+        head, _ = clash._history(session, base)
+        state["base"] = _pin(head)
+        state.pop("conflict", None)
+        state.pop("evaluation", None)
+        session.outbox.write(state)
+    return True
+
+
 def _request(record, part):
     options = copy.deepcopy(part.get("commit_options") or {})
     base = _pin(part["base"])
@@ -234,8 +252,18 @@ def retry(timeline, ref, fn=None):
     if record.get("state") == "landed":
         return _landed(timeline, path, record)
     if fn is not None:
-        return timeline.commit(fn, label=record.get("label"), key=record.get("key"),
-                               pending=record["id"])
+        refreshed = _refresh_function_base(timeline, record)
+        result = timeline.commit(fn, label=record.get("label"), key=record.get("key"),
+                                 pending=record["id"])
+        receipt = result.get("receipt") if isinstance(result, dict) else None
+        receipt_id = receipt.get("receipt_id") if isinstance(receipt, dict) else None
+        if refreshed and receipt_id and result.get("status") in {"accepted", "merged", "rebased"}:
+            label = record.get("label") or "Timeline edit"
+            result["summary"] = (f'Committed "{label}" as {receipt_id} after re-running it on the '
+                                 f'newest timeline; {record["id"]} is closed.')
+            if isinstance(result.get("data"), dict):
+                result["data"]["summary"] = result["summary"]
+        return result
 
     part = _part(record)
     request = _request(record, part)
