@@ -3015,7 +3015,7 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
     if getattr(parsed, "text", False):
         from astrid.packs.timeline.cli_common import status_text
 
-        if session_status and session_status["status"] != "clear":
+        if session_status and (session_status["status"] != "clear" or session_status.get("pending_changes")):
             _print_session_status(session_status)
         return status_text(parsed, project_id, timeline_id, current_head, draft_name, path if path.is_file() else None)
     data: dict[str, Any] = {
@@ -3070,6 +3070,8 @@ def _print_session_status(status: Mapping[str, Any]) -> None:
         print(f"CONNECTED SESSION: last request was refused; {status.get('command_count', 0)} command(s) retained")
     elif state == "invalid":
         print("CONNECTED SESSION: saved outbox is invalid; no changes were made")
+    if status.get("pending_changes") is not None:
+        print(f"CONNECTED SESSION: {status['pending_changes']} pending change(s) saved")
     if status.get("rejected_command_count") and state != "rejected":
         print(f"CONNECTED SESSION: an earlier refused request also has {status['rejected_command_count']} command(s) retained for review")
 

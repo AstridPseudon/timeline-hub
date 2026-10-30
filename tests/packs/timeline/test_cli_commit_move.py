@@ -427,6 +427,51 @@ def test_discard_clears_unsent_connected_commands(command, capsys):
     assert generated.calls == []
 
 
+def test_status_counts_and_discard_migrates_legacy_conflicts(command, capsys):
+    run, generated = command
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--dry-run", "--json") == 0
+    capsys.readouterr()
+    state = json.loads(generated.path.read_bytes())
+    rejected_command = capture_move(initial_bundle(), "parent/clip:a", 5.0)
+    state["rejected"] = {
+        "base": state["base"], "commands": [rejected_command],
+        "flight": {"key": "conflict", "logical_key": "conflict", "count": 1,
+                   "body": json.dumps({
+                       "base_revision_id": state["base"]["revision_id"],
+                       "base_publication_id": state["base"]["publication_id"],
+                       "commands": [rejected_command],
+                       "label": "Recover this edit",
+                   }, separators=(",", ":"))},
+        "failure": {"code": "conflict", "message": "changed", "details": {
+            "status": "conflict", "current": {"revision_id": "r1", "publication_id": "pub1"},
+        }},
+        "commit_options": {"label": "Recover this edit"}, "evaluation": None,
+    }
+    state["pending_changes"] = {"pc_existing": {"id": "pc_existing", "state": "pending"}}
+    generated.path.write_text(json.dumps(state), encoding="utf-8")
+
+    assert run("status", "t", "--project", "p", "--json") == 0
+    status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
+    assert status["pending_changes"] == 1
+
+    assert run("discard", "t", "--project", "p") == 0
+    output = capsys.readouterr().out
+    saved = json.loads(generated.path.read_bytes())
+    assert saved.get("rejected") is None
+    assert saved["pending"] == [] and saved["flight"] is None
+    assert len(saved["pending_changes"]) == 2
+    migrated = saved["pending_changes"]
+    record_id = next(key for key in migrated if key != "pc_existing")
+    record = migrated[record_id]
+    assert record["id"] == record_id and record["state"] == "pending"
+    assert record["parts"][0]["base"] == {
+        "revision_id": state["base"]["revision_id"],
+        "publication_id": state["base"]["publication_id"],
+    }
+    assert record["parts"][0]["commands"] == [rejected_command]
+    assert "kept 2 pending change(s)" in output
+
+
 def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, monkeypatch):
     run, generated = command
 

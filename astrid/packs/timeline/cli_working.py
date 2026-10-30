@@ -27,6 +27,7 @@ from astrid.packs.timeline.cli_common import (
     working_copy,
     working_copy_view,
 )
+from astrid.sdk.timeline._pending import migrate
 
 
 def _valid_replay_flight(state: Mapping[str, Any], scope: Mapping[str, str], outbox) -> bool:
@@ -96,6 +97,9 @@ def _connected_outbox(parsed: argparse.Namespace, project_id: str, timeline_id: 
             not isinstance(rejected, Mapping) or not isinstance(rejected.get("commands"), list)
         )):
             return outbox, {"status": "invalid"}, scope
+        pending_changes = state.get("pending_changes", {})
+        if not isinstance(pending_changes, Mapping):
+            return outbox, {"status": "invalid"}, scope
         flight = state.get("flight")
         if flight is not None:
             if not _valid_replay_flight(state, scope, outbox):
@@ -119,6 +123,7 @@ def _connected_outbox(parsed: argparse.Namespace, project_id: str, timeline_id: 
                          if known_conflict else {})}
         else:
             status = {"status": "clear"}
+        status["pending_changes"] = len(pending_changes)
         if rejected and status["status"] != "rejected":
             status["rejected_command_count"] = len(rejected["commands"])
         return outbox, status, scope
@@ -126,7 +131,7 @@ def _connected_outbox(parsed: argparse.Namespace, project_id: str, timeline_id: 
         return None, None, None
 
 
-def _discard_recoverable_outbox(outbox, expected_scope) -> str:
+def _discard_recoverable_outbox(outbox, expected_scope, *, return_kept_count=False):
     """Clear recoverable intent while retaining an unknown request's exact retry data."""
     if outbox is None:
         return "unavailable"
@@ -137,6 +142,11 @@ def _discard_recoverable_outbox(outbox, expected_scope) -> str:
             return "invalid"
         if not isinstance(state, dict) or state.get("scope") != expected_scope:
             return "invalid"
+        migrated = migrate(state)
+        pending_changes = state.get("pending_changes", {})
+        if not isinstance(pending_changes, Mapping):
+            return "invalid"
+        kept_count = len(pending_changes)
         flight = state.get("flight")
         pending = state.get("pending")
         if not isinstance(pending, list):
@@ -152,18 +162,22 @@ def _discard_recoverable_outbox(outbox, expected_scope) -> str:
                 state["pending"] = pending[:flight["count"]]
             # Keep current-flight metadata and prior acknowledged keys; only rejected
             # work and the unsent suffix are safe to discard.
-            changed = bool(state.get("rejected")) or len(state["pending"]) != len(pending)
-            state.pop("rejected", None)
+            changed = migrated or bool(state.get("rejected")) or len(state["pending"]) != len(pending)
+            # A conflict was migrated above. Refused/invalid rejections retain
+            # their historical discard behavior.
+            if state.get("rejected"):
+                state.pop("rejected", None)
             if changed:
                 outbox.write(state)
-            return "in_flight"
-        changed = bool(pending or state.get("rejected") or state.get("conflict"))
+            return ("in_flight", kept_count) if return_kept_count else "in_flight"
+        changed = bool(pending or state.get("rejected") or state.get("conflict") or migrated)
         state["pending"] = []
         for key in ("conflict", "commit_options", "evaluation", "rationale", "media_input", "rejected"):
             state.pop(key, None)
         if changed:
             outbox.write(state)
-        return "cleared" if changed else "clear"
+        result = "cleared" if changed else "clear"
+        return (result, kept_count) if return_kept_count else result
 
 
 def _cmd_lint(parsed: argparse.Namespace) -> int:
@@ -597,14 +611,16 @@ def _cmd_discard(parsed: argparse.Namespace) -> int:
     # mutate an outbox that belongs to another realm, actor, project, or
     # timeline.  The status path reports it as invalid instead.
     try:
-        discard_state = (
+        discard_result = (
             "invalid"
             if session_status and session_status.get("status") == "invalid"
-            else _discard_recoverable_outbox(outbox, scope)
+            else _discard_recoverable_outbox(outbox, scope, return_kept_count=True)
         )
     except OSError as exc:
         raise VerbError(f"connected-session discard could not be confirmed: {exc}; check status before retrying") from exc
+    discard_state, kept_count = discard_result if isinstance(discard_result, tuple) else (discard_result, 0)
     retained_flight = discard_state == "in_flight"
+    kept_count_known = discard_state not in {"invalid", "unavailable"}
     invalid_outbox = discard_state == "invalid" or bool(
         session_status and session_status.get("status") == "invalid"
     )
@@ -619,6 +635,8 @@ def _cmd_discard(parsed: argparse.Namespace) -> int:
             print("connected-session request retained for exact retry: its commit outcome is unknown; discard did not undo it")
         elif invalid_outbox:
             print("connected-session outbox could not be verified and was left untouched")
+        if kept_count_known:
+            print(f"kept {kept_count} pending change(s)")
         print(f"next: timelines checkout {parsed.ref} --project {parsed.project}")
         return 0
     dropped = len(tl.edits().get("changes") or [])
@@ -630,6 +648,8 @@ def _cmd_discard(parsed: argparse.Namespace) -> int:
         print("connected-session request retained for exact retry: its commit outcome is unknown; discard did not undo it")
     elif invalid_outbox:
         print("connected-session outbox could not be verified and was left untouched")
+    if kept_count_known:
+        print(f"kept {kept_count} pending change(s)")
     print(f"next: timelines checkout {parsed.ref} --project {parsed.project}")
     return 0
 
