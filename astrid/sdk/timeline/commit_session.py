@@ -491,6 +491,9 @@ class Timeline(Checkout):
             raise TimelineEditError("a commit function cannot commit its own evaluation")
         if isinstance(label_or_fn, Mapping) and isinstance(label_or_fn.get("data"), Mapping) \
                 and isinstance(label_or_fn["data"].get("retry"), Mapping):
+            if (label is not None or merge != "fields" or dry_run or reads is not None
+                    or key is not None or idempotency_key is not None or pending is not None):
+                raise TimelineEditError("retry preview commits do not accept additional commit options")
             from . import retry
 
             return retry.commit_preview(self, label_or_fn)
@@ -498,7 +501,8 @@ class Timeline(Checkout):
             raise TimelineEditError("pass only one of key or idempotency_key")
         if key is not None:
             idempotency_key = key
-        pending_target = self._resolve_pending(pending) if pending is not None else None
+        pending_target = (self._resolve_pending(pending) if pending is not None else
+                          self._resolve_pending_key(idempotency_key) if idempotency_key is not None else None)
         pending_id, pending_path = pending_target if pending_target is not None else (None, None)
         if merge not in {"fields", "atomic"}:
             raise TimelineEditError("merge must be fields or atomic")
@@ -692,6 +696,18 @@ class Timeline(Checkout):
         path, record = matches[0]
         if record.get("state") != "pending":
             raise TimelineEditError(f"cannot close pending change in state {record.get('state')!r}")
+        return record["id"], str(path)
+
+    def _resolve_pending_key(self, key):
+        """Find a pending edit created with this commit key, if it is unique."""
+        actors = "self" if getattr(self.session, "_explicit_outbox", False) else "all"
+        matches = [(path, record) for path, record in self._pending_records_with_paths(actors)
+                   if record.get("state") == "pending" and record.get("key") == key]
+        if len(matches) > 1:
+            raise TimelineEditError(f"pending key {key!r} is ambiguous; use pending= with a pending id")
+        if not matches:
+            return None
+        path, record = matches[0]
         return record["id"], str(path)
 
     def _commit_commands(self, commands, *, label, merge, dry_run, reads, idempotency_key,
