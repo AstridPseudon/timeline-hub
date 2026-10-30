@@ -611,6 +611,7 @@ class Timeline(Checkout):
                     working._commands, label=commit_label, steps=steps, merge=effective_merge, reads=reads,
                     idempotency_key=idempotency_key, dry_run=dry_run, expected_state=state, base=base,
                     evaluation={"kind": "function" if function else "label", "count": count,
+                                "synthetic_function_scope": bool(function and reads is None and merge != "atomic"),
                                 "media_cache": copy.deepcopy(working._media_cache),
                                 "identity_cache": copy.deepcopy(working._identity_cache)},
                     pending_id=pending_id,

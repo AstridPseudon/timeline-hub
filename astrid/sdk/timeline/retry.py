@@ -140,6 +140,17 @@ def _refresh_function_base(timeline, record):
 
 def _request(record, part):
     options = copy.deepcopy(part.get("commit_options") or {})
+    evaluation = part.get("evaluation") or {}
+    steps = options.get("steps") or []
+    scope = {"kind": "scope", "ref": "timeline", "path": []}
+    if (evaluation.get("kind") == "function" and evaluation.get("synthetic_function_scope") is True
+            and options.get("merge") == "atomic" and "reads" not in options
+            and all(step.get("reads") and step["reads"][-1] == scope for step in steps)):
+        for step in steps:
+            step["reads"].pop()
+            if not step["reads"]:
+                del step["reads"]
+        options["merge"] = "fields"
     base = _pin(part["base"])
     request = {"base_revision_id": base["revision_id"],
                "base_publication_id": base["publication_id"],
