@@ -11,6 +11,8 @@ import json
 import re
 import shlex
 import uuid
+from datetime import datetime, timezone
+from pathlib import Path
 from urllib.parse import quote
 
 from astrid.core.receipts.canonical import canonical_json
@@ -47,7 +49,8 @@ class CommitConflict(TimelineEditError):
         if pending_id is not None:
             self.presentation["fix"] = (
                 f'Someone else changed this timeline after your edit was made, so "{label or "Timeline edit"}" '
-                f'was not committed. Your edit is saved as {pending_id}; nothing is lost.')
+                f'was not committed. Your edit is saved as {pending_id}; nothing is lost. '
+                f'Retry it with tl.retry("{pending_id}").')
             self.presentation.update(pending_id=pending_id, clash=copy.deepcopy(clash))
         self.headline = self.presentation["headline"]
         self.detail = self.presentation["detail"]
@@ -193,6 +196,26 @@ def _ack(result, body, flight, identity):
     except (KeyError, TypeError, ValueError) as exc:
         raise TimelineEditError("invalid Runtime acknowledgement; request remains in flight") from exc
     return data, receipt
+
+
+def _pending_diff(session, record):
+    """Build the saved part's authored-field diff after its record is durable."""
+    from ._command_state import equal
+    from .emitter import _diff, _payload_for_emit, _root_pairs
+    from .store import fetch_bundle
+
+    part = record["parts"][record.get("part", 0)]
+    base = part["base"]
+    before = fetch_bundle(session.project_id, session.timeline_id,
+                          revision_id=base["revision_id"], publication_id=base["publication_id"],
+                          client=session.client)
+    after = session._capture_bundle({"base": base, "pending": part["commands"]})
+    changes = []
+    for ref, before_value, after_value in _root_pairs(before, after):
+        if not equal(before_value, after_value):
+            _diff(_payload_for_emit(ref, before_value), _payload_for_emit(ref, after_value),
+                  ref, (), changes)
+    return changes
 
 
 class TimelineSession:
@@ -639,7 +662,8 @@ class TimelineSession:
                            release_conflict=release_conflict)
 
     def submit(self, commands, *, label, steps, merge="fields", reads=None,
-               idempotency_key=None, dry_run=False, expected_state, base=None, evaluation=None):
+               idempotency_key=None, dry_run=False, expected_state, base=None, evaluation=None,
+               pending_id=None, pending_path=None, pending_how="retry"):
         """Freeze an already captured v2 batch, without recapturing its guards.
 
         A replacement is allowed only after an explicit conflict. Transport
@@ -671,6 +695,10 @@ class TimelineSession:
             state.pop("conflict", None)
             state["commit_options"] = options
             state["evaluation"] = copy.deepcopy(evaluation)
+            if pending_id is not None:
+                state["pending_close"] = pending_id
+                state["pending_close_path"] = pending_path
+                state["pending_how"] = pending_how
 
         release_conflict = (not isinstance(evaluation, dict)
                             or evaluation.get("kind") != "function"
@@ -709,6 +737,11 @@ class TimelineSession:
                 flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
                           "count": len(state["pending"]), "fence": uuid.uuid4().hex,
                           "explicit_key": logical_key is not None}
+                if state.get("pending_close") is not None:
+                    flight["pending_id"] = state["pending_close"]
+                    if state.get("pending_close_path") is not None:
+                        flight["pending_path"] = state["pending_close_path"]
+                    flight["pending_how"] = state.get("pending_how", "retry")
                 if logical_key is not None:
                     flight["logical_key"] = logical_key
                 if state.get("evaluation") is not None:
@@ -787,7 +820,26 @@ class TimelineSession:
                                 # Function commits retain the known conflict only
                                 # while bounded reevaluation remains available.
                                 state["conflict"] = failure
+                        if release_conflict or details.get("status") != "conflict":
+                            state.pop("pending_close", None)
+                            state.pop("pending_close_path", None)
+                            state.pop("pending_how", None)
                         self.outbox.write(state)
+                if record is not None:
+                    try:
+                        diff = _pending_diff(self, record)
+                    except Exception:  # noqa: BLE001 - enrichment failure must not undo the saved record
+                        diff = None
+                    if diff is not None:
+                        with self.outbox.locked():
+                            latest = self._state()
+                            saved = latest.get("pending_changes", {}).get(record["id"])
+                            if saved is not None and saved.get("state") == "pending" and saved.get("diff") is None:
+                                saved["diff"] = diff
+                                saved["rev"] = int(saved.get("rev", 0)) + 1
+                                saved["updated_at"] = datetime.now(timezone.utc).isoformat()
+                                self.outbox.write(latest)
+                                record = copy.deepcopy(saved)
                 from ._pending import clash
                 raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
                                      timeline_id=self.timeline_id, project_id=self.project_id,
@@ -799,6 +851,7 @@ class TimelineSession:
             data, receipt = _ack(result, body, flight, self.identity)
         except TimelineEditError as exc:
             raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc
+        external_close = None
         with self.outbox.locked():
             state = self._state()
             # A duplicate send may finish after another send acknowledged this
@@ -824,7 +877,46 @@ class TimelineSession:
                 state.pop("preview_key", None)
                 state["flight"] = None
                 state.pop("conflict", None)
+                pending_id = flight.get("pending_id")
+                if pending_id is not None and not dry_run:
+                    target_path = flight.get("pending_path")
+                    if target_path is not None and target_path != str(self.outbox.path):
+                        external_close = (target_path, pending_id, flight.get("pending_how", "retry"))
+                    else:
+                        record = state.get("pending_changes", {}).get(pending_id)
+                        if record is not None and record.get("state") == "pending":
+                            record["state"] = "landed"
+                            record["rev"] = int(record.get("rev", 0)) + 1
+                            record["updated_at"] = datetime.now(timezone.utc).isoformat()
+                            record["closed_by"] = {
+                                "actor_id": self.identity["actor_id"],
+                                "publication_id": receipt["receipt_id"],
+                                "how": flight.get("pending_how", "retry"),
+                            }
+                if pending_id is not None:
+                    state.pop("pending_close", None)
+                    state.pop("pending_close_path", None)
+                    state.pop("pending_how", None)
                 self.outbox.write(state)
+        if external_close is not None:
+            target_path, pending_id, how = external_close
+            try:
+                target_outbox = Outbox(Path(target_path))
+                with target_outbox.locked():
+                    target = target_outbox.read()
+                    record = target.get("pending_changes", {}).get(pending_id) if isinstance(target, dict) else None
+                    if record is not None and record.get("state") == "pending":
+                        record["state"] = "landed"
+                        record["rev"] = int(record.get("rev", 0)) + 1
+                        record["updated_at"] = datetime.now(timezone.utc).isoformat()
+                        record["closed_by"] = {
+                            "actor_id": self.identity["actor_id"],
+                            "publication_id": receipt["receipt_id"],
+                            "how": how,
+                        }
+                        target_outbox.write(target)
+            except Exception:  # noqa: BLE001 - the accepted receipt stands if local close bookkeeping fails
+                pass
         return self._present(result, data, receipt, imports=flight.get('imports', ()),
                              confirmed=confirmed, label=body.get("label"))
 

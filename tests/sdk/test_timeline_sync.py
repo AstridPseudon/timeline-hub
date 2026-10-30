@@ -541,6 +541,7 @@ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(con
     assert record["state"] == "pending"
     assert record["failure"]["details"]["status"] == "conflict"
     assert record["parts"][0]["commands"]
+    assert isinstance(record["diff"], list) and record["diff"]
     assert not generated.accepted
     session.queue_move("parent/clip:b", 6)
     generated.refusal = ConnectionError("connection unavailable")
@@ -549,6 +550,34 @@ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(con
     assert unknown.value.outcome == "unknown"
     saved = json.loads(path.read_bytes())
     assert saved["flight"] is not None and saved["pending"]
+
+
+def test_record_saved_before_enrichment_failure(connected, monkeypatch):
+    from astrid.sdk.timeline import sync
+
+    session = open_session(connected)
+    _, generated, path = connected
+    session.queue_move("parent/clip:a", 5)
+    generated.refusal = ApiError(409, "conflict", "guards changed", details={
+        "status": "conflict", "reason": "guard_changed", "conflicts": [],
+    })
+
+    def fail_enrichment(saved_session, record):
+        persisted = json.loads(path.read_bytes())
+        assert record["id"] in persisted["pending_changes"]
+        raise RuntimeError("diff enrichment failed")
+
+    monkeypatch.setattr(sync, "_pending_diff", fail_enrichment)
+    with pytest.raises(CommitConflict) as error:
+        session.flush()
+
+    state = json.loads(path.read_bytes())
+    record = state["pending_changes"][error.value.pending_id]
+    assert record["state"] == "pending"
+    assert record["diff"] is None
+    assert record["attempts"] == 1
+    assert record["closed_by"] is None
+    assert not {"choices", "candidate", "flight_fence"} & record.keys()
 
 
 def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(connected):

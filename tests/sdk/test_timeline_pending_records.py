@@ -43,8 +43,8 @@ def test_pending_drop_keeps_raw_record_and_tombstone(tmp_path):
                          "commit_options": {"merge": "fields"}, "rationale": None,
                          "media_input": None, "imports": [], "evaluation": None}],
               "part": 0, "failure": {"details": {"status": "conflict"}},
-              "head": {"revision_id": "r2", "publication_id": "p2"}, "choices": {},
-              "candidate": None, "flight_fence": None, "receipts": [], "versions": [],
+              "head": {"revision_id": "r2", "publication_id": "p2"}, "diff": None,
+              "attempts": 1, "receipts": [], "closed_by": None, "versions": [],
               "created_at": "2026-10-29T00:00:00Z", "updated_at": "2026-10-29T00:00:00Z",
               "dropped_reason": None}
     session.outbox.write({"scope": _scope(), "base": record["parts"][0]["base"],
@@ -62,3 +62,24 @@ def test_pending_drop_keeps_raw_record_and_tombstone(tmp_path):
     assert timeline.pending_list() == []
     assert timeline.pending_list(all=True) == [dropped]
     assert timeline.pending_show(record["id"]) == dropped
+
+
+def test_actors_all_lists_only_matching_scope(tmp_path):
+    own = _session(tmp_path / "timeline-outbox" / "self.json")
+    timeline = _timeline(own)
+    own_record = {"id": "pc_self", "state": "pending", "created_at": "2026-10-30T00:00:00Z"}
+    peer_record = {"id": "pc_peer", "state": "pending", "created_at": "2026-10-30T00:00:01Z"}
+    other_project = {"id": "pc_other", "state": "pending", "created_at": "2026-10-30T00:00:02Z"}
+    own.outbox.path.parent.mkdir(parents=True)
+    own.outbox.write({"scope": _scope(), "pending_changes": {own_record["id"]: own_record}})
+    Outbox(tmp_path / "timeline-outbox" / "peer.json").write({
+        "scope": {**_scope(), "actor_id": "peer"},
+        "pending_changes": {peer_record["id"]: peer_record},
+    })
+    Outbox(tmp_path / "timeline-outbox" / "other-project.json").write({
+        "scope": {**_scope(), "actor_id": "peer", "project_id": "elsewhere"},
+        "pending_changes": {other_project["id"]: other_project},
+    })
+
+    assert [row["id"] for row in timeline.pending_list(actors="all")] == ["pc_self", "pc_peer"]
+    assert [row["id"] for row in timeline.pending_list()] == ["pc_self"]

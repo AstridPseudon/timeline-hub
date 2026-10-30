@@ -88,6 +88,47 @@ def test_native_edits_commit_once_with_label_and_steps(connected):
     assert tl._journal == []
 
 
+@pytest.mark.parametrize("ref", ["id", "key"])
+def test_commit_with_pending_closes_record(connected, ref):
+    tl = opened(connected)
+    record = {"id": "pc_close_me", "state": "pending", "rev": 2,
+              "created_at": "2026-10-30T00:00:00Z", "key": "old-edit"}
+    with tl.session.outbox.locked():
+        state = tl.session._state()
+        state["pending_changes"] = {record["id"]: record}
+        tl.session.outbox.write(state)
+
+    result = tl.commit(lambda working: working.move("parent/clip:a", 4),
+                       label="Re-derived edit", pending=record["id"] if ref == "id" else record["key"])
+
+    saved = tl.pending_show(record["id"])
+    assert saved["state"] == "landed"
+    assert saved["closed_by"] == {
+        "actor_id": "actor", "publication_id": result["receipt"]["receipt_id"], "how": "rerun",
+    }
+
+
+def test_commit_with_pending_closes_matching_other_actor_record(connected):
+    from astrid.sdk.timeline.outbox import Outbox
+
+    tl = opened(connected)
+    tl.session._explicit_outbox = False
+    peer_path = tl.session.outbox.path.parent / "peer.json"
+    record = {"id": "pc_peer_close", "state": "pending", "rev": 2,
+              "created_at": "2026-10-30T00:00:00Z", "key": "peer-edit"}
+    Outbox(peer_path).write({
+        "scope": {**tl.session._state()["scope"], "actor_id": "peer"},
+        "pending_changes": {record["id"]: record},
+    })
+
+    result = tl.commit(lambda working: working.move("parent/clip:a", 5),
+                       label="Close peer edit", pending=record["id"])
+
+    closed = Outbox(peer_path).read()["pending_changes"][record["id"]]
+    assert closed["state"] == "landed"
+    assert closed["closed_by"]["publication_id"] == result["receipt"]["receipt_id"]
+
+
 def test_accepted_move_reports_exact_revision_pair_and_old_new_ranges(connected):
     tl = opened(connected)
     preview = tl.commit(lambda working: working.move("parent/clip:a", 3), dry_run=True)
@@ -235,7 +276,7 @@ def test_declared_function_reads_allow_fields(connected):
     assert "reads" not in body["steps"][0]
 
 
-def test_three_evaluation_bound_survives_reopening(connected, monkeypatch):
+def test_three_evaluation_bound_saves_function_record(connected, monkeypatch):
     tl = opened(connected)
     _, generated, path = connected
     evaluations, sent = [], []
@@ -258,10 +299,9 @@ def test_three_evaluation_bound_survives_reopening(connected, monkeypatch):
     assert evaluations == [0, 1, 2] and len(set(sent)) == 3
     state = json.loads(path.read_text())
     assert state["flight"] is None and state["pending"] == []
-    assert state["rejected"]["evaluation"]["count"] == 3
-    assert state["rejected"]["commands"]
-    with pytest.raises(CommitConflict):
-        opened(connected).commit(edit)
+    record = next(iter(state["pending_changes"].values()))
+    assert record["parts"][0]["evaluation"]["count"] == 3
+    assert record["parts"][0]["commands"]
     assert len(evaluations) == len(sent) == 3
 
 
@@ -425,8 +465,9 @@ def test_fixed_list_does_not_recompute_after_conflict(connected, monkeypatch):
     assert len(sent) == 1 and sent[0]["commands"] == commands
     state = json.loads(path.read_text())
     assert state["pending"] == [] and state["flight"] is None
-    assert state["rejected"]["commands"] == commands
-    assert state["rejected"]["failure"]["details"]["status"] == "conflict"
+    record = next(iter(state["pending_changes"].values()))
+    assert record["parts"][0]["commands"] == commands
+    assert record["failure"]["details"]["status"] == "conflict"
 
 
 def test_media_preview_list_reuse_keeps_verified_selection_without_reimport(connected, monkeypatch, tmp_path):
@@ -679,9 +720,10 @@ def test_label_commit_does_not_reauthor_after_conflict(connected, monkeypatch):
     with pytest.raises(CommitConflict):
         tl.commit("Literal")
     frozen = path.read_bytes()
-    with pytest.raises(CommitConflict):
+    with pytest.raises(TimelineEditError, match="no pending"):
         tl.commit("Literal")
-    assert path.read_bytes() == frozen and len(sent) == 1
+    assert json.loads(path.read_bytes())["pending_changes"] == json.loads(frozen)["pending_changes"]
+    assert len(sent) == 1
 
 
 def test_conflict_replacement_preserves_later_pending_dependents(connected, monkeypatch):
@@ -698,16 +740,17 @@ def test_conflict_replacement_preserves_later_pending_dependents(connected, monk
         tl.commit("Literal")
     with tl.session.outbox.locked():
         state = tl.session._state()
-        state["pending"].append(copy.deepcopy(state["rejected"]["commands"][0]))
+        record = next(iter(state["pending_changes"].values()))
+        state["pending"].append(copy.deepcopy(record["parts"][0]["commands"][0]))
         tl.session.outbox.write(state)
     before = path.read_bytes()
-    with pytest.raises(TimelineEditError, match="dependent"):
+    with pytest.raises(TimelineEditError, match="before another edit"):
         tl.session.submit(state["pending"][:1], label="Replacement", steps=[], expected_state=state,
                           base=generated.head)
     assert path.read_bytes() == before
 
 
-def test_saved_fixed_list_conflict_blocks_later_commits_and_says_discard(connected, monkeypatch):
+def test_saved_fixed_list_conflict_suggests_retry(connected, monkeypatch):
     tl = opened(connected)
     client, generated, path = connected
     preview = tl.commit(lambda working: working.move("parent/clip:a", 6), dry_run=True)
@@ -719,8 +762,10 @@ def test_saved_fixed_list_conflict_blocks_later_commits_and_says_discard(connect
     monkeypatch.setattr(generated, "commit_timeline", refuse)
     with pytest.raises(CommitConflict) as first:
         tl.commit(commands, label="Fixed")
-    assert "timelines discard" in first.value.fix
-    assert json.loads(path.read_text())["rejected"]["failure"]["details"]["status"] == "conflict"
+    assert "tl.retry(" in first.value.fix
+    record = next(iter(json.loads(path.read_text())["pending_changes"].values()))
+    assert record["parts"][0]["commands"] == commands
+    assert record["failure"]["details"]["status"] == "conflict"
 
     again = timeline.open("p", "t", client=client, outbox_path=path)
     for attempt in (
@@ -731,4 +776,4 @@ def test_saved_fixed_list_conflict_blocks_later_commits_and_says_discard(connect
     ):
         with pytest.raises(CommitConflict) as second:
             attempt()
-        assert "timelines discard t --project p" in second.value.fix, second.value.fix
+        assert "tl.retry(" in second.value.fix or "no pending" in second.value.fix, second.value.fix
