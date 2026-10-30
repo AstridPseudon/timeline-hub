@@ -77,8 +77,11 @@ def test_packet_names_touching_receipt():
     realm = DetachedRealm()
     base = copy.deepcopy(realm.head)
     receipt = realm.call([realm.move('parent/clip:clip-a', 6.006)])
-    realm.entries[-1]['records']['label'] = 'Move clip-a'
-    conflict = {'kind': 'value_conflict', 'ref': 'parent/clip:clip-a', 'path': ['at'],
+    for write in realm.entries[-1]['records']['commands'][0]['writes']:
+        if write['ref'] == 'parent/clip:clip-a':
+            write['ref'] = 'parent/clip:b'
+    realm.entries[-1]['records']['label'] = 'Move clip-b'
+    conflict = {'kind': 'value_conflict', 'ref': 'parent/clip:b', 'path': ['at'],
                 'base': {'state': 'absent'}, 'theirs': {'state': 'absent'},
                 'ours': {'state': 'absent'}}
 
@@ -88,8 +91,8 @@ def test_packet_names_touching_receipt():
     assert packet['conflicts'] == [conflict]
     assert packet['receipts'][0]['publication_id'] == receipt['receipt']['receipt_id']
     assert packet['receipts'][0]['touches_conflict'] is True
-    assert packet['receipts'][0]['touched']
-    assert 'Move' in packet['summary']
+    assert {'ref': 'parent/clip:b', 'path': ['at']} in packet['receipts'][0]['touched']
+    assert 'Move clip-b' in packet['summary']
     assert 'pc_saved' in packet['summary']
     assert packet['next'] == "tl.retry('pc_saved')"
 
