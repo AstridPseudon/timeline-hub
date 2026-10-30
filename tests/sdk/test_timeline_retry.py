@@ -239,6 +239,104 @@ def test_function_record_probe_preserves_original_base_and_guards(monkeypatch, t
     )
 
 
+def test_function_fallback_removes_marked_synthetic_scope_without_mutating_saved_record(tmp_path):
+    record = _record()
+    part = record["parts"][0]
+    part["evaluation"] = {"kind": "function", "synthetic_function_scope": True}
+    part["commit_options"] = {
+        "merge": "atomic",
+        "steps": [
+            {"id": "s1", "reads": [{"kind": "scope", "ref": "timeline", "path": []}]},
+            {"id": "s2", "reads": [{"kind": "scope", "ref": "timeline", "path": []}]},
+        ],
+    }
+    before = copy.deepcopy(record)
+
+    request = retry_module._request(record, part)
+
+    assert request["base_revision_id"] == BASE["revision_id"]
+    assert request["base_publication_id"] == BASE["publication_id"]
+    assert request["merge"] == "fields"
+    assert request["reads"] == []
+    assert request["steps"] == [{"id": "s1"}, {"id": "s2"}]
+    assert record == before
+
+
+def test_function_fallback_removes_only_sdk_added_step_read(tmp_path):
+    record = _record()
+    part = record["parts"][0]
+    caller_read = {"kind": "scope", "ref": "clip:a", "path": ["start"]}
+    synthetic_scope = {"kind": "scope", "ref": "timeline", "path": []}
+    part["evaluation"] = {"kind": "function", "synthetic_function_scope": True}
+    part["commit_options"] = {
+        "merge": "atomic",
+        "steps": [
+            {"id": "s1", "reads": [caller_read, synthetic_scope]},
+            {"id": "s2", "reads": [synthetic_scope]},
+        ],
+    }
+
+    request = retry_module._request(record, part)
+
+    assert request["merge"] == "fields"
+    assert request["reads"] == []
+    assert request["steps"] == [{"id": "s1", "reads": [caller_read]}, {"id": "s2"}]
+
+
+def test_function_retry_preserves_caller_reads_and_explicit_atomic(tmp_path):
+    record = _record()
+    part = record["parts"][0]
+    caller_reads = [{"kind": "scope", "ref": "timeline", "path": ["clips"]}]
+    part["evaluation"] = {"kind": "function", "synthetic_function_scope": True}
+    part["commit_options"] = {
+        "merge": "atomic",
+        "reads": caller_reads,
+        "steps": [{"id": "s1", "reads": [{"kind": "scope", "ref": "timeline", "path": []}]}],
+    }
+
+    request = retry_module._request(record, part)
+
+    assert request["merge"] == "atomic"
+    assert request["reads"] == caller_reads
+    assert request["steps"] == part["commit_options"]["steps"]
+
+
+def test_explicit_atomic_function_commit_stays_atomic_without_reads(tmp_path):
+    record = _record()
+    part = record["parts"][0]
+    part["evaluation"] = {"kind": "function", "synthetic_function_scope": False}
+    part["commit_options"] = {
+        "merge": "atomic",
+        "steps": [{"id": "s1", "reads": [
+            {"kind": "scope", "ref": "timeline", "path": []}
+        ]}],
+    }
+
+    request = retry_module._request(record, part)
+
+    assert request["merge"] == "atomic"
+    assert "reads" not in request
+    assert request["steps"] == part["commit_options"]["steps"]
+
+
+def test_legacy_function_record_without_provenance_keeps_ambiguous_atomic_scope(tmp_path):
+    record = _record()
+    part = record["parts"][0]
+    part["evaluation"] = {"kind": "function"}
+    part["commit_options"] = {
+        "merge": "atomic",
+        "steps": [{"id": "s1", "reads": [
+            {"kind": "scope", "ref": "timeline", "path": []}
+        ]}],
+    }
+
+    request = retry_module._request(record, part)
+
+    assert request["merge"] == "atomic"
+    assert "reads" not in request
+    assert request["steps"] == part["commit_options"]["steps"]
+
+
 def test_probe_reads_conflict_preview_before_generated_dto_rejects_it(tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     captured = {}
