@@ -415,7 +415,13 @@ def test_status_counts_and_discard_migrates_legacy_conflicts(command, capsys):
     rejected_command = capture_move(initial_bundle(), "parent/clip:a", 5.0)
     state["rejected"] = {
         "base": state["base"], "commands": [rejected_command],
-        "flight": {"key": "refused", "count": 1},
+        "flight": {"key": "conflict", "logical_key": "conflict", "count": 1,
+                   "body": json.dumps({
+                       "base_revision_id": state["base"]["revision_id"],
+                       "base_publication_id": state["base"]["publication_id"],
+                       "commands": [rejected_command],
+                       "label": "Recover this edit",
+                   }, separators=(",", ":"))},
         "failure": {"code": "conflict", "message": "changed", "details": {
             "status": "conflict", "current": {"revision_id": "r1", "publication_id": "pub1"},
         }},
@@ -438,6 +444,10 @@ def test_status_counts_and_discard_migrates_legacy_conflicts(command, capsys):
     record_id = next(key for key in migrated if key != "pc_existing")
     record = migrated[record_id]
     assert record["id"] == record_id and record["state"] == "pending"
+    assert record["parts"][0]["base"] == {
+        "revision_id": state["base"]["revision_id"],
+        "publication_id": state["base"]["publication_id"],
+    }
     assert record["parts"][0]["commands"] == [rejected_command]
     assert "kept 2 pending change(s)" in output
 
