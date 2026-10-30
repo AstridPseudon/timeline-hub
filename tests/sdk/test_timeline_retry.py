@@ -341,6 +341,27 @@ def test_multi_part_history_uses_current_part_order(monkeypatch, tmp_path):
     assert saved["receipts"] == ["receipt-part-0", "receipt-part-1"]
 
 
+def test_close_ignores_stale_part_after_another_actor_advances_record(tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    saved["parts"].extend(copy.deepcopy(saved["parts"][0]) for _ in range(2))
+    stale = copy.deepcopy(saved)
+    saved["part"] = 1
+    saved["receipts"] = ["receipt-part-0"]
+    before = copy.deepcopy(saved)
+    path = timeline.session.outbox.path
+
+    duplicate = {"publication_id": "pub-part-0", "revision_id": "r3",
+                 "publisher": "actor-2", "receipt": {"receipt_id": "receipt-part-0"}}
+    retry_module._close(path, stale, timeline.session, duplicate, "retry")
+    assert saved == before
+
+    stale_history_entry = {"publication_id": "pub-stale", "revision_id": "r4",
+                           "publisher": "actor-3", "receipt": {"receipt_id": "receipt-stale"}}
+    retry_module._close(path, stale, timeline.session, stale_history_entry, "retry")
+    assert saved == before
+
+
 def test_multi_part_preview_ack_advances_without_closing(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     record = timeline.session.state["pending_changes"]["pc_saved"]
