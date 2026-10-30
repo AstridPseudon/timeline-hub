@@ -578,6 +578,30 @@ def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(c
     assert json.loads(path.read_bytes())["rejected"]["commands"] == [rejected]
 
 
+def test_conflict_packet_enrichment_runs_after_rejected_intent_is_saved(connected, monkeypatch):
+    session = open_session(connected)
+    _, generated, path = connected
+    generated.refusal = ApiError(409, "conflict", "concurrent edit",
+                                 details={"status": "conflict", "current": generated.head,
+                                          "conflicts": []})
+    packet = {"schema": "astrid.clash/2", "summary": "saved"}
+
+    def enrich(_session, record):
+        durable = json.loads(path.read_bytes())
+        assert durable["rejected"]["commands"] == record["commands"]
+        return packet
+
+    from astrid.sdk.timeline import clash
+
+    monkeypatch.setattr(clash, "explain", enrich)
+    command = capture_move(initial_bundle(), "parent/clip:a", 5)
+    with pytest.raises(CommitConflict) as conflict:
+        session.submit([command], label="Move clip", steps=[], expected_state=session._state())
+
+    assert conflict.value.clash == packet
+    assert json.loads(path.read_bytes())["rejected"]["clash"] == packet
+
+
 @pytest.mark.parametrize("status", ["refused", "invalid"])
 def test_final_refusal_preserves_and_releases_dependent_queued_suffix(connected, monkeypatch, status):
     session = open_session(connected)

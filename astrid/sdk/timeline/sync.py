@@ -22,8 +22,10 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 
 class CommitConflict(TimelineEditError):
     def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
-                 timeline_id=None, project_id=None):
+                 timeline_id=None, project_id=None, pending_id=None, clash=None):
         self.failure = copy.deepcopy(failure)
+        self.pending_id = pending_id
+        self.clash = copy.deepcopy(clash)
         from ._commit_wording import present_failure
 
         self.presentation = present_failure(self.failure)
@@ -770,6 +772,7 @@ class TimelineSession:
                         else:
                             if release_conflict:
                                 state["rejected"] = {
+                                    "id": "pc_" + uuid.uuid4().hex[:12],
                                     "base": copy.deepcopy(state["base"]),
                                     "commands": copy.deepcopy(state["pending"]),
                                     "flight": copy.deepcopy(flight),
@@ -787,8 +790,32 @@ class TimelineSession:
                                 # while bounded reevaluation remains available.
                                 state["conflict"] = failure
                         self.outbox.write(state)
+                clash = None
+                pending_id = None
+                if release_conflict and details.get("status") == "conflict":
+                    # Explain only after the exact refused intent is durably saved.
+                    with self.outbox.locked():
+                        saved = self._state().get("rejected")
+                        saved = copy.deepcopy(saved) if isinstance(saved, dict) else None
+                    if saved is not None:
+                        pending_id = saved.get("id")
+                        record = {**saved, "label": body.get("label", "Timeline edit"),
+                                  "key": saved.get("flight", {}).get("logical_key"),
+                                  "origin": "list"}
+                        try:
+                            from .clash import explain
+
+                            clash = explain(self, record)
+                            with self.outbox.locked():
+                                state = self._state()
+                                if state.get("rejected") == saved:
+                                    state["rejected"]["clash"] = copy.deepcopy(clash)
+                                    self.outbox.write(state)
+                        except Exception:  # noqa: BLE001 - enrichment cannot change the saved refusal
+                            clash = None
                 raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
-                                     timeline_id=self.timeline_id, project_id=self.project_id) from exc
+                                     timeline_id=self.timeline_id, project_id=self.project_id,
+                                     pending_id=pending_id, clash=clash) from exc
             raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc  # Keep the durable flight byte-for-byte retryable.
         try:
             data, receipt = _ack(result, body, flight, self.identity)
