@@ -29,7 +29,7 @@ D=$O/workers/$N; [ -e $D ] && { echo "worker $N already exists"; exit 2; }
 FREE=$(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$FREE" -lt 1 ] && { echo "REFUSED: only ${FREE}G free"; exit 3; }   # 27 Oct (owner): run to the wire; was 5
 if [ $HEAVY = 1 ]; then H=$(grep -l '^heavy=1' $O/workers/*/meta 2>/dev/null | while read f; do d=$(dirname $f); [ -f $d/running ] && echo x; done | wc -l); T=$(for r in $O/tests/*/running; do [ -f "$r" ] && [ -f "${r%running}heavy" ] && kill -0 "$(cat "$r")" 2>/dev/null && echo x; done | wc -l); H=$((H+T)); [ "$H" -ge 2 ] && { echo "REFUSED: $H heavy jobs running ($T full test suites)"; exit 3; }; fi
 WT=/home/user/work/wt/$N; git -C /home/user/work/$REPO worktree add -q -b tl/$N $WT $BASE
-mkdir -p $D; cp $BRIEF $D/brief.md; case $N in U-*|R-*) cat $O/followups/leads/U-uxtrial/OWNERSHIP.md >> $D/brief.md;; esac;   # 28 Oct: ownership paragraph on every project U worker
+mkdir -p $D; cp $BRIEF $D/brief.md; case $N in U-*|R-*) cat $O/followups/leads/U-uxtrial/OWNERSHIP.md >> $D/brief.md;; esac; case $N in R-*) head -1 "$BRIEF" | grep -qE "^(SUPER-)?HARD:" && cat $O/followups/leads/R-clashback/COORDINATOR.md >> $D/brief.md;; esac;   # 30 Oct (owner): Terra/Sol coordinate Lunas   # 28 Oct: ownership paragraph on every project U worker
  [ -n "$MPARENT" ] && echo "$MPARENT" > $D/merge-parent
 printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nworktree=%s\nstarted=%s\n' $N $REPO $BASE $(git -C $WT rev-parse --short HEAD) $M $E $HEAVY $WT $(date -u +%FT%TZ) > $D/meta
 # 27 Oct 13:25Z: a worker based on anything but tl/integration merges back into its base unless --merge-target says otherwise (a missing target once sent an H fix to tl/integration)
