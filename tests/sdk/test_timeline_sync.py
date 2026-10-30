@@ -684,6 +684,63 @@ def test_old_rejected_conflict_migrates_to_pending_change_on_open(connected):
     assert open_session(connected)._state()["pending_changes"] == first_snapshot
 
 
+def test_legacy_conflict_migration_preserves_unknown_flight_and_queued_suffix(connected):
+    session = open_session(connected)
+    _, generated, path = connected
+    live_command = session.queue_move("parent/clip:a", 3)
+    queued_command = capture_move(initial_bundle(), "parent/clip:b", 7)
+    rejected_command = capture_move(initial_bundle(), "parent/clip:a", 9)
+    state = session._state()
+
+    def saved_body(command):
+        return {
+            "api_version": 1, "project_id": "p", "timeline_id": "t",
+            "base_revision_id": state["base"]["revision_id"],
+            "base_publication_id": state["base"]["publication_id"],
+            "commands": [command], "source": {"via": "python"}, "dry_run": False,
+        }
+
+    live_body = saved_body(live_command)
+    live_flight = {
+        "path": session.path, "body": request_bytes(live_body).decode(),
+        "key": "live-unknown-key", "count": 1, "fence": "live-fence",
+        "explicit_key": True,
+    }
+    failure = {"code": "conflict", "message": "guards changed", "details": {
+        "status": "conflict", "reason": "guard_changed",
+    }}
+    state["pending"] = [live_command, queued_command]
+    state["flight"] = live_flight
+    state["rejected"] = {
+        "base": copy.deepcopy(state["base"]), "commands": [rejected_command],
+        "flight": {"path": session.path, "body": request_bytes(saved_body(rejected_command)).decode(),
+                   "key": "legacy-rejected-key", "count": 1, "fence": "legacy-fence"},
+        "failure": failure, "commit_options": None, "evaluation": None,
+    }
+    session.outbox.write(state)
+    expected_body = live_flight["body"].encode()
+    expected_queue = copy.deepcopy(state["pending"])
+
+    reopened = open_session(connected)
+    migrated = reopened._state()
+    assert migrated["flight"] == live_flight
+    assert migrated["flight"]["body"].encode() == expected_body
+    assert migrated["pending"] == expected_queue
+    assert not migrated.get("rejected")
+    assert len(migrated["pending_changes"]) == 1
+    record = next(iter(migrated["pending_changes"].values()))
+    assert record["failure"] == failure
+    assert record["parts"][0]["commands"] == [rejected_command]
+
+    reopened.flush()
+
+    assert generated.calls == [(expected_body, "live-unknown-key")]
+    after_retry = json.loads(path.read_bytes())
+    assert after_retry["pending"] == [queued_command]
+    assert after_retry["flight"] is None
+    assert after_retry["pending_changes"] == migrated["pending_changes"]
+
+
 def test_failed_refusal_persistence_keeps_exact_flight_for_restart(connected, monkeypatch):
     from astrid.sdk.timeline import outbox
 
