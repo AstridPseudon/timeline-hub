@@ -48,7 +48,9 @@ def _close(path, record, session, entry, how):
         saved = state.get("pending_changes", {}).get(record["id"]) if isinstance(state, dict) else None
         if saved is None:
             return record
-        if saved.get("state") == "pending":
+        if (saved.get("state") == "pending"
+                and saved.get("part", 0) == record.get("part", 0)
+                and receipt not in saved.get("receipts", [])):
             index = saved.get("part", 0)
             parts = saved.get("parts") or []
             saved.setdefault("receipts", []).append(receipt)
