@@ -792,11 +792,16 @@ class Timeline(Checkout):
         raise TimelineEditError(f"no pending change with id or key {ref!r}")
 
     def pending_show(self, ref):
-        """Return a saved pending record, retrying best-effort conflict enrichment."""
-        with self.session.outbox.locked():
-            state = self.session._state()
-            record = copy.deepcopy(self._pending_record(ref, state))
-        if (record.get("state") == "pending"
+        """Return a visible saved record, enriching conflicts only in this actor's outbox."""
+        actors = "self" if getattr(self.session, "_explicit_outbox", False) else "all"
+        matches = [(path, record) for path, record in self._pending_records_with_paths(actors)
+                   if record.get("id") == ref or record.get("key") == ref]
+        if not matches:
+            raise TimelineEditError(f"no pending change with id or key {ref!r}")
+        if len(matches) > 1:
+            raise TimelineEditError(f"pending key {ref!r} is ambiguous; use a pending id")
+        path, record = matches[0]
+        if (path == self.session.outbox.path and record.get("state") == "pending"
                 and (record.get("failure", {}).get("details") or {}).get("status") == "conflict"
                 and (not record.get("clash") or record["clash"].get("receipts") is None)):
             record = _pending_clash(self.session, record)
