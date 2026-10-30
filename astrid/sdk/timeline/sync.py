@@ -1075,7 +1075,7 @@ class TimelineSession:
                      and body["project_id"] == self.project_id and body["timeline_id"] == self.timeline_id
                      and body["base_revision_id"] == state["base"]["revision_id"]
                      and body["base_publication_id"] == state["base"]["publication_id"]
-                     and (key is None or key == flight.get("logical_key", flight["key"]))
+                     and (key is None or key in (flight["key"], flight.get("logical_key")))
                      and body.get("dry_run", False) == dry_run)
         except (KeyError, TypeError, ValueError) as exc:
             raise TimelineEditError("invalid in-flight request; original intent retained") from exc
