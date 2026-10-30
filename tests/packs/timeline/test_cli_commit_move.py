@@ -152,7 +152,7 @@ def test_status_and_discard_preserve_lost_ack_flight_truthfully(command, capsys)
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
     assert status == {
         "status": "in_flight", "outcome": "unknown", "key": before["flight"]["key"],
-        "command_count": before["flight"]["count"],
+        "command_count": before["flight"]["count"], "pending_changes": 0,
     }
 
     assert run("discard", "t", "--project", "p") == 0
@@ -215,7 +215,7 @@ def test_status_and_discard_report_and_clear_rejected_commands(command, capsys):
 
     assert run("status", "t", "--project", "p", "--json") == 0
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
-    assert status == {"status": "rejected", "command_count": 1}
+    assert status == {"status": "rejected", "command_count": 1, "pending_changes": 0}
 
     assert run("discard", "t", "--project", "p") == 0
     output = capsys.readouterr().out
@@ -324,7 +324,7 @@ def test_cli_final_refusal_can_be_reviewed_discarded_and_replanned(command, caps
     assert len(rejected["rejected"]["commands"]) == 1
     assert run("status", "t", "--project", "p", "--json") == 0
     assert json.loads(capsys.readouterr().out)["data"]["connected_session"] == {
-        "status": "rejected", "command_count": 1,
+        "status": "rejected", "command_count": 1, "pending_changes": 0,
     }
     assert run("status", "t", "--project", "p", "--text") == 0
     assert "last request was refused" in capsys.readouterr().out
@@ -418,7 +418,7 @@ def test_discard_clears_unsent_connected_commands(command, capsys):
 
     assert run("status", "t", "--project", "p", "--json") == 0
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
-    assert status == {"status": "pending", "command_count": 1}
+    assert status == {"status": "pending", "command_count": 1, "pending_changes": 0}
 
     assert run("discard", "t", "--project", "p") == 0
     assert "discarded recoverable connected-session commands" in capsys.readouterr().out
