@@ -5,6 +5,7 @@ import copy
 import hashlib
 import uuid
 from collections.abc import Mapping
+from datetime import datetime, timezone
 from typing import Any, cast
 
 from ._common import PARENT_SHOT, TimelineEditError
@@ -527,6 +528,7 @@ class Timeline(Checkout):
                     raise TimelineEditError("retry the original function idempotency key")
                 idempotency_key = logical_key
         if state["pending"] or state["flight"] is not None:
+            pending_id = clash = None
             # A known conflict may be recomputed; every other outcome must first
             # reconcile the exact original request, without invoking user code.
             conflict = state.get("conflict")
@@ -539,6 +541,7 @@ class Timeline(Checkout):
                                                 release_conflict=not function)
                 except CommitConflict as exc:
                     conflict = exc.failure
+                    pending_id, clash = getattr(exc, "pending_id", None), getattr(exc, "clash", None)
                     with self.session.outbox.locked():
                         state = self.session._state()
                         evaluation = state.get("evaluation") or evaluation
@@ -549,7 +552,8 @@ class Timeline(Checkout):
             if not function or evaluation.get("kind") != "function" or count >= 3:
                 raise CommitConflict(conflict, attempts=count if function and count >= 3 else None,
                                      label=commit_label, timeline_id=self.session.timeline_id,
-                                     project_id=self.session.project_id)
+                                     project_id=self.session.project_id,
+                                     pending_id=pending_id, clash=clash)
             base = _pin(conflict["details"]["current"])
         else:
             if not function and state["base"] != self._basis:
@@ -601,7 +605,8 @@ class Timeline(Checkout):
                         raise CommitConflict(exc.failure, attempts=count, label=commit_label,
                                              timeline_id=self.session.timeline_id,
                                              project_id=self.session.project_id,
-                                             pending_id=exc.pending_id, clash=exc.clash) from exc
+                                             pending_id=getattr(exc, "pending_id", None),
+                                             clash=getattr(exc, "clash", None)) from exc
                     raise
                 base = _pin(exc.failure["details"]["current"])
                 with self.session.outbox.locked():
@@ -645,7 +650,9 @@ class Timeline(Checkout):
             if exc.failure.get("details", {}).get("status") == "conflict":
                 raise CommitConflict(exc.failure, label=label, fixed_list=True,
                                      timeline_id=self.session.timeline_id,
-                                     project_id=self.session.project_id) from exc
+                                     project_id=self.session.project_id,
+                                     pending_id=getattr(exc, "pending_id", None),
+                                     clash=getattr(exc, "clash", None)) from exc
             raise
         if not result.get("imports"):
             imports = _imports_in_commands(commands)
@@ -680,15 +687,46 @@ class Timeline(Checkout):
 
     def pending_list(self, *, all=False):
         """List this timeline's saved refused edits."""
-        return self.session.pending_list(all=all)
+        with self.session.outbox.locked():
+            state = self.session._state()
+            records = state.get("pending_changes", {})
+            visible = [copy.deepcopy(record) for record in records.values()
+                       if all or record.get("state") in {"pending", "committing"}]
+        return sorted(visible, key=lambda record: (record.get("created_at", ""), record.get("id", "")))
+
+    def _pending_record(self, ref, state):
+        records = state.get("pending_changes", {})
+        if ref in records:
+            return records[ref]
+        matches = [record for record in records.values() if record.get("key") == ref]
+        if len(matches) == 1:
+            return matches[0]
+        if len(matches) > 1:
+            raise TimelineEditError(f"pending key {ref!r} is ambiguous; use a pending id")
+        raise TimelineEditError(f"no pending change with id or key {ref!r}")
 
     def pending_show(self, ref):
         """Return the saved pending record as stored in the outbox."""
-        return self.session.pending_show(ref)
+        with self.session.outbox.locked():
+            state = self.session._state()
+            return copy.deepcopy(self._pending_record(ref, state))
 
     def pending_drop(self, ref, *, reason=None):
         """Mark a saved pending edit dropped without deleting its record."""
-        return self.session.pending_drop(ref, reason=reason)
+        if reason is not None and not isinstance(reason, str):
+            raise TimelineEditError("pending drop reason must be text")
+        with self.session.outbox.locked():
+            state = self.session._state()
+            record = self._pending_record(ref, state)
+            if record.get("state") not in {"pending", "dropped"}:
+                raise TimelineEditError(f"cannot drop pending change in state {record.get('state')!r}")
+            if record.get("state") != "dropped":
+                record["state"] = "dropped"
+                record["rev"] = int(record.get("rev", 0)) + 1
+                record["updated_at"] = datetime.now(timezone.utc).isoformat()
+                record["dropped_reason"] = reason
+                self.session.outbox.write(state)
+            return copy.deepcopy(record)
 
     def save(self, *args, **kwargs):
         raise TimelineEditError("use commit(label) to save a Runtime timeline")

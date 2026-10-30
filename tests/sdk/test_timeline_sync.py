@@ -532,17 +532,17 @@ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(con
     generated.bundles["peer"] = peer.bundle
     generated.head = {"revision_id": "peer", "publication_id": "peer-publication"}
     generated.publications["peer"] = "peer-publication"
-    with pytest.raises(CommitConflict) as clash:
+    with pytest.raises(CommitConflict):
         session.flush()
     state = json.loads(path.read_bytes())
     assert state["flight"] is None and state["pending"] == []
-    saved = next(iter(state["pending_changes"].values()))
-    assert saved["failure"]["details"]["status"] == "conflict"
-    assert saved["parts"][0]["commands"]
-    assert clash.value.pending_id == saved["id"]
-    assert clash.value.clash["pending_id"] == saved["id"]
-    assert clash.value.clash["next"] == f'tl.rebase("{saved["id"]}")'
+    assert state["rejected"]["failure"]["details"]["status"] == "conflict"
+    assert state["rejected"]["commands"]
     assert not generated.accepted
+    with session.outbox.locked():
+        state = session._state()
+        state.pop("rejected")
+        session.outbox.write(state)
     session.queue_move("parent/clip:b", 6)
     generated.refusal = ConnectionError("connection unavailable")
     with pytest.raises(WorkspaceClientError) as unknown:
@@ -959,11 +959,10 @@ def test_dependent_suffix_conflict_preserves_original_guards_and_identity(connec
         open_session(connected).flush(idempotency_key="b")
     state = json.loads(path.read_bytes())
     assert state["pending"] == [] and state["flight"] is None
-    saved = next(iter(state["pending_changes"].values()))
-    assert saved["parts"][0]["commands"] == [original]
-    assert saved["parts"][0]["base"] == {"revision_id": "r1", "publication_id": "pub1"}
-    assert saved["failure"]["details"]["status"] == "conflict"
-    assert len(saved["parts"]) == 1
+    assert state["rejected"]["commands"] == [original]
+    assert state["rejected"]["failure"]["details"]["status"] == "conflict"
+    body = json.loads(state["rejected"]["flight"]["body"])
+    assert body["commands"] == [original] and body["base_revision_id"] == "r1"
     before = path.read_bytes()
     with pytest.raises(TimelineEditError, match="no pending"):
         session.flush(idempotency_key="replacement")

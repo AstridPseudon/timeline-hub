@@ -11,7 +11,6 @@ import json
 import re
 import shlex
 import uuid
-from datetime import datetime, timezone
 from urllib.parse import quote
 
 from astrid.core.receipts.canonical import canonical_json
@@ -23,10 +22,8 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 
 class CommitConflict(TimelineEditError):
     def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
-                 timeline_id=None, project_id=None, pending_id=None, clash=None):
+                 timeline_id=None, project_id=None):
         self.failure = copy.deepcopy(failure)
-        self.pending_id = pending_id
-        self.clash = copy.deepcopy(clash)
         from ._commit_wording import present_failure
 
         self.presentation = present_failure(self.failure)
@@ -50,94 +47,7 @@ class CommitConflict(TimelineEditError):
         self.fix = self.presentation["fix"]
         self.outcome = self.presentation["outcome"]
         self.cause = self.presentation["cause"]
-        if self.pending_id is not None:
-            self.presentation["pending_id"] = self.pending_id
-            label_text = (self.clash or {}).get("label") or label or "Timeline edit"
-            summary = (f'Someone else changed this timeline after your edit was made, so '
-                       f'"{label_text}" was not committed. Your edit is saved as '
-                       f'{self.pending_id}; nothing is lost.')
-            self.presentation.update(headline=summary, detail=summary,
-                                     fix=f'tl.rebase("{self.pending_id}")', outcome="conflict")
-        if self.clash is not None:
-            self.presentation["clash"] = copy.deepcopy(self.clash)
-            self.presentation["next"] = self.clash.get("next")
-        self.headline = self.presentation["headline"]
-        self.detail = self.presentation["detail"]
-        self.fix = self.presentation["fix"]
-        self.outcome = self.presentation["outcome"]
-        self.cause = self.presentation["cause"]
-        super().__init__(f"{self.headline} {self.fix}")
-
-
-def _utc_now():
-    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-
-
-def _pending_record(state, failure):
-    flight = state["flight"]
-    body = json.loads(flight["body"])
-    count = flight.get("count", len(body.get("commands", [])))
-    flight_commands = body.get("commands", [])
-    commands = state.get("pending", flight_commands)
-    options = {key: copy.deepcopy(body[key]) for key in ("label", "steps", "merge", "reads") if key in body}
-    if not options:
-        options = copy.deepcopy(state.get("commit_options") or {})
-    logical_key = flight.get("logical_key")
-    if logical_key is None and flight.get("explicit_key"):
-        logical_key = flight.get("key")
-    generated = logical_key is None
-    key = logical_key or f"clash-{uuid.uuid4().hex[:12]}"
-    now = _utc_now()
-    part = {"base": {"revision_id": body["base_revision_id"],
-                     "publication_id": body["base_publication_id"]},
-            "commands": copy.deepcopy(flight_commands),
-            "commit_options": options,
-            "rationale": copy.deepcopy(body.get("rationale")),
-            "media_input": copy.deepcopy(flight.get("media_input")),
-            "imports": copy.deepcopy(flight.get("imports", [])),
-            "evaluation": copy.deepcopy(flight.get("evaluation", state.get("evaluation")))}
-    parts = [part]
-    suffix = commands[count:]
-    if suffix:
-        parts.append({"base": copy.deepcopy(state["base"]), "commands": copy.deepcopy(suffix),
-                      "commit_options": copy.deepcopy(state.get("commit_options") or options),
-                      "rationale": copy.deepcopy(state.get("rationale")),
-                      "media_input": copy.deepcopy(state.get("media_input")),
-                      "imports": copy.deepcopy(state.get("media_imports", [])),
-                      "evaluation": copy.deepcopy(state.get("evaluation"))})
-    record_id = f"pc_{uuid.uuid4().hex[:12]}"
-    return {"id": record_id, "state": "pending", "rev": 1, "key": key,
-            "key_generated": generated, "label": options.get("label", "Timeline edit"),
-            "origin": "function" if (part["evaluation"] or {}).get("kind") == "function" else "list",
-            "parts": parts, "part": 0, "failure": copy.deepcopy(failure),
-            "head": copy.deepcopy(failure.get("details", {}).get("current")),
-            "choices": {}, "candidate": None, "flight_fence": None, "receipts": [],
-            "versions": [], "created_at": now, "updated_at": now, "dropped_reason": None}
-
-
-def _migrate_rejected(state):
-    rejected = state.get("rejected")
-    failure = rejected.get("failure") if isinstance(rejected, dict) else None
-    details = failure.get("details") if isinstance(failure, dict) else None
-    if not isinstance(details, dict) or details.get("status") != "conflict":
-        return False
-    flight = rejected.get("flight")
-    if not isinstance(flight, dict):
-        return False
-    # Reconstitute the released request in the same record format as a fresh refusal.
-    state["flight"] = copy.deepcopy(flight)
-    state["pending"] = copy.deepcopy(rejected.get("commands", []))
-    state["base"] = copy.deepcopy(rejected.get("base", state.get("base")))
-    state["commit_options"] = copy.deepcopy(rejected.get("commit_options"))
-    state["evaluation"] = copy.deepcopy(rejected.get("evaluation"))
-    state.setdefault("pending_changes", {})
-    record = _pending_record(state, failure)
-    state["pending_changes"][record["id"]] = record
-    state["flight"] = None
-    state["pending"] = []
-    for key in ("conflict", "commit_options", "evaluation", "rationale", "media_input", "media_imports", "rejected"):
-        state.pop(key, None)
-    return True
+        super().__init__(f"{self.headline}. {self.fix}")
 
 
 class CommitOutcomeUnknown(TimelineEditError, WorkspaceClientError):
@@ -307,8 +217,6 @@ class TimelineSession:
                 if state is not None:
                     if state["scope"] != scope:
                         raise TimelineEditError("outbox belongs to a different realm, actor, project or timeline")
-                    if _migrate_rejected(state):
-                        session.outbox.write(state)
                     if state["pending"] or state["flight"] is not None:
                         session._state()
                         if base is not None and state["base"] != base:
@@ -335,55 +243,6 @@ class TimelineSession:
         }:
             raise TimelineEditError("outbox identity changed; reconnect to its original realm and actor")
         return state
-
-    def pending_list(self, *, all=False):
-        """List this outbox's pending changes; include tombstones when requested."""
-        with self.outbox.locked():
-            state = self._state()
-            if _migrate_rejected(state):
-                self.outbox.write(state)
-            records = state.setdefault("pending_changes", {})
-            visible = [copy.deepcopy(record) for record in records.values()
-                       if all or record.get("state") in {"pending", "committing"}]
-        return sorted(visible, key=lambda record: (record.get("created_at", ""), record.get("id", "")))
-
-    def _pending_record(self, ref, state):
-        records = state.setdefault("pending_changes", {})
-        if ref in records:
-            return records[ref]
-        matches = [record for record in records.values() if record.get("key") == ref]
-        if len(matches) == 1:
-            return matches[0]
-        if len(matches) > 1:
-            raise TimelineEditError(f"pending key {ref!r} is ambiguous; use a pending id")
-        raise TimelineEditError(f"no pending change with id or key {ref!r}")
-
-    def pending_show(self, ref):
-        """Return the stored pending record without diagnosis or transformation."""
-        with self.outbox.locked():
-            state = self._state()
-            if _migrate_rejected(state):
-                self.outbox.write(state)
-            return copy.deepcopy(self._pending_record(ref, state))
-
-    def pending_drop(self, ref, *, reason=None):
-        """Explicitly tombstone a saved change while retaining its exact commands."""
-        if reason is not None and not isinstance(reason, str):
-            raise TimelineEditError("pending drop reason must be text")
-        with self.outbox.locked():
-            state = self._state()
-            if _migrate_rejected(state):
-                self.outbox.write(state)
-            record = self._pending_record(ref, state)
-            if record.get("state") not in {"pending", "dropped"}:
-                raise TimelineEditError(f"cannot drop pending change in state {record.get('state')!r}")
-            if record.get("state") != "dropped":
-                record["state"] = "dropped"
-                record["rev"] = int(record.get("rev", 0)) + 1
-                record["updated_at"] = _utc_now()
-                record["dropped_reason"] = reason
-                self.outbox.write(state)
-            return copy.deepcopy(record)
 
     def _bundle(self, state, extra_commands=()):
         """Project an authenticated capture without exposing its canonical cache."""
@@ -784,6 +643,14 @@ class TimelineSession:
         def prepare(state):
             if state != expected_state:
                 raise TimelineEditError("outbox changed during evaluation; nothing was submitted")
+            rejected = state.get("rejected")
+            rejected_failure = rejected.get("failure") if isinstance(rejected, dict) else None
+            rejected_details = rejected_failure.get("details") if isinstance(rejected_failure, dict) else None
+            if isinstance(rejected_details, dict) and rejected_details.get("status") == "conflict":
+                if state["pending"]:
+                    raise TimelineEditError("pending dependent commands require revalidation before discarding the rejected conflict")
+                raise CommitConflict(rejected_failure, fixed_list=True,
+                                     timeline_id=self.timeline_id, project_id=self.project_id)
             if state["pending"] or state["flight"] is not None:
                 if state.get("conflict", {}).get("details", {}).get("status") != "conflict":
                     raise TimelineEditError("retry the original in-flight request before another edit")
@@ -877,7 +744,6 @@ class TimelineSession:
             details = getattr(exc, "details", {})
             if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
-                pending_record = None
                 with self.outbox.locked():
                     state = self._state()
                     if state["flight"] == flight:
@@ -903,35 +769,26 @@ class TimelineSession:
                             state.pop("media_input", None)
                         else:
                             if release_conflict:
-                                state.setdefault("pending_changes", {})
-                                record = _pending_record(state, failure)
-                                state["pending_changes"][record["id"]] = record
-                                pending_record = copy.deepcopy(record)
+                                state["rejected"] = {
+                                    "base": copy.deepcopy(state["base"]),
+                                    "commands": copy.deepcopy(state["pending"]),
+                                    "flight": copy.deepcopy(flight),
+                                    "failure": copy.deepcopy(failure),
+                                    "commit_options": copy.deepcopy(state.get("commit_options")),
+                                    "evaluation": copy.deepcopy(state.get("evaluation")),
+                                }
                                 state["pending"] = []
                                 state["flight"] = None
                                 state.pop("conflict", None)
                                 state.pop("commit_options", None)
                                 state.pop("evaluation", None)
-                                state.pop("rationale", None)
-                                state.pop("media_input", None)
                             else:
                                 # Function commits retain the known conflict only
                                 # while bounded reevaluation remains available.
                                 state["conflict"] = failure
                         self.outbox.write(state)
-                pending_id = pending_record.get("id") if pending_record else None
-                clash = None
-                if pending_record is not None:
-                    clash = {"pending_id": pending_id, "label": pending_record["label"],
-                             "key": pending_record["key"], "origin": pending_record["origin"],
-                             "base": copy.deepcopy(pending_record["parts"][0]["base"]),
-                             "head": copy.deepcopy(pending_record["head"]),
-                             "runtime": {"reason": details.get("reason"),
-                                         "conflicts": copy.deepcopy(details.get("conflicts", []))},
-                             "next": f'tl.rebase("{pending_id}")'}
                 raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
-                                     timeline_id=self.timeline_id, project_id=self.project_id,
-                                     pending_id=pending_id, clash=clash) from exc
+                                     timeline_id=self.timeline_id, project_id=self.project_id) from exc
             raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc  # Keep the durable flight byte-for-byte retryable.
         try:
             data, receipt = _ack(result, body, flight, self.identity)
