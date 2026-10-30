@@ -9,12 +9,11 @@ import copy
 import hashlib
 import json
 import sys
-from types import ModuleType
 
 import pytest
 
 from astrid.sdk import timeline
-from astrid.sdk.timeline import api, commit_session
+from astrid.sdk.timeline import api, commit_session, retry as retry_module
 from astrid.sdk.timeline.commit_session import _changed_ranges
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commands import execute
@@ -382,9 +381,10 @@ def test_three_evaluation_bound_saves_function_record(connected, monkeypatch):
 def test_retry_delegates_pending_ref_and_retained_function(connected, monkeypatch):
     tl = opened(connected)
     calls = []
-    retry_module = ModuleType("astrid.sdk.timeline.retry")
-    retry_module.retry = lambda owner, ref, fn=None: calls.append((owner, ref, fn)) or "retried"
-    monkeypatch.setitem(sys.modules, retry_module.__name__, retry_module)
+    monkeypatch.setattr(
+        retry_module, "retry",
+        lambda owner, ref, fn=None: calls.append((owner, ref, fn)) or "retried",
+    )
 
     def edit(working):
         working.move("parent/clip:a", 9)
@@ -399,9 +399,10 @@ def test_retry_delegates_pending_ref_and_retained_function(connected, monkeypatc
 def test_commit_retry_preview_delegates_to_retry_module(connected, monkeypatch):
     tl = opened(connected)
     calls = []
-    retry_module = ModuleType("astrid.sdk.timeline.retry")
-    retry_module.commit_preview = lambda owner, preview: calls.append((owner, preview)) or "committed"
-    monkeypatch.setitem(sys.modules, retry_module.__name__, retry_module)
+    monkeypatch.setattr(
+        retry_module, "commit_preview",
+        lambda owner, preview: calls.append((owner, preview)) or "committed",
+    )
     preview = {"status": "preview", "data": {"retry": {"pending_id": "pc-1", "token": "t"}}}
 
     assert tl.commit(preview) == "committed"
@@ -416,9 +417,10 @@ def test_commit_retry_preview_delegates_to_retry_module(connected, monkeypatch):
 def test_commit_retry_preview_rejects_extra_options(connected, monkeypatch, options):
     tl = opened(connected)
     calls = []
-    retry_module = ModuleType("astrid.sdk.timeline.retry")
-    retry_module.commit_preview = lambda owner, preview: calls.append((owner, preview)) or "committed"
-    monkeypatch.setitem(sys.modules, retry_module.__name__, retry_module)
+    monkeypatch.setattr(
+        retry_module, "commit_preview",
+        lambda owner, preview: calls.append((owner, preview)) or "committed",
+    )
     preview = {"status": "preview", "data": {"retry": {"pending_id": "pc-1", "token": "t"}}}
 
     with pytest.raises(TimelineEditError, match="retry preview commits do not accept"):
