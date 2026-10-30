@@ -96,6 +96,7 @@ def _connected_outbox(parsed: argparse.Namespace, project_id: str, timeline_id: 
             not isinstance(rejected, Mapping) or not isinstance(rejected.get("commands"), list)
         )):
             return outbox, {"status": "invalid"}, scope
+        status_count = sum(r.get("state") in {"pending", "committing"} for r in state.get("pending_changes", {}).values())
         flight = state.get("flight")
         if flight is not None:
             if not _valid_replay_flight(state, scope, outbox):
@@ -121,6 +122,7 @@ def _connected_outbox(parsed: argparse.Namespace, project_id: str, timeline_id: 
             status = {"status": "clear"}
         if rejected and status["status"] != "rejected":
             status["rejected_command_count"] = len(rejected["commands"])
+        status["pending_changes"] = status_count
         return outbox, status, scope
     except (AttributeError, OSError, ValueError, TypeError):
         return None, None, None
@@ -137,6 +139,8 @@ def _discard_recoverable_outbox(outbox, expected_scope) -> str:
             return "invalid"
         if not isinstance(state, dict) or state.get("scope") != expected_scope:
             return "invalid"
+        from astrid.sdk.timeline._pending import migrate
+        migrated = migrate(state)
         flight = state.get("flight")
         pending = state.get("pending")
         if not isinstance(pending, list):
@@ -152,12 +156,12 @@ def _discard_recoverable_outbox(outbox, expected_scope) -> str:
                 state["pending"] = pending[:flight["count"]]
             # Keep current-flight metadata and prior acknowledged keys; only rejected
             # work and the unsent suffix are safe to discard.
-            changed = bool(state.get("rejected")) or len(state["pending"]) != len(pending)
+            changed = migrated or bool(state.get("rejected")) or len(state["pending"]) != len(pending)
             state.pop("rejected", None)
             if changed:
                 outbox.write(state)
             return "in_flight"
-        changed = bool(pending or state.get("rejected") or state.get("conflict"))
+        changed = bool(migrated or pending or state.get("rejected") or state.get("conflict"))
         state["pending"] = []
         for key in ("conflict", "commit_options", "evaluation", "rationale", "media_input", "rejected"):
             state.pop(key, None)

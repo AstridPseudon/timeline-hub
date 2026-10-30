@@ -22,7 +22,7 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 
 class CommitConflict(TimelineEditError):
     def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
-                 timeline_id=None, project_id=None):
+                 timeline_id=None, project_id=None, record=None):
         self.failure = copy.deepcopy(failure)
         from ._commit_wording import present_failure
 
@@ -42,6 +42,16 @@ class CommitConflict(TimelineEditError):
                 fix=(f'Run astrid timelines discard {timeline_id} --project {project_id}, '
                      'preview again with dry_run=True, then commit the reviewed commands.'),
             )
+        self.pending_id = record["id"] if record else None
+        self.clash = None
+        if record:
+            next_call = f'tl.rebase("{self.pending_id}")'
+            details = self.failure.get("details", {})
+            self.clash = {"pending_id": self.pending_id, "label": record["label"], "key": record["key"],
+                          "origin": record["origin"], "base": record["parts"][0]["base"],
+                          "head": record["head"], "runtime": {"reason": details.get("reason"),
+                          "conflicts": details.get("conflicts", [])}, "next": next_call}
+            self.presentation["fix"] = next_call
         self.headline = self.presentation["headline"]
         self.detail = self.presentation["detail"]
         self.fix = self.presentation["fix"]
@@ -217,6 +227,9 @@ class TimelineSession:
                 if state is not None:
                     if state["scope"] != scope:
                         raise TimelineEditError("outbox belongs to a different realm, actor, project or timeline")
+                    from ._pending import migrate
+                    if migrate(state):
+                        session.outbox.write(state)
                     if state["pending"] or state["flight"] is not None:
                         session._state()
                         if base is not None and state["base"] != base:
@@ -643,14 +656,6 @@ class TimelineSession:
         def prepare(state):
             if state != expected_state:
                 raise TimelineEditError("outbox changed during evaluation; nothing was submitted")
-            rejected = state.get("rejected")
-            rejected_failure = rejected.get("failure") if isinstance(rejected, dict) else None
-            rejected_details = rejected_failure.get("details") if isinstance(rejected_failure, dict) else None
-            if isinstance(rejected_details, dict) and rejected_details.get("status") == "conflict":
-                if state["pending"]:
-                    raise TimelineEditError("pending dependent commands require revalidation before discarding the rejected conflict")
-                raise CommitConflict(rejected_failure, fixed_list=True,
-                                     timeline_id=self.timeline_id, project_id=self.project_id)
             if state["pending"] or state["flight"] is not None:
                 if state.get("conflict", {}).get("details", {}).get("status") != "conflict":
                     raise TimelineEditError("retry the original in-flight request before another edit")
@@ -744,6 +749,7 @@ class TimelineSession:
             details = getattr(exc, "details", {})
             if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+                record = None
                 with self.outbox.locked():
                     state = self._state()
                     if state["flight"] == flight:
@@ -769,26 +775,19 @@ class TimelineSession:
                             state.pop("media_input", None)
                         else:
                             if release_conflict:
-                                state["rejected"] = {
-                                    "base": copy.deepcopy(state["base"]),
-                                    "commands": copy.deepcopy(state["pending"]),
-                                    "flight": copy.deepcopy(flight),
-                                    "failure": copy.deepcopy(failure),
-                                    "commit_options": copy.deepcopy(state.get("commit_options")),
-                                    "evaluation": copy.deepcopy(state.get("evaluation")),
-                                }
+                                from ._pending import retain
+                                record = retain(state, flight, failure)
                                 state["pending"] = []
                                 state["flight"] = None
-                                state.pop("conflict", None)
-                                state.pop("commit_options", None)
-                                state.pop("evaluation", None)
+                                for name in ("conflict", "commit_options", "evaluation", "rationale", "media_input", "media_imports"):
+                                    state.pop(name, None)
                             else:
                                 # Function commits retain the known conflict only
                                 # while bounded reevaluation remains available.
                                 state["conflict"] = failure
                         self.outbox.write(state)
                 raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
-                                     timeline_id=self.timeline_id, project_id=self.project_id) from exc
+                                     timeline_id=self.timeline_id, project_id=self.project_id, record=record) from exc
             raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc  # Keep the durable flight byte-for-byte retryable.
         try:
             data, receipt = _ack(result, body, flight, self.identity)

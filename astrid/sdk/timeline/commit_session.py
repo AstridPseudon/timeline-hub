@@ -210,6 +210,32 @@ class Timeline(Checkout):
     def open(cls, project=None, timeline=None, *, client=None, outbox_path=None):
         return open(project, timeline, client=client, outbox_path=outbox_path)
 
+    def pending_list(self, *, all=False):
+        with self.session.outbox.locked():
+            records = self.session._state().get("pending_changes", {})
+            return copy.deepcopy([record for record in records.values()
+                                  if all or record["state"] in {"pending", "committing"}])
+
+    def pending_show(self, ref):
+        from ._pending import resolve
+        with self.session.outbox.locked():
+            return copy.deepcopy(resolve(self.session._state(), ref))
+
+    def pending_drop(self, ref, *, reason=None):
+        from datetime import datetime, timezone
+        from ._pending import resolve
+        with self.session.outbox.locked():
+            state = self.session._state()
+            record = resolve(state, ref)
+            if record["state"] == "committing":
+                raise TimelineEditError("confirm the in-flight request before dropping it")
+            if record["state"] != "pending":
+                raise TimelineEditError("pending change is already closed")
+            record.update(state="dropped", dropped_reason=reason, rev=record["rev"] + 1,
+                          updated_at=datetime.now(timezone.utc).isoformat())
+            self.session.outbox.write(state)
+            return copy.deepcopy(record)
+
     def _adopt(self, bundle):
         self.bundle = copy.deepcopy(bundle)
         self._base_bundle = copy.deepcopy(bundle)
@@ -517,16 +543,6 @@ class Timeline(Checkout):
                 return replay
         with self.session.outbox.locked():
             state = self.session._state()
-        rejected = state.get("rejected")
-        rejected_failure = rejected.get("failure") if isinstance(rejected, Mapping) else None
-        rejected_details = rejected_failure.get("details") if isinstance(rejected_failure, Mapping) else None
-        if isinstance(rejected_details, Mapping) and rejected_details.get("status") == "conflict":
-            rejected_eval = rejected.get("evaluation") if isinstance(rejected, Mapping) else None
-            attempts = rejected_eval.get("count") if isinstance(rejected_eval, Mapping) and rejected_eval.get("kind") == "function" else None
-            raise CommitConflict(rejected_failure, attempts=attempts, fixed_list=True,
-                                 label=label_or_fn if isinstance(label_or_fn, str) else label,
-                                 timeline_id=self.session.timeline_id,
-                                 project_id=self.session.project_id)
         evaluation = state.get("evaluation") or {}
         count = evaluation.get("count", 0)
         if function and state["flight"] is not None and evaluation.get("kind") == "function":
@@ -610,7 +626,7 @@ class Timeline(Checkout):
                     if function and count >= 3:
                         raise CommitConflict(exc.failure, attempts=count, label=commit_label,
                                              timeline_id=self.session.timeline_id,
-                                             project_id=self.session.project_id) from exc
+                                             project_id=self.session.project_id, record=(self.session.pending_show(exc.pending_id) if exc.pending_id else None)) from exc
                     raise
                 base = _pin(exc.failure["details"]["current"])
                 with self.session.outbox.locked():
