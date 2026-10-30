@@ -37,7 +37,11 @@ def _record(timeline, ref):
     return found[0]
 
 
-def _close(path, record, session, publication, how):
+def _close(path, record, session, entry, how):
+    publication = entry.get("publication_id")
+    receipt = entry.get("receipt", {}).get("receipt_id") or publication
+    actor = entry.get("publisher")
+    base = _pin(entry)
     outbox = session.outbox if Path(path) == Path(session.outbox.path) else Outbox(Path(path))
     with outbox.locked():
         state = outbox.read()
@@ -47,12 +51,14 @@ def _close(path, record, session, publication, how):
         if saved.get("state") == "pending":
             index = saved.get("part", 0)
             parts = saved.get("parts") or []
+            saved.setdefault("receipts", []).append(receipt)
             if index + 1 < len(parts):
                 saved["part"] = index + 1
+                parts[index + 1]["base"] = copy.deepcopy(base)
                 saved["attempts"] = int(saved.get("attempts", 1))
             else:
                 saved["state"] = "landed"
-                saved["closed_by"] = {"actor_id": session.identity["actor_id"],
+                saved["closed_by"] = {"actor_id": actor,
                                        "publication_id": publication, "how": how}
             saved["rev"] = int(saved.get("rev", 0)) + 1
             saved["updated_at"] = datetime.now(timezone.utc).isoformat()
@@ -83,7 +89,7 @@ def _landed(timeline, path, record):
     publication = entry.get("publication_id")
     if publication is None:
         publication = entry.get("receipt", {}).get("receipt_id")
-    closed = _close(path, record, timeline.session, publication, "retry")
+    closed = _close(path, record, timeline.session, entry, "retry")
     actor = entry.get("publisher")
     label = record.get("label") or "Timeline edit"
     suffix = f" (by {actor})" if actor else ""
@@ -266,6 +272,10 @@ def commit_preview(timeline, result):
         raise ValueError("retry preview token is stale or invalid")
     current = next((record for record_path, record in timeline._pending_records_with_paths("all")
                     if record.get("id") == pending_id and str(record_path) == path), None)
+    if current is not None:
+        landed = _landed(timeline, Path(path), current)
+        if landed is not None:
+            return landed
     if (current is None or current.get("state") != "pending"
             or current.get("rev") != result.get("_retry_record_rev")
             or current.get("attempts", 1) != result.get("_retry_attempts")
@@ -278,6 +288,9 @@ def commit_preview(timeline, result):
     with timeline.session.outbox.locked():
         expected = timeline.session._state()
     part = _part(current)
+    expected_request = _request(current, part)
+    if request != expected_request:
+        raise ValueError("retry preview request no longer matches its saved part; preview it again")
     options = {key: copy.deepcopy(request[key]) for key in ("merge", "reads") if key in request}
     group_id = request.get("group_id", current["id"])
     try:
@@ -291,7 +304,7 @@ def commit_preview(timeline, result):
             expected_state=expected, base={"revision_id": request["base_revision_id"],
                                             "publication_id": request["base_publication_id"]},
             pending_id=pending_id, pending_path=path, pending_how="retry")
-        return submitted
+        return timeline._accepted(submitted)
     except Exception as exc:
         # Timeline.commit() reconciles durable unknown outcomes on the next call.
         if getattr(exc, "failure", {}).get("details", {}).get("status") != "conflict":
