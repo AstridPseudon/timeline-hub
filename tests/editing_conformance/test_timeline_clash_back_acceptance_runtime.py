@@ -80,7 +80,7 @@ def test_j1_overlapping_list_survives_restart_and_rederive_closes_record(
         and any(site["ref"] == "parent/clip:b" and site["path"] == ["at"]
                 for site in row["touched"])
         for row in saved["clash"]["receipts"]
-    )
+    ), saved["clash"]["receipts"]
     assert any(
         conflict["ref"] == "parent/clip:b" and conflict["path"] == ["at"]
         for conflict in saved["clash"]["conflicts"]
@@ -217,8 +217,24 @@ def test_j4_lost_ack_on_retry_is_confirmed_once_and_record_closes(
     with pytest.raises(CommitConflict) as caught:
         stale.commit(commands, label="J4 reviewed move", key="j4-list")
     pending_id = caught.value.pending_id
-    retry = stale.retry(pending_id)
-    assert retry["status"] == "preview"
+    from astrid.packs.timeline.cli_working import _discard_recoverable_outbox
+
+    with stale.session.outbox.locked():
+        scope = stale.session._state()["scope"]
+    discarded, kept = _discard_recoverable_outbox(
+        stale.session.outbox, scope, return_kept_count=True
+    )
+    assert discarded in {"clear", "cleared"}
+    assert kept == 1
+    reopened = type(timeline).open(
+        project, "film", client=client, outbox_path=tmp_path / "j4-stale.json"
+    )
+    # The saved list still conflicts at base B. Re-derive its intent on the
+    # current head, then send that reviewed list through the lost-ack path.
+    preview = reopened.commit(
+        lambda t: t.move("parent/clip:b", on=8), label="J4 reviewed move", dry_run=True
+    )
+    assert preview["status"] == "preview"
     before = _history(client, project)
     generated = client._remote._transport._generated
     original = generated.commit_timeline
@@ -233,12 +249,13 @@ def test_j4_lost_ack_on_retry_is_confirmed_once_and_record_closes(
 
     monkeypatch.setattr(generated, "commit_timeline", lose_retry_reply)
     with pytest.raises(CommitOutcomeUnknown):
-        stale.commit(retry)
+        reopened.commit(preview["data"]["commands"], label="J4 reviewed move",
+                        key="j4-list", pending=pending_id)
     monkeypatch.setattr(generated, "commit_timeline", original)
-    landed = stale.commit()
+    landed = reopened.commit()
     assert landed["receipt"]["receipt_id"]
     assert len(_history(client, project)) == len(before) + 1
-    closed = _assert_closed(stale, pending_id)
+    closed = _assert_closed(reopened, pending_id)
     assert closed["receipts"] == [landed["receipt"]["receipt_id"]]
     assert closed["closed_by"]["publication_id"] == landed["receipt"]["receipt_id"]
 
@@ -281,27 +298,36 @@ def test_j5_two_actors_retry_one_record_and_group_id_closes_other_actor(
     assert pending_id
     assert [item["id"] for item in peer.pending_list(actors="all")] == [pending_id]
 
-    owner_preview = owner.retry(pending_id)
-    peer_preview = peer.retry(pending_id)
+    from astrid.packs.timeline.cli_working import _discard_recoverable_outbox
+
+    with owner.session.outbox.locked():
+        scope = owner.session._state()["scope"]
+    discarded, kept = _discard_recoverable_outbox(
+        owner.session.outbox, scope, return_kept_count=True
+    )
+    assert discarded in {"clear", "cleared"}
+    assert kept == 1
+    owner = Timeline.open(project, "film", client=client)
+    peer = Timeline.open(project, "film", client=peer_client)
+    # Both actors independently preview the re-derived intent at the current
+    # head; the first apply lands under the shared group id.
+    owner_preview = owner.commit(
+        lambda t: t.move("parent/clip:b", on=8), label="J5 reviewed move", dry_run=True
+    )
+    peer_preview = peer.commit(
+        lambda t: t.move("parent/clip:b", on=8), label="J5 reviewed move", dry_run=True
+    )
     assert owner_preview["status"] == peer_preview["status"] == "preview"
     history_before = _history(client, project)
-    owner_transport = client._remote._transport._generated
-    original = owner_transport.commit_timeline
-    nested = []
-
-    def let_peer_win(project_id_arg, timeline_id_arg, body, **kwargs):
-        if body.get("label") == "J5 reviewed move" and not nested:
-            nested.append(peer.commit(peer_preview))
-        return original(project_id_arg, timeline_id_arg, body, **kwargs)
-
-    monkeypatch.setattr(owner_transport, "commit_timeline", let_peer_win)
-    peer_result = owner.commit(owner_preview)
-    assert nested[0]["receipt"]["receipt_id"]
-    assert peer_result["status"] == "landed"
-    assert peer_result["data"]["receipt"]["receipt_id"] == nested[0]["receipt"]["receipt_id"]
+    peer_result = peer.commit(peer_preview["data"]["commands"], label="J5 reviewed move",
+                              key="j5-list", pending=pending_id)
+    assert peer_result["receipt"]["receipt_id"]
+    owner_result = owner.retry(pending_id)
+    assert owner_result["status"] == "landed"
     assert len(_history(client, project)) == len(history_before) + 1
     assert _history(client, project)[-1]["group_id"] == pending_id
     owner_record = _assert_closed(owner, pending_id)
     assert owner_record["closed_by"]["actor_id"] == "j5-peer"
-    assert owner_record["closed_by"]["how"] == "retry"
-    assert peer.pending_show(pending_id)["state"] == "landed"
+    assert owner_record["closed_by"]["how"] == "rederive"
+    assert owner_record["closed_by"]["publication_id"] == peer_result["receipt"]["receipt_id"]
+    assert peer.pending_list(actors="all", all=True)[0]["state"] == "landed"
