@@ -477,7 +477,7 @@ class Timeline(Checkout):
         return result
 
     def commit(self, label_or_fn="Timeline edit", *, label=None, merge="fields", dry_run=False,
-               reads=None, key=None, idempotency_key=None):
+               reads=None, key=None, idempotency_key=None, pending=None):
         """Accept staged edits, a fixed command list, or evaluate ``fn`` up to three times.
 
         Only an explicit conflict permits reevaluation. Calling again after a
@@ -493,6 +493,8 @@ class Timeline(Checkout):
             raise TimelineEditError("pass only one of key or idempotency_key")
         if key is not None:
             idempotency_key = key
+        pending_target = self._resolve_pending(pending) if pending is not None else None
+        pending_id, pending_path = pending_target if pending_target is not None else (None, None)
         if merge not in {"fields", "atomic"}:
             raise TimelineEditError("merge must be fields or atomic")
         if dry_run:
@@ -511,7 +513,8 @@ class Timeline(Checkout):
             raise TimelineEditError("commit requires a nonempty label or a function")
         if commands is not None:
             return self._commit_commands(commands, label=commit_label, merge=merge, dry_run=dry_run,
-                                         reads=reads, idempotency_key=idempotency_key)
+                                         reads=reads, idempotency_key=idempotency_key,
+                                         pending_id=pending_id, pending_path=pending_path)
         if function:
             replay = self.session.resolve_acknowledged(idempotency_key, dry_run=dry_run)
             if replay is not None:
@@ -598,8 +601,13 @@ class Timeline(Checkout):
                     evaluation={"kind": "function" if function else "label", "count": count,
                                 "media_cache": copy.deepcopy(working._media_cache),
                                 "identity_cache": copy.deepcopy(working._identity_cache)},
+                    pending_id=pending_id,
+                    pending_path=pending_path,
+                    pending_how="rerun" if function else "rederive",
                 )
             except CommitConflict as exc:
+                if exc.pending_id is not None and working is self:
+                    self._adopt(self._base_bundle)
                 if not function or exc.failure["details"].get("status") != "conflict" or count >= 3:
                     if function and count >= 3:
                         raise CommitConflict(exc.failure, attempts=count, label=commit_label,
@@ -626,7 +634,50 @@ class Timeline(Checkout):
                 result["data"]["summary"] = result["summary"]
             return self._accepted(result)
 
-    def _commit_commands(self, commands, *, label, merge, dry_run, reads, idempotency_key):
+    def _pending_records_with_paths(self, actors):
+        if actors not in {"self", "all"}:
+            raise TimelineEditError("actors must be 'self' or 'all'")
+        with self.session.outbox.locked():
+            state = self.session._state()
+            scope = {key: state["scope"][key] for key in ("realm_id", "project_id", "timeline_id")}
+            paths = [self.session.outbox.path]
+            if actors == "all" and not getattr(self.session, "_explicit_outbox", False):
+                paths = sorted(self.session.outbox.path.parent.glob("*.json"))
+        visible, seen = [], set()
+        for path in paths:
+            from astrid.sdk.timeline.outbox import Outbox
+
+            outbox = self.session.outbox if path == self.session.outbox.path else Outbox(path)
+            with outbox.locked():
+                saved = outbox.read()
+                if not isinstance(saved, dict) or not isinstance(saved.get("scope"), dict):
+                    continue
+                if any(saved["scope"].get(key) != value for key, value in scope.items()):
+                    continue
+                for record in saved.get("pending_changes", {}).values():
+                    if not isinstance(record, dict) or record.get("id") in seen:
+                        continue
+                    seen.add(record.get("id"))
+                    visible.append((path, copy.deepcopy(record)))
+        return visible
+
+    def _resolve_pending(self, ref):
+        if not isinstance(ref, str) or not ref:
+            raise TimelineEditError("pending must be a pending id or key")
+        actors = "self" if getattr(self.session, "_explicit_outbox", False) else "all"
+        matches = [(path, record) for path, record in self._pending_records_with_paths(actors)
+                   if record.get("id") == ref or record.get("key") == ref]
+        if not matches:
+            raise TimelineEditError(f"no pending change with id or key {ref!r}")
+        if len(matches) > 1:
+            raise TimelineEditError(f"pending key {ref!r} is ambiguous; use a pending id")
+        path, record = matches[0]
+        if record.get("state") != "pending":
+            raise TimelineEditError(f"cannot close pending change in state {record.get('state')!r}")
+        return record["id"], str(path)
+
+    def _commit_commands(self, commands, *, label, merge, dry_run, reads, idempotency_key,
+                         pending_id=None, pending_path=None):
         """Submit an already captured list without rebuilding its guards or media pins."""
         if not commands:
             raise TimelineEditError("commit requires a nonempty command list")
@@ -646,7 +697,9 @@ class Timeline(Checkout):
             list_reads = [] if reads is None and merge == "fields" else reads
             result = self.session.submit(commands, label=label, steps=steps, merge=merge, reads=list_reads,
                                          idempotency_key=idempotency_key, dry_run=dry_run,
-                                         expected_state=state, base=state["base"])
+                                         expected_state=state, base=state["base"],
+                                         pending_id=pending_id, pending_path=pending_path,
+                                         pending_how="rederive")
         except CommitConflict as exc:
             if exc.failure.get("details", {}).get("status") == "conflict":
                 raise CommitConflict(exc.failure, label=label, fixed_list=True,
@@ -686,13 +739,11 @@ class Timeline(Checkout):
                            for command in data.get("commands", [])]
             data.setdefault("diff", {"changes": changes})
 
-    def pending_list(self, *, all=False):
+    def pending_list(self, *, all=False, actors="self"):
         """List this timeline's saved refused edits."""
-        with self.session.outbox.locked():
-            state = self.session._state()
-            records = state.get("pending_changes", {})
-            visible = [copy.deepcopy(record) for record in records.values()
-                       if all or record.get("state") in {"pending", "committing"}]
+        records = self._pending_records_with_paths(actors)
+        visible = [record for _, record in records
+                   if all or record.get("state") == "pending"]
         return sorted(visible, key=lambda record: (record.get("created_at", ""), record.get("id", "")))
 
     def _pending_record(self, ref, state):

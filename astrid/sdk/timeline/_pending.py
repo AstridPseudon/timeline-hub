@@ -31,20 +31,40 @@ def snapshot(state, flight, failure):
     generated = logical_key is None
     now = datetime.now(timezone.utc).isoformat()
     details = failure.get("details") or {}
-    return {"id": "pc_" + uuid.uuid4().hex[:12], "state": "pending", "rev": 1,
+    return {"id": "pc_" + uuid.uuid4().hex[:12], "state": "pending", "rev": 2,
             "key": logical_key or "clash-" + uuid.uuid4().hex[:12], "key_generated": generated,
             "label": body.get("label") or "Timeline edit",
             "origin": "function" if isinstance(evaluation, dict) and evaluation.get("kind") == "function" else "list",
             "parts": parts, "part": 0, "failure": copy.deepcopy(failure),
-            "head": copy.deepcopy(details.get("current")), "choices": {}, "candidate": None,
-            "flight_fence": None, "receipts": [], "versions": [],
+            "head": copy.deepcopy(details.get("current")), "diff": None, "attempts": 1,
+            "receipts": [], "closed_by": None, "versions": [],
             "created_at": now, "updated_at": now, "dropped_reason": None}
 
 
 def migrate(state):
+    changed = False
+    records = state.get("pending_changes")
+    if isinstance(records, dict):
+        for record in records.values():
+            if not isinstance(record, dict):
+                continue
+            legacy = {"choices", "candidate", "flight_fence"} & record.keys()
+            missing = {"attempts", "closed_by", "diff"} - record.keys()
+            invalid_state = record.get("state") == "committing"
+            if legacy or missing or invalid_state:
+                for key in legacy:
+                    record.pop(key, None)
+                record.setdefault("attempts", 1)
+                record.setdefault("closed_by", None)
+                record.setdefault("diff", None)
+                if invalid_state:
+                    record["state"] = "pending"
+                record["rev"] = int(record.get("rev", 0)) + 1
+                record["updated_at"] = datetime.now(timezone.utc).isoformat()
+                changed = True
     rejected = state.get("rejected")
     if not isinstance(rejected, dict) or rejected.get("failure", {}).get("details", {}).get("status") != "conflict":
-        return False
+        return changed
     saved = {**state, **{key: copy.deepcopy(rejected[key]) for key in
                         ("base", "commit_options", "evaluation") if key in rejected},
              "pending": copy.deepcopy(rejected["commands"])}
@@ -61,4 +81,4 @@ def clash(record):
             "head": copy.deepcopy(record["head"]),
             "runtime": {"reason": copy.deepcopy(details.get("reason")),
                         "conflicts": copy.deepcopy(details.get("conflicts", []))},
-            "next": f'tl.rebase("{record["id"]}")'}
+            "next": f'tl.retry("{record["id"]}")'}
