@@ -35,8 +35,8 @@ runtime owns every timeline and revision; change them only through the CLI or
 |---|---|
 | One move, trim or picture add you can name | Direct CLI: `timelines edit` |
 | Editing cuts as rows of a table | The sheet: `show --as sheet --native`, edit, `timelines apply` |
-| Anything with logic, several changes, audio, text or ripple | A Python function: `tl.commit(fn)` |
-| A reviewed set of exact changes that must not be recomputed | A Python list: `tl.commit(changes)` |
+| Anything with logic, several changes, audio, text or ripple | A Python function: `tl.commit(fn)` (the default) |
+| A reviewed set of exact changes that a person should approve | A Python list: preview, then `tl.commit(changes)` |
 
 If the edit needs an `if` or a `for`, write a function. Do not mix the CLI, the sheet and
 Python in one task; a preview and its list are one Python path.
@@ -174,21 +174,30 @@ r = tl.commit(changes, label="Recut", idempotency_key="recut-ep01")   # after ap
 
 The list applies exactly what was reviewed, on that one timeline; `tl.commit(recut)`
 re-evaluates on the newest timeline and may differ. The list is Python only and held by the caller; the SDK does not
-persist it. Keep `changes` until the person answers; if it is lost, run the preview again. For a series, apply the reviewed list (not a
-rerun) to the approved episode; run the function for the others.
+persist it. Keep `changes` until the person answers; if it is lost, run the preview again. Use functions by default;
+use a reviewed list when a person should approve the exact values before they are sent.
 
 ## When someone else edits
 
 Runtime merges changes that do not touch the same things (`status` is then
 `merged`). A **clash** is a commit that landed after your base and overlaps yours.
 
-- **A function reruns** on the newer timeline, up to three evaluations in total.
-  Other refusals do not rerun it.
-- **A list never reruns**: a clash raises `CommitConflict` at once; so does
-  a function's third clash. Do not retry in a loop (a series gets one bounded retry, below; otherwise only if the person asks); tell the person which
-  edit did not land, then run `timelines discard <timeline> --project
-  <project>` (the refused changes stay saved) before you edit or preview again.
-  Say what happened: "applied after one rerun because the timeline moved".
+- **What you'll see:** a clash raises `CommitConflict`. Its `err.clash["summary"]`
+  explains what changed, and the refused edit is saved as a pending change.
+- **Recover it:** call `r = tl.retry(err)`. For a function edit, this re-runs
+  the function on the current timeline and commits it when one of its bounded
+  attempts succeeds. For a reviewed list, it returns a preview. Show
+  `r["data"]["diff"]` for approval, then call `tl.commit(r)` to send that exact
+  request. The CLI path is `timelines retry <timeline> <id|key> --project
+  <project>` followed by `--commit TOKEN` after review.
+- **When to re-derive:** if `r["status"] == "re_derive"`, the reviewed list can
+  no longer apply safely. Run the code that produced it again on the newest
+  timeline, preview the new result, then commit with `pending=` set to the
+  saved record id. The record closes when the re-derived edit lands.
+- `timelines discard` drops the working copy and queued edits, but keeps saved
+  pending changes. Find records from any agent on this machine with
+  `timelines pending list <timeline> --project <project> --all-actors`; inspect
+  one with `timelines pending show` or mark it dropped with `pending drop`.
 
 ## Keys, retries and undo
 
@@ -222,15 +231,21 @@ for ep in episodes:                                      # "ep-001" … "ep-100"
         r = tl.commit(add_outro, label="Add outro", idempotency_key=f"outro-{ep}")
         record(ep, status=r["data"]["status"], receipt=r["receipt"]["receipt_id"])
     except CommitConflict as exc:                        # first: it is a TimelineEditError
-        record(ep, status="conflict", detail=str(exc))   # someone is editing it
+        try:
+            r = tl.retry(exc)                             # functions re-run; reviewed lists preview
+            record(ep, status=r["status"], detail=r.get("summary"),
+                   pending_id=r.get("pending_id"))
+        except CommitConflict as retry_exc:
+            record(ep, status="conflict", detail=str(retry_exc),
+                   pending_id=retry_exc.pending_id)
     except Exception as exc:                             # refused, or no verified reply
         record(ep, status="error", detail=str(exc))
 ```
 
-Continue past a clash and report it at the end. Backoff is bounded: after the
-loop, `discard` each clashed timeline, wait 30 s or more, retry it once, then
-stop and report; never retry in a tight loop. Rerunning the loop is safe:
-landed keys return their receipts (discard a clashed timeline first). To skip
+Continue past a clash and report it at the end. `tl.retry(exc)` gives a
+function a fresh bounded evaluation budget; a reviewed list returns a preview
+and must be committed explicitly. Rerunning the loop is safe:
+landed keys return their receipts. To skip
 a timeline, check first and record it: `if not any(c.id == "sponsor-card"
 for c in tl.clips()): record(ep, status="skipped"); continue`.
 
@@ -272,7 +287,7 @@ it says no reply could be verified. Messages read *what went wrong*, *where*, *w
 | No pending timeline edits | The function changed nothing; record it as skipped |
 | No clip/word matches a name | Check `show`; in a loop, skip that timeline |
 | The source file is too short for this length | Trim in, or choose a shorter hold |
-| The timeline changed (a list, or a third clash) | `timelines discard`; one bounded retry in a series, otherwise only when the person asks |
+| The timeline changed | `CommitConflict`; inspect `err.clash`, then recover with `tl.retry(err)` or `timelines retry` |
 | A previous request has an unknown outcome | Repeat the same call with the same key |
 
 ## Looking at the result

@@ -11,7 +11,7 @@ from astrid.core.cli.domain_output import DomainResult, print_result
 
 
 def _commit_conflict_message(parsed, details: Mapping[str, object]) -> str:
-    """Present the commit refusal with the same actor/discard-first guidance as the editor."""
+    """Present a clash with the saved-edit recovery route."""
     current = details.get("current")
     base = details.get("base")
     current_revision = current.get("revision_id") if isinstance(current, Mapping) else None
@@ -34,6 +34,13 @@ def _commit_conflict_message(parsed, details: Mapping[str, object]) -> str:
                 elif isinstance(path, list) and path:
                     changed.append("/".join(str(part) for part in path))
     changed_text = ", ".join(changed) if changed else "the changed timeline fields"
+    pending_id = details.get("pending_id")
+    if isinstance(pending_id, str) and pending_id:
+        retry = f"astrid timelines retry {parsed.ref} {pending_id} --project {parsed.project}"
+        return (f"not published: {actor} published {short_revision(current_revision)} after your checkout "
+                f"({short_revision(base_revision)}), and you both changed:\n  {changed_text}\n"
+                f"your edit is saved as {pending_id}; inspect it with `timelines pending show`, "
+                f"then recover with:\n  {retry}")
     return (
         f"not published: {actor} published {short_revision(current_revision)} after your checkout "
         f"({short_revision(base_revision)}), and you both changed:\n  {changed_text}\n"
@@ -52,6 +59,10 @@ def _document_error(parsed, exc: Exception, *, code: str | None = None) -> Domai
     if isinstance(failure, Mapping):
         details = dict(failure.get("details") or details)
         code = code or str(failure.get("code") or "timeline_commit_error")
+    if getattr(exc, "pending_id", None):
+        details["pending_id"] = exc.pending_id
+    if isinstance(getattr(exc, "clash", None), Mapping):
+        details["clash"] = copy.deepcopy(exc.clash)
     details.setdefault("path", "/file")
     details.setdefault("hint", "re-check out the detached document and retry with its exact base pair")
     details.setdefault(

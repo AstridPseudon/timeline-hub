@@ -3938,6 +3938,15 @@ def _configure_working_verb(name: str):
     return configure
 
 
+def _configure_pending_verb(name: str):
+    """Configure the saved-edit commands owned by ``cli_pending``."""
+    def configure(subparser: argparse.ArgumentParser) -> None:
+        from astrid.packs.timeline import cli_pending
+
+        getattr(cli_pending, f"configure_{name}")(subparser)
+    return configure
+
+
 def _configure_log(subparser: argparse.ArgumentParser) -> None:
     from astrid.packs.timeline.cli_log import configure_log
     configure_log(subparser)
@@ -3980,6 +3989,10 @@ COMMANDS: tuple[CommandSpec, ...] = (
     CommandSpec("check", help="Validate a working copy and optionally sweep every cut.", configure=_configure_check),
     CommandSpec("status", help="Show the canonical head, working copy, and connected commit state.", configure=_configure_status),
     CommandSpec("discard", help="Drop recoverable working edits; retain commits with unknown outcomes.", configure=_configure_working_verb("discard")),
+    CommandSpec("pending", help="List, inspect, or drop saved edits that did not land.",
+                configure=_configure_pending_verb("pending")),
+    CommandSpec("retry", help="Preview or commit a saved edit after a timeline clash.",
+                configure=_configure_pending_verb("retry")),
     CommandSpec("duplicate", help="Copy a timeline's published head into a new timeline, for a trial.", configure=_configure_working_verb("duplicate")),
     CommandSpec("rename", help="Set a timeline's display name.", configure=_configure_working_verb("rename")),
     CommandSpec("restructure", help="Store chapters as shots and music / wall-crossing clips on the film (proven equal first).", configure=_configure_working_verb("restructure")),
@@ -4091,7 +4104,7 @@ def build_parser(client: Any) -> argparse.ArgumentParser:
     parser = TimelinesParser(
         prog="astrid timelines",
         description=(
-            "Timeline check/create/list/show/script/replace-parent-media/archive/recover/history/log/diff/visualize/lint/render/lines/words/discard/duplicate "
+            "Timeline check/create/list/show/script/replace-parent-media/archive/recover/history/log/diff/visualize/lint/render/lines/words/discard/pending/retry/duplicate "
             "(product family); nested shots beneath 'timelines shots'."
         ),
     )
