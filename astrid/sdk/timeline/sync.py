@@ -381,6 +381,8 @@ class TimelineSession:
 
         commands = [_native_command(command) for command in commands]
         metadata_requested = label is not None or steps is not None or merge != "fields" or reads is not None
+        if reads is None and merge == "fields":
+            reads = []
         label = label if label is not None else "Timeline edit"
         if not isinstance(label, str) or not label.strip():
             raise TimelineEditError("commit label must be a nonempty string")
@@ -424,13 +426,12 @@ class TimelineSession:
                         for saved, command in zip(pending, commands)), base=base)
         with self.outbox.locked():
             state = self._state()
-            if metadata_requested:
-                existing = state.get("commit_options")
-                if existing is not None and existing != options:
-                    raise TimelineEditError("pending commit metadata differs; retry the original request")
-                if state.get("flight") is None:
-                    state["commit_options"] = copy.deepcopy(options)
-                    self.outbox.write(state)
+            existing = state.get("commit_options")
+            if metadata_requested and existing is not None and existing != options:
+                raise TimelineEditError("pending commit metadata differs; retry the original request")
+            if state.get("flight") is None and (metadata_requested or existing is None):
+                state["commit_options"] = copy.deepcopy(options)
+                self.outbox.write(state)
         return self.flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via)
 
     def _queue(self, capture, matches=None):

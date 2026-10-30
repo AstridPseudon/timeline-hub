@@ -482,9 +482,9 @@ class Timeline(Checkout):
         Only an explicit conflict permits reevaluation. Calling again after a
         transport/unknown outcome retries the durable original body/key first,
         even after reopening. Refused/invalid results never rerun the function.
-        A command list is submitted as captured and never recaptured. Omitted
-        reads remain omitted; doc.patch then receives conservative atomic
-        guarding from the provider. Preview never becomes this session's base.
+        A command list is submitted as captured and never recaptured. Its
+        default empty read set allows guarded disjoint edits to merge. Preview
+        never becomes this session's base.
         """
         if self._evaluating:
             raise TimelineEditError("a commit function cannot commit its own evaluation")
@@ -647,7 +647,8 @@ class Timeline(Checkout):
             steps.append({"id": f"step-{ordinal + 1}", "label": label, "intent": "", "tags": [],
                           "command_ordinals": [ordinal], "patch": patch})
         try:
-            result = self.session.submit(commands, label=label, steps=steps, merge=merge, reads=reads,
+            list_reads = [] if reads is None and merge == "fields" else reads
+            result = self.session.submit(commands, label=label, steps=steps, merge=merge, reads=list_reads,
                                          idempotency_key=idempotency_key, dry_run=dry_run,
                                          expected_state=state, base=state["base"])
         except CommitConflict as exc:
