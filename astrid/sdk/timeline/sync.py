@@ -816,6 +816,8 @@ class TimelineSession:
                     flight["pending_how"] = state.get("pending_how", "retry")
                 if logical_key is not None:
                     flight["logical_key"] = logical_key
+                    if conflict_retry:
+                        idempotency_key = logical_key
                 if state.get("evaluation") is not None:
                     flight["evaluation"] = copy.deepcopy(state["evaluation"])
                     cache = state["evaluation"].get("media_cache", {})
