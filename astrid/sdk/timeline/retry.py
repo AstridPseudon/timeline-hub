@@ -9,11 +9,17 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from . import clash
+from .sync import _response
 from .outbox import Outbox
 
 
 def _pin(value):
     return {"revision_id": value["revision_id"], "publication_id": value["publication_id"]}
+
+
+def _record_digest(record):
+    encoded = json.dumps(record, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
+    return hashlib.sha256(encoded).hexdigest()
 
 
 def _record(timeline, ref):
@@ -39,11 +45,17 @@ def _close(path, record, session, publication, how):
         if saved is None:
             return record
         if saved.get("state") == "pending":
-            saved["state"] = "landed"
+            index = saved.get("part", 0)
+            parts = saved.get("parts") or []
+            if index + 1 < len(parts):
+                saved["part"] = index + 1
+                saved["attempts"] = int(saved.get("attempts", 1))
+            else:
+                saved["state"] = "landed"
+                saved["closed_by"] = {"actor_id": session.identity["actor_id"],
+                                       "publication_id": publication, "how": how}
             saved["rev"] = int(saved.get("rev", 0)) + 1
             saved["updated_at"] = datetime.now(timezone.utc).isoformat()
-            saved["closed_by"] = {"actor_id": session.identity["actor_id"],
-                                   "publication_id": publication, "how": how}
             outbox.write(state)
         return copy.deepcopy(saved)
 
@@ -63,9 +75,11 @@ def _landed(timeline, path, record):
         _, entries = clash._history(timeline.session, base)
     except Exception:  # noqa: BLE001 - history is only a recovery confirmation path
         return None
-    entry = next((item for item in entries if item.get("group_id") == record["id"]), None)
-    if entry is None:
+    matches = [item for item in entries if item.get("group_id") == record["id"]]
+    index = record.get("part", 0)
+    if type(index) is not int or index < 0 or len(matches) <= index:
         return None
+    entry = matches[index]
     publication = entry.get("publication_id")
     if publication is None:
         publication = entry.get("receipt", {}).get("receipt_id")
@@ -73,6 +87,12 @@ def _landed(timeline, path, record):
     actor = entry.get("publisher")
     label = record.get("label") or "Timeline edit"
     suffix = f" (by {actor})" if actor else ""
+    if closed.get("state") != "landed":
+        return {"status": "part_landed", "pending_id": record["id"],
+                "data": {"publication_id": publication, "part": closed.get("part")},
+                "summary": f'Part {index + 1} of "{label}" landed as {publication}{suffix}; '
+                           f'{record["id"]} still has saved work.',
+                "next": f'tl.retry({record["id"]!r})', "record": closed}
     return {"status": "landed", "pending_id": record["id"], "data": {"publication_id": publication},
             "summary": f'"{label}" already landed as {publication}{suffix}; '
                        f'{record["id"]} is closed. Nothing was sent.', "next": None,
@@ -98,10 +118,54 @@ def _request(record, part):
     request.setdefault("merge", "fields")
     if "reads" not in request and request.get("merge") != "atomic":
         request["reads"] = []
-    if part.get("rationale") is not None:
+    if "rationale" in part:
         request["rationale"] = copy.deepcopy(part["rationale"])
+    request["imports"] = copy.deepcopy(part.get("imports", []))
     request["source"] = {"via": "python"}
     return request
+
+
+def _probe(session, request):
+    """Probe the saved request, preserving an intentionally omitted read set."""
+    body = {key: copy.deepcopy(value) for key, value in request.items()
+            if key not in {"base", "reads", "merge", "commands", "key", "origin", "imports"}}
+    body.update(api_version=1, project_id=session.project_id, timeline_id=session.timeline_id,
+                commands=copy.deepcopy(request["commands"]), merge=request["merge"], dry_run=True)
+    if "reads" in request:
+        body["reads"] = copy.deepcopy(request["reads"])
+    body.setdefault("source", {"via": "python"})
+    try:
+        return _response(session.client.timelines.commit(
+            session.project_id, session.timeline_id, body,
+            idempotency_key="clash-probe-" + uuid.uuid4().hex))["data"]
+    except Exception as exc:  # noqa: BLE001 - retain Runtime refusal details
+        if isinstance(getattr(exc, "details", None), dict):
+            return exc.details
+        raise
+
+
+def _preview_diff(timeline, data, evaluated_head):
+    """Diff the canonical preview document against its evaluated head."""
+    document = data.get("canonical_document")
+    if not isinstance(document, dict):
+        raise ValueError("retry preview did not include canonical_document")
+    from .commit import bundle_from_document
+    from .emitter import _diff, _payload_for_emit, _root_pairs
+    from .store import fetch_bundle
+
+    before = fetch_bundle(timeline.session.project_id, timeline.session.timeline_id,
+                          revision_id=evaluated_head["revision_id"],
+                          publication_id=evaluated_head["publication_id"],
+                          client=timeline.session.client)
+    after = bundle_from_document(document)
+    changes = []
+    for ref, old, new in _root_pairs(before, after):
+        _diff(_payload_for_emit(ref, old), _payload_for_emit(ref, new), ref, (), changes)
+    if not changes:
+        changes = [{"op": command["op"], "ref": command.get("select"),
+                    "args": copy.deepcopy(command["args"])}
+                   for command in data.get("commands", [])]
+    return {"changes": changes}
 
 
 def _summary_rederive(record, packet):
@@ -151,23 +215,28 @@ def retry(timeline, ref, fn=None):
 
     part = _part(record)
     request = _request(record, part)
-    data = clash._probe(timeline.session, request, request["merge"], request.get("reads"))
+    data = _probe(timeline.session, request)
     details = data.get("details", data) if isinstance(data, dict) else {}
     status = data.get("would_status", data.get("status", details.get("status")))
     if status in {"accepted", "merged"}:
-        head = data.get("head") or details.get("current") or record.get("head") or part["base"]
-        token_data = json.dumps([record["id"], record.get("attempts", 1), _pin(head)],
+        head = data.get("evaluated_head")
+        if not isinstance(head, dict) or not head.get("revision_id") or not head.get("publication_id"):
+            raise ValueError("retry preview did not include an evaluated_head")
+        head = _pin(head)
+        token_data = json.dumps([record["id"], record.get("attempts", 1), head],
                                 sort_keys=True, separators=(",", ":")).encode()
         token = hashlib.sha256(token_data).hexdigest()
         label = record.get("label") or "Timeline edit"
         result = {"status": "preview", "pending_id": record["id"],
                   "data": {"commands": copy.deepcopy(part["commands"]),
-                           "diff": copy.deepcopy(data.get("diff", [])), "head": _pin(head),
+                           "diff": _preview_diff(timeline, data, head), "head": head,
                            "retry": {"pending_id": record["id"], "token": token}},
                   "summary": f'"{label}" still applies to the newest timeline. Show this diff to '
                              "whoever approves it, then commit.",
                   "next": "tl.commit(r)",
-                  "_retry_request": request, "_retry_path": str(path), "_retry_token": token}
+                  "_retry_request": request, "_retry_path": str(path), "_retry_token": token,
+                  "_retry_record_rev": record.get("rev"), "_retry_attempts": record.get("attempts", 1),
+                  "_retry_record_digest": _record_digest(record)}
         return result
     if status == "conflict":
         packet = clash.explain(timeline.session, record)
@@ -190,18 +259,48 @@ def commit_preview(timeline, result):
     request = copy.deepcopy(result["_retry_request"])
     pending_id = result["pending_id"]
     path = result["_retry_path"]
+    token = result.get("data", {}).get("retry", {}).get("token")
+    if token != result.get("_retry_token"):
+        raise ValueError("retry preview token is stale or invalid")
+    current = next((record for record_path, record in timeline._pending_records_with_paths("all")
+                    if record.get("id") == pending_id and str(record_path) == path), None)
+    if (current is None or current.get("state") != "pending"
+            or current.get("rev") != result.get("_retry_record_rev")
+            or current.get("attempts", 1) != result.get("_retry_attempts")
+            or _record_digest(current) != result.get("_retry_record_digest")):
+        raise ValueError("pending change changed after this retry preview; preview it again")
+    check = json.dumps([pending_id, result["_retry_attempts"], result["data"]["head"]],
+                       sort_keys=True, separators=(",", ":")).encode()
+    if hashlib.sha256(check).hexdigest() != token:
+        raise ValueError("retry preview token is stale or invalid")
     with timeline.session.outbox.locked():
         expected = timeline.session._state()
     options = {key: copy.deepcopy(request[key]) for key in ("steps", "merge", "reads") if key in request}
-    options["steps"] = options.get("steps", [])
+    part = _part(current)
+    original_group_id = part.get("commit_options", {}).get("group_id")
+    group_id = original_group_id if original_group_id is not None else current["id"]
+    final_part = current.get("part", 0) + 1 >= len(current.get("parts") or [])
     try:
-        return timeline.session.submit(
+        submitted = timeline.session.submit(
             request["commands"], label=request["label"], steps=options["steps"],
             merge=options.get("merge", "fields"), reads=options.get("reads"),
-            idempotency_key="timeline-retry-" + uuid.uuid4().hex,
+            idempotency_key=str(uuid.uuid4()),
+            logical_key=current["key"], group_id=group_id,
+            rationale=copy.deepcopy(request.get("rationale")),
+            imports=copy.deepcopy(part.get("imports", [])),
             expected_state=expected, base={"revision_id": request["base_revision_id"],
                                             "publication_id": request["base_publication_id"]},
-            pending_id=pending_id, pending_path=path, pending_how="retry")
-    except Exception:
+            pending_id=pending_id if final_part else None,
+            pending_path=path if final_part else None, pending_how="retry")
+        if not final_part:
+            publication = submitted.get("receipt", {}).get("receipt_id")
+            _close(path, current, timeline.session, publication, "retry")
+        return submitted
+    except Exception as exc:
         # Timeline.commit() reconciles durable unknown outcomes on the next call.
+        if getattr(exc, "failure", {}).get("details", {}).get("status") != "conflict":
+            raise
+        landed = _landed(timeline, Path(path), current)
+        if landed is not None:
+            return landed
         raise
