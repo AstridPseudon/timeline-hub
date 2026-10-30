@@ -489,6 +489,11 @@ class Timeline(Checkout):
         """
         if self._evaluating:
             raise TimelineEditError("a commit function cannot commit its own evaluation")
+        if isinstance(label_or_fn, Mapping) and isinstance(label_or_fn.get("data"), Mapping) \
+                and isinstance(label_or_fn["data"].get("retry"), Mapping):
+            from . import retry
+
+            return retry.commit_preview(self, label_or_fn)
         if key is not None and idempotency_key is not None:
             raise TimelineEditError("pass only one of key or idempotency_key")
         if key is not None:
@@ -553,10 +558,13 @@ class Timeline(Checkout):
             if conflict.get("details", {}).get("status") != "conflict":
                 raise CommitConflict(conflict)
             if not function or evaluation.get("kind") != "function" or count >= 3:
-                raise CommitConflict(conflict, attempts=count if function and count >= 3 else None,
-                                     label=commit_label, timeline_id=self.session.timeline_id,
-                                     project_id=self.session.project_id,
-                                     pending_id=pending_id, clash=clash)
+                error = CommitConflict(conflict, attempts=count if function and count >= 3 else None,
+                                       label=commit_label, timeline_id=self.session.timeline_id,
+                                       project_id=self.session.project_id,
+                                       pending_id=pending_id, clash=clash)
+                if function and count >= 3:
+                    error.retry_fn = function
+                raise error
             base = _pin(conflict["details"]["current"])
         else:
             if not function and state["base"] != self._basis:
@@ -610,11 +618,13 @@ class Timeline(Checkout):
                     self._adopt(self._base_bundle)
                 if not function or exc.failure["details"].get("status") != "conflict" or count >= 3:
                     if function and count >= 3:
-                        raise CommitConflict(exc.failure, attempts=count, label=commit_label,
-                                             timeline_id=self.session.timeline_id,
-                                             project_id=self.session.project_id,
-                                             pending_id=getattr(exc, "pending_id", None),
-                                             clash=getattr(exc, "clash", None)) from exc
+                        exhausted = CommitConflict(exc.failure, attempts=count, label=commit_label,
+                                                   timeline_id=self.session.timeline_id,
+                                                   project_id=self.session.project_id,
+                                                   pending_id=getattr(exc, "pending_id", None),
+                                                   clash=getattr(exc, "clash", None))
+                        exhausted.retry_fn = function
+                        raise exhausted from exc
                     raise
                 base = _pin(exc.failure["details"]["current"])
                 with self.session.outbox.locked():
@@ -633,6 +643,14 @@ class Timeline(Checkout):
                     result["summary"] += " Media:" + media
                 result["data"]["summary"] = result["summary"]
             return self._accepted(result)
+
+    def retry(self, err_or_ref, fn=None):
+        """Retry a saved edit by record reference, using an exhausted function when available."""
+        ref = getattr(err_or_ref, "pending_id", None) or err_or_ref
+        retry_fn = fn if fn is not None else getattr(err_or_ref, "retry_fn", None)
+        from . import retry
+
+        return retry.retry(self, ref, retry_fn)
 
     def _pending_records_with_paths(self, actors):
         if actors not in {"self", "all"}:
