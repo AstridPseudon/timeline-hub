@@ -13,7 +13,7 @@ import sys
 import pytest
 
 from astrid.sdk import timeline
-from astrid.sdk.timeline import api, commit_session
+from astrid.sdk.timeline import api, commit_session, retry as retry_module
 from astrid.sdk.timeline.commit_session import _changed_ranges
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.commands import execute
@@ -108,6 +108,24 @@ def test_commit_with_pending_closes_record(connected, ref):
     }
 
 
+def test_commit_key_rederives_and_closes_matching_pending_record(connected):
+    tl = opened(connected)
+    record = {"id": "pc_key_close", "state": "pending", "rev": 2,
+              "created_at": "2026-10-30T00:00:00Z", "key": "saved-edit-key"}
+    with tl.session.outbox.locked():
+        state = tl.session._state()
+        state["pending_changes"] = {record["id"]: record}
+        tl.session.outbox.write(state)
+
+    result = tl.commit(lambda working: working.move("parent/clip:a", 4), key=record["key"])
+
+    saved = tl.pending_show(record["id"])
+    assert saved["state"] == "landed"
+    assert saved["closed_by"] == {
+        "actor_id": "actor", "publication_id": result["receipt"]["receipt_id"], "how": "rerun",
+    }
+
+
 def test_commit_with_pending_closes_matching_other_actor_record(connected):
     from astrid.sdk.timeline.outbox import Outbox
 
@@ -127,6 +145,60 @@ def test_commit_with_pending_closes_matching_other_actor_record(connected):
     closed = Outbox(peer_path).read()["pending_changes"][record["id"]]
     assert closed["state"] == "landed"
     assert closed["closed_by"]["publication_id"] == result["receipt"]["receipt_id"]
+
+
+def test_commit_key_closes_unique_matching_pending_record_across_actors(connected):
+    from astrid.sdk.timeline.outbox import Outbox
+
+    tl = opened(connected)
+    tl.session._explicit_outbox = False
+    peer_path = tl.session.outbox.path.parent / "peer.json"
+    record = {"id": "pc_peer_key_close", "state": "pending", "rev": 2,
+              "created_at": "2026-10-30T00:00:00Z", "key": "peer-saved-key"}
+    Outbox(peer_path).write({
+        "scope": {**tl.session._state()["scope"], "actor_id": "peer"},
+        "pending_changes": {record["id"]: record},
+    })
+
+    result = tl.commit(lambda working: working.move("parent/clip:a", 5), key=record["key"])
+
+    closed = Outbox(peer_path).read()["pending_changes"][record["id"]]
+    assert closed["state"] == "landed"
+    assert closed["closed_by"]["publication_id"] == result["receipt"]["receipt_id"]
+
+
+def test_commit_key_refuses_ambiguous_pending_match_across_actors(connected):
+    from astrid.sdk.timeline.outbox import Outbox
+
+    tl = opened(connected)
+    _, generated, _ = connected
+    tl.session._explicit_outbox = False
+    key = "shared-pending-key"
+    local = {"id": "pc_local_ambiguous", "state": "pending", "key": key}
+    peer = {"id": "pc_peer_ambiguous", "state": "pending", "key": key}
+    with tl.session.outbox.locked():
+        state = tl.session._state()
+        state["pending_changes"] = {local["id"]: local}
+        tl.session.outbox.write(state)
+    peer_path = tl.session.outbox.path.parent / "peer.json"
+    Outbox(peer_path).write({
+        "scope": {**tl.session._state()["scope"], "actor_id": "peer"},
+        "pending_changes": {peer["id"]: peer},
+    })
+
+    with pytest.raises(TimelineEditError, match="ambiguous"):
+        tl.commit(lambda working: working.move("parent/clip:a", 5), key=key)
+    assert generated.calls == []
+
+
+def test_commit_key_preserves_unrelated_idempotency_key(connected):
+    tl = opened(connected)
+    _, generated, _ = connected
+
+    result = tl.commit(lambda working: working.move("parent/clip:a", 6), key="ordinary-key")
+
+    assert result["receipt"]["idempotency_key"] == "ordinary-key"
+    assert generated.calls[0][1] == "ordinary-key"
 
 
 def test_accepted_move_reports_exact_revision_pair_and_old_new_ranges(connected):
@@ -294,6 +366,7 @@ def test_three_evaluation_bound_saves_function_record(connected, monkeypatch):
 
     with pytest.raises(CommitConflict) as exhausted:
         tl.commit(edit)
+    assert exhausted.value.retry_fn is edit
     assert exhausted.value.outcome == "not_applied"
     assert "edit" in exhausted.value.headline and "3 times" in exhausted.value.detail
     assert evaluations == [0, 1, 2] and len(set(sent)) == 3
@@ -303,6 +376,56 @@ def test_three_evaluation_bound_saves_function_record(connected, monkeypatch):
     assert record["parts"][0]["evaluation"]["count"] == 3
     assert record["parts"][0]["commands"]
     assert len(evaluations) == len(sent) == 3
+
+
+def test_retry_delegates_pending_ref_and_retained_function(connected, monkeypatch):
+    tl = opened(connected)
+    calls = []
+    monkeypatch.setattr(
+        retry_module, "retry",
+        lambda owner, ref, fn=None: calls.append((owner, ref, fn)) or "retried",
+    )
+
+    def edit(working):
+        working.move("parent/clip:a", 9)
+
+    error = CommitConflict({"details": {"status": "conflict"}}, pending_id="pc-1")
+    error.retry_fn = edit
+    assert tl.retry(error) == "retried"
+    assert tl.retry("pc-2", fn=edit) == "retried"
+    assert calls == [(tl, "pc-1", edit), (tl, "pc-2", edit)]
+
+
+def test_commit_retry_preview_delegates_to_retry_module(connected, monkeypatch):
+    tl = opened(connected)
+    calls = []
+    monkeypatch.setattr(
+        retry_module, "commit_preview",
+        lambda owner, preview: calls.append((owner, preview)) or "committed",
+    )
+    preview = {"status": "preview", "data": {"retry": {"pending_id": "pc-1", "token": "t"}}}
+
+    assert tl.commit(preview) == "committed"
+    assert calls == [(tl, preview)]
+
+
+@pytest.mark.parametrize("options", [
+    {"label": "ignored"}, {"merge": "atomic"}, {"dry_run": True},
+    {"reads": []}, {"key": "ignored"}, {"idempotency_key": "ignored"},
+    {"pending": "pc-1"},
+])
+def test_commit_retry_preview_rejects_extra_options(connected, monkeypatch, options):
+    tl = opened(connected)
+    calls = []
+    monkeypatch.setattr(
+        retry_module, "commit_preview",
+        lambda owner, preview: calls.append((owner, preview)) or "committed",
+    )
+    preview = {"status": "preview", "data": {"retry": {"pending_id": "pc-1", "token": "t"}}}
+
+    with pytest.raises(TimelineEditError, match="retry preview commits do not accept"):
+        tl.commit(preview, **options)
+    assert calls == []
 
 
 @pytest.mark.parametrize("status", ["refused", "invalid"])
