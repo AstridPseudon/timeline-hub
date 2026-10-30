@@ -9,6 +9,7 @@ import copy
 import hashlib
 import json
 import sys
+from types import ModuleType
 
 import pytest
 
@@ -294,6 +295,7 @@ def test_three_evaluation_bound_saves_function_record(connected, monkeypatch):
 
     with pytest.raises(CommitConflict) as exhausted:
         tl.commit(edit)
+    assert exhausted.value.retry_fn is edit
     assert exhausted.value.outcome == "not_applied"
     assert "edit" in exhausted.value.headline and "3 times" in exhausted.value.detail
     assert evaluations == [0, 1, 2] and len(set(sent)) == 3
@@ -303,6 +305,35 @@ def test_three_evaluation_bound_saves_function_record(connected, monkeypatch):
     assert record["parts"][0]["evaluation"]["count"] == 3
     assert record["parts"][0]["commands"]
     assert len(evaluations) == len(sent) == 3
+
+
+def test_retry_delegates_pending_ref_and_retained_function(connected, monkeypatch):
+    tl = opened(connected)
+    calls = []
+    retry_module = ModuleType("astrid.sdk.timeline.retry")
+    retry_module.retry = lambda owner, ref, fn=None: calls.append((owner, ref, fn)) or "retried"
+    monkeypatch.setitem(sys.modules, retry_module.__name__, retry_module)
+
+    def edit(working):
+        working.move("parent/clip:a", 9)
+
+    error = CommitConflict({"details": {"status": "conflict"}}, pending_id="pc-1")
+    error.retry_fn = edit
+    assert tl.retry(error) == "retried"
+    assert tl.retry("pc-2", fn=edit) == "retried"
+    assert calls == [(tl, "pc-1", edit), (tl, "pc-2", edit)]
+
+
+def test_commit_retry_preview_delegates_to_retry_module(connected, monkeypatch):
+    tl = opened(connected)
+    calls = []
+    retry_module = ModuleType("astrid.sdk.timeline.retry")
+    retry_module.commit_preview = lambda owner, preview: calls.append((owner, preview)) or "committed"
+    monkeypatch.setitem(sys.modules, retry_module.__name__, retry_module)
+    preview = {"status": "preview", "data": {"retry": {"pending_id": "pc-1", "token": "t"}}}
+
+    assert tl.commit(preview) == "committed"
+    assert calls == [(tl, preview)]
 
 
 @pytest.mark.parametrize("status", ["refused", "invalid"])
