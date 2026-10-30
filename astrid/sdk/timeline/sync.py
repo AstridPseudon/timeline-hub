@@ -24,7 +24,7 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 
 class CommitConflict(TimelineEditError):
     def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
-                 timeline_id=None, project_id=None, pending_id=None, clash=None):
+                 timeline_id=None, project_id=None, pending_id=None, clash=None, retry_clash=False):
         self.failure = copy.deepcopy(failure)
         self.pending_id = pending_id
         self.clash = copy.deepcopy(clash)
@@ -52,6 +52,11 @@ class CommitConflict(TimelineEditError):
                 f'was not committed. Your edit is saved as {pending_id}; nothing is lost. '
                 f'Retry it with tl.retry("{pending_id}").')
             self.presentation.update(pending_id=pending_id, clash=copy.deepcopy(clash))
+            if retry_clash:
+                self.presentation["headline"] = (
+                    f'The timeline changed again before "{label or "Timeline edit"}" landed; '
+                    f'nothing was committed. {pending_id} is still saved')
+                self.presentation["fix"] = f'tl.retry("{pending_id}")'
         self.headline = self.presentation["headline"]
         self.detail = self.presentation["detail"]
         self.fix = self.presentation["fix"]
@@ -939,6 +944,7 @@ class TimelineSession:
                                      timeline_id=self.timeline_id, project_id=self.project_id,
                                      label=record["label"] if record else None,
                                      pending_id=record["id"] if record else None,
+                                     retry_clash=bool(flight.get("pending_id") and record),
                                      clash=record.get("clash") or clash(record) if record else None) from exc
             raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc  # Keep the durable flight byte-for-byte retryable.
         try:
