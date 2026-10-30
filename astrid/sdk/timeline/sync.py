@@ -218,6 +218,27 @@ def _pending_diff(session, record):
     return changes
 
 
+def _pending_clash(session, record):
+    """Best-effort history enrichment for a durable pending conflict."""
+    try:
+        from .clash import explain
+
+        packet = explain(session, record)
+    except Exception:  # noqa: BLE001 - enrichment must not disturb the saved edit
+        return copy.deepcopy(record)
+    with session.outbox.locked():
+        state = session._state()
+        saved = state.get("pending_changes", {}).get(record["id"])
+        if saved is None or saved.get("state") != "pending":
+            return copy.deepcopy(saved or record)
+        if saved.get("clash") != packet:
+            saved["clash"] = copy.deepcopy(packet)
+            saved["rev"] = int(saved.get("rev", 0)) + 1
+            saved["updated_at"] = datetime.now(timezone.utc).isoformat()
+            session.outbox.write(state)
+        return copy.deepcopy(saved)
+
+
 class TimelineSession:
     def __init__(self, client, outbox, identity, project_id, timeline_id):
         self.client, self.outbox, self.identity = client, outbox, identity
@@ -841,12 +862,13 @@ class TimelineSession:
                                 saved["updated_at"] = datetime.now(timezone.utc).isoformat()
                                 self.outbox.write(latest)
                                 record = copy.deepcopy(saved)
+                    record = _pending_clash(self, record)
                 from ._pending import clash
                 raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
                                      timeline_id=self.timeline_id, project_id=self.project_id,
                                      label=record["label"] if record else None,
                                      pending_id=record["id"] if record else None,
-                                     clash=clash(record) if record else None) from exc
+                                     clash=record.get("clash") or clash(record) if record else None) from exc
             raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc  # Keep the durable flight byte-for-byte retryable.
         try:
             data, receipt = _ack(result, body, flight, self.identity)
