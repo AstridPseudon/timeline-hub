@@ -580,6 +580,59 @@ def test_record_saved_before_enrichment_failure(connected, monkeypatch):
     assert not {"choices", "candidate", "flight_fence"} & record.keys()
 
 
+def test_conflict_packet_enrichment_runs_after_pending_record_is_saved(connected, monkeypatch):
+    from astrid.sdk.timeline import clash
+
+    session = open_session(connected)
+    _, generated, path = connected
+    generated.refusal = ApiError(409, "conflict", "concurrent edit", details={
+        "status": "conflict", "current": generated.head, "conflicts": [],
+    })
+    packet = {"schema": "astrid.clash/2", "summary": "saved", "receipts": []}
+
+    def enrich(saved_session, record):
+        durable = json.loads(path.read_bytes())
+        assert durable["pending_changes"][record["id"]]["state"] == "pending"
+        assert record["parts"][0]["commands"]
+        return packet
+
+    monkeypatch.setattr(clash, "explain", enrich)
+    command = capture_move(initial_bundle(), "parent/clip:a", 5)
+    with pytest.raises(CommitConflict) as conflict:
+        session.submit([command], label="Move clip", steps=[], expected_state=session._state())
+
+    saved = json.loads(path.read_bytes())["pending_changes"][conflict.value.pending_id]
+    assert conflict.value.clash == packet
+    assert saved["clash"] == packet
+
+
+def test_pending_show_retries_missing_packet_enrichment(connected, monkeypatch):
+    from astrid.sdk.timeline import commit_session
+    from astrid.sdk.timeline.commit_session import Timeline
+
+    session = open_session(connected)
+    record = {"id": "pc_saved", "state": "pending", "rev": 2,
+              "failure": {"details": {"status": "conflict"}}}
+    with session.outbox.locked():
+        state = session._state()
+        state["pending_changes"] = {record["id"]: copy.deepcopy(record)}
+        session.outbox.write(state)
+    timeline = Timeline.__new__(Timeline)
+    timeline.session = session
+    calls = []
+
+    def enrich(saved_session, saved):
+        calls.append(saved["id"])
+        packet = {"schema": "astrid.clash/2", "receipts": []}
+        saved["clash"] = packet
+        return saved
+
+    monkeypatch.setattr(commit_session, "_pending_clash", enrich)
+
+    assert timeline.pending_show(record["id"])["clash"]["receipts"] == []
+    assert calls == [record["id"]]
+
+
 def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(connected):
     session = open_session(connected)
     _, generated, path = connected

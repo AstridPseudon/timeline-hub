@@ -198,8 +198,10 @@ def test_native_lost_ack_retry_precedes_original_suffix_with_fresh_key(connected
             session.flush()
         state = json.loads(path.read_bytes())
         assert state['pending'] == [] and state['flight'] is None
-        assert state['rejected']['commands'] == [suffix]
-        assert state['rejected']['failure']['details']['status'] == 'conflict'
+        assert len(state['pending_changes']) == 1
+        record = next(iter(state['pending_changes'].values()))
+        assert record['parts'][0]['commands'] == [suffix]
+        assert record['failure']['details']['status'] == 'conflict'
     else:
         session.flush()
         assert State(generated.bundles['r2']).entity(REF)['label'] == 'B'
@@ -210,7 +212,7 @@ def test_native_lost_ack_retry_precedes_original_suffix_with_fresh_key(connected
     assert body['commands'] == [suffix]
     assert body['base_revision_id'] == 'r1' and body['base_publication_id'] == 'pub1'
     assert key != 'A'
-    assert client.reads == ['r0', 'r0']
+    assert client.reads == (['r0', 'r0', 'r1', 'r1'] if peer == 'label' else ['r0', 'r0'])
 
 
 def test_native_one_shot_retry_never_reads_or_recaptures(connected):

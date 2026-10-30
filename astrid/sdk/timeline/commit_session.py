@@ -10,7 +10,7 @@ from typing import Any, cast
 
 from ._common import PARENT_SHOT, TimelineEditError
 from .checkout import Checkout
-from .sync import CommitConflict, TimelineSession, _pin
+from .sync import CommitConflict, TimelineSession, _pending_clash, _pin
 
 
 def emit_document_commands(before, after):
@@ -758,10 +758,15 @@ class Timeline(Checkout):
         raise TimelineEditError(f"no pending change with id or key {ref!r}")
 
     def pending_show(self, ref):
-        """Return the saved pending record as stored in the outbox."""
+        """Return a saved pending record, retrying best-effort conflict enrichment."""
         with self.session.outbox.locked():
             state = self.session._state()
-            return copy.deepcopy(self._pending_record(ref, state))
+            record = copy.deepcopy(self._pending_record(ref, state))
+        if (record.get("state") == "pending"
+                and (record.get("failure", {}).get("details") or {}).get("status") == "conflict"
+                and (not record.get("clash") or record["clash"].get("receipts") is None)):
+            record = _pending_clash(self.session, record)
+        return record
 
     def pending_drop(self, ref, *, reason=None):
         """Mark a saved pending edit dropped without deleting its record."""
