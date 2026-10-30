@@ -7,6 +7,7 @@ import json
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
+from urllib.parse import quote
 
 from . import clash
 from .sync import _response
@@ -126,7 +127,7 @@ def _request(record, part):
     request.setdefault("merge", "fields")
     if "reads" not in request and request.get("merge") != "atomic":
         request["reads"] = []
-    if "rationale" in part:
+    if part.get("rationale") is not None:
         request["rationale"] = copy.deepcopy(part["rationale"])
     if part.get("group_id") is not None:
         request["group_id"] = copy.deepcopy(part["group_id"])
@@ -145,11 +146,28 @@ def _probe(session, request):
         body["reads"] = copy.deepcopy(request["reads"])
     body.setdefault("source", {"via": "python"})
     try:
+        remote = getattr(session.client, "_remote", None)
+        transport = getattr(remote, "_transport", None)
+        generated = getattr(transport, "_generated", None)
+        raw_request = getattr(generated, "_request", None)
+        if callable(raw_request):
+            # The generated CommitPreview DTO only admits accepted/merged
+            # previews. A conflict preview is valid for retry and must reach
+            # the re-derive branch instead of becoming invalid_response.
+            path = (f"/v1/projects/{quote(session.project_id, safe='')}"
+                    f"/timelines/{quote(session.timeline_id, safe='')}/commit")
+            _, _, payload = raw_request(
+                "POST", path,
+                body=json.dumps(body, separators=(",", ":"), allow_nan=False).encode(),
+                headers={"Content-Type": "application/json",
+                         "Idempotency-Key": "clash-probe-" + uuid.uuid4().hex})
+            return generated._json(payload)["data"]
         return _response(session.client.timelines.commit(
             session.project_id, session.timeline_id, body,
             idempotency_key="clash-probe-" + uuid.uuid4().hex))["data"]
     except Exception as exc:  # noqa: BLE001 - retain Runtime refusal details
-        if isinstance(getattr(exc, "details", None), dict):
+        details = getattr(exc, "details", None)
+        if isinstance(details, dict) and details:
             return exc.details
         raise
 
@@ -216,12 +234,8 @@ def retry(timeline, ref, fn=None):
     if record.get("state") == "landed":
         return _landed(timeline, path, record)
     if fn is not None:
-        result = timeline.commit(fn, label=record.get("label"), key=record.get("key"), pending=record["id"])
-        publication = result.get("receipt", {}).get("receipt_id")
-        return {"status": "landed", "pending_id": record["id"], "data": result.get("data", {}),
-                "summary": f'Committed "{record.get("label") or "Timeline edit"}" as {publication} '
-                           f'after re-running it on the newest timeline; {record["id"]} is closed.',
-                "next": None, "result": result}
+        return timeline.commit(fn, label=record.get("label"), key=record.get("key"),
+                               pending=record["id"])
 
     part = _part(record)
     request = _request(record, part)
