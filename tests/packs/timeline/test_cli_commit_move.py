@@ -234,19 +234,41 @@ def test_known_conflict_is_reported_not_applied_and_can_be_discarded(command, ca
     error = json.loads(capsys.readouterr().out)["error"]
     assert error["details"]["outcome"] == "not_applied"
     assert error["details"]["headline"]
-    assert "astrid timelines discard t --project p" in error["details"]["fix"]
+    assert "Your edit is saved as" in error["details"]["fix"]
     assert error["details"]["cause"]["details"]["reason"] == "selection_changed"
     state = json.loads(generated.path.read_bytes())
     assert state["flight"] is None and state["pending"] == []
-    assert state["rejected"]["commands"]
+    assert not state.get("rejected")
+    assert len(state["pending_changes"]) == 1
+    pending_id, record = next(iter(state["pending_changes"].items()))
+    assert error["details"]["pending_id"] == pending_id
+    assert record["state"] == "pending"
+    assert record["parts"][0]["commands"]
 
     assert run("status", "t", "--project", "p", "--json") == 0
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
     assert status["status"] == "conflict" and status["outcome"] == "not_applied"
-    assert status["command_count"] == len(state["rejected"]["commands"])
+    assert status["command_count"] == len(record["parts"][0]["commands"])
 
+    # Exercise the compatibility path: a conflict written by an older SDK is
+    # migrated before discard clears the working queue.
+    legacy = {
+        "base": record["parts"][0]["base"],
+        "commands": record["parts"][0]["commands"],
+        "flight": {"body": request_bytes({"commands": record["parts"][0]["commands"]}).decode(),
+                   "key": "legacy-conflict", "count": 1, "fence": "legacy-fence"},
+        "failure": record["failure"], "commit_options": None, "evaluation": None,
+    }
+    state.pop("pending_changes")
+    state["rejected"] = legacy
+    generated.path.write_text(json.dumps(state), encoding="utf-8")
     assert run("discard", "t", "--project", "p") == 0
-    assert "discarded recoverable connected-session commands" in capsys.readouterr().out
+    assert "kept 1 pending change" in capsys.readouterr().out
+    saved = json.loads(generated.path.read_bytes())
+    assert not saved.get("rejected")
+    assert len(saved["pending_changes"]) == 1
+    migrated = next(iter(saved["pending_changes"].values()))
+    assert migrated["parts"][0]["commands"] == record["parts"][0]["commands"]
     generated.refusal = None
     assert run("edit", "t", "--project", "p", "--clip", "b", "--on", "7", "--json") == 0
     result = json.loads(capsys.readouterr().out)

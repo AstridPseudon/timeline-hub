@@ -536,13 +536,12 @@ def test_semantic_conflict_is_retained_but_transport_failure_stays_ambiguous(con
         session.flush()
     state = json.loads(path.read_bytes())
     assert state["flight"] is None and state["pending"] == []
-    assert state["rejected"]["failure"]["details"]["status"] == "conflict"
-    assert state["rejected"]["commands"]
+    assert len(state["pending_changes"]) == 1
+    record = next(iter(state["pending_changes"].values()))
+    assert record["state"] == "pending"
+    assert record["failure"]["details"]["status"] == "conflict"
+    assert record["parts"][0]["commands"]
     assert not generated.accepted
-    with session.outbox.locked():
-        state = session._state()
-        state.pop("rejected")
-        session.outbox.write(state)
     session.queue_move("parent/clip:b", 6)
     generated.refusal = ConnectionError("connection unavailable")
     with pytest.raises(WorkspaceClientError) as unknown:
@@ -565,6 +564,7 @@ def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(c
     state = json.loads(path.read_bytes())
     assert state["flight"] is None
     assert state["pending"] == []
+    assert not state.get("pending_changes")
     assert state["rejected"]["commands"] == [rejected]
     assert state["rejected"]["flight"]["key"] == "rejected-edit"
     assert state["rejected"]["failure"]["details"]["status"] == "refused"
@@ -614,11 +614,76 @@ def test_final_refusal_preserves_and_releases_dependent_queued_suffix(connected,
     assert path.read_bytes() == before
 
 
+def test_final_conflict_saves_flight_and_dependent_suffix_as_separate_parts(connected, monkeypatch):
+    session = open_session(connected)
+    _, generated, path = connected
+    entered, release = Event(), Event()
+    conflict = ApiError(409, "conflict", "guards changed", details={
+        "status": "conflict", "reason": "guard_changed", "conflicts": [],
+    })
+
+    def conflict_after_suffix(*args, **kwargs):
+        entered.set()
+        assert release.wait(10)
+        raise conflict
+
+    monkeypatch.setattr(generated, "commit_timeline", conflict_after_suffix)
+    flight_command = session.queue_move("parent/clip:a", 5)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        sending = pool.submit(session.flush, idempotency_key="conflicted-flight")
+        try:
+            assert entered.wait(10)
+            suffix_command = open_session(connected).queue_move("parent/clip:a", 7)
+        finally:
+            release.set()
+        with pytest.raises(CommitConflict):
+            sending.result(timeout=10)
+
+    state = json.loads(path.read_bytes())
+    assert state["flight"] is None and state["pending"] == []
+    assert not state.get("rejected")
+    assert len(state["pending_changes"]) == 1
+    record = next(iter(state["pending_changes"].values()))
+    assert record["state"] == "pending" and record["part"] == 0
+    assert len(record["parts"]) == 2
+    assert record["parts"][0]["commands"] == [flight_command]
+    assert record["parts"][1]["commands"] == [suffix_command]
+    assert record["parts"][0]["base"] == state["base"]
+
+
+def test_old_rejected_conflict_migrates_to_pending_change_on_open(connected):
+    session = open_session(connected)
+    command = session.queue_move("parent/clip:a", 5)
+    failure = {"code": "conflict", "message": "guards changed", "details": {
+        "status": "conflict", "reason": "guard_changed",
+    }}
+    state = session._state()
+    state["rejected"] = {
+        "base": copy.deepcopy(state["base"]), "commands": [command],
+        "flight": {"body": request_bytes({"commands": [command]}).decode(), "key": "legacy-key",
+                   "count": 1, "fence": "legacy-fence"},
+        "failure": failure, "commit_options": None, "evaluation": None,
+    }
+    state["pending"] = []
+    session.outbox.write(state)
+
+    reopened = open_session(connected)
+    migrated = reopened._state()
+    assert not migrated.get("rejected")
+    assert len(migrated["pending_changes"]) == 1
+    record = next(iter(migrated["pending_changes"].values()))
+    assert record["failure"] == failure
+    assert record["parts"][0]["commands"] == [command]
+    first_snapshot = copy.deepcopy(migrated["pending_changes"])
+    assert open_session(connected)._state()["pending_changes"] == first_snapshot
+
+
 def test_failed_refusal_persistence_keeps_exact_flight_for_restart(connected, monkeypatch):
+    from astrid.sdk.timeline import outbox
+
     session = open_session(connected)
     _, generated, path = connected
     command = session.queue_move("parent/clip:a", 5)
-    write = session.outbox.write
     refusal = ApiError(409, "refused", "edit is not allowed",
                        details={"status": "refused", "reason": "policy"})
     generated.refusal = refusal
@@ -629,14 +694,24 @@ def test_failed_refusal_persistence_keeps_exact_flight_for_restart(connected, mo
         durable_at_send.append(path.read_bytes())
         return send(*args, **kwargs)
 
-    monkeypatch.setattr(generated, "commit_timeline", capture_durable_flight)
+    refusal_seen = False
 
-    def fail_rejection(state):
-        if state.get("rejected"):
-            raise OSError("disk unavailable while recording refusal")
-        write(state)
+    def capture_refusal(*args, **kwargs):
+        nonlocal refusal_seen
+        try:
+            return capture_durable_flight(*args, **kwargs)
+        finally:
+            refusal_seen = True
 
-    monkeypatch.setattr(session.outbox, "write", fail_rejection)
+    monkeypatch.setattr(generated, "commit_timeline", capture_refusal)
+    fsync = outbox.os.fsync
+
+    def fail_refusal_write(fd):
+        if refusal_seen:
+            raise OSError("fsync failed while recording refusal")
+        fsync(fd)
+
+    monkeypatch.setattr(outbox.os, "fsync", fail_refusal_write)
     with pytest.raises(OSError, match="recording refusal"):
         session.flush(idempotency_key="rejected-edit")
     assert len(durable_at_send) == 1
@@ -644,7 +719,8 @@ def test_failed_refusal_persistence_keeps_exact_flight_for_restart(connected, mo
     flight = json.loads(durable_at_send[0])["flight"]
     assert json.loads(flight["body"])["commands"] == [command]
 
-    monkeypatch.setattr(session.outbox, "write", write)
+    monkeypatch.setattr(outbox.os, "fsync", fsync)
+    monkeypatch.setattr(generated, "commit_timeline", send)
     generated.refusal = None
     open_session(connected).flush()
     assert generated.calls[0] == generated.calls[1]
