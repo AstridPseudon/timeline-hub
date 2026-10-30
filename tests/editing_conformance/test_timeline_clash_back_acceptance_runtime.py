@@ -352,3 +352,96 @@ def test_j5_two_actors_retry_one_record_and_group_id_closes_other_actor(
     assert owner_record["closed_by"]["actor_id"] == "j5-peer"
     assert owner_record["closed_by"]["how"] == "retry"
     assert peer.pending_show(pending_id)["state"] == "landed"
+
+
+def test_j6_atomic_function_fallback_keeps_saved_base_after_disjoint_retries(
+    editing_case,
+    tmp_path,
+    monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    timeline.commit(
+        lambda t: t.add(_media_file(tmp_path / "c.png"), at=4, hold=3, track="V1", id="c"),
+        label="Seed c",
+        key="clash-seed-c",
+    )
+    from astrid.sdk.timeline.sync import CommitConflict
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _, credential = daemon.credentials.provision(
+        "j6-peer",
+        [
+            "handshake",
+            "projects:read",
+            "projects:write",
+            "objects:read",
+            "objects:write",
+            "tasks:read",
+            "tasks:write",
+        ],
+    )
+    peer_client = open_client(daemon, actor="j6-peer", credential=credential)
+    peer = type(timeline).open(
+        project, "film", client=peer_client, outbox_path=tmp_path / "j6-peer.json"
+    )
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    function_requests = []
+    peer_writes = []
+
+    def inject_disjoint_peer_changes(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "J6 atomic function" and len(function_requests) < 3:
+            function_requests.append(body)
+            peer_writes.append(
+                peer.commit(
+                    lambda t: t.move("parent/clip:c", on=10 + len(peer_writes)),
+                    label=f"J6 disjoint peer {len(peer_writes) + 1}",
+                    key=f"j6-peer-{len(peer_writes)}",
+                )
+            )
+            current = type(timeline).open(
+                project,
+                "film",
+                client=peer_client,
+                outbox_path=tmp_path / "j6-peer.json",
+            )
+            raise _injected_conflict(timeline, current=current.head)
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", inject_disjoint_peer_changes)
+
+    def edit(t):
+        t.move("parent/clip:b", on=20)
+
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(edit, label="J6 atomic function", merge="atomic", key="j6-function")
+
+    assert len(function_requests) == 3
+    assert len(peer_writes) == 3
+    assert all(request["merge"] == "atomic" for request in function_requests)
+    pending_id = caught.value.pending_id
+    assert pending_id
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+
+    # Reopening loses the in-memory function. The final disjoint c move landed
+    # after the saved base, so recovery must retain atomic scope and refuse it.
+    reopened = type(timeline).open(
+        project, "film", client=client, outbox_path=timeline.session.outbox.path
+    )
+    saved = reopened.pending_show(pending_id)
+    saved_base = saved["parts"][0]["base"]
+    saved_request = saved["parts"][0]["commit_options"]
+    assert saved_request["merge"] == "atomic"
+    assert saved_base == {
+        "revision_id": function_requests[-1]["base_revision_id"],
+        "publication_id": function_requests[-1]["base_publication_id"],
+    }
+
+    retry = reopened.retry(pending_id)
+    assert retry["status"] == "re_derive"
+    assert any(
+        conflict.get("kind") == "atomic_scope_changed"
+        for conflict in retry["data"]["conflicts"]
+    ), retry["data"]["conflicts"]
