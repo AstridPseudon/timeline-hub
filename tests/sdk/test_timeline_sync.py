@@ -658,9 +658,15 @@ def test_old_rejected_conflict_migrates_to_pending_change_on_open(connected):
         "status": "conflict", "reason": "guard_changed",
     }}
     state = session._state()
+    body = {
+        "api_version": 1, "project_id": "p", "timeline_id": "t",
+        "base_revision_id": state["base"]["revision_id"],
+        "base_publication_id": state["base"]["publication_id"],
+        "commands": [command], "source": {"via": "python"}, "dry_run": False,
+    }
     state["rejected"] = {
         "base": copy.deepcopy(state["base"]), "commands": [command],
-        "flight": {"body": request_bytes({"commands": [command]}).decode(), "key": "legacy-key",
+        "flight": {"path": session.path, "body": request_bytes(body).decode(), "key": "legacy-key",
                    "count": 1, "fence": "legacy-fence"},
         "failure": failure, "commit_options": None, "evaluation": None,
     }
@@ -1035,10 +1041,11 @@ def test_dependent_suffix_conflict_preserves_original_guards_and_identity(connec
         open_session(connected).flush(idempotency_key="b")
     state = json.loads(path.read_bytes())
     assert state["pending"] == [] and state["flight"] is None
-    assert state["rejected"]["commands"] == [original]
-    assert state["rejected"]["failure"]["details"]["status"] == "conflict"
-    body = json.loads(state["rejected"]["flight"]["body"])
-    assert body["commands"] == [original] and body["base_revision_id"] == "r1"
+    assert len(state["pending_changes"]) == 1
+    record = next(iter(state["pending_changes"].values()))
+    assert record["failure"]["details"]["status"] == "conflict"
+    assert record["parts"][0]["commands"] == [original]
+    assert record["parts"][0]["base"] == {"revision_id": "r1", "publication_id": "pub1"}
     before = path.read_bytes()
     with pytest.raises(TimelineEditError, match="no pending"):
         session.flush(idempotency_key="replacement")
