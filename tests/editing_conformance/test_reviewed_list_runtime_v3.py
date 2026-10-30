@@ -68,7 +68,7 @@ def test_disjoint_reviewed_doc_patch_list_merges(editing_case, tmp_path):
                             label="Approve C3", merge="fields", reads=[], key="review-c3")
     assert first["data"]["status"] == "accepted", first
     merged = reviewer.commit([patch(field_change("c9", "label", present("c9"), "C9 approved"))],
-                             label="Approve C9", merge="fields", reads=[], key="review-c9")
+                             label="Approve C9", key="review-c9")
     assert merged["data"]["status"] == "merged", merged
     rows = merged["data"]["canonical_document"]["parent_revision"]["payload"]["config"]["tracks"]
     labels = {row["id"]: row["label"] for row in rows}
@@ -81,14 +81,29 @@ def test_disjoint_reviewed_doc_patch_list_merges(editing_case, tmp_path):
     assert atomic_peer["data"]["status"] == "accepted", atomic_peer
     with pytest.raises(CommitConflict) as raised:
         stale_atomic.commit([patch(field_change("c3", "label", present("C3 approved"), "C3 atomic"))],
-                            label="Atomic C3", merge="atomic", reads=[], key="atomic-c3-write")
+                            label="Atomic C3", merge="atomic", key="atomic-c3-write")
     failure = getattr(raised.value, "failure", {})
     details = failure.get("details", {})
     assert details.get("status") == "conflict", failure
     assert details.get("conflicts"), failure
 
 
-def test_reviewed_list_same_field_aba_order_and_idless_still_conflict(editing_case, tmp_path):
+def test_reviewed_list_before_state_conflicts(editing_case, tmp_path):
+    _, _, _, timeline = editing_case
+    seed_tracks(timeline)
+    stale = actor_timeline(editing_case, tmp_path, "before-state-stale")
+    writer = actor_timeline(editing_case, tmp_path, "before-state-writer")
+
+    changed = writer.commit([patch(field_change("c3", "label", present("c3"), "C3 changed"))],
+                            label="Change C3", merge="fields", reads=[], key="before-state-writer")
+    assert changed["data"]["status"] == "accepted", changed
+    with pytest.raises(CommitConflict) as before_state:
+        stale.commit([patch(field_change("c3", "label", present("c3"), "C3 stale"))],
+                     label="Stale C3 review", key="before-state-stale")
+    assert before_state.value.failure.get("details", {}).get("status") == "conflict"
+
+
+def test_reviewed_list_aba_order_membership_and_idless_still_conflict(editing_case, tmp_path):
     _, _, _, timeline = editing_case
     seed_tracks(timeline)
     stale = actor_timeline(editing_case, tmp_path, "aba-stale")
@@ -101,7 +116,7 @@ def test_reviewed_list_same_field_aba_order_and_idless_still_conflict(editing_ca
         assert result["data"]["status"] == "accepted", result
     with pytest.raises(CommitConflict) as aba:
         stale.commit([patch(field_change("c3", "label", present("c3"), "C3 stale"))],
-                     label="Stale C3 review", merge="fields", reads=[], key="aba-stale-write")
+                     label="Stale C3 review", key="aba-stale-write")
     assert getattr(aba.value, "failure", {}).get("details", {}).get("status") == "conflict"
 
     # A stale list-order observation conflicts even when the reviewed row is
@@ -123,7 +138,7 @@ def test_reviewed_list_same_field_aba_order_and_idless_still_conflict(editing_ca
                                   "id": "c7", "before": ABSENT.copy(),
                                   "value": {"id": "c7", "kind": "visual", "label": "c7"},
                                   "order_before": order_before, "after_id": "c3"})],
-                           label="Stale order review", merge="fields", reads=[], key="stale-order")
+                           label="Stale order review", key="stale-order")
     assert getattr(order.value, "failure", {}).get("details", {}).get("status") == "conflict"
 
     stale_membership = actor_timeline(editing_case, tmp_path, "membership-stale")
@@ -143,7 +158,7 @@ def test_reviewed_list_same_field_aba_order_and_idless_still_conflict(editing_ca
             "id": "c8", "before": ABSENT.copy(),
             "value": {"id": "c8", "kind": "visual", "label": "c8"},
             "order_before": membership_base, "after_id": membership_base[-1],
-        })], label="Stale membership review", merge="fields", reads=[], key="stale-membership")
+        })], label="Stale membership review", key="stale-membership")
     assert membership.value.failure.get("details", {}).get("status") == "conflict"
 
     # `meta` is an idless JSON list: a reviewed whole-list replacement keeps
@@ -170,7 +185,7 @@ def test_reviewed_list_same_field_aba_order_and_idless_still_conflict(editing_ca
                                    "path": ["meta", "org.example.reviewed", "rows"],
                                    "before": present(["first", "second"]),
                                    "value": ["reviewed", "second"]})],
-                            label="Stale idless review", merge="fields", reads=[], key="meta-stale")
+                            label="Stale idless review", key="meta-stale")
     assert getattr(idless.value, "failure", {}).get("details", {}).get("status") == "conflict"
 
 
