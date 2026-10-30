@@ -171,7 +171,8 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
     peer_writes = []
 
     def inject_peer_before_primary(project_id, timeline_id, body, **kwargs):
-        if body.get("label") == "J3 function" and len(peer_writes) < 2:
+        peer_limit = 3 if same_process else 2
+        if body.get("label") == "J3 function" and len(peer_writes) < peer_limit:
             peer_writes.append(
                 peer_session[0].commit(
                     lambda t: t.move("parent/clip:b", on=10 + len(peer_writes)),
@@ -182,7 +183,7 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
             peer_session[0] = type(timeline).open(
                 project, "film", client=peer_client, outbox_path=tmp_path / "j3-peer.json"
             )
-        elif body.get("label") == "J3 function":
+        elif body.get("label") == "J3 function" and not same_process:
             raise _injected_conflict(timeline, current=peer_session[0].head)
         return original(project_id, timeline_id, body, **kwargs)
 
@@ -195,7 +196,7 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
     with pytest.raises(CommitConflict) as caught:
         timeline.commit(edit, label="J3 function", key="j3-function")
     assert len(evaluations) == 3
-    assert len(peer_writes) == 2
+    assert len(peer_writes) == (3 if same_process else 2)
     assert caught.value.pending_id
     if same_process:
         monkeypatch.setattr(generated, "commit_timeline", original)
