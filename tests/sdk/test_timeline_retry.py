@@ -515,3 +515,22 @@ def test_retry_detects_prior_group_id_and_closes_cross_actor_record(monkeypatch,
     assert saved["state"] == "landed"
     assert saved["closed_by"] == {"actor_id": "actor-2", "publication_id": "pub-retry", "how": "retry"}
     assert saved["receipts"] == ["receipt-retry"]
+
+
+def test_retry_returns_history_receipt_when_another_actor_already_landed(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    entry = {"group_id": "pc_saved", "publication_id": "pub-retry", "revision_id": "r3",
+             "publisher": "actor-2", "receipt": {"receipt_id": "receipt-retry"}}
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
+
+    result = retry_module.retry(timeline, "pc_saved")
+
+    assert result["data"] == {
+        "publication_id": "pub-retry",
+        "receipt": {"receipt_id": "receipt-retry"},
+    }
+    assert result["summary"] == (
+        '"Recut" already landed as pub-retry (by actor-2); '
+        'pc_saved is closed. Nothing was sent.'
+    )
+    assert timeline.session.submissions == []

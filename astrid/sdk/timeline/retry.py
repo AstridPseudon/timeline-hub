@@ -102,7 +102,11 @@ def _landed(timeline, path, record):
                 "summary": f'Part {index + 1} of "{label}" landed as {publication}{suffix}; '
                            f'{record["id"]} still has saved work.',
                 "next": f'tl.retry({record["id"]!r})', "record": closed}
-    return {"status": "landed", "pending_id": record["id"], "data": {"publication_id": publication},
+    data = {"publication_id": publication}
+    receipt = entry.get("receipt")
+    if isinstance(receipt, dict):
+        data["receipt"] = copy.deepcopy(receipt)
+    return {"status": "landed", "pending_id": record["id"], "data": data,
             "summary": f'"{label}" already landed as {publication}{suffix}; '
                        f'{record["id"]} is closed. Nothing was sent.', "next": None,
             "record": closed}
