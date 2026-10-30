@@ -517,16 +517,6 @@ class Timeline(Checkout):
                 return replay
         with self.session.outbox.locked():
             state = self.session._state()
-        rejected = state.get("rejected")
-        rejected_failure = rejected.get("failure") if isinstance(rejected, Mapping) else None
-        rejected_details = rejected_failure.get("details") if isinstance(rejected_failure, Mapping) else None
-        if isinstance(rejected_details, Mapping) and rejected_details.get("status") == "conflict":
-            rejected_eval = rejected.get("evaluation") if isinstance(rejected, Mapping) else None
-            attempts = rejected_eval.get("count") if isinstance(rejected_eval, Mapping) and rejected_eval.get("kind") == "function" else None
-            raise CommitConflict(rejected_failure, attempts=attempts, fixed_list=True,
-                                 label=label_or_fn if isinstance(label_or_fn, str) else label,
-                                 timeline_id=self.session.timeline_id,
-                                 project_id=self.session.project_id)
         evaluation = state.get("evaluation") or {}
         count = evaluation.get("count", 0)
         if function and state["flight"] is not None and evaluation.get("kind") == "function":
@@ -610,7 +600,8 @@ class Timeline(Checkout):
                     if function and count >= 3:
                         raise CommitConflict(exc.failure, attempts=count, label=commit_label,
                                              timeline_id=self.session.timeline_id,
-                                             project_id=self.session.project_id) from exc
+                                             project_id=self.session.project_id,
+                                             pending_id=exc.pending_id, clash=exc.clash) from exc
                     raise
                 base = _pin(exc.failure["details"]["current"])
                 with self.session.outbox.locked():
@@ -686,6 +677,18 @@ class Timeline(Checkout):
                             "args": copy.deepcopy(command["args"])}
                            for command in data.get("commands", [])]
             data.setdefault("diff", {"changes": changes})
+
+    def pending_list(self, *, all=False):
+        """List this timeline's saved refused edits."""
+        return self.session.pending_list(all=all)
+
+    def pending_show(self, ref):
+        """Return the saved pending record as stored in the outbox."""
+        return self.session.pending_show(ref)
+
+    def pending_drop(self, ref, *, reason=None):
+        """Mark a saved pending edit dropped without deleting its record."""
+        return self.session.pending_drop(ref, reason=reason)
 
     def save(self, *args, **kwargs):
         raise TimelineEditError("use commit(label) to save a Runtime timeline")
