@@ -829,6 +829,120 @@ def test_e14_function_conflict_reruns_but_literal_list_conflict_stays_fixed(
     assert len(_history(client, project)) == len(before_list_conflict) + 1
 
 
+def test_e14_function_lost_fallback_previews_then_merges_disjoint_edit(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    from astrid.sdk.timeline.sync import CommitConflict
+    from astrid_runtime_client import ApiError
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _, credential = daemon.credentials.provision("e14-fallback-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="e14-fallback-peer", credential=credential)
+    peer = type(timeline).open(
+        project, "film", client=peer_client, outbox_path=tmp_path / "fallback-peer.json"
+    )
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    history_before = _history(client, project)
+    peer_writes = []
+    evaluations = []
+
+    def advance_before_attempt(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "E14 function fallback" and len(peer_writes) < 2:
+            name = f"Peer edit {len(peer_writes) + 1}"
+            peer_writes.append(peer.commit(
+                lambda t, name=name: t.bundle["parent"].update({"name": name}),
+                label=name,
+                key=f"e14-fallback-peer-{len(peer_writes) + 1}",
+            ))
+        elif body.get("label") == "E14 function fallback":
+            raise ApiError(409, "conflict", "injected conflict after disjoint peer edits", details={
+                "status": "conflict", "reason": "value_conflict", "current": dict(peer.head),
+            })
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", advance_before_attempt)
+
+    def edit(t):
+        evaluations.append(t.bundle["parent"].get("name"))
+        t.bundle["parent"]["custom"] = {"function_edit": True}
+
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(edit, label="E14 function fallback", key="e14-function-fallback")
+    assert len(evaluations) == 3
+    assert len(peer_writes) == 2
+    assert caught.value.pending_id
+    assert len(_history(client, project)) == len(history_before) + 2
+
+    # Reopening discards the in-memory callable; retry must offer a list preview.
+    reopened = type(timeline).open(
+        project, "film", client=client, outbox_path=timeline.session.outbox.path
+    )
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    preview = reopened.retry(caught.value.pending_id)
+    assert preview["status"] == "preview"
+    assert preview["pending_id"] == caught.value.pending_id
+    assert len(evaluations) == 3
+
+    # This edit lands after preview. The saved list is fields-mergeable with it.
+    late_peer_edit = peer.commit(
+        lambda t: t.bundle["parent"].update({"name": "Peer edit after preview"}),
+        label="Peer edit after preview",
+        key="e14-fallback-peer-after-preview",
+    )
+    assert late_peer_edit["receipt"]["receipt_id"]
+    merged = reopened.commit(preview)
+    assert merged["data"]["status"] == "merged"
+    assert merged["receipt"]["receipt_id"]
+    assert reopened.bundle["parent"]["name"] == "Peer edit after preview"
+    assert reopened.bundle["parent"]["custom"] == {"function_edit": True}
+    assert len(evaluations) == 3
+
+
+def test_e14_explicit_atomic_list_refuses_disjoint_intervening_edit(
+    editing_case, tmp_path,
+):
+    daemon, client, project, timeline = editing_case
+    from astrid.sdk.timeline.sync import CommitConflict
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _, credential = daemon.credentials.provision("e14-atomic-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="e14-atomic-peer", credential=credential)
+    peer = type(timeline).open(
+        project, "film", client=peer_client, outbox_path=tmp_path / "atomic-peer.json"
+    )
+    atomic_commands = timeline.commit(
+        lambda t: t.bundle["parent"].update({"custom": {"atomic_edit": True}}),
+        label="E14 explicit atomic",
+        dry_run=True,
+    )["data"]["commands"]
+    before = _history(client, project)
+    peer_result = peer.commit(
+        lambda t: t.bundle["parent"].update({"name": "Disjoint peer edit"}),
+        label="Disjoint peer edit",
+        key="e14-atomic-peer-edit",
+    )
+    assert peer_result["receipt"]["receipt_id"]
+
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(
+            atomic_commands,
+            label="E14 explicit atomic",
+            merge="atomic",
+            key="e14-explicit-atomic",
+        )
+    assert caught.value.outcome == "not_applied"
+    assert len(_history(client, project)) == len(before) + 1
+    assert _snapshot(peer)["parent_revision"]["payload"].get("custom") is None
+
+
 def test_e14_final_refusal_releases_outbox_for_new_intent_and_exact_undo(
     editing_case, tmp_path,
 ):
