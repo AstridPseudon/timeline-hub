@@ -9,6 +9,7 @@ import copy
 import hashlib
 import json
 import sys
+from types import ModuleType
 
 import pytest
 
@@ -303,6 +304,76 @@ def test_three_evaluation_bound_saves_function_record(connected, monkeypatch):
     assert record["parts"][0]["evaluation"]["count"] == 3
     assert record["parts"][0]["commands"]
     assert len(evaluations) == len(sent) == 3
+
+
+def test_retry_delegates_conflict_ref_and_retained_function(connected, monkeypatch):
+    tl = opened(connected)
+    _, generated, _ = connected
+    monkeypatch.setattr(generated, "commit_timeline",
+                        lambda *args, **kwargs: (_ for _ in ()).throw(conflict(generated)))
+
+    def edit(working):
+        working.move("parent/clip:a", 9)
+
+    with pytest.raises(CommitConflict) as exhausted:
+        tl.commit(edit)
+    calls = []
+    retry_module = ModuleType("astrid.sdk.timeline.retry")
+    retry_module.retry = lambda owner, ref, fn: calls.append((owner, ref, fn)) or "retried"
+    monkeypatch.setitem(sys.modules, retry_module.__name__, retry_module)
+
+    assert tl.retry(exhausted.value) == "retried"
+    assert calls == [(tl, exhausted.value.pending_id, edit)]
+
+
+def test_function_retry_gets_a_fresh_three_evaluation_budget(connected, monkeypatch):
+    tl = opened(connected)
+    _, generated, _ = connected
+    evaluations, sends = [], []
+
+    def refuse(*args, **kwargs):
+        sends.append(kwargs["idempotency_key"])
+        advance(generated, len(sends))
+        raise conflict(generated)
+
+    monkeypatch.setattr(generated, "commit_timeline", refuse)
+
+    def edit(working):
+        evaluations.append(at(working))
+        working.move("parent/clip:a", at(working) + 1)
+
+    with pytest.raises(CommitConflict) as exhausted:
+        tl.commit(edit)
+    assert "3 times" in exhausted.value.presentation["detail"]
+    assert len(evaluations) == len(sends) == 3
+    retry_module = ModuleType("astrid.sdk.timeline.retry")
+
+    def retry(owner, ref, fn):
+        try:
+            owner.commit(fn, pending=ref)
+        except CommitConflict as error:
+            return error
+
+    retry_module.retry = retry
+    monkeypatch.setitem(sys.modules, retry_module.__name__, retry_module)
+    retried = tl.retry(exhausted.value)
+
+    assert isinstance(retried, CommitConflict)
+    assert len(evaluations) == len(sends) == 6
+    assert retried.presentation["detail"].count("3 times") == 1
+    assert len(sends) == 6 and len(set(sends)) == 6
+
+
+def test_commit_retry_preview_delegates_to_retry_module(connected, monkeypatch):
+    tl = opened(connected)
+    calls = []
+    retry_module = ModuleType("astrid.sdk.timeline.retry")
+    retry_module.commit_preview = lambda owner, result: calls.append((owner, result)) or "committed"
+    monkeypatch.setitem(sys.modules, retry_module.__name__, retry_module)
+    preview = {"status": "preview", "data": {"retry": {"pending_id": "pc-1", "token": "t"}}}
+
+    assert tl.commit(preview) == "committed"
+    assert calls == [(tl, preview)]
 
 
 @pytest.mark.parametrize("status", ["refused", "invalid"])
