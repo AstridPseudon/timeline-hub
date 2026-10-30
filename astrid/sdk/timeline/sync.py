@@ -802,8 +802,8 @@ class TimelineSession:
                 conflict_retry = logical_key is not None
                 if logical_key is None and idempotency_key is not None:
                     logical_key = idempotency_key
-                key = (f"timeline-edit-{uuid.uuid4().hex}"
-                       if conflict_retry
+                key = (str(uuid.uuid4()) if state.get("pending_close") is not None
+                       else f"timeline-edit-{uuid.uuid4().hex}" if conflict_retry
                        else idempotency_key if idempotency_key is not None
                        else f"timeline-edit-{uuid.uuid4().hex}")
                 flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
