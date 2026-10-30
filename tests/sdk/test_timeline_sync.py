@@ -733,6 +733,75 @@ def test_failed_refusal_persistence_keeps_exact_flight_for_restart(connected, mo
     assert json.loads(path.read_bytes())["pending"] == []
 
 
+def test_failed_conflict_persistence_keeps_exact_flight_and_pending_for_restart(connected, monkeypatch):
+    from astrid.sdk.timeline import outbox
+
+    session = open_session(connected)
+    _, generated, path = connected
+    entered, release = Event(), Event()
+    conflict = ApiError(409, "conflict", "guards changed", details={
+        "status": "conflict", "reason": "guard_changed", "conflicts": [],
+    })
+    send = generated.commit_timeline
+    durable_at_conflict = []
+    attempts = []
+    conflict_seen = False
+
+    def conflict_after_suffix(*args, **kwargs):
+        nonlocal conflict_seen
+        attempts.append((request_bytes(args[2]), kwargs["idempotency_key"]))
+        entered.set()
+        assert release.wait(10)
+        durable_at_conflict.append(path.read_bytes())
+        conflict_seen = True
+        raise conflict
+
+    monkeypatch.setattr(generated, "commit_timeline", conflict_after_suffix)
+    fsync = outbox.os.fsync
+
+    def fail_conflict_write(fd):
+        if conflict_seen:
+            raise OSError("fsync failed while recording conflict")
+        fsync(fd)
+
+    flight_command = session.queue_move("parent/clip:a", 5)
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        sending = pool.submit(session.flush, idempotency_key="conflicted-flight")
+        try:
+            assert entered.wait(10)
+            suffix_command = open_session(connected).queue_move("parent/clip:a", 7)
+            monkeypatch.setattr(outbox.os, "fsync", fail_conflict_write)
+        finally:
+            release.set()
+        with pytest.raises(OSError, match="recording conflict"):
+            sending.result(timeout=10)
+
+    assert len(durable_at_conflict) == 1
+    assert path.read_bytes() == durable_at_conflict[0]
+    state = json.loads(durable_at_conflict[0])
+    assert state["flight"] is not None
+    assert json.loads(state["flight"]["body"])["commands"] == [flight_command]
+    assert state["pending"] == [flight_command, suffix_command]
+    assert not state.get("pending_changes")
+    assert not state.get("rejected")
+
+    monkeypatch.setattr(outbox.os, "fsync", fsync)
+    monkeypatch.setattr(generated, "commit_timeline", send)
+    reopened = open_session(connected)
+    assert reopened._state() == state
+    reopened.flush()
+    assert attempts[0] == generated.calls[0]
+    state = json.loads(path.read_bytes())
+    assert state["flight"] is None
+    assert state["pending"] == [suffix_command]
+    assert not state.get("pending_changes")
+    assert not state.get("rejected")
+
+    open_session(connected).flush()
+    assert len(generated.accepted) == 2
+    assert json.loads(path.read_bytes())["pending"] == []
+
+
 def test_preview_remains_unsent_and_does_not_reserve_its_key(connected):
     session = open_session(connected)
     _, generated, path = connected
