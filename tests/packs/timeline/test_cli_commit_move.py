@@ -152,7 +152,7 @@ def test_status_and_discard_preserve_lost_ack_flight_truthfully(command, capsys)
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
     assert status == {
         "status": "in_flight", "outcome": "unknown", "key": before["flight"]["key"],
-        "command_count": before["flight"]["count"],
+        "command_count": before["flight"]["count"], "pending_changes": 0,
     }
 
     assert run("discard", "t", "--project", "p") == 0
@@ -215,7 +215,7 @@ def test_status_and_discard_report_and_clear_rejected_commands(command, capsys):
 
     assert run("status", "t", "--project", "p", "--json") == 0
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
-    assert status == {"status": "rejected", "command_count": 1}
+    assert status == {"status": "rejected", "command_count": 1, "pending_changes": 0}
 
     assert run("discard", "t", "--project", "p") == 0
     output = capsys.readouterr().out
@@ -234,19 +234,49 @@ def test_known_conflict_is_reported_not_applied_and_can_be_discarded(command, ca
     error = json.loads(capsys.readouterr().out)["error"]
     assert error["details"]["outcome"] == "not_applied"
     assert error["details"]["headline"]
-    assert "astrid timelines discard t --project p" in error["details"]["fix"]
+    assert "Your edit is saved as" in error["details"]["fix"]
     assert error["details"]["cause"]["details"]["reason"] == "selection_changed"
     state = json.loads(generated.path.read_bytes())
     assert state["flight"] is None and state["pending"] == []
-    assert state["rejected"]["commands"]
+    assert not state.get("rejected")
+    assert len(state["pending_changes"]) == 1
+    pending_id, record = next(iter(state["pending_changes"].items()))
+    assert error["details"]["pending_id"] == pending_id
+    assert record["state"] == "pending"
+    assert record["parts"][0]["commands"]
 
     assert run("status", "t", "--project", "p", "--json") == 0
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
-    assert status["status"] == "conflict" and status["outcome"] == "not_applied"
-    assert status["command_count"] == len(state["rejected"]["commands"])
+    assert status["status"] == "clear"
+    assert status["pending_changes"] == 1
 
+    # Exercise the compatibility path: a conflict written by an older SDK is
+    # migrated before discard clears the working queue.
+    base = record["parts"][0]["base"]
+    commands = record["parts"][0]["commands"]
+    flight_body = json.loads(generated.calls[0][0])
+    flight_body.update(
+        base_revision_id=base["revision_id"],
+        base_publication_id=base["publication_id"],
+        commands=commands,
+    )
+    legacy = {
+        "base": base,
+        "commands": commands,
+        "flight": {"body": request_bytes(flight_body).decode(),
+                   "key": "legacy-conflict", "count": 1, "fence": "legacy-fence"},
+        "failure": record["failure"], "commit_options": None, "evaluation": None,
+    }
+    state.pop("pending_changes")
+    state["rejected"] = legacy
+    generated.path.write_text(json.dumps(state), encoding="utf-8")
     assert run("discard", "t", "--project", "p") == 0
-    assert "discarded recoverable connected-session commands" in capsys.readouterr().out
+    assert "kept 1 pending change" in capsys.readouterr().out
+    saved = json.loads(generated.path.read_bytes())
+    assert not saved.get("rejected")
+    assert len(saved["pending_changes"]) == 1
+    migrated = next(iter(saved["pending_changes"].values()))
+    assert migrated["parts"][0]["commands"] == record["parts"][0]["commands"]
     generated.refusal = None
     assert run("edit", "t", "--project", "p", "--clip", "b", "--on", "7", "--json") == 0
     result = json.loads(capsys.readouterr().out)
@@ -302,7 +332,7 @@ def test_cli_final_refusal_can_be_reviewed_discarded_and_replanned(command, caps
     assert len(rejected["rejected"]["commands"]) == 1
     assert run("status", "t", "--project", "p", "--json") == 0
     assert json.loads(capsys.readouterr().out)["data"]["connected_session"] == {
-        "status": "rejected", "command_count": 1,
+        "status": "rejected", "command_count": 1, "pending_changes": 0,
     }
     assert run("status", "t", "--project", "p", "--text") == 0
     assert "last request was refused" in capsys.readouterr().out
@@ -396,13 +426,58 @@ def test_discard_clears_unsent_connected_commands(command, capsys):
 
     assert run("status", "t", "--project", "p", "--json") == 0
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
-    assert status == {"status": "pending", "command_count": 1}
+    assert status == {"status": "pending", "command_count": 1, "pending_changes": 0}
 
     assert run("discard", "t", "--project", "p") == 0
     assert "discarded recoverable connected-session commands" in capsys.readouterr().out
     saved = json.loads(generated.path.read_bytes())
     assert saved["pending"] == [] and saved["flight"] is None
     assert generated.calls == []
+
+
+def test_status_counts_and_discard_migrates_legacy_conflicts(command, capsys):
+    run, generated = command
+    assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--dry-run", "--json") == 0
+    capsys.readouterr()
+    state = json.loads(generated.path.read_bytes())
+    rejected_command = capture_move(initial_bundle(), "parent/clip:a", 5.0)
+    state["rejected"] = {
+        "base": state["base"], "commands": [rejected_command],
+        "flight": {"key": "conflict", "logical_key": "conflict", "count": 1,
+                   "body": json.dumps({
+                       "base_revision_id": state["base"]["revision_id"],
+                       "base_publication_id": state["base"]["publication_id"],
+                       "commands": [rejected_command],
+                       "label": "Recover this edit",
+                   }, separators=(",", ":"))},
+        "failure": {"code": "conflict", "message": "changed", "details": {
+            "status": "conflict", "current": {"revision_id": "r1", "publication_id": "pub1"},
+        }},
+        "commit_options": {"label": "Recover this edit"}, "evaluation": None,
+    }
+    state["pending_changes"] = {"pc_existing": {"id": "pc_existing", "state": "pending"}}
+    generated.path.write_text(json.dumps(state), encoding="utf-8")
+
+    assert run("status", "t", "--project", "p", "--json") == 0
+    status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
+    assert status["pending_changes"] == 1
+
+    assert run("discard", "t", "--project", "p") == 0
+    output = capsys.readouterr().out
+    saved = json.loads(generated.path.read_bytes())
+    assert saved.get("rejected") is None
+    assert saved["pending"] == [] and saved["flight"] is None
+    assert len(saved["pending_changes"]) == 2
+    migrated = saved["pending_changes"]
+    record_id = next(key for key in migrated if key != "pc_existing")
+    record = migrated[record_id]
+    assert record["id"] == record_id and record["state"] == "pending"
+    assert record["parts"][0]["base"] == {
+        "revision_id": state["base"]["revision_id"],
+        "publication_id": state["base"]["publication_id"],
+    }
+    assert record["parts"][0]["commands"] == [rejected_command]
+    assert "kept 2 pending change(s)" in output
 
 
 def test_ordinary_edit_symbolic_move_keeps_legacy_moment_resolution(command, monkeypatch):
