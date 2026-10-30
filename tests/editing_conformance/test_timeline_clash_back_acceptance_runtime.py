@@ -215,6 +215,88 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
     assert _assert_closed(timeline, caught.value.pending_id)["state"] == "landed"
 
 
+def test_explicit_atomic_function_fallback_rederives_after_disjoint_edit(
+    editing_case,
+    tmp_path,
+    monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    timeline.commit(
+        lambda t: t.add(_media_file(tmp_path / "c.png"), at=4, hold=3, track="V1", id="c"),
+        label="Seed c",
+        key="atomic-fallback-seed-c",
+    )
+    saved_base = dict(timeline.head)
+    _, peer = _peer(daemon, project, tmp_path, actor="atomic-fallback-peer")
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    conflicts = []
+
+    def exhaust_function_retries(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "Explicit atomic function":
+            conflicts.append(body)
+            raise _injected_conflict(timeline, current=saved_base)
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", exhaust_function_retries)
+    evaluations = []
+
+    def edit(t):
+        evaluations.append(t.bundle["parent"]["clips"][0]["at"])
+        t.move("parent/clip:b", on=8)
+
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(edit, label="Explicit atomic function", merge="atomic",
+                        key="explicit-atomic-function")
+    assert len(evaluations) == 3
+    assert len(conflicts) == 3
+    assert caught.value.pending_id
+
+    saved = timeline.pending_show(caught.value.pending_id)
+    part = saved["parts"][0]
+    assert part["base"] == saved_base
+    assert part["commit_options"]["merge"] == "atomic"
+    assert part["evaluation"] == {
+        "kind": "function",
+        "count": 3,
+        "synthetic_function_scope": False,
+        "media_cache": {},
+        "identity_cache": {},
+    }
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    peer_result = peer.commit(lambda t: t.move("parent/clip:c", on=9), label="Move disjoint c",
+                              key="atomic-fallback-peer-move")
+    assert peer_result["data"]["status"] == "accepted"
+    assert peer_result["data"]["accepted_revision_id"] != saved_base["revision_id"]
+
+    reopened = type(timeline).open(
+        project, "film", client=client, outbox_path=timeline.session.outbox.path
+    )
+    import astrid.sdk.timeline.retry as retry_module
+
+    original_probe = retry_module._probe
+    probed = []
+
+    def capture_probe(session, request):
+        result = original_probe(session, request)
+        probed.append(result)
+        return result
+
+    monkeypatch.setattr(retry_module, "_probe", capture_probe)
+    retry = reopened.retry(caught.value.pending_id)
+    assert retry["status"] == "re_derive"
+    assert len(probed) == 1
+    assert probed[0]["status"] == "conflict"
+    assert probed[0]["reason"] == "atomic_scope_changed"
+    assert retry["data"]["conflicts"]
+    assert retry["data"]["receipts"]
+    assert retry["data"]["receipts"][-1]["label"] == "Move disjoint c"
+
+
 def test_j4_lost_ack_on_retry_is_confirmed_once_and_record_closes(
     editing_case,
     tmp_path,
