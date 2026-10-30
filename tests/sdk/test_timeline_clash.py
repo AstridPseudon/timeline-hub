@@ -55,9 +55,14 @@ def test_receipts_keep_only_touched_refs_and_paths():
     _, entries = _history(session, base)
 
     receipts, sites = _receipt_sites(entries, Closure(bundle))
+    raw_writes = [write for record in entries[0]['records']['commands']
+                  for write in [*record['writes'], *record['derived_writes']]]
 
     assert receipts[0]['publication_id'] == realm.head['publication_id']
     assert receipts[0]['touched']
+    assert receipts[0]['touched'] == [
+        {'ref': write['ref'], 'path': write['path']} for write in raw_writes
+    ]
     assert all(set(site) == {'ref', 'path'} for site in receipts[0]['touched'])
     assert all(isinstance(ref, str) and isinstance(path, list)
                for ref, path in sites[0])

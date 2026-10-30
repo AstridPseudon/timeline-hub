@@ -14,6 +14,7 @@ def snapshot(state, flight, failure):
     evaluation = copy.deepcopy(flight.get("evaluation", state.get("evaluation")))
     part = {"base": base, "commands": copy.deepcopy(body["commands"]),
             "commit_options": options, "rationale": copy.deepcopy(body.get("rationale")),
+            "group_id": copy.deepcopy(body.get("group_id")),
             "media_input": copy.deepcopy(flight.get("media_input")),
             "imports": copy.deepcopy(flight.get("imports", [])), "evaluation": evaluation}
     parts = [part]
