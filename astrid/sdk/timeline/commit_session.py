@@ -489,11 +489,20 @@ class Timeline(Checkout):
         """
         if self._evaluating:
             raise TimelineEditError("a commit function cannot commit its own evaluation")
+        if isinstance(label_or_fn, Mapping) and isinstance(label_or_fn.get("data"), Mapping) \
+                and isinstance(label_or_fn["data"].get("retry"), Mapping):
+            if (label is not None or merge != "fields" or dry_run or reads is not None
+                    or key is not None or idempotency_key is not None or pending is not None):
+                raise TimelineEditError("retry preview commits do not accept additional commit options")
+            from . import retry
+
+            return retry.commit_preview(self, label_or_fn)
         if key is not None and idempotency_key is not None:
             raise TimelineEditError("pass only one of key or idempotency_key")
         if key is not None:
             idempotency_key = key
-        pending_target = self._resolve_pending(pending) if pending is not None else None
+        pending_target = (self._resolve_pending(pending) if pending is not None else
+                          self._resolve_pending_key(idempotency_key) if idempotency_key is not None else None)
         pending_id, pending_path = pending_target if pending_target is not None else (None, None)
         if merge not in {"fields", "atomic"}:
             raise TimelineEditError("merge must be fields or atomic")
@@ -553,10 +562,13 @@ class Timeline(Checkout):
             if conflict.get("details", {}).get("status") != "conflict":
                 raise CommitConflict(conflict)
             if not function or evaluation.get("kind") != "function" or count >= 3:
-                raise CommitConflict(conflict, attempts=count if function and count >= 3 else None,
-                                     label=commit_label, timeline_id=self.session.timeline_id,
-                                     project_id=self.session.project_id,
-                                     pending_id=pending_id, clash=clash)
+                error = CommitConflict(conflict, attempts=count if function and count >= 3 else None,
+                                       label=commit_label, timeline_id=self.session.timeline_id,
+                                       project_id=self.session.project_id,
+                                       pending_id=pending_id, clash=clash)
+                if function and count >= 3:
+                    error.retry_fn = function
+                raise error
             base = _pin(conflict["details"]["current"])
         else:
             if not function and state["base"] != self._basis:
@@ -610,11 +622,13 @@ class Timeline(Checkout):
                     self._adopt(self._base_bundle)
                 if not function or exc.failure["details"].get("status") != "conflict" or count >= 3:
                     if function and count >= 3:
-                        raise CommitConflict(exc.failure, attempts=count, label=commit_label,
-                                             timeline_id=self.session.timeline_id,
-                                             project_id=self.session.project_id,
-                                             pending_id=getattr(exc, "pending_id", None),
-                                             clash=getattr(exc, "clash", None)) from exc
+                        exhausted = CommitConflict(exc.failure, attempts=count, label=commit_label,
+                                                   timeline_id=self.session.timeline_id,
+                                                   project_id=self.session.project_id,
+                                                   pending_id=getattr(exc, "pending_id", None),
+                                                   clash=getattr(exc, "clash", None))
+                        exhausted.retry_fn = function
+                        raise exhausted from exc
                     raise
                 base = _pin(exc.failure["details"]["current"])
                 with self.session.outbox.locked():
@@ -633,6 +647,14 @@ class Timeline(Checkout):
                     result["summary"] += " Media:" + media
                 result["data"]["summary"] = result["summary"]
             return self._accepted(result)
+
+    def retry(self, err_or_ref, fn=None):
+        """Retry a saved edit, retaining an exhausted function when available."""
+        ref = getattr(err_or_ref, "pending_id", None) or err_or_ref
+        retry_fn = fn if fn is not None else getattr(err_or_ref, "retry_fn", None)
+        from . import retry
+
+        return retry.retry(self, ref, retry_fn)
 
     def _pending_records_with_paths(self, actors):
         if actors not in {"self", "all"}:
@@ -674,6 +696,18 @@ class Timeline(Checkout):
         path, record = matches[0]
         if record.get("state") != "pending":
             raise TimelineEditError(f"cannot close pending change in state {record.get('state')!r}")
+        return record["id"], str(path)
+
+    def _resolve_pending_key(self, key):
+        """Find a pending edit created with this commit key, if it is unique."""
+        actors = "self" if getattr(self.session, "_explicit_outbox", False) else "all"
+        matches = [(path, record) for path, record in self._pending_records_with_paths(actors)
+                   if record.get("state") == "pending" and record.get("key") == key]
+        if len(matches) > 1:
+            raise TimelineEditError(f"pending key {key!r} is ambiguous; use pending= with a pending id")
+        if not matches:
+            return None
+        path, record = matches[0]
         return record["id"], str(path)
 
     def _commit_commands(self, commands, *, label, merge, dry_run, reads, idempotency_key,
@@ -758,11 +792,16 @@ class Timeline(Checkout):
         raise TimelineEditError(f"no pending change with id or key {ref!r}")
 
     def pending_show(self, ref):
-        """Return a saved pending record, retrying best-effort conflict enrichment."""
-        with self.session.outbox.locked():
-            state = self.session._state()
-            record = copy.deepcopy(self._pending_record(ref, state))
-        if (record.get("state") == "pending"
+        """Return a visible saved record, enriching conflicts only in this actor's outbox."""
+        actors = "self" if getattr(self.session, "_explicit_outbox", False) else "all"
+        matches = [(path, record) for path, record in self._pending_records_with_paths(actors)
+                   if record.get("id") == ref or record.get("key") == ref]
+        if not matches:
+            raise TimelineEditError(f"no pending change with id or key {ref!r}")
+        if len(matches) > 1:
+            raise TimelineEditError(f"pending key {ref!r} is ambiguous; use a pending id")
+        path, record = matches[0]
+        if (path == self.session.outbox.path and record.get("state") == "pending"
                 and (record.get("failure", {}).get("details") or {}).get("status") == "conflict"
                 and (not record.get("clash") or record["clash"].get("receipts") is None)):
             record = _pending_clash(self.session, record)

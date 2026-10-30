@@ -24,7 +24,7 @@ from astrid.sdk.workspace_client import WorkspaceClientError
 
 class CommitConflict(TimelineEditError):
     def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
-                 timeline_id=None, project_id=None, pending_id=None, clash=None):
+                 timeline_id=None, project_id=None, pending_id=None, clash=None, retry_clash=False):
         self.failure = copy.deepcopy(failure)
         self.pending_id = pending_id
         self.clash = copy.deepcopy(clash)
@@ -52,6 +52,11 @@ class CommitConflict(TimelineEditError):
                 f'was not committed. Your edit is saved as {pending_id}; nothing is lost. '
                 f'Retry it with tl.retry("{pending_id}").')
             self.presentation.update(pending_id=pending_id, clash=copy.deepcopy(clash))
+            if retry_clash:
+                self.presentation["headline"] = (
+                    f'The timeline changed again before "{label or "Timeline edit"}" landed; '
+                    f'nothing was committed. {pending_id} is still saved')
+                self.presentation["fix"] = f'tl.retry("{pending_id}")'
         self.headline = self.presentation["headline"]
         self.detail = self.presentation["detail"]
         self.fix = self.presentation["fix"]
@@ -797,8 +802,8 @@ class TimelineSession:
                 conflict_retry = logical_key is not None
                 if logical_key is None and idempotency_key is not None:
                     logical_key = idempotency_key
-                key = (f"timeline-edit-{uuid.uuid4().hex}"
-                       if conflict_retry
+                key = (str(uuid.uuid4()) if state.get("pending_close") is not None
+                       else f"timeline-edit-{uuid.uuid4().hex}" if conflict_retry
                        else idempotency_key if idempotency_key is not None
                        else f"timeline-edit-{uuid.uuid4().hex}")
                 flight = {"path": self.path, "body": request_bytes(body).decode(), "key": key,
@@ -811,6 +816,8 @@ class TimelineSession:
                     flight["pending_how"] = state.get("pending_how", "retry")
                 if logical_key is not None:
                     flight["logical_key"] = logical_key
+                    if conflict_retry:
+                        idempotency_key = logical_key
                 if state.get("evaluation") is not None:
                     flight["evaluation"] = copy.deepcopy(state["evaluation"])
                     cache = state["evaluation"].get("media_cache", {})
@@ -939,6 +946,7 @@ class TimelineSession:
                                      timeline_id=self.timeline_id, project_id=self.project_id,
                                      label=record["label"] if record else None,
                                      pending_id=record["id"] if record else None,
+                                     retry_clash=bool(flight.get("pending_id") and record),
                                      clash=record.get("clash") or clash(record) if record else None) from exc
             raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc  # Keep the durable flight byte-for-byte retryable.
         try:
@@ -1069,7 +1077,7 @@ class TimelineSession:
                      and body["project_id"] == self.project_id and body["timeline_id"] == self.timeline_id
                      and body["base_revision_id"] == state["base"]["revision_id"]
                      and body["base_publication_id"] == state["base"]["publication_id"]
-                     and (key is None or key == flight.get("logical_key", flight["key"]))
+                     and (key is None or key in (flight["key"], flight.get("logical_key")))
                      and body.get("dry_run", False) == dry_run)
         except (KeyError, TypeError, ValueError) as exc:
             raise TimelineEditError("invalid in-flight request; original intent retained") from exc
