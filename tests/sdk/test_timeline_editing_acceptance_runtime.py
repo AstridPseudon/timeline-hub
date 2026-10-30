@@ -761,7 +761,7 @@ def test_e14_duplicate_unknown_copy_retry_reuses_destination_and_receipt(
     assert undone["data"]["canonical_document"] == before_copy
 
 
-def test_e14_function_conflict_reruns_but_literal_list_conflict_stays_fixed(
+def test_e14_function_conflict_reruns_and_literal_list_merges_disjoint_name(
     editing_case, tmp_path, monkeypatch,
 ):
     daemon, client, project, timeline = editing_case
@@ -823,10 +823,14 @@ def test_e14_function_conflict_reruns_but_literal_list_conflict_stays_fixed(
         return original(*args, **kwargs)
 
     monkeypatch.setattr(generated, "commit_timeline", count_fixed_submission)
-    with pytest.raises(CommitConflict):
-        stale.commit(fixed, label="Apply reviewed list", key="e14-fixed-list")
+    merged = stale.commit(fixed, label="Apply reviewed list", key="e14-fixed-list")
+    assert merged["data"]["status"] == "merged"
+    assert merged["receipt"]["receipt_id"]
     assert len(attempts) == 1
-    assert len(_history(client, project)) == len(before_list_conflict) + 1
+    assert len(_history(client, project)) == len(before_list_conflict) + 2
+    landed = _snapshot(stale)["parent_revision"]["payload"]
+    assert landed["name"] == "Second concurrent editor change"
+    assert landed["custom"] == {"literal_edit": True}
 
 
 def test_e14_function_lost_fallback_previews_then_merges_disjoint_edit(
