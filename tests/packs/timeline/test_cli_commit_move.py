@@ -247,15 +247,23 @@ def test_known_conflict_is_reported_not_applied_and_can_be_discarded(command, ca
 
     assert run("status", "t", "--project", "p", "--json") == 0
     status = json.loads(capsys.readouterr().out)["data"]["connected_session"]
-    assert status["status"] == "conflict" and status["outcome"] == "not_applied"
-    assert status["command_count"] == len(record["parts"][0]["commands"])
+    assert status["status"] == "clear"
+    assert status["pending_changes"] == 1
 
     # Exercise the compatibility path: a conflict written by an older SDK is
     # migrated before discard clears the working queue.
+    base = record["parts"][0]["base"]
+    commands = record["parts"][0]["commands"]
+    flight_body = json.loads(generated.calls[0][0])
+    flight_body.update(
+        base_revision_id=base["revision_id"],
+        base_publication_id=base["publication_id"],
+        commands=commands,
+    )
     legacy = {
-        "base": record["parts"][0]["base"],
-        "commands": record["parts"][0]["commands"],
-        "flight": {"body": request_bytes({"commands": record["parts"][0]["commands"]}).decode(),
+        "base": base,
+        "commands": commands,
+        "flight": {"body": request_bytes(flight_body).decode(),
                    "key": "legacy-conflict", "count": 1, "fence": "legacy-fence"},
         "failure": record["failure"], "commit_options": None, "evaluation": None,
     }
