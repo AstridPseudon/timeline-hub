@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 import pytest
 
 from tests.sdk.test_timeline_editing_acceptance_runtime import _history, _media_file
@@ -53,6 +55,17 @@ def _assert_closed(timeline, pending_id, *, how=None):
     if how is not None:
         assert record["closed_by"]["how"] == how
     return record
+
+
+def _injected_conflict(timeline, *, current=None):
+    from astrid_runtime_client import ApiError
+
+    return ApiError(409, "conflict", "injected definitive conflict", details={
+        "status": "conflict",
+        "reason": "value_conflict",
+        "conflicts": [{"ref": "parent/clip:b", "path": ["at"]}],
+        "current": dict(current or timeline.head),
+    })
 
 
 def test_j1_overlapping_list_survives_restart_and_rederive_closes_record(
@@ -158,7 +171,7 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
     peer_writes = []
 
     def inject_peer_before_primary(project_id, timeline_id, body, **kwargs):
-        if body.get("label") == "J3 function" and len(peer_writes) < 3:
+        if body.get("label") == "J3 function" and len(peer_writes) < 2:
             peer_writes.append(
                 peer_session[0].commit(
                     lambda t: t.move("parent/clip:b", on=10 + len(peer_writes)),
@@ -169,6 +182,8 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
             peer_session[0] = type(timeline).open(
                 project, "film", client=peer_client, outbox_path=tmp_path / "j3-peer.json"
             )
+        elif body.get("label") == "J3 function":
+            raise _injected_conflict(timeline, current=peer_session[0].head)
         return original(project_id, timeline_id, body, **kwargs)
 
     monkeypatch.setattr(generated, "commit_timeline", inject_peer_before_primary)
@@ -180,6 +195,7 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
     with pytest.raises(CommitConflict) as caught:
         timeline.commit(edit, label="J3 function", key="j3-function")
     assert len(evaluations) == 3
+    assert len(peer_writes) == 2
     assert caught.value.pending_id
     if same_process:
         monkeypatch.setattr(generated, "commit_timeline", original)
@@ -192,6 +208,8 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
         retry = reopened.retry(caught.value.pending_id)
         assert retry["status"] == "preview"
         landed = reopened.commit(retry)
+        assert str(uuid.UUID(landed["receipt"]["idempotency_key"])) == landed["receipt"]["idempotency_key"]
+        assert _history(client, project)[-1]["group_id"] == caught.value.pending_id
         timeline = reopened
     assert landed["receipt"]["receipt_id"]
     assert len(evaluations) == (4 if same_process else 3)
@@ -208,26 +226,36 @@ def test_j4_lost_ack_on_retry_is_confirmed_once_and_record_closes(
     stale = type(timeline).open(
         project, "film", client=client, outbox_path=tmp_path / "j4-stale.json"
     )
-    _, peer = _peer(daemon, project, tmp_path, actor="j4-peer")
     commands = _move_commands(stale, on=4, label="J4 reviewed move")
-    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="J4 peer move", key="j4-peer")
     from astrid.sdk.timeline.sync import CommitConflict, CommitOutcomeUnknown
     from astrid_runtime_client import ApiError
+
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    initial_conflicts = []
+
+    def inject_initial_conflict(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "J4 reviewed move" and not initial_conflicts:
+            initial_conflicts.append(body)
+            raise _injected_conflict(stale)
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", inject_initial_conflict)
 
     with pytest.raises(CommitConflict) as caught:
         stale.commit(commands, label="J4 reviewed move", key="j4-list")
     pending_id = caught.value.pending_id
+    assert pending_id and len(initial_conflicts) == 1
+    monkeypatch.setattr(generated, "commit_timeline", original)
     retry = stale.retry(pending_id)
     assert retry["status"] == "preview"
     before = _history(client, project)
-    generated = client._remote._transport._generated
-    original = generated.commit_timeline
     calls = []
 
     def lose_retry_reply(project_id, timeline_id, body, **kwargs):
         result = original(project_id, timeline_id, body, **kwargs)
         if body.get("label") == "J4 reviewed move" and not calls:
-            calls.append(kwargs["idempotency_key"])
+            calls.append((kwargs["idempotency_key"], body.get("group_id")))
             raise ApiError(503, "not_ready", "simulated lost retry response after acceptance")
         return result
 
@@ -237,7 +265,11 @@ def test_j4_lost_ack_on_retry_is_confirmed_once_and_record_closes(
     monkeypatch.setattr(generated, "commit_timeline", original)
     landed = stale.commit()
     assert landed["receipt"]["receipt_id"]
+    assert calls[0][0] != "j4-list"
+    assert str(uuid.UUID(calls[0][0])) == calls[0][0]
+    assert calls[0][1] == pending_id
     assert len(_history(client, project)) == len(before) + 1
+    assert _history(client, project)[-1]["group_id"] == pending_id
     closed = _assert_closed(stale, pending_id)
     assert closed["receipts"] == [landed["receipt"]["receipt_id"]]
     assert closed["closed_by"]["publication_id"] == landed["receipt"]["receipt_id"]
@@ -274,33 +306,49 @@ def test_j5_two_actors_retry_one_record_and_group_id_closes_other_actor(
     # Use the peer's default actor outbox under the same configured data root.
     peer = Timeline.open(project, "film", client=peer_client)
     commands = _move_commands(owner, on=4, label="J5 reviewed move")
-    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="J5 peer move", key="j5-peer")
+    owner_transport = client._remote._transport._generated
+    original = owner_transport.commit_timeline
+    initial_conflicts = []
+
+    def inject_initial_conflict(project_id_arg, timeline_id_arg, body, **kwargs):
+        if body.get("label") == "J5 reviewed move" and not initial_conflicts:
+            initial_conflicts.append(body)
+            raise _injected_conflict(owner)
+        return original(project_id_arg, timeline_id_arg, body, **kwargs)
+
+    monkeypatch.setattr(owner_transport, "commit_timeline", inject_initial_conflict)
     with pytest.raises(CommitConflict) as caught:
         owner.commit(commands, label="J5 reviewed move", key="j5-list")
     pending_id = caught.value.pending_id
-    assert pending_id
+    assert pending_id and len(initial_conflicts) == 1
+    monkeypatch.setattr(owner_transport, "commit_timeline", original)
     assert [item["id"] for item in peer.pending_list(actors="all")] == [pending_id]
 
     owner_preview = owner.retry(pending_id)
     peer_preview = peer.retry(pending_id)
     assert owner_preview["status"] == peer_preview["status"] == "preview"
     history_before = _history(client, project)
-    owner_transport = client._remote._transport._generated
-    original = owner_transport.commit_timeline
     nested = []
+    retry_requests = []
 
     def let_peer_win(project_id_arg, timeline_id_arg, body, **kwargs):
         if body.get("label") == "J5 reviewed move" and not nested:
+            retry_requests.append((kwargs["idempotency_key"], body.get("group_id")))
             nested.append(peer.commit(peer_preview))
         return original(project_id_arg, timeline_id_arg, body, **kwargs)
 
     monkeypatch.setattr(owner_transport, "commit_timeline", let_peer_win)
     peer_result = owner.commit(owner_preview)
     assert nested[0]["receipt"]["receipt_id"]
+    assert retry_requests[0][0] != "j5-list"
+    assert retry_requests[0][1] == pending_id
     assert peer_result["status"] == "landed"
     assert peer_result["data"]["receipt"]["receipt_id"] == nested[0]["receipt"]["receipt_id"]
     assert len(_history(client, project)) == len(history_before) + 1
     assert _history(client, project)[-1]["group_id"] == pending_id
+    winner_key = nested[0]["receipt"]["idempotency_key"]
+    assert winner_key != "j5-list"
+    assert str(uuid.UUID(winner_key)) == winner_key
     owner_record = _assert_closed(owner, pending_id)
     assert owner_record["closed_by"]["actor_id"] == "j5-peer"
     assert owner_record["closed_by"]["how"] == "retry"
