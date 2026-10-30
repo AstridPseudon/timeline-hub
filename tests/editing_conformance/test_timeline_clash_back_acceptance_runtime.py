@@ -55,6 +55,36 @@ def _assert_closed(timeline, pending_id, *, how=None):
     return record
 
 
+def _inject_current_base_conflict(monkeypatch, transport, label):
+    """Save a refusal without making the request's guarded writes stale."""
+    from astrid_runtime_client import ApiError
+
+    original = transport.commit_timeline
+    injected = []
+
+    def conflict_once(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == label and not injected:
+            injected.append(body)
+            raise ApiError(
+                409,
+                "conflict",
+                "injected definitive conflict before Runtime execution",
+                details={
+                    "status": "conflict",
+                    "reason": "intervening_write",
+                    "current": {
+                        "revision_id": body["base_revision_id"],
+                        "publication_id": body["base_publication_id"],
+                    },
+                    "conflicts": [],
+                },
+            )
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(transport, "commit_timeline", conflict_once)
+    return original, injected
+
+
 def test_j1_overlapping_list_survives_restart_and_rederive_closes_record(
     editing_case,
     tmp_path,
@@ -158,7 +188,7 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
     peer_writes = []
 
     def inject_peer_before_primary(project_id, timeline_id, body, **kwargs):
-        if body.get("label") == "J3 function" and len(peer_writes) < 3:
+        if body.get("label") == "J3 function" and len(peer_writes) < (3 if same_process else 2):
             peer_writes.append(
                 peer_session[0].commit(
                     lambda t: t.move("parent/clip:b", on=10 + len(peer_writes)),
@@ -168,6 +198,26 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
             )
             peer_session[0] = type(timeline).open(
                 project, "film", client=peer_client, outbox_path=tmp_path / "j3-peer.json"
+            )
+        elif body.get("label") == "J3 function" and not same_process and len(peer_writes) == 2:
+            # The saved function attempt is based on the current head after two
+            # real clashes. Refuse it before Runtime execution so its guards
+            # still apply when the process restarts and retries it.
+            from astrid_runtime_client import ApiError
+
+            raise ApiError(
+                409,
+                "conflict",
+                "injected definitive final conflict before Runtime execution",
+                details={
+                    "status": "conflict",
+                    "reason": "intervening_write",
+                    "current": {
+                        "revision_id": body["base_revision_id"],
+                        "publication_id": body["base_publication_id"],
+                    },
+                    "conflicts": [],
+                },
             )
         return original(project_id, timeline_id, body, **kwargs)
 
@@ -180,6 +230,7 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
     with pytest.raises(CommitConflict) as caught:
         timeline.commit(edit, label="J3 function", key="j3-function")
     assert len(evaluations) == 3
+    assert len(peer_writes) == (3 if same_process else 2)
     assert caught.value.pending_id
     if same_process:
         monkeypatch.setattr(generated, "commit_timeline", original)
@@ -191,6 +242,12 @@ def test_j3_exhausted_function_retry_lands_and_closes_record(
         monkeypatch.setattr(generated, "commit_timeline", original)
         retry = reopened.retry(caught.value.pending_id)
         assert retry["status"] == "preview"
+        assert retry["_retry_request"]["base_revision_id"] == (
+            reopened.session._state()["base"]["revision_id"]
+        )
+        assert retry["_retry_request"]["base_publication_id"] == (
+            reopened.session._state()["base"]["publication_id"]
+        )
         landed = reopened.commit(retry)
         timeline = reopened
     assert landed["receipt"]["receipt_id"]
@@ -203,14 +260,16 @@ def test_j4_lost_ack_on_retry_is_confirmed_once_and_record_closes(
     tmp_path,
     monkeypatch,
 ):
-    daemon, client, project, timeline = editing_case
+    _, client, project, timeline = editing_case
     _seed_clip(timeline, tmp_path)
     stale = type(timeline).open(
         project, "film", client=client, outbox_path=tmp_path / "j4-stale.json"
     )
-    _, peer = _peer(daemon, project, tmp_path, actor="j4-peer")
     commands = _move_commands(stale, on=4, label="J4 reviewed move")
-    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="J4 peer move", key="j4-peer")
+    generated = client._remote._transport._generated
+    original, injected = _inject_current_base_conflict(
+        monkeypatch, generated, "J4 reviewed move"
+    )
     from astrid.sdk.timeline.sync import CommitConflict, CommitOutcomeUnknown
     from astrid_runtime_client import ApiError
 
@@ -219,9 +278,13 @@ def test_j4_lost_ack_on_retry_is_confirmed_once_and_record_closes(
     pending_id = caught.value.pending_id
     retry = stale.retry(pending_id)
     assert retry["status"] == "preview"
+    assert retry["_retry_request"]["base_revision_id"] == (
+        stale.session._state()["base"]["revision_id"]
+    )
+    assert retry["_retry_request"]["base_publication_id"] == (
+        stale.session._state()["base"]["publication_id"]
+    )
     before = _history(client, project)
-    generated = client._remote._transport._generated
-    original = generated.commit_timeline
     calls = []
 
     def lose_retry_reply(project_id, timeline_id, body, **kwargs):
@@ -235,6 +298,7 @@ def test_j4_lost_ack_on_retry_is_confirmed_once_and_record_closes(
     with pytest.raises(CommitOutcomeUnknown):
         stale.commit(retry)
     monkeypatch.setattr(generated, "commit_timeline", original)
+    assert len(injected) == 1
     landed = stale.commit()
     assert landed["receipt"]["receipt_id"]
     assert len(_history(client, project)) == len(before) + 1
@@ -274,7 +338,10 @@ def test_j5_two_actors_retry_one_record_and_group_id_closes_other_actor(
     # Use the peer's default actor outbox under the same configured data root.
     peer = Timeline.open(project, "film", client=peer_client)
     commands = _move_commands(owner, on=4, label="J5 reviewed move")
-    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="J5 peer move", key="j5-peer")
+    owner_transport = client._remote._transport._generated
+    original, injected = _inject_current_base_conflict(
+        monkeypatch, owner_transport, "J5 reviewed move"
+    )
     with pytest.raises(CommitConflict) as caught:
         owner.commit(commands, label="J5 reviewed move", key="j5-list")
     pending_id = caught.value.pending_id
@@ -284,9 +351,13 @@ def test_j5_two_actors_retry_one_record_and_group_id_closes_other_actor(
     owner_preview = owner.retry(pending_id)
     peer_preview = peer.retry(pending_id)
     assert owner_preview["status"] == peer_preview["status"] == "preview"
+    assert owner_preview["_retry_request"]["base_revision_id"] == (
+        owner.session._state()["base"]["revision_id"]
+    )
+    assert owner_preview["_retry_request"]["base_publication_id"] == (
+        owner.session._state()["base"]["publication_id"]
+    )
     history_before = _history(client, project)
-    owner_transport = client._remote._transport._generated
-    original = owner_transport.commit_timeline
     nested = []
 
     def let_peer_win(project_id_arg, timeline_id_arg, body, **kwargs):
@@ -305,3 +376,4 @@ def test_j5_two_actors_retry_one_record_and_group_id_closes_other_actor(
     assert owner_record["closed_by"]["actor_id"] == "j5-peer"
     assert owner_record["closed_by"]["how"] == "retry"
     assert peer.pending_show(pending_id)["state"] == "landed"
+    assert len(injected) == 1
