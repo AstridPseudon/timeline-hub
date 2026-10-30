@@ -90,6 +90,8 @@ def _receipt_sites(entries, base):
                 ref, path = site['ref'], copy.deepcopy(site['path'])
                 address = _addresses(ref, path, before) + _addresses(ref, path, after)
                 addresses.extend(address)
+            for write in [*record.get('writes', []), *record.get('derived_writes', [])]:
+                ref, path = write['ref'], copy.deepcopy(write['path'])
                 public = {'ref': ref, 'path': path}
                 if public not in touched:
                     touched.append(public)
