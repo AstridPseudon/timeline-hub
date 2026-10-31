@@ -388,6 +388,37 @@ def test_outbox_unlocks_when_locked_body_raises(tmp_path, monkeypatch):
     assert len(released) == 1
 
 
+def test_reciprocal_retry_outbox_locks_use_canonical_order_and_dedupe_aliases(tmp_path, monkeypatch):
+    from contextlib import contextmanager
+
+    from astrid.sdk.timeline.sync import _retry_outbox_locks
+
+    left = Outbox(tmp_path / "left" / "outbox.json")
+    right = Outbox(tmp_path / "right" / "outbox.json")
+    acquired = []
+
+    @contextmanager
+    def observe_lock(outbox):
+        acquired.append(outbox.path.resolve())
+        yield
+
+    monkeypatch.setattr(Outbox, "locked", observe_lock)
+
+    with _retry_outbox_locks(left, right.path):
+        pass
+    with _retry_outbox_locks(right, left.path):
+        pass
+
+    ordered = sorted((left.path.resolve(), right.path.resolve()))
+    assert acquired == ordered + ordered
+
+    acquired.clear()
+    left_alias = left.path.parent / ".." / "left" / "outbox.json"
+    with _retry_outbox_locks(left, left_alias):
+        pass
+    assert acquired == [left.path.resolve()]
+
+
 @pytest.mark.parametrize('guard', ['sheet', 'producer'])
 def test_stage_guards_precede_even_matching_pending_retry(connected, guard):
     session = open_session(connected)
