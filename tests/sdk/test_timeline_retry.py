@@ -252,7 +252,7 @@ def test_function_record_probe_preserves_original_base_and_guards(monkeypatch, t
     )
 
 
-def test_function_fallback_removes_marked_synthetic_scope_without_mutating_saved_record(tmp_path):
+def test_function_retry_preserves_synthetic_scope_and_saved_record(tmp_path):
     record = _record()
     part = record["parts"][0]
     part["evaluation"] = {"kind": "function", "synthetic_function_scope": True}
@@ -269,13 +269,13 @@ def test_function_fallback_removes_marked_synthetic_scope_without_mutating_saved
 
     assert request["base_revision_id"] == BASE["revision_id"]
     assert request["base_publication_id"] == BASE["publication_id"]
-    assert request["merge"] == "fields"
-    assert request["reads"] == []
-    assert request["steps"] == [{"id": "s1"}, {"id": "s2"}]
+    assert request["merge"] == "atomic"
+    assert "reads" not in request
+    assert request["steps"] == part["commit_options"]["steps"]
     assert record == before
 
 
-def test_function_fallback_removes_only_sdk_added_step_read(tmp_path):
+def test_function_retry_preserves_all_step_reads_and_omits_batch_reads(tmp_path):
     record = _record()
     part = record["parts"][0]
     caller_read = {"kind": "scope", "ref": "clip:a", "path": ["start"]}
@@ -288,12 +288,14 @@ def test_function_fallback_removes_only_sdk_added_step_read(tmp_path):
             {"id": "s2", "reads": [synthetic_scope]},
         ],
     }
+    before = copy.deepcopy(record)
 
     request = retry_module._request(record, part)
 
-    assert request["merge"] == "fields"
-    assert request["reads"] == []
-    assert request["steps"] == [{"id": "s1", "reads": [caller_read]}, {"id": "s2"}]
+    assert request["merge"] == "atomic"
+    assert "reads" not in request
+    assert request["steps"] == part["commit_options"]["steps"]
+    assert record == before
 
 
 def test_function_retry_preserves_caller_reads_and_explicit_atomic(tmp_path):
