@@ -152,7 +152,20 @@ def test_retry_returns_redrive_state_for_conflict(monkeypatch, tmp_path):
 
     assert result["status"] == "re_derive"
     assert 'pending="pc_saved"' in result["summary"]
-    assert "tl.commit(make_edit" in result["next"]
+    assert "make_edit is your function" in result["next"]
+    assert "\n" in result["next"]
+    assert "idempotency_key='recut'" in result["next"]
+    assert "          key=" not in result["next"]
+
+
+def test_pending_conflict_string_does_not_repeat_its_summary():
+    error = CommitConflict({"details": {"status": "conflict"}},
+                           pending_id="pc-1", label="Move clip")
+
+    message = str(error)
+
+    assert message.count('nothing was committed') == 1
+    assert 'tl.retry("pc-1")' in message
 
 
 def test_function_retry_returns_commit_result_and_reuses_label_key(monkeypatch, tmp_path):

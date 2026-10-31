@@ -229,18 +229,19 @@ def _preview_diff(timeline, data, evaluated_head):
     return {"changes": changes}
 
 
-def _summary_rederive(record, packet):
+def _summary_rederive(record, packet, session):
     label = record.get("label") or "Timeline edit"
     receipts = packet.get("receipts") or []
     receipt = next((item for item in receipts if item.get("touches_conflict")), None)
+    if receipt is None and record.get("origin") == "function":
+        receipt = next((item for item in reversed(receipts)
+                        if item.get("publication_id")), None)
     conflicts = ((record.get("failure") or {}).get("details") or {}).get("conflicts", [])
     conflict = conflicts[0] if conflicts else {}
-    path = "/".join(map(str, conflict.get("path", [])))
-    ref = str(conflict.get("ref", "the changed part")).rsplit("/", 1)[-1]
-    if ":" in ref:
-        kind, identity = ref.split(":", 1)
-        ref = f"{kind} {identity}"
-    site = ref + (f' ({path})' if path else "")
+    try:
+        site = clash.friendly_target(session, record, conflict)
+    except Exception:  # noqa: BLE001 - keep a plain fallback when history is unavailable
+        site = "the changed part"
     cause = "the timeline changed"
     if receipt:
         cause = f'"{receipt.get("label") or "Another edit"}"'
@@ -310,10 +311,11 @@ def retry(timeline, ref, fn=None):
         return {"status": "re_derive", "pending_id": record["id"],
                 "data": {"conflicts": copy.deepcopy(details.get("conflicts", [])),
                          "receipts": copy.deepcopy(packet.get("receipts"))},
-                "summary": _summary_rederive(record, packet),
-                "next": (f'preview = tl.commit(make_edit, label={record.get("label")!r}, dry_run=True); '
-                         f'tl.commit(preview["data"]["commands"], label={record.get("label")!r}, '
-                         f'key={record.get("key")!r}, pending={record["id"]!r})')}
+                "summary": _summary_rederive(record, packet, timeline.session),
+                "next": (f'# make_edit is your function; re-run it on the newest timeline and review the preview.\n'
+                         f'preview = tl.commit(make_edit, label={record.get("label")!r}, dry_run=True)\n'
+                         f'tl.commit(preview["data"]["commands"], label={record.get("label")!r},\n'
+                         f'          idempotency_key={record.get("key")!r}, pending={record["id"]!r})')}
     message = data.get("message") or details.get("message") or details.get("reason") or "The Runtime refused this edit."
     return {"status": "refused", "pending_id": record["id"], "data": copy.deepcopy(data),
             "summary": str(message), "next": f'tl.retry({record["id"]!r})'}
