@@ -891,7 +891,8 @@ def test_function_rerun_saves_overlapping_user_edit_and_explicit_retry_rebases(
     saved_after_retry = timeline.pending_show(caught.value.pending_id)
     assert saved_after_retry["state"] == "landed"
     assert saved_after_retry["closed_by"] == {
-        "actor_id": "actor", "publication_id": rebased["receipt"]["receipt_id"], "how": "rerun",
+        "actor_id": client._remote._transport._last_handshake["actor_id"],
+        "publication_id": rebased["receipt"]["receipt_id"], "how": "rerun",
     }
 
 
