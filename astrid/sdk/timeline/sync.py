@@ -479,6 +479,7 @@ class TimelineSession:
     def commit_many(
         self, commands, *, idempotency_key=None, dry_run=False, via="python", base=None,
         verified_media=(), label=None, steps=None, merge="fields", reads=None,
+        _omit_empty_reads=False,
     ):
         """Capture and flush a batch, or retry its exact flight before a suffix."""
         from astrid.sdk.timeline._command_state import equal
@@ -486,7 +487,7 @@ class TimelineSession:
 
         commands = [_native_command(command) for command in commands]
         metadata_requested = label is not None or steps is not None or merge != "fields" or reads is not None
-        if reads is None and merge == "fields":
+        if reads is None and merge == "fields" and not _omit_empty_reads:
             reads = []
         label = label if label is not None else "Timeline edit"
         if not isinstance(label, str) or not label.strip():

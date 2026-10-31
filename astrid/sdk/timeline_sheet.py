@@ -878,7 +878,8 @@ class NativeSheet:
                   "tags": ["sheet"], "command_ordinals": [index], "patch": []}
                  for index, _command in enumerate(plan.commands)]
         return session.commit_many(plan.commands, idempotency_key=idempotency_key, via="sheet",
-                                   base=self._basis, label="Apply sheet", steps=steps)
+                                   base=self._basis, label="Apply sheet", steps=steps,
+                                   _omit_empty_reads=True)
 
 
 def apply_sheet(tl: Checkout, text: str, *, client: Any = None) -> list[str]:

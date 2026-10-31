@@ -40,7 +40,8 @@ def _commit_conflict_message(parsed, details: Mapping[str, object]) -> str:
         return (f"not published: {actor} published {short_revision(current_revision)} after your checkout "
                 f"({short_revision(base_revision)}), and you both changed:\n  {changed_text}\n"
                 f"your edit is saved as {pending_id}; inspect it with `timelines pending show`, "
-                f"then recover with:\n  {retry}")
+                f"then recover with:\n  {retry}\n"
+                "force overwrite is refused; review the saved edit before retrying.")
     return (
         f"not published: {actor} published {short_revision(current_revision)} after your checkout "
         f"({short_revision(base_revision)}), and you both changed:\n  {changed_text}\n"
@@ -59,10 +60,11 @@ def _document_error(parsed, exc: Exception, *, code: str | None = None) -> Domai
     if isinstance(failure, Mapping):
         details = dict(failure.get("details") or details)
         code = code or str(failure.get("code") or "timeline_commit_error")
-    if getattr(exc, "pending_id", None):
-        details["pending_id"] = exc.pending_id
-    if isinstance(getattr(exc, "clash", None), Mapping):
-        details["clash"] = copy.deepcopy(exc.clash)
+    pending_id = getattr(exc, "pending_id", None)
+    if isinstance(pending_id, str):
+        details["pending_id"] = pending_id
+        if isinstance(getattr(exc, "clash", None), Mapping):
+            details["clash"] = copy.deepcopy(exc.clash)
     details.setdefault("path", "/file")
     details.setdefault("hint", "re-check out the detached document and retry with its exact base pair")
     details.setdefault(
@@ -168,6 +170,10 @@ def _preview_detached_document(checkout, bundle, base, parsed, *, dry_run: bool)
     )
     with session.outbox.locked():
         state = session._state()
+    # The editable bundle omits Runtime's private canonical document image.
+    # Document patch emission needs that image to materialize a complete v2
+    # request, so use the authenticated capture inside this CLI boundary.
+    authenticated_capture = _normalized_document_diff(session._capture_bundle(state))
     authenticated_base = _normalized_document_diff(session._bundle(state))
     candidate = _normalized_document_diff(checkout.bundle)
     if candidate == authenticated_base:
@@ -176,7 +182,7 @@ def _preview_detached_document(checkout, bundle, base, parsed, *, dry_run: bool)
                           "project_id": bundle["project_id"], "timeline_id": bundle["timeline_id"],
                           "label": parsed.message, "commands": [], "steps": [],
                           "merge_mode": "atomic"}, "receipt": None}
-    working = Timeline(session, authenticated_base, base)
+    working = Timeline(session, authenticated_capture, base)
     working.bundle = candidate
     working._refresh()
     return working.commit(
@@ -214,7 +220,7 @@ def commit_document(parsed) -> int:
         as_json=parsed.json,
         human_renderer=lambda value: _render_commit_result(
             value, dry_run=parsed.dry_run, label=parsed.message, summary=summary,
-            project=parsed.project, ref=parsed.ref,
+            project=parsed.project, ref=parsed.ref, include_revision=True,
         ),
     )
 
@@ -227,12 +233,17 @@ def _render_commit_result(
     summary: tuple[int, int] | None = None,
     project: str | None = None,
     ref: str | None = None,
+    include_revision: bool = False,
 ) -> str:
     if not isinstance(value, DomainResult) or not isinstance(value.data, Mapping):
         raise TypeError("native commit renderer received an invalid result envelope")
     data = value.data
     if isinstance(data.get("summary"), str):
         lines = [data["summary"]]
+        if include_revision and data.get("accepted_revision_id"):
+            publication = data.get("accepted_publication_id")
+            receipt = f" · publication {publication}" if publication else ""
+            lines.append(f"accepted revision {data['accepted_revision_id']}{receipt} · {label or 'Timeline edit'}")
         if summary is not None and not dry_run:
             clip_word = "clip" if summary[0] == 1 else "clips"
             cut_word = "cut" if summary[1] == 1 else "cuts"

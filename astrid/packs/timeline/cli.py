@@ -1903,11 +1903,14 @@ def _visualization_navigation_help(
     ]
     if show_range is not None:
         show_selectors.append(["--range", show_range])
+    show_revision = (source_identity.get("revision_id")
+                     if isinstance(source_identity, Mapping) else None) or (
+                         inputs.get("revision_id") or _revision_from_outputs(outputs)
+                     )
     show_source = (
         ["--draft", str(source_identity.get("name"))]
         if isinstance(source_identity, Mapping) and source_identity.get("kind") == "working_copy"
-        else ["--revision-id", str(source_identity.get("revision_id"))]
-        if isinstance(source_identity, Mapping) and source_identity.get("revision_id") else []
+        else ["--revision-id", str(show_revision)] if show_revision else []
     )
     show_command = shlex.join(
         [

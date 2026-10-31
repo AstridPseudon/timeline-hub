@@ -173,7 +173,10 @@ def _cmd_sync(args: argparse.Namespace) -> int:
     pack = getattr(args, "pack", None)
     skill_names = getattr(args, "skill", [])
     if skill_names and not pack:
-        raise ValueError("--skill requires a pack")
+        raise AstridError(
+            "--skill requires a pack",
+            recovery_command="specify a pack id before --skill",
+        )
     refresh = None
     if pack:
         from . import _units
