@@ -700,10 +700,11 @@ def test_function_rerun_guard_saves_flight_and_dependent_suffix_in_order(connect
     generated.publications["peer"] = "pub-peer"
 
     evaluations = []
+    target = [5]
 
     def edit(working):
         evaluations.append(working.head["revision_id"])
-        working.move("parent/clip:a", 5)
+        working.move("parent/clip:a", target[0])
 
     original_base = {"revision_id": "r0", "publication_id": "pub0"}
 
@@ -751,12 +752,17 @@ def test_function_rerun_guard_saves_flight_and_dependent_suffix_in_order(connect
     assert record["receipts"] == [] and record["closed_by"] is None
 
     saved_suffix = copy.deepcopy(record["parts"][1])
+    target[0] = 6
     with pytest.raises(CommitConflict) as repeated:
         tl.commit(edit, label="Rerun edit", key="rerun-key")
 
     repeated_record = json.loads(path.read_text())["pending_changes"][error.value.pending_id]
     assert repeated.value.pending_id == error.value.pending_id
     assert repeated_record["part"] == 0
+    assert repeated_record["parts"][0]["commands"] == [{
+        "schema_version": 1, "op": "clip.move", "version": "1",
+        "select": "parent/clip:a", "args": {"on": 6},
+    }]
     assert repeated_record["parts"][1] == saved_suffix
 
 
