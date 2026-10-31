@@ -642,7 +642,10 @@ class Timeline(Checkout):
                 else:
                     return self._accepted(result)
             if conflict.get("details", {}).get("status") != "conflict":
-                raise CommitConflict(conflict)
+                error = CommitConflict(conflict, pending_id=pending_id, clash=clash)
+                if function:
+                    error.retry_fn = function
+                raise error
             if not function or evaluation.get("kind") != "function" or count >= 3:
                 error = CommitConflict(conflict, attempts=count if function and count >= 3 else None,
                                        label=commit_label, timeline_id=self.session.timeline_id,
@@ -705,6 +708,8 @@ class Timeline(Checkout):
                     self._adopt(self._base_bundle)
                 retryable = exc.failure["details"].get("status") == "conflict"
                 if not function or not retryable or count >= 3:
+                    if function and not retryable:
+                        exc.retry_fn = function
                     if function and retryable and count >= 3:
                         exhausted = CommitConflict(exc.failure, attempts=count, label=commit_label,
                                                    timeline_id=self.session.timeline_id,
