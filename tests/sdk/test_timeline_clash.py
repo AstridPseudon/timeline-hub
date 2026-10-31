@@ -83,6 +83,7 @@ def test_packet_names_touching_receipt():
     base = copy.deepcopy(realm.head)
     receipt = realm.call([realm.move('parent/clip:clip-a', 6.006)])
     realm.entries[-1]['records']['label'] = 'Move clip-a'
+    realm.entries[-1]['publisher'] = 'astrid-0123456789abcdef'
     conflict = {'kind': 'value_conflict', 'ref': 'parent/clip:clip-a', 'path': ['at'],
                 'base': {'state': 'absent'}, 'theirs': {'state': 'absent'},
                 'ours': {'state': 'absent'}}
@@ -92,9 +93,12 @@ def test_packet_names_touching_receipt():
     assert packet['schema'] == 'astrid.clash/2'
     assert packet['conflicts'] == [conflict]
     assert packet['receipts'][0]['publication_id'] == receipt['receipt']['receipt_id']
+    assert packet['receipts'][0]['publisher'] == 'astrid-0123456789abcdef'
     assert packet['receipts'][0]['touches_conflict'] is True
     assert packet['receipts'][0]['touched']
     assert 'Move' in packet['summary']
+    assert 'another writer' in packet['summary']
+    assert 'astrid-0123456789abcdef' not in packet['summary']
     assert 'pc_saved' in packet['summary']
     assert packet['next'] == "tl.retry('pc_saved')"
 
