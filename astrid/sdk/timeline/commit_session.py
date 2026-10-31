@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import uuid
 from collections.abc import Mapping
 from datetime import datetime, timezone
@@ -768,6 +769,16 @@ class Timeline(Checkout):
                           "command_ordinals": [ordinal], "patch": patch})
         try:
             list_reads = [] if reads is None and merge == "fields" else reads
+            flight = state.get("flight")
+            if flight is not None and pending_id is not None:
+                body = json.loads(flight["body"])
+                if (flight.get("pending_id") != pending_id or body.get("commands") != commands
+                        or body.get("label") != label or body.get("steps") != steps
+                        or body.get("merge") != merge or body.get("reads") != list_reads
+                        or body.get("dry_run", False) != dry_run):
+                    raise TimelineEditError("retry the original in-flight request before another edit")
+                return self._accepted(self.session.flush(idempotency_key=idempotency_key,
+                                                         dry_run=dry_run, release_conflict=True))
             if state["base"] != self._basis:
                 if dry_run or pending_id is not None:
                     raise TimelineEditError("session base changed; reopen before committing")
