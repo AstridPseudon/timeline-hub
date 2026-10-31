@@ -69,17 +69,24 @@ def test_case1_fps_removal_refusal_reason_and_wording(editing_case):
     assert exc.failure["details"]["status"] == "invalid"
     assert exc.failure["details"]["reason"] == "invalid_document"
     assert exc.headline == "This edit is not valid; nothing was committed"
-    assert exc.fix == "Fix the edit and commit again; the timeline is unchanged."
+    assert exc.fix == (
+        f'Inspect the saved edit with tl.pending_show("{exc.pending_id}"), '
+        "fix the edit, then retry or drop it."
+    )
     assert exc.outcome == "not_applied"
     assert exc.detail == exc.failure["message"] == (
         "candidate: all authored fps declarations must retain their typed locations")
     assert len(_history(client, project)) == len(history_before)
     assert _snapshot(timeline) == before
+    state = json.loads(timeline.session.outbox.path.read_bytes())
+    assert state["flight"] is None
+    saved = state["pending_changes"][exc.pending_id]
+    assert saved["state"] == "pending"
+    assert saved["failure"]["details"] == exc.failure["details"]
 
 
-def test_case2_stale_literal_list_conflict_is_not_rerun(editing_case, tmp_path, monkeypatch):
+def test_case2_stale_literal_list_merges_disjoint_fields_without_rerun(editing_case, tmp_path, monkeypatch):
     daemon, client, project, timeline = editing_case
-    from astrid.sdk.timeline.sync import CommitConflict
     from tests.editing_conformance.test_commit_runtime_m1 import open_client
 
     _, peer_credential = daemon.credentials.provision("e14r1-peer", [
@@ -105,24 +112,16 @@ def test_case2_stale_literal_list_conflict_is_not_rerun(editing_case, tmp_path, 
         return original(*args, **kwargs)
 
     monkeypatch.setattr(generated, "commit_timeline", count_submission)
-    with pytest.raises(CommitConflict) as info:
-        stale.commit(fixed, label="Apply reviewed list", key="e14r1-fixed-list")
-    exc = info.value
+    applied = stale.commit(fixed, label="Apply reviewed list", key="e14r1-fixed-list")
     assert len(attempts) == 1
-    assert exc.failure["details"]["status"] == "conflict"
-    assert exc.headline == "The timeline changed since this list was made; nothing was committed"
-    assert exc.detail == exc.failure["message"]
-    assert exc.fix == (
-        f'Someone else changed this timeline after your edit was made, so "Apply reviewed list" '
-        f'was not committed. Your edit is saved as {exc.pending_id}; nothing is lost. '
-        f'Retry it with tl.retry("{exc.pending_id}").')
-    assert exc.outcome == "not_applied"
+    assert applied["data"]["status"] == "merged"
+    parent = applied["data"]["canonical_document"]["parent_revision"]["payload"]
+    assert parent["name"] == "Concurrent list change"
+    assert parent["custom"] == {"literal_edit": True}
+    assert _snapshot(stale) == applied["data"]["canonical_document"]
     saved = json.loads((tmp_path / "stale.json").read_bytes())
-    assert not saved.get("rejected")
-    assert len(saved["pending_changes"]) == 1
-    record = saved["pending_changes"][exc.pending_id]
-    assert record["state"] == "pending"
-    assert record["parts"][0]["commands"] == fixed
+    assert saved["flight"] is None
+    assert saved.get("pending_changes", {}) == {}
 
 
 @pytest.mark.parametrize("kind", ["function", "list"])
