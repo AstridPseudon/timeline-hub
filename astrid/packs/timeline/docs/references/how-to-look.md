@@ -24,11 +24,11 @@ use `visualize` as below.)
 
 Look at a named revision so you know what you saw. In `timelines history
 <timeline> --project <project> --json`, the row whose `publication_id` is your
-receipt has your revision as `id` and the one before it as `parent`. Always
-pass it with `--revision-id`: without it, a view can read an unpublished
-working copy instead of what you committed. The result prints the revision it
-drew; if it says `revision unavailable`, say so rather than guess. In your
-report, give the revision, the moments you looked at and what you saw.
+receipt has your revision as `id` and the one before it as `parent`. Pass it
+with `--revision-id` when you need to pin the view. Without it, `visualize`
+defaults to the published revision. The result prints the revision it drew; if
+it says `revision unavailable`, say so rather than guess. In your report, give
+the revision, the moments you looked at and what you saw.
 
 ## Point at a moment
 

@@ -1,9 +1,9 @@
 # Render, inspect, transfer and worlds
 
-Moved unchanged from the rendering skill so the [editing skill](../SKILL.md) stays
-short. The editing skill owns every timeline write; this page covers reading
+Moved unchanged from the rendering skill so `timeline` stays
+short. `timeline` owns every timeline write; this page covers reading
 frames, rendering, timeline transfer, worlds and shot narration. Make every
-timeline edit with `tl.commit` or the direct CLI as the editing skill teaches;
+timeline edit with `tl.commit` or the direct CLI as `timeline` teaches;
 `TimelineSession` is a legacy low-level layer, not an edit path to use here.
 
 ## Timeline transfer
@@ -71,7 +71,7 @@ python3 -m astrid timelines visualize <timeline> --project <project> \
   --mode inputs --format md --format png --json
 ```
 
-Look at the film the way the question needs, one page each (pass a window and the view follows it; [how to look](how-to-look.md) says which):
+Look at the film the way the question needs, one page each (pass a window and the view follows it; load `timeline` for the how-to-look reference):
 
 ```bash
 python3 -m astrid timelines visualize <timeline> --project <project>                          # overview: a tile per cut
@@ -161,7 +161,7 @@ shared shot metadata.
 
 For a repeatable read-only pass, use canonical `timelines show`/
 `open_composition` to pin the current head and enumerate occurrence identities.
-For a change, use `tl.commit` from the [editing skill](../SKILL.md); do not
+For a change, use `tl.commit` from `timeline`; do not
 turn the projection into a whole-candidate writer:
 
 ```python
@@ -535,8 +535,8 @@ to the shot's current voiceover audio.
 The config must be renderable before spending a render attempt. Keep clip types
 explicit, use registered element IDs for custom visual elements, and keep the
 output/profile compatible with the authoritative theme canvas. Read
-[references/timeline-cookbook.md](timeline-cookbook.md) when
-constructing or checking the JSON shape.
+Load `timeline` and read its `timeline-cookbook.md` reference when constructing
+or checking the JSON shape.
 
 For the constrained transparent PNG layer supported by the FFmpeg backend, use
 one ordinary managed `clipType: "media"` clip with a positive `hold` on a

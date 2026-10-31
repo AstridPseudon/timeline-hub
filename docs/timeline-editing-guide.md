@@ -157,7 +157,7 @@ verified file; an existing track of the wrong kind refuses.
 Words are numbers you can compute with (`w.start`, `w.end`). A moment string
 (`'after "Astrid"'`, `'beat 2 after "Astrid"'`, `'"tool" in v20a #2'`) is
 stored on the clip and re-resolved when the narration moves; the grammar is
-in [the editing front door](../astrid/packs/rendering/docs/references/editing.md#moments).
+in [the editing reference](../astrid/packs/timeline/docs/references/editing.md#moments).
 A word said more than once must name its line and number, as `timelines words
 <timeline> <word>` prints them. Beats are reachable through moment strings;
 `timelines words <timeline> <word> --beats` prints the beats near one word.
