@@ -348,8 +348,7 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
         return landed
     if record.get("state") == "landed":
         return _landed(timeline, path, record)
-    if record.get("origin") == "function" and fn is None:
-        raise ValueError("retrying a saved function edit requires the original edit function")
+    captured_function_list = record.get("origin") == "function" and fn is None
     if fn is not None:
         refreshed = _refresh_function_base(timeline, record)
         options = {"_overwrite": True} if overwrite else {}
@@ -406,20 +405,40 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
                   "_retry_request": request, "_retry_path": str(path), "_retry_token": token,
                   "_retry_record_rev": record.get("rev"), "_retry_attempts": record.get("attempts", 1),
                   "_retry_record_digest": _record_digest(record)}
+        if captured_function_list:
+            result["data"]["captured_list_requires_approval"] = True
+            result["summary"] = (
+                f'"{label}" is available as its saved captured command list. Review this diff '
+                "and explicitly commit the preview to approve it; the edit function was not rerun."
+            )
         return result
     if status == "conflict":
         packet = clash.explain(timeline.session, record)
         already_applied = _already_applied(timeline, path, record, packet)
         if already_applied is not None:
             return already_applied
-        return {"status": "re_derive", "pending_id": record["id"],
-                "data": {"conflicts": copy.deepcopy(details.get("conflicts", [])),
-                         "receipts": copy.deepcopy(packet.get("receipts"))},
-                "summary": _summary_rederive(record, packet, timeline.session),
-                "next": (f'# make_edit is your function; re-run it on the newest timeline and review the preview.\n'
+        result = {"status": "re_derive", "pending_id": record["id"],
+                  "data": {"conflicts": copy.deepcopy(details.get("conflicts", [])),
+                           "receipts": copy.deepcopy(packet.get("receipts"))},
+                  "summary": _summary_rederive(record, packet, timeline.session),
+                  "next": (f'# make_edit is your function; re-run it on the newest timeline and review the preview.\n'
                          f'preview = tl.commit(make_edit, label={record.get("label")!r}, dry_run=True)\n'
                          f'tl.commit(preview["data"]["commands"], label={record.get("label")!r},\n'
                          f'          idempotency_key={record.get("key")!r}, pending={record["id"]!r})')}
+        if captured_function_list:
+            result["data"]["captured_list_requires_approval"] = True
+            result["summary"] += (
+                " The saved function edit is only available as captured commands, so they were "
+                "not replayed; re-run the original function on the newest timeline and review "
+                "the result."
+            )
+            result["next"] = (
+                f'# The saved function edit is only a captured command list. It conflicts with '
+                f'the current timeline and was not submitted. If available, re-run the original '
+                f'function on the newest timeline.\n'
+                f'tl.retry({record["id"]!r}, your_function)'
+            )
+        return result
     message = data.get("message") or details.get("message") or details.get("reason") or "The Runtime refused this edit."
     return {"status": "refused", "pending_id": record["id"], "data": copy.deepcopy(data),
             "summary": str(message), "next": f'tl.retry({record["id"]!r})'}
