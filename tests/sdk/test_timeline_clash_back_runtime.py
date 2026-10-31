@@ -96,6 +96,54 @@ def _a5_clash_process(endpoint, credential, realm, project, result_queue):
         result_queue.put({"error": "A5 commit unexpectedly succeeded"})
 
 
+def _same_actor_function_process(endpoint, credential, realm, project, captured_queue,
+                                  release, result_queue):
+    """Pause after function commands are captured while a same-actor peer commits."""
+    from astrid.sdk.client import AstridClient
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    client = AstridClient.open(
+        endpoint=endpoint,
+        credential=credential,
+        realm_id=realm,
+        actor_id="ux-core-same-actor",
+        client_name="ux-core-clash-recovery",
+        client_version="1",
+        protocol_version="workspace.v1",
+    )
+    timeline = Timeline.open(project, "film", client=client)
+    capture = Timeline._capture_free_edits
+
+    def capture_then_wait(working):
+        capture(working)
+        if working._commands:
+            captured_queue.put({"base": copy.deepcopy(working._basis),
+                                "commands": copy.deepcopy(working._commands),
+                                "outbox": str(working.session.outbox.path)})
+            if not release.wait(timeout=60):
+                raise TimeoutError("peer did not release captured function edit")
+
+    Timeline._capture_free_edits = capture_then_wait
+    evaluations = []
+
+    def edit(working):
+        evaluations.append(1)
+        working.bundle["parent"]["custom"] = {"same_actor_recovery": True}
+
+    try:
+        timeline.commit(edit, label="Same actor function edit", key="ux-core-function",
+                        reads=[])
+    except CommitConflict as caught:
+        result_queue.put({"pending_id": caught.pending_id, "evaluations": len(evaluations)})
+    except Exception as caught:  # Return child failures to the parent as test evidence.
+        import traceback
+        result_queue.put({"error": repr(caught), "traceback": traceback.format_exc()})
+    else:
+        result_queue.put({"error": "same-actor commit unexpectedly succeeded",
+                          "evaluations": len(evaluations)})
+
+
 def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
     daemon, _client, project, setup = editing_case
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "astrid-data"))
@@ -245,3 +293,87 @@ def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
     expected["c5"]["volume"] = 0.3
     expected["c6"]["opacity"] = 0.5
     assert _clips(bundle_from_document(a1._runtime_document)) == expected
+
+
+def test_same_actor_default_outbox_recovers_captured_function_after_process_exit(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, _client, project, _setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "same-actor-data"))
+
+    import json
+    import multiprocessing
+    from astrid.sdk.timeline import Timeline
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    actor = "ux-core-same-actor"
+    _, credential = daemon.credentials.provision(actor, [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    client = open_client(daemon, actor=actor, credential=credential)
+    peer = Timeline.open(project, "film", client=client)
+    initial_head = copy.deepcopy(peer.head)
+
+    context = multiprocessing.get_context("spawn")
+    captured_queue, result_queue = context.Queue(), context.Queue()
+    release = context.Event()
+    process = context.Process(
+        target=_same_actor_function_process,
+        args=(daemon.endpoint, credential, daemon.service.realm["id"], project,
+              captured_queue, release, result_queue),
+    )
+    process.start()
+    try:
+        captured = captured_queue.get(timeout=60)
+        assert captured["base"] == initial_head
+        assert captured["commands"]
+        assert captured["outbox"] == str(peer.session.outbox.path)
+
+        peer_result = peer.commit(
+            lambda t: t.bundle["parent"].update({"name": "Same actor peer edit"}),
+            label="Same actor peer edit", key="ux-core-peer",
+        )
+        assert peer_result["receipt"]["receipt_id"]
+        after_peer = json.loads(peer.session.outbox.path.read_text(encoding="utf-8"))
+        assert after_peer["flight"] is None
+        assert after_peer["pending"] == []
+        assert after_peer["acknowledged"]["ux-core-peer"]
+        peer_state = {key: copy.deepcopy(after_peer.get(key))
+                      for key in ("base", "flight", "pending", "acknowledged")}
+        release.set()
+        result = result_queue.get(timeout=60)
+        process.join(timeout=10)
+        assert not process.is_alive(), "same-actor child process did not exit"
+        assert process.exitcode == 0
+    finally:
+        release.set()
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=10)
+
+    assert "error" not in result, result
+    pending_id = result["pending_id"]
+    assert pending_id and result["evaluations"] == 1
+    saved = peer.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["parts"][0]["base"] == captured["base"]
+    assert saved["parts"][0]["commands"] == captured["commands"]
+
+    after_conflict = json.loads(peer.session.outbox.path.read_text(encoding="utf-8"))
+    assert {key: after_conflict.get(key) for key in peer_state} == peer_state
+    assert after_conflict["pending_changes"][pending_id]["parts"][0]["commands"] == captured["commands"]
+
+    # The callable is gone with the child. A fresh default-open handle retries its saved list.
+    recovered = Timeline.open(project, "film", client=client)
+    preview = recovered.retry(pending_id)
+    assert preview["status"] == "preview"
+    assert preview["data"]["commands"] == captured["commands"]
+    assert recovered.commit(preview)["status"] in {"accepted", "merged", "landed"}
+    assert recovered.bundle["parent"]["custom"] == {"same_actor_recovery": True}
+    assert recovered.bundle["parent"]["name"] == "Same actor peer edit"
+    history_count = len(client.timelines.history(project, "film", limit=100).data["items"])
+    again = recovered.commit(preview)
+    assert again["status"] == "landed"
+    assert len(client.timelines.history(project, "film", limit=100).data["items"]) == history_count
+    assert recovered.pending_show(pending_id)["state"] == "landed"
