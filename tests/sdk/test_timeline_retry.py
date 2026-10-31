@@ -208,6 +208,98 @@ def test_explicit_read_change_after_refusal_requires_fresh_preview_before_commit
     assert reopened.pending_show(pending_id)["state"] == "landed"
 
 
+def test_function_retry_does_not_close_record_replaced_during_evaluation(editing_case, tmp_path):
+    _, client, project, _ = editing_case
+    from astrid.sdk.timeline import Timeline
+
+    timeline = Timeline.open(project, "film", client=client,
+                             outbox_path=tmp_path / "replacement-during-evaluation.json")
+    base = copy.deepcopy(timeline.session._state()["base"])
+    original = {"op": "clip.move", "select": "parent/clip:a", "args": {"on": 4}}
+    replacement = {"op": "clip.move", "select": "parent/clip:a", "args": {"on": 9}}
+    record = {
+        "id": "replacement-race", "state": "pending", "key": "replacement-race",
+        "label": "Replacement race", "origin": "function", "part": 0, "attempts": 1,
+        "parts": [{"base": base, "commands": [original],
+                   "commit_options": {"label": "Replacement race", "steps": [], "merge": "fields"}}],
+        "failure": {"details": {"status": "conflict", "conflicts": []}},
+        "head": base, "closed_by": None,
+    }
+    state = timeline.session._state()
+    state.setdefault("pending_changes", {})[record["id"]] = record
+    timeline.session.outbox.write(state)
+
+    def replace_saved_record(working):
+        working.bundle["parent"]["name"] = "Function edit during replacement"
+        latest = timeline.session.outbox.read()
+        latest["pending_changes"][record["id"]]["parts"][0]["commands"] = [replacement]
+        timeline.session.outbox.write(latest)
+
+    with pytest.raises(CommitConflict):
+        timeline.commit(replace_saved_record, label="Replacement race", key="replacement-race",
+                        pending=record["id"])
+
+    saved = timeline.session.outbox.read()["pending_changes"][record["id"]]
+    assert saved["state"] == "pending"
+    assert saved["parts"][0]["commands"] == [replacement]
+    assert saved["closed_by"] is None
+
+
+def test_replayed_interrupted_function_save_keeps_one_suffix(editing_case, tmp_path, monkeypatch):
+    _, client, project, _ = editing_case
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.outbox import request_bytes
+    from astrid.sdk.timeline import sync
+
+    monkeypatch.setattr(sync, "_enrich_pending_diff", lambda _session, record: record)
+    monkeypatch.setattr(sync, "_pending_clash", lambda _session, record: record)
+
+    timeline = Timeline.open(project, "film", client=client,
+                             outbox_path=tmp_path / "interrupted-save-suffix.json")
+    session = timeline.session
+    base = copy.deepcopy(session._state()["base"])
+    function_command = {"schema_version": 1, "op": "clip.move", "version": "1",
+                        "select": "parent/clip:a", "args": {"on": 4}}
+    suffix = {"schema_version": 1, "op": "clip.move", "version": "1",
+              "select": "parent/clip:b", "args": {"on": 8}}
+    evaluation = {"kind": "function", "count": 1}
+    body = {"api_version": 1, "project_id": session.project_id,
+            "timeline_id": session.timeline_id, "base_revision_id": base["revision_id"],
+            "base_publication_id": base["publication_id"], "commands": [function_command],
+            "source": {"via": "python"}, "dry_run": False, "label": "Interrupted function",
+            "steps": [], "merge": "atomic"}
+    flight = {"body": request_bytes(body).decode(), "count": 1, "key": "interrupted-function",
+              "explicit_key": True, "logical_key": "interrupted-function", "path": session.path,
+              "evaluation": evaluation}
+    state = session._state()
+    state["pending"] = [function_command, suffix]
+    state["flight"] = flight
+    state["evaluation"] = evaluation
+    state["commit_options"] = {"label": "Interrupted function", "steps": [], "merge": "atomic"}
+    state["conflict"] = {"details": {"status": "conflict"}}
+    session.outbox.write(state)
+    failure = {"code": "intervening_write", "message": "overlap",
+               "details": {"status": "conflict", "current": base, "conflicts": []}}
+
+    first = session.save_interrupted(
+        [function_command], base=base, label="Interrupted function", steps=[], merge="atomic",
+        reads=None, key="interrupted-function", evaluation=evaluation,
+        failure=failure, release_flight=flight,
+    )
+    first_record = session._state()["pending_changes"][first.pending_id]
+    assert [part["commands"] for part in first_record["parts"]] == [[function_command], [suffix]]
+
+    session.save_interrupted(
+        [function_command], base=base, label="Interrupted function", steps=[], merge="atomic",
+        reads=None, key="interrupted-function", evaluation={"kind": "function", "count": 2},
+        failure=failure, pending_id=first.pending_id,
+        pending_path=session.outbox.path, pending_part=0,
+    )
+
+    replayed = session._state()["pending_changes"][first.pending_id]
+    assert [part["commands"] for part in replayed["parts"]] == [[function_command], [suffix]]
+
+
 def _record():
     return {"id": "pc_saved", "state": "pending", "key": "recut", "label": "Recut",
             "origin": "list", "part": 0, "attempts": 2,
