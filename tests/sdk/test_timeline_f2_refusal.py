@@ -9,7 +9,7 @@ import pytest
 
 from astrid.sdk import timeline
 from astrid.sdk.timeline.commit import bundle_from_document
-from astrid.sdk.timeline.sync import CommitConflict
+from astrid.sdk.timeline.sync import CommitConflict, CommitRefused
 from astrid_runtime_client import ApiError
 from tests.sdk import test_timeline_sync as sync_test
 from tests.sdk.test_timeline_sync import connected as connected_fixture  # noqa: F401
@@ -79,7 +79,7 @@ def test_runtime_refusal_is_not_retried_or_reclassified_and_saves_verified_paylo
         evaluations.append(True)
         working.add(source, at=0, hold=2, id="refused-clip")
 
-    with pytest.raises(CommitConflict) as caught:
+    with pytest.raises(CommitRefused) as caught:
         editor.commit(edit, idempotency_key="refused-media-edit")
 
     assert caught.value.failure["details"]["status"] == "refused"
@@ -225,7 +225,7 @@ def test_list_origin_runtime_refusal_suggests_fix_retry_or_drop(
         "status": status, "reason": "policy",
     })
 
-    with pytest.raises(CommitConflict) as caught:
+    with pytest.raises(CommitRefused) as caught:
         editor.commit(commands, label="Reviewed move", idempotency_key="reviewed-move")
 
     assert caught.value.failure["details"]["status"] == status
