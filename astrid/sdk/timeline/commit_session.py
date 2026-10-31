@@ -207,6 +207,60 @@ class Timeline(Checkout):
         self._verified_media = []
         self._adopt(bundle)
 
+    def _register_asset(self, shot_id, asset, *, replace=False):
+        """Keep local replacement media verified when a commit function reruns."""
+        from pathlib import Path
+
+        local_path = Path(asset).expanduser() if isinstance(asset, (str, Path)) else None
+        if not self._evaluating or local_path is None or not local_path.is_file():
+            return super()._register_asset(shot_id, asset, replace=replace)
+
+        from .media_add import _selection
+        from astrid.sdk.timeline_media_replacement import _verified
+
+        transport = self.session.client._remote._transport
+        source = str(local_path.absolute())
+        cached = next((item for item in self._media_cache.values()
+                       if source in item.get("sources", [])), None)
+        if cached is not None:
+            pin = copy.deepcopy(cached["pin"])
+            from astrid.core.media import MediaProbeError
+            from astrid.sdk.authoring_media import _metadata
+
+            try:
+                metadata = _metadata(local_path)
+                payload = local_path.read_bytes()
+            except (MediaProbeError, OSError, ValueError) as exc:
+                raise TimelineEditError(f"invalid local media {source!r}: {exc}; use a readable image, video, or audio file") from exc
+            if "sha256:" + hashlib.sha256(payload).hexdigest() != pin.get("object_id") \
+                    or metadata.get("digest") != pin.get("object_id"):
+                raise TimelineEditError("local media changed during import; retry after the file is saved")
+            pin, verified = _verified(transport, self.session.project_id, pin)
+        else:
+            pin, verified = _selection(self.session, self.bundle, local_path)
+        object_id = pin["object_id"]
+        if not any(row.get("selection") == verified.get("selection") for row in self._verified_media):
+            self._verified_media.append({**copy.deepcopy(verified), "object_id": object_id,
+                                         "pin": {"media_id": object_id, "content_digest": object_id}})
+        media_entry = {"key": pin["asset"], "media_id": object_id,
+                       "content_sha256": object_id, "type": verified.get("media_type"),
+                       "generationId": pin["generation_id"], "variantId": pin["variant_id"]}
+        if verified.get("duration_seconds") is not None:
+            media_entry["duration"] = verified["duration_seconds"]
+        if verified.get("width") and verified.get("height"):
+            media_entry["resolution"] = f'{verified["width"]}x{verified["height"]}'
+        key = super()._register_asset(shot_id, media_entry, replace=replace)
+
+        cache = self._media_cache.setdefault(object_id, {
+            "pin": copy.deepcopy(pin), "sources": [],
+            "imports": [{"object_id": pin["object_id"], "generation_id": pin["generation_id"],
+                         "variant_id": pin["variant_id"], "catalog_write": True,
+                         "retained_on_undo": True}],
+        })
+        if source not in cache.setdefault("sources", []):
+            cache["sources"].append(source)
+        return key
+
     @classmethod
     def open(cls, project=None, timeline=None, *, client=None, outbox_path=None):
         return open(project, timeline, client=client, outbox_path=outbox_path)
@@ -389,6 +443,14 @@ class Timeline(Checkout):
             commands = emit_document_commands(before, after)
             if not commands:
                 raise TimelineEditError("document emitter omitted local edits")
+            from .publish import _media_admission_inputs
+
+            inputs = _media_admission_inputs(
+                before, after, self.session.client._remote._transport,
+            )
+            if inputs:
+                commands.append({"schema_version": 1, "op": "media.admit", "version": "1",
+                                 "select": None, "args": {"inputs": inputs}})
             self._append(commands, label="Edit document")
             self._free_edits = True
 
@@ -641,7 +703,9 @@ class Timeline(Checkout):
             except CommitConflict as exc:
                 if exc.pending_id is not None and working is self:
                     self._adopt(self._base_bundle)
-                if not function or exc.failure["details"].get("status") != "conflict" or count >= 3:
+                retryable = (exc.failure["details"].get("status") == "conflict"
+                             or getattr(exc, "raced_metadata_refusal", False))
+                if not function or not retryable or count >= 3:
                     if function and count >= 3:
                         exhausted = CommitConflict(exc.failure, attempts=count, label=commit_label,
                                                    timeline_id=self.session.timeline_id,
@@ -651,7 +715,7 @@ class Timeline(Checkout):
                         exhausted.retry_fn = function
                         raise exhausted from exc
                     raise
-                base = _pin(exc.failure["details"]["current"])
+                base = _pin(getattr(exc, "current_head", None) or exc.failure["details"]["current"])
                 with self.session.outbox.locked():
                     state = self.session._state()
                     evaluation = state.get("evaluation") or evaluation

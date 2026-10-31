@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import uuid
 
 import pytest
@@ -132,6 +133,85 @@ def test_j1_overlapping_list_survives_restart_and_rederive_closes_record(
         _history(peer_client, project)[-1]["receipt"]["result"]["canonical_document"]
         == landed["data"]["canonical_document"]
     )
+
+
+def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_case, tmp_path):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "swap-stale.json")
+    _, peer = _peer(daemon, project, tmp_path, actor="swap-peer")
+    replacement = _media_file(tmp_path / "replacement.png", color="blue")
+    replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
+    seeded_digest = "sha256:" + hashlib.sha256((tmp_path / "b.png").read_bytes()).hexdigest()
+    assert replacement_digest != seeded_digest
+
+    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="W2 move b", key="swap-peer-hold")
+    result = stale.commit(lambda t: t.clip("b").swap_asset(str(replacement)),
+                          label="Swap b", key="swap-new-file", merge="fields", reads=[])
+
+    assert result["status"] in {"accepted", "merged"}
+    assert result["attempts"] == 2
+    assert len(result["imports"]) == 1
+    assert result["imports"][0]["object_id"] == replacement_digest
+    assert result["imports"][0]["generation_id"]
+    assert result["imports"][0]["variant_id"]
+    assert replacement_digest in str(result["data"]["canonical_document"])
+
+
+def test_reviewed_list_runtime_refusal_is_saved_and_recovered(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "list-stale.json")
+    _, peer = _peer(daemon, project, tmp_path, actor="metadata-peer")
+    replacement = _media_file(tmp_path / "reviewed-replacement.png", color="green")
+    replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
+    seeded_digest = "sha256:" + hashlib.sha256((tmp_path / "b.png").read_bytes()).hexdigest()
+    assert replacement_digest != seeded_digest
+    commands = stale.commit(
+        lambda t: t.clip("b").swap_asset(str(replacement)), label="Reviewed media swap",
+        dry_run=True, merge="fields", reads=[],
+    )["data"]["commands"]
+    assert any(command["op"] == "media.admit" for command in commands)
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    peer_writes = []
+
+    def advance_head_before_reviewed_list(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "Reviewed media swap" and not peer_writes:
+            peer_writes.append(peer.commit(
+                lambda t: t.move("parent/clip:b", on=6),
+                label="W2 move b", key="metadata-peer-move",
+            ))
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", advance_head_before_reviewed_list)
+
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(commands, label="Reviewed media swap", key="metadata-list-race",
+                     merge="fields", reads=[])
+
+    assert peer_writes[0]["receipt"]["receipt_id"]
+    assert caught.value.failure["details"]["status"] in {"conflict", "refused", "invalid"}
+    assert caught.value.pending_id
+    saved = stale.pending_show(caught.value.pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "list"
+    assert saved["failure"]["details"]["status"] == caught.value.failure["details"]["status"]
+    assert "provider consumed manifest differs from its sequential parent allocation" in saved["failure"]["message"]
+    assert saved["parts"][0]["commands"] == commands
+    assert saved["clash"]["pending_id"] == caught.value.pending_id
+    assert "rejected" not in stale.session._state()
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    reopened = type(timeline).open(
+        project, "film", client=client, outbox_path=tmp_path / "list-stale.json"
+    )
+    recovered = reopened.pending_show(caught.value.pending_id)
+    assert recovered["state"] == "pending"
+    assert recovered["parts"][0]["commands"] == commands
+    assert replacement_digest in str(commands)
 
 
 @pytest.mark.parametrize("same_process", [True, False])

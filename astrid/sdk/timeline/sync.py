@@ -21,6 +21,11 @@ from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.outbox import Outbox, request_bytes
 from astrid.sdk.workspace_client import WorkspaceClientError
 
+_RACED_SEQUENTIAL_REFUSALS = (
+    "sequential command metadata differs from the prepared candidate",
+    "provider consumed manifest differs from its sequential parent allocation",
+)
+
 
 class CommitConflict(TimelineEditError):
     def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
@@ -272,6 +277,31 @@ def _retry_conflict(record, replacement):
     record.pop("clash", None)
     record["rev"] = int(record.get("rev", 0)) + 1
     record["updated_at"] = datetime.now(timezone.utc).isoformat()
+
+
+def _raced_metadata_refusal(details, flight, *, message=None):
+    """Recognize Runtime's stale sequential metadata refusal for a reviewed list."""
+    if not isinstance(details, dict) or details.get("status") not in {"refused", "invalid"}:
+        return False
+    try:
+        body = json.loads(flight["body"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    if body.get("base_revision_id") is None or body.get("base_publication_id") is None:
+        return False
+    message = " ".join(str(value) for value in (
+        message, details.get("reason"), details.get("message"), details.get("detail"),
+    ) if value).lower()
+    if not any(reason in message for reason in _RACED_SEQUENTIAL_REFUSALS):
+        return False
+    current = details.get("current")
+    if not isinstance(current, dict):
+        return False
+    try:
+        return _pin(current) != _pin({"revision_id": body["base_revision_id"],
+                                      "publication_id": body["base_publication_id"]})
+    except (KeyError, TypeError, ValueError):
+        return False
 
 
 class TimelineSession:
@@ -855,13 +885,36 @@ class TimelineSession:
             details = getattr(exc, "details", {})
             if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+                raced_metadata_refusal = _raced_metadata_refusal(
+                    details, flight, message=getattr(exc, "message", exc),
+                )
+                raced_head = details.get("current") if isinstance(details, dict) else None
+                if (not raced_metadata_refusal and isinstance(details, dict)
+                        and details.get("status") in {"refused", "invalid"}
+                        and any(reason in str(getattr(exc, "message", exc)).lower()
+                                for reason in _RACED_SEQUENTIAL_REFUSALS)):
+                    # Some Runtime refusal envelopes omit `current`; observe the
+                    # authoritative pair before deciding whether this was a race.
+                    try:
+                        observed = self.client.timelines.history(
+                            self.project_id, self.timeline_id, cursor=None, limit=1,
+                        )
+                        head = observed.data.get("head") if observed.ok else None
+                        raced_metadata_refusal = _raced_metadata_refusal(
+                            {**details, "current": head}, flight,
+                            message=getattr(exc, "message", exc),
+                        )
+                        if raced_metadata_refusal:
+                            raced_head = head
+                    except Exception:  # noqa: BLE001 - preserve the original Runtime refusal
+                        pass
                 record = None
                 external_conflict = None
                 with self.outbox.locked():
                     state = self._state()
                     if state["flight"] == flight:
                         self._flight_body(state, flight, idempotency_key, dry_run)
-                        if details.get("status") in {"refused", "invalid"}:
+                        if details.get("status") in {"refused", "invalid"} and not raced_metadata_refusal:
                             # Preserve the full queue for review, including any
                             # suffix captured against the flight's optimistic
                             # effects, and release it so it cannot run without them.
@@ -908,7 +961,11 @@ class TimelineSession:
                             else:
                                 # Function commits retain the known conflict only
                                 # while bounded reevaluation remains available.
-                                state["conflict"] = failure
+                                state["conflict"] = copy.deepcopy(failure)
+                                if raced_metadata_refusal:
+                                    # The precise Runtime refusal is retryable only
+                                    # after its independently observed head advanced.
+                                    state["conflict"]["details"]["status"] = "conflict"
                         if release_conflict or details.get("status") != "conflict":
                             state.pop("pending_close", None)
                             state.pop("pending_close_path", None)
@@ -942,12 +999,16 @@ class TimelineSession:
                     if external_conflict is None:
                         record = _pending_clash(self, record)
                 from ._pending import clash
-                raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
-                                     timeline_id=self.timeline_id, project_id=self.project_id,
-                                     label=record["label"] if record else None,
-                                     pending_id=record["id"] if record else None,
-                                     retry_clash=bool(flight.get("pending_id") and record),
-                                     clash=record.get("clash") or clash(record) if record else None) from exc
+                conflict = CommitConflict(failure, fixed_list=release_conflict and (
+                                              details.get("status") == "conflict" or raced_metadata_refusal),
+                                          timeline_id=self.timeline_id, project_id=self.project_id,
+                                          label=record["label"] if record else None,
+                                          pending_id=record["id"] if record else None,
+                                          retry_clash=bool(flight.get("pending_id") and record),
+                                          clash=record.get("clash") or clash(record) if record else None)
+                conflict.raced_metadata_refusal = raced_metadata_refusal
+                conflict.current_head = copy.deepcopy(raced_head)
+                raise conflict from exc
             raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc  # Keep the durable flight byte-for-byte retryable.
         try:
             data, receipt = _ack(result, body, flight, self.identity)
