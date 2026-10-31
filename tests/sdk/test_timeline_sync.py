@@ -633,7 +633,7 @@ def test_pending_show_retries_missing_packet_enrichment(connected, monkeypatch):
     assert calls == [record["id"]]
 
 
-def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(connected):
+def test_final_refusal_releases_flight_and_saves_pending_edit(connected):
     session = open_session(connected)
     _, generated, path = connected
     rejected = session.queue_move("parent/clip:a", 5)
@@ -646,10 +646,14 @@ def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(c
     state = json.loads(path.read_bytes())
     assert state["flight"] is None
     assert state["pending"] == []
-    assert not state.get("pending_changes")
-    assert state["rejected"]["commands"] == [rejected]
-    assert state["rejected"]["flight"]["key"] == "rejected-edit"
-    assert state["rejected"]["failure"]["details"]["status"] == "refused"
+    assert not state.get("rejected")
+    assert len(state["pending_changes"]) == 1
+    record = next(iter(state["pending_changes"].values()))
+    assert record["state"] == "pending"
+    assert record["parts"][0]["commands"] == [rejected]
+    assert record["flight"]["key"] == "rejected-edit"
+    assert json.loads(record["flight"]["body"])["commands"] == [rejected]
+    assert record["failure"]["details"]["status"] == "refused"
 
     # A refusal no longer wedges the session; later intent gets its own request.
     generated.refusal = None
@@ -657,11 +661,11 @@ def test_final_refusal_releases_flight_and_pending_but_preserves_rejected_edit(c
     open_session(connected).flush(idempotency_key="later-edit")
     assert json.loads(generated.calls[-1][0])["commands"] == [later]
     assert generated.calls[-1][1] == "later-edit"
-    assert json.loads(path.read_bytes())["rejected"]["commands"] == [rejected]
+    assert json.loads(path.read_bytes())["pending_changes"][record["id"]] == record
 
 
 @pytest.mark.parametrize("status", ["refused", "invalid"])
-def test_final_refusal_preserves_and_releases_dependent_queued_suffix(connected, monkeypatch, status):
+def test_final_refusal_saves_and_releases_dependent_queued_suffix(connected, monkeypatch, status):
     session = open_session(connected)
     _, generated, path = connected
     entered, release = Event(), Event()
@@ -688,8 +692,14 @@ def test_final_refusal_preserves_and_releases_dependent_queued_suffix(connected,
     state = json.loads(path.read_bytes())
     assert state["flight"] is None
     assert state["pending"] == []
-    assert state["rejected"]["commands"] == [rejected, suffix]
-    assert json.loads(state["rejected"]["flight"]["body"])["commands"] == [rejected]
+    assert not state.get("rejected")
+    assert len(state["pending_changes"]) == 1
+    record = next(iter(state["pending_changes"].values()))
+    assert record["state"] == "pending"
+    assert record["parts"][0]["commands"] == [rejected]
+    assert record["parts"][1]["commands"] == [suffix]
+    assert json.loads(record["flight"]["body"])["commands"] == [rejected]
+    assert record["failure"]["details"]["status"] == status
     before = path.read_bytes()
     with pytest.raises(TimelineEditError, match="no pending"):
         open_session(connected).flush()
