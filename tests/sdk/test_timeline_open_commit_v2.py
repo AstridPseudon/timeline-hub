@@ -783,6 +783,11 @@ def test_g3_emitter_seam_captures_helpers_once(connected, monkeypatch):
     _, generated, _ = connected
     calls = []
 
+    # This lightweight connected fixture has no Runtime source mapping, so it
+    # cannot exercise the separate media-admission scan.
+    from astrid.sdk.timeline import publish
+    monkeypatch.setattr(publish, "_media_admission_inputs", lambda *_: [])
+
     def emit(before, after):
         calls.append((before, after))
         return [{"schema_version": 1, "op": "clip.move", "version": "1", "select": "parent/clip:a",
