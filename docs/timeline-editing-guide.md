@@ -217,18 +217,25 @@ answers; if it is lost, preview again and show the new diff.
 ## Conflicts with a person
 
 Runtime merges disjoint changes from different authors. When a change
-clashes:
+clashes, a function can be evaluated again on the new head, up to three
+evaluations total. A fixed list is refused as submitted. A real clash saves a
+pending record and raises `CommitConflict`; inspect `err.clash["summary"]` and
+recover with `tl.retry(err)` only when `err.pending_id` is set. A conflict
+without a pending id (such as an idempotency mismatch or a Runtime refusal)
+has no saved edit to retry; report it as a refusal and continue.
 
-1. a function is evaluated again on the new head, at most three evaluations
-   in total;
-2. a list is refused at once;
-3. either way, `CommitConflict` is then raised. Stop, report which edit did
-   not land, and leave the decision to the person.
+`tl.retry(err)` re-runs function intent. For reviewed lists, it returns a
+`preview` if the list still applies, or `re_derive` if it still clashes
+(disjoint list edits already merge). Commit only a `preview`; for
+`re_derive`, run the function that created the list again on a fresh
+`Timeline.open`, preview the result, then commit `data.commands` with
+`idempotency_key=` and `pending=<saved id>`. The saved record closes when the
+re-derived edit lands. In the CLI, use `timelines pending list/show` and
+`timelines retry`; a preview prints the valid `--commit TOKEN` command.
 
-The refused changes are kept for review. Run `timelines discard <timeline>
---project <project>` before the next edit or preview on that timeline.
-`CommitConflict` is a subclass of `TimelineEditError`, so an `except` for it
-must come first.
+`timelines discard` clears queued working-copy commands but keeps saved pending
+records. It is not a required step before another edit. `CommitConflict` is a
+subclass of `TimelineEditError`, so an `except` for it must come first.
 
 Function commits are guarded broadly: any concurrent commit can count as a
 clash. Precise read tracking is a planned follow-on, so expect reruns while
@@ -287,17 +294,26 @@ for ep in episodes:
         r = tl.commit(swap_sponsor, label="Swap sponsor", idempotency_key=f"sponsor-{ep}")
         record(ep, status=r["data"]["status"], receipt=r["receipt"]["receipt_id"])
     except CommitConflict as exc:                    # before the general case
-        record(ep, status="conflict", detail=str(exc))
+        if not exc.pending_id:                        # refusals without saved records are not retryable
+            record(ep, status="refused", detail=str(exc))
+            continue
+        try:
+            r = tl.retry(exc)
+            record(ep, status=r["status"], detail=r.get("summary"),
+                   pending_id=r.get("pending_id"))
+        except Exception as retry_exc:                # recovery failure is recorded per timeline
+            record(ep, status="retry_error", detail=str(retry_exc),
+                   pending_id=exc.pending_id)
     except Exception as exc:                         # refused, or no verified reply
         record(ep, status="error", detail=str(exc))
 ```
 
 Each outcome is written as it happens, so a crash loses nothing. Continue
-past a clash and report failures individually. Backoff is bounded: after
-the loop, `discard` each clashed timeline, wait 30 s or more, retry it once, then
-stop and report; never retry in a tight loop. Rerunning the loop is safe:
+past a clash and report failures individually. Do not call `tl.retry` when a
+`CommitConflict` has no `pending_id`. Catch recovery errors inside the per
+timeline handler so they cannot stop the series. Rerunning the loop is safe:
 landed keys return their receipts, and an unknown outcome is settled by the
-same key; discard a clashed timeline first. For "the end of V1", compute
+same key. For "the end of V1", compute
 it from V1's clips; `t.duration` also counts V2 and titles. There is no
 transaction across timelines. A preview list belongs to one timeline: apply
 the reviewed literal list to the approved episode rather than rerunning its

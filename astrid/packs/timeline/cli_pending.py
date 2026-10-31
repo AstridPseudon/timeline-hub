@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from collections.abc import Mapping
 
@@ -38,12 +39,74 @@ def _cmd_list(parsed):
     records = timeline.pending_list(
         all=parsed.all, actors="all" if parsed.all_actors else "self",
     )
-    return print_result(DomainResult.success({"pending_changes": records}), as_json=parsed.json)
+    return print_result(
+        DomainResult.success({"pending_changes": records}), as_json=parsed.json,
+        human_renderer=lambda _result: _render_pending_list(records, parsed),
+    )
 
 
 def _cmd_show(parsed):
     timeline = _open(parsed)
-    return print_result(DomainResult.success(timeline.pending_show(parsed.ref_id)), as_json=parsed.json)
+    record = timeline.pending_show(parsed.ref_id)
+    return print_result(
+        DomainResult.success(record), as_json=parsed.json,
+        human_renderer=lambda _result: _render_pending_show(record, parsed),
+    )
+
+
+def _record_summary(record):
+    if record.get("state") == "landed":
+        closed = record.get("closed_by") if isinstance(record.get("closed_by"), Mapping) else {}
+        publication = closed.get("publication_id")
+        return f"Already landed as {publication}" if publication else "Already landed"
+    if record.get("state") == "dropped":
+        return record.get("dropped_reason") or "Dropped"
+    clash = record.get("clash") if isinstance(record.get("clash"), Mapping) else {}
+    failure = record.get("failure") if isinstance(record.get("failure"), Mapping) else {}
+    details = failure.get("details") if isinstance(failure.get("details"), Mapping) else {}
+    summary = clash.get("summary") or record.get("summary") or details.get("message") or details.get("reason")
+    if isinstance(summary, str) and summary:
+        return summary
+    conflicts = details.get("conflicts")
+    if isinstance(conflicts, list) and conflicts:
+        return f"{len(conflicts)} conflicting field(s); inspect with pending show"
+    return "Saved after a timeline conflict; inspect with pending show"
+
+
+def _render_pending_list(records, parsed):
+    if not records:
+        return "No pending changes."
+    lines = ["ID  STATE  ORIGIN  ATTEMPTS  LABEL  SUMMARY"]
+    for record in records:
+        lines.append("  ".join(str(value) for value in (
+            record.get("id", "?"), record.get("state", "unknown"),
+            record.get("origin", "unknown"), record.get("attempts", 1),
+            record.get("label") or "Timeline edit", _record_summary(record),
+        )))
+    lines.append(f"inspect: astrid timelines pending show {parsed.ref} <id> --project {parsed.project}")
+    return "\n".join(lines)
+
+
+def _render_pending_show(record, parsed):
+    lines = [
+        f"{record.get('id', '?')} · {record.get('state', 'unknown')} · "
+        f"{record.get('origin', 'unknown')} · {record.get('label') or 'Timeline edit'}",
+        f"attempts: {record.get('attempts', 1)}",
+        f"summary: {_record_summary(record)}",
+    ]
+    clash = record.get("clash") if isinstance(record.get("clash"), Mapping) else {}
+    diff = record.get("diff") or clash.get("diff")
+    if diff:
+        lines.append("diff:")
+        lines.append(json.dumps(diff, indent=2, ensure_ascii=False))
+    elif record.get("state") == "pending":
+        lines.append("diff: no preview diff is stored; retry to inspect the current preview")
+    if clash.get("conflicts"):
+        lines.append("conflicts:")
+        lines.append(json.dumps(clash["conflicts"], indent=2, ensure_ascii=False))
+    if record.get("state") == "pending":
+        lines.append(f"next: astrid timelines retry {parsed.ref} {record.get('id')} --project {parsed.project}")
+    return "\n".join(lines)
 
 
 def _cmd_drop(parsed):
@@ -74,9 +137,18 @@ def _cmd_retry(parsed):
     timeline = _open(parsed)
     result = timeline.retry(parsed.ref_id)
     if parsed.commit_token is not None:
+        if result.get("status") == "landed":
+            data = _retry_data(result)
+            if parsed.json:
+                return print_result(DomainResult.success(data), as_json=True)
+            print(data["summary"] or "This pending change already landed.")
+            return 0
         token = result.get("data", {}).get("retry", {}).get("token")
         if result.get("status") != "preview" or token != parsed.commit_token:
-            raise ValueError("retry preview token is stale or invalid; run timelines retry again")
+            raise ValueError(
+                f"retry preview token is stale or invalid for {parsed.ref_id}; "
+                f"run astrid timelines retry {parsed.ref} {parsed.ref_id} --project {parsed.project} again"
+            )
         result = commit_preview(timeline, result)
         status = result.get("status")
         data = result.get("data") if isinstance(result.get("data"), Mapping) else {}
@@ -92,7 +164,15 @@ def _cmd_retry(parsed):
     if data["token"]:
         lines.append(f"token: {data['token']}")
     if data["next"]:
-        lines.append(f"next: {data['next']}")
+        if data["status"] == "preview" and data["token"]:
+            lines.append(
+                f"next: astrid timelines retry {parsed.ref} {parsed.ref_id} --project {parsed.project} "
+                f"--commit {data['token']}"
+            )
+        elif data["status"] == "re_derive":
+            lines.append("next: re-derive needs Python; see SKILL.md ‘When to re-derive’")
+        else:
+            lines.append(f"next: {data['next']}")
     print("\n".join(lines))
     return 0
 

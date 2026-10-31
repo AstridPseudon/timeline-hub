@@ -3016,7 +3016,7 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
         from astrid.packs.timeline.cli_common import status_text
 
         if session_status and (session_status["status"] != "clear" or session_status.get("pending_changes")):
-            _print_session_status(session_status)
+            _print_session_status(session_status, parsed)
         return status_text(parsed, project_id, timeline_id, current_head, draft_name, path if path.is_file() else None)
     data: dict[str, Any] = {
         "timeline_id": timeline_id,
@@ -3057,21 +3057,23 @@ def _cmd_status(parsed: argparse.Namespace) -> int:
     return print_result(DomainResult.success(data), as_json=parsed.json)
 
 
-def _print_session_status(status: Mapping[str, Any]) -> None:
+def _print_session_status(status: Mapping[str, Any], parsed=None) -> None:
     state = status.get("status")
     if state == "conflict":
-        print(f"CONNECTED SESSION: conflict, not applied; {status.get('command_count', 0)} rejected command(s) retained for review")
+        print(f"CONNECTED SESSION: conflict, not applied; {status.get('command_count', 0)} command(s) retained in the local outbox for review")
     elif state == "in_flight":
         print("CONNECTED SESSION: commit outcome unknown; its exact request is retained for retry"
               + (f" (key {status['key']})" if status.get("key") else ""))
     elif state == "pending":
         print(f"CONNECTED SESSION: {status.get('command_count', 0)} queued command(s), not yet sent")
     elif state == "rejected":
-        print(f"CONNECTED SESSION: last request was refused; {status.get('command_count', 0)} command(s) retained")
+        print(f"CONNECTED SESSION: last request was refused; {status.get('command_count', 0)} command(s) remain in the local outbox for review and were not published")
     elif state == "invalid":
         print("CONNECTED SESSION: saved outbox is invalid; no changes were made")
     if status.get("pending_changes") is not None:
         print(f"CONNECTED SESSION: {status['pending_changes']} pending change(s) saved")
+        if status["pending_changes"] and parsed is not None:
+            print(f"next: astrid timelines pending list {parsed.ref} --project {parsed.project}")
     if status.get("rejected_command_count") and state != "rejected":
         print(f"CONNECTED SESSION: an earlier refused request also has {status['rejected_command_count']} command(s) retained for review")
 
