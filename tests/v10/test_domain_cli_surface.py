@@ -817,6 +817,43 @@ def test_product_help_lists_current_timeline_visualize_and_render_verbs() -> Non
     assert "[pack: timeline] timelines list/show/replace-parent-media/archive/recover/history/diff/visualize/render" in text
 
 
+def test_status_human_output_includes_selected_project_and_recent_timelines(monkeypatch, capsys) -> None:
+    from contextlib import nullcontext
+
+    from astrid.core.gateway import dispatch
+    from astrid.sdk.contracts import DomainResult
+
+    class Projects:
+        def current(self):
+            return DomainResult.success({"project": {"project_id": "P", "slug": "demo"}})
+
+        def list(self):
+            return DomainResult.success([{"project_id": "P", "slug": "demo"}])
+
+    class Timelines:
+        def list(self, _project, **_kwargs):
+            return DomainResult.success([[{"timeline_id": "promo", "name": "Promo"}], None])
+
+    client = types.SimpleNamespace(projects=Projects(), timelines=Timelines())
+    monkeypatch.setattr("astrid.sdk.storage_root.resolve_runtime_data_root", lambda: "/tmp/support")
+    monkeypatch.setattr("astrid.runtime_cli.RuntimeCLI", lambda: object())
+    monkeypatch.setattr("astrid.core.gateway.diagnostics.collect_diagnostic", lambda *_, **__: (
+        {}, types.SimpleNamespace(ok=True, data={}), types.SimpleNamespace(ok=True, data={}),
+    ))
+    monkeypatch.setattr("astrid.core.auth.contributor_key_present", lambda: False)
+    monkeypatch.setattr("astrid.sdk.client.AstridClient.open_existing_from_launcher", lambda: nullcontext(client))
+    monkeypatch.setattr(
+        "astrid.sdk.timeline.revisions.RuntimeRevisions.list",
+        lambda *_args, **_kwargs: [types.SimpleNamespace(created_at="2026-10-30T12:00:00Z")],
+    )
+
+    assert dispatch._dispatch_status([]) == 0
+    output = capsys.readouterr().out
+    assert "project: demo (selected)" in output
+    assert "recent: 2026-10-30T12:00:00Z  demo  promo  Promo" in output
+    assert "next: astrid timelines show promo" in output
+
+
 def test_print_product_help_prints_to_stdout(capsys) -> None:
     _print_product_help()
     captured = capsys.readouterr()

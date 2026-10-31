@@ -345,6 +345,23 @@ def test_launcher_bootstrap_preserves_typed_install_action(monkeypatch):
     assert caught.value.details["next_action"] == autobootstrap.INSTALL_RUNTIME_ACTION
 
 
+def test_no_workspace_bootstrap_points_to_install_line_not_operator_command(monkeypatch):
+    def no_workspace():
+        raise autobootstrap.AutoBootstrapError(
+            "No workspace is configured; run astrid-runtime workspace create or workspace attach.",
+            details={"cause_message": "No workspace is configured; run astrid-runtime workspace create."},
+        )
+
+    monkeypatch.setattr(autobootstrap, "ensure_runtime", no_workspace)
+    with pytest.raises(ServiceUnavailableError) as caught:
+        AstridClient.open_from_launcher()
+
+    assert str(caught.value) == "No workspace is configured; run the Astrid install line again."
+    assert caught.value.details["next_action"] == "run the Astrid install line again"
+    assert "workspace create" not in str(caught.value)
+    assert "cause_message" not in caught.value.details
+
+
 def test_launcher_rejection_preserves_structured_runtime_cause(monkeypatch, tmp_path):
     """A neutral admission failure remains actionable at the Astrid boundary."""
     monkeypatch.setenv("ASTRID_RUNTIME_LAUNCHER", "/usr/bin/astrid-runtime")

@@ -19,6 +19,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import sys
 from dataclasses import dataclass, replace
 from pathlib import Path
 from typing import Iterable
@@ -138,6 +139,13 @@ def _materialise(source: Path, target: Path, links: _ViewLinks, *, pre: dict[str
     text = source.read_text(encoding="utf-8")
     for old, new in (pre or {}).items():
         text = text.replace(old, new)
+    if target.name == "SKILL.md":
+        binding = f"Run SDK scripts with `{sys.executable}`.\n\n"
+        frontmatter = re.match(r"\A---\n.*?\n---\n", text, re.DOTALL)
+        if frontmatter:
+            text = text[:frontmatter.end()] + "\n" + binding + text[frontmatter.end():]
+        else:
+            text = binding + text
     text = rewrite_links(text, lambda raw: links.target(raw, source=source, dest=target))
     _write_view_file(target, rewrite_commands(text))
 

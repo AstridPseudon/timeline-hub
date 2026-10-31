@@ -8,7 +8,7 @@ from typing import Any
 
 # Verbs whose --project is optional: omitted, it is the workspace runtime's current project.
 CURRENT_PROJECT_VERBS = frozenset(
-    {"checkout", "apply", "assets", "check", "commit", "discard", "find", "lines", "redo", "status", "undo"}
+    {"checkout", "apply", "assets", "check", "commit", "create", "discard", "find", "history", "lines", "redo", "status", "undo"}
 )
 
 
