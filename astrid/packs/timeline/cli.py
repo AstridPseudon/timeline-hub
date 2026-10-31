@@ -191,6 +191,12 @@ def _cmd_create(parsed: argparse.Namespace) -> int:
         config=config,
         idempotency_key=parsed.idempotency_key,
     )
+    if result.ok and not parsed.json:
+        data = result.data if isinstance(result.data, Mapping) else {}
+        print(f"Created timeline {data.get('timeline_id') or parsed.slug or parsed.timeline_id}")
+        print(f"project: {parsed.project}")
+        print(f"next: astrid timelines show {data.get('timeline_id') or parsed.slug or parsed.timeline_id}")
+        return 0
     return print_result(result, as_json=parsed.json)
 
 
@@ -252,6 +258,8 @@ def _configure_import(subparser: argparse.ArgumentParser) -> None:
 
 
 def _cmd_list(parsed: argparse.Namespace) -> int:
+    if getattr(parsed, "recent", False):
+        return _cmd_list_recent(parsed)
     result = parsed.client.timelines.list(
         parsed.project, include_archived=parsed.include_archived
     )
@@ -277,7 +285,69 @@ def _cmd_list(parsed: argparse.Namespace) -> int:
             receipt=result.receipt,
             idempotency_key=result.idempotency_key,
         )
+    if result.ok and not parsed.json:
+        rows = _list_rows(result.data)
+        if not rows:
+            print("No timelines yet. Create one with: astrid timelines create --name NAME")
+            return 0
+        print("TIMELINE  NAME  PROJECT")
+        for row in rows:
+            print(f"{row.get('timeline_id') or row.get('slug') or row.get('id', '')}  {row.get('name', '')}  {parsed.project or ''}")
+        return 0
     return print_result(result, as_json=parsed.json)
+
+
+def _list_rows(data: Any) -> list[dict[str, Any]]:
+    rows = data[0] if isinstance(data, (list, tuple)) and len(data) == 2 and isinstance(data[0], list) else data
+    return [dict(row) for row in rows or [] if isinstance(row, Mapping)]
+
+
+def _cmd_list_recent(parsed: argparse.Namespace) -> int:
+    from astrid.sdk.timeline.revisions import RuntimeRevisions
+
+    projects: list[dict[str, Any]]
+    if parsed.all_projects:
+        projects_result = parsed.client.projects.list()
+        if not projects_result.ok:
+            return print_result(projects_result, as_json=parsed.json)
+        projects = _list_rows(projects_result.data)
+    else:
+        current = parsed.client.projects.current()
+        project = current.data.get("project") if current.ok and isinstance(current.data, Mapping) else None
+        projects = [dict(project)] if isinstance(project, Mapping) else []
+    rows = []
+    revisions = RuntimeRevisions(parsed.client.timelines)
+    for project in projects:
+        project_id = project.get("project_id") or project.get("id") or project.get("slug")
+        if not project_id:
+            continue
+        parsed.project = str(project_id)
+        parsed.include_archived = False
+        listed = parsed.client.timelines.list(str(project_id))
+        if not listed.ok:
+            return print_result(listed, as_json=parsed.json)
+        for timeline in _list_rows(_follow_list_cursors(parsed, listed).data):
+            ref = timeline.get("timeline_id") or timeline.get("slug") or timeline.get("id")
+            if not ref:
+                continue
+            history = revisions.list(str(project_id), str(ref), limit=1)
+            if history:
+                revision = history[0]
+                rows.append({"timeline_id": ref, "name": timeline.get("name") or ref,
+                             "project": project.get("slug") or project.get("name") or project_id,
+                             "created_at": revision.created_at or ""})
+    rows.sort(key=lambda row: row["created_at"], reverse=True)
+    rows = rows[:3]
+    if parsed.json:
+        from astrid.sdk.contracts import DomainResult
+        return print_result(DomainResult.success(rows), as_json=True)
+    if not rows:
+        print("No timelines found. Create one with: astrid timelines create --name NAME")
+    else:
+        print("LAST EDITED  PROJECT  TIMELINE  NAME")
+        for row in rows:
+            print(f"{row['created_at']}  {row['project']}  {row['timeline_id']}  {row['name']}")
+    return 0
 
 
 def _follow_list_cursors(parsed: argparse.Namespace, result: Any) -> Any:
@@ -1137,8 +1207,6 @@ def _print_cut_table(parsed: argparse.Namespace, opener) -> int:
     from astrid.packs.timeline.cli_show import print_cut_table
 
     code=print_cut_table(parsed, opener)
-    if not parsed.json and code==0:
-        print(f"Effect source/settings: astrid-tools timelines elements --project {shlex.quote(str(parsed.project))} {shlex.quote(str(parsed.ref))}")
     return code
 
 
@@ -1464,6 +1532,12 @@ def _cmd_recover(parsed: argparse.Namespace) -> int:
 
 
 def _cmd_history(parsed: argparse.Namespace) -> int:
+    if not parsed.project:
+        from astrid.packs.timeline.cli_parser import resolve_current_project
+        parsed.project = resolve_current_project(parsed)
+        if not parsed.project:
+            print("history: no project selected; run `astrid projects select <project>`")
+            return 2
     from astrid.packs.timeline.cli_history import run_history
 
     return run_history(parsed)
@@ -2358,7 +2432,7 @@ def _configure_create(subparser: argparse.ArgumentParser) -> None:
             "in the result and is what show/checkout/render accept."
         ),
     )
-    _add_project_arg(subparser)
+    _add_project_arg(subparser, required=False)
     subparser.add_argument("--name", default=None, help="Display name for the timeline.")
     subparser.add_argument(
         "--slug",
@@ -2378,7 +2452,7 @@ def _configure_create(subparser: argparse.ArgumentParser) -> None:
         help="Canvas frame rate (default 30).",
     )
     _add_idempotency_key(subparser)
-    _add_json_flag(subparser)
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_cmd_create)
 
 
@@ -2390,7 +2464,9 @@ def _configure_list(subparser: argparse.ArgumentParser) -> None:
         action="store_true",
         help="Include archived timelines and their archived_at state.",
     )
-    _add_json_flag(subparser)
+    subparser.add_argument("--recent", action="store_true", help="Show up to three timelines by latest revision time.")
+    subparser.add_argument("--all-projects", action="store_true", help="Search every project (with --recent).")
+    _add_json_flag(subparser, default=False)
     subparser.set_defaults(handler=_cmd_list)
 
 
@@ -2562,7 +2638,7 @@ def _configure_recover(subparser: argparse.ArgumentParser) -> None:
 
 
 def _configure_history(subparser: argparse.ArgumentParser) -> None:
-    _add_project_arg(subparser)
+    _add_project_arg(subparser, required=False)
     subparser.add_argument("ref", help="Timeline UUID, ULID, or slug (TL@prev etc. names an earlier revision elsewhere).")
     subparser.add_argument("--limit", type=_positive_int, default=50, help="Newest revisions to list (default 50).")
     _add_json_flag(subparser)

@@ -78,6 +78,51 @@ def test_history_json_envelope(capsys):
     assert [r["id"] for r in payload["data"]["revisions"]] == [A, B, C]
 
 
+def test_history_uses_selected_project(monkeypatch, capsys):
+    seen = {}
+    def record(parsed):
+        seen["project"] = parsed.project
+        return 0
+
+    monkeypatch.setattr(cli_history, "run_history", record)
+    parsed = SimpleNamespace(
+        project=None,
+        client=SimpleNamespace(projects=SimpleNamespace(current=lambda: DomainResult.success({
+            "project": {"project_id": "P-selected"},
+        }))),
+    )
+    assert cli._cmd_history(parsed) == 0
+    assert seen["project"] == "P-selected"
+
+
+def test_recent_list_uses_latest_revision_and_prints_project(monkeypatch, capsys):
+    class Timelines:
+        def list(self, project, **_kwargs):
+            assert project == "P"
+            return DomainResult.success([[
+                {"timeline_id": "promo", "name": "Promo"},
+                {"timeline_id": "yesterday", "name": "Yesterday cut"},
+            ], None])
+
+    class Projects:
+        def current(self):
+            return DomainResult.success({"project": {"project_id": "P", "slug": "demo"}})
+
+    monkeypatch.setattr(
+        "astrid.sdk.timeline.revisions.RuntimeRevisions.list",
+        lambda _self, _project, timeline, *, limit: [SimpleNamespace(
+            created_at="2026-10-30T12:00:00Z" if timeline == "yesterday" else "2026-10-29T12:00:00Z",
+        )],
+    )
+    parsed = SimpleNamespace(
+        client=SimpleNamespace(projects=Projects(), timelines=Timelines()),
+        recent=True, all_projects=False, json=False, include_archived=False,
+    )
+    assert cli._cmd_list(parsed) == 0
+    output = capsys.readouterr().out
+    assert output.splitlines()[1] == "2026-10-30T12:00:00Z  demo  yesterday  Yesterday cut"
+
+
 def test_history_prints_the_head_and_says_earlier_revisions_cannot_be_listed(capsys):
     code = cli_history.run_history(_parsed(FakeTimelines(named=False)))
     out = capsys.readouterr().out.splitlines()
