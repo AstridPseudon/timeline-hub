@@ -37,8 +37,8 @@ class _Timeline:
         self.calls.append(("drop", ref, reason))
         return {"id": ref, "state": "dropped", "dropped_reason": reason}
 
-    def retry(self, ref):
-        self.calls.append(("retry", ref))
+    def retry(self, ref, *, overwrite=False):
+        self.calls.append(("retry", ref, overwrite))
         return self.retry_result
 
 
@@ -106,6 +106,25 @@ def test_retry_preview_has_stable_json_shape_and_token(monkeypatch, capsys):
         "diff": {"changes": []}, "conflicts": None, "receipts": None,
         "summary": "Ready for review", "next": "tl.commit(r)",
     }
+    assert timeline.calls == [("retry", "pc-one", False)]
+
+
+def test_retry_overwrite_explains_python_function_requirement(monkeypatch, capsys):
+    timeline = _Timeline()
+
+    def retry(ref, *, overwrite=False):
+        timeline.calls.append(("retry", ref, overwrite))
+        raise ValueError("overwrite requires the original edit function")
+
+    timeline.retry = retry
+    monkeypatch.setattr(cli_pending, "_open", lambda parsed: timeline)
+    parsed = _parse(_Client(), ["retry", "film", "pc-one", "--project", "p", "--overwrite"])
+
+    assert parsed.handler(parsed) == 1
+    assert timeline.calls == [("retry", "pc-one", True)]
+    error = capsys.readouterr().err
+    assert "CLI saves concrete edit commands" in error
+    assert "tl.retry(pending_id, fn=original_edit, overwrite=True)" in error
 
 
 def test_retry_commit_token_commits_fresh_preview(monkeypatch, capsys):

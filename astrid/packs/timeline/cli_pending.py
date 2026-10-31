@@ -135,7 +135,15 @@ def _cmd_retry(parsed):
     from astrid.sdk.timeline.retry import commit_preview
 
     timeline = _open(parsed)
-    result = timeline.retry(parsed.ref_id)
+    try:
+        result = timeline.retry(parsed.ref_id, overwrite=parsed.overwrite)
+    except ValueError as exc:
+        if parsed.overwrite and str(exc) == "overwrite requires the original edit function":
+            raise ValueError(
+                "the CLI saves concrete edit commands and cannot re-run the original Python function; "
+                "use tl.retry(pending_id, fn=original_edit, overwrite=True) in Python"
+            ) from exc
+        raise
     if parsed.commit_token is not None:
         if result.get("status") == "landed":
             data = _retry_data(result)
@@ -233,6 +241,9 @@ def _configure_retry(parser):
     parser.add_argument("--project", required=True)
     parser.add_argument("--commit", dest="commit_token", metavar="TOKEN",
                         help="Commit only if the current retry preview still has this token.")
+    parser.add_argument("--overwrite", action="store_true",
+                        help="Re-run the original Python edit function on the newest timeline; "
+                             "saved CLI edit lists do not contain that function.")
     parser.add_argument("--json", action="store_true")
     parser.set_defaults(handler=lambda p: _run(p, _cmd_retry))
 
