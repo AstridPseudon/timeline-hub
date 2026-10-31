@@ -134,6 +134,59 @@ def test_j1_overlapping_list_survives_restart_and_rederive_closes_record(
     )
 
 
+def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_case, tmp_path):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "swap-stale.json")
+    _, peer = _peer(daemon, project, tmp_path, actor="swap-peer")
+    replacement = _media_file(tmp_path / "replacement.png")
+
+    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="W2 move b", key="swap-peer-hold")
+    result = stale.commit(lambda t: t.clip("b").swap_asset(str(replacement)),
+                          label="Swap b", key="swap-new-file")
+
+    assert result["status"] in {"accepted", "merged"}
+    assert result["attempts"] == 2
+    assert len(result["imports"]) == 1
+    assert result["imports"][0]["object_id"]
+    assert result["imports"][0]["generation_id"]
+    assert result["imports"][0]["variant_id"]
+
+
+def test_raced_sequential_metadata_refusal_is_saved_as_pending(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "list-stale.json")
+    _, peer = _peer(daemon, project, tmp_path, actor="metadata-peer")
+    commands = _move_commands(stale, on=4, label="Reviewed move")
+    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="W2 move b", key="metadata-peer-move")
+
+    class RuntimeRefusal(Exception):
+        code = "conflict"
+        message = "sequential command metadata differs from the prepared candidate"
+
+        def __init__(self, current):
+            super().__init__(self.message)
+            self.details = {"status": "refused", "reason": self.message, "current": current}
+
+    monkeypatch.setattr(stale.session.client.timelines, "commit",
+                        lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeRefusal(peer.head)))
+
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(commands, label="Reviewed move", key="metadata-list-race")
+
+    assert caught.value.pending_id
+    saved = stale.pending_show(caught.value.pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "list"
+    assert saved["failure"]["details"]["status"] == "refused"
+    assert saved["parts"][0]["commands"] == commands
+    assert saved["clash"]["pending_id"] == caught.value.pending_id
+    assert "rejected" not in stale.session._state()
+
+
 @pytest.mark.parametrize("same_process", [True, False])
 def test_j3_exhausted_function_retry_lands_and_closes_record(
     editing_case,

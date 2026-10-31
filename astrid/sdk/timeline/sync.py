@@ -274,6 +274,31 @@ def _retry_conflict(record, replacement):
     record["updated_at"] = datetime.now(timezone.utc).isoformat()
 
 
+def _raced_metadata_refusal(details, flight, *, message=None):
+    """Recognize Runtime's stale sequential metadata refusal for a reviewed list."""
+    if not isinstance(details, dict) or details.get("status") not in {"refused", "invalid"}:
+        return False
+    try:
+        body = json.loads(flight["body"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    if body.get("base_revision_id") is None or body.get("base_publication_id") is None:
+        return False
+    message = " ".join(str(value) for value in (
+        message, details.get("reason"), details.get("message"), details.get("detail"),
+    ) if value).lower()
+    if "sequential command metadata differs from the prepared candidate" not in message:
+        return False
+    current = details.get("current")
+    if not isinstance(current, dict):
+        return False
+    try:
+        return _pin(current) != _pin({"revision_id": body["base_revision_id"],
+                                      "publication_id": body["base_publication_id"]})
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
 class TimelineSession:
     def __init__(self, client, outbox, identity, project_id, timeline_id):
         self.client, self.outbox, self.identity = client, outbox, identity
@@ -855,13 +880,16 @@ class TimelineSession:
             details = getattr(exc, "details", {})
             if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+                raced_metadata_refusal = _raced_metadata_refusal(
+                    details, flight, message=getattr(exc, "message", exc),
+                )
                 record = None
                 external_conflict = None
                 with self.outbox.locked():
                     state = self._state()
                     if state["flight"] == flight:
                         self._flight_body(state, flight, idempotency_key, dry_run)
-                        if details.get("status") in {"refused", "invalid"}:
+                        if details.get("status") in {"refused", "invalid"} and not raced_metadata_refusal:
                             # Preserve the full queue for review, including any
                             # suffix captured against the flight's optimistic
                             # effects, and release it so it cannot run without them.
@@ -942,7 +970,8 @@ class TimelineSession:
                     if external_conflict is None:
                         record = _pending_clash(self, record)
                 from ._pending import clash
-                raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
+                raise CommitConflict(failure, fixed_list=release_conflict and (
+                                         details.get("status") == "conflict" or raced_metadata_refusal),
                                      timeline_id=self.timeline_id, project_id=self.project_id,
                                      label=record["label"] if record else None,
                                      pending_id=record["id"] if record else None,
