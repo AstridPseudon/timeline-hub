@@ -186,7 +186,9 @@ Runtime merges changes that do not touch the same things (`status` is then
   explains what changed, and the refused edit is saved as a pending change.
 - **Recover it:** call `r = tl.retry(err)`. For a function edit, this re-runs
   the function on the current timeline and commits it when one of its bounded
-  attempts succeeds. A reviewed list that still applies returns `preview`; show
+  attempts succeeds. If the function still clashes, `tl.retry(err,
+  overwrite=True)` explicitly re-runs it on the newest timeline and overwrites
+  the conflicting fields. A reviewed list that still applies returns `preview`; show
   `r["data"]["diff"]` for approval, then commit that preview. A reviewed list
   that still clashes returns `re_derive` because a list already merges
   disjoint fields. A function edit retried from another process can also return

@@ -766,6 +766,7 @@ def test_e14_function_conflict_reruns_but_literal_list_conflict_stays_fixed(
 ):
     daemon, client, project, timeline = editing_case
     from astrid.sdk.timeline.sync import CommitConflict
+    from astrid_runtime_client import ApiError
     from tests.editing_conformance.test_commit_runtime_m1 import open_client
 
     # The Runtime derives the handshake actor from the presented credential.
@@ -983,7 +984,6 @@ def test_e14_final_refusal_releases_outbox_for_new_intent_and_exact_undo(
 def test_e14_unknown_commit_reopens_and_retries_the_exact_request(editing_case, tmp_path, monkeypatch):
     _daemon, client, project, timeline = editing_case
     from astrid.sdk.timeline.sync import CommitOutcomeUnknown
-    from astrid_runtime_client import ApiError
 
     before = _snapshot(timeline)
     history_before = _history(client, project)
@@ -1020,4 +1020,128 @@ def test_e14_unknown_commit_reopens_and_retries_the_exact_request(editing_case, 
     undone = reopened.undo(publications=[retried["receipt"]["receipt_id"]])
     assert undone["data"]["canonical_document"] == before
     assert len(_history(client, project)) == len(history_before) + 2
+
+
+def _seed_three_title_clips(timeline):
+    def add_titles(t):
+        for index in range(1, 4):
+            t.add_text(f"Title {index}", at=(index - 1) * 3, hold=2,
+                       track="Titles", id=f"clip-{index}")
+
+    result = timeline.commit(add_titles, label="Seed three title clips", key="e14-seed-title-clips")
+    assert result["receipt"]["receipt_id"]
+
+
+def test_e14_function_duration_clash_saves_receipt_and_explicit_overwrite_rebases(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    from astrid.sdk.timeline.sync import CommitConflict
+    from astrid_runtime_client import ApiError
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _seed_three_title_clips(timeline)
+    _, credential = daemon.credentials.provision("e14-duration-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="e14-duration-peer", credential=credential)
+    peer = type(timeline).open(
+        project, "film", client=peer_client, outbox_path=tmp_path / "duration-peer.json",
+    )
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    peer_writes = []
+    evaluations = []
+
+    def conflict_after_peer_duration_write(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "E14 clip 3 duration clash":
+            duration = 3 + len(peer_writes)
+            peer_writes.append(peer.commit(
+                lambda t, duration=duration: t.clip("clip-3").hold_for(duration),
+                label=f"Peer clip 3 duration {duration}",
+                key=f"e14-peer-clip-3-duration-{duration}",
+            ))
+            raise ApiError(409, "conflict", "clip 3 duration changed", details={
+                "status": "conflict",
+                "reason": "value_conflict",
+                "conflicts": [{"ref": "parent/clip:clip-3", "path": ["hold"]}],
+                "current": dict(peer.head),
+            })
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", conflict_after_peer_duration_write)
+
+    def set_duration(t):
+        evaluations.append(t.clip("clip-3").duration)
+        t.clip("clip-3").hold_for(7)
+
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(set_duration, label="E14 clip 3 duration clash", key="e14-clip-3-duration")
+
+    assert len(evaluations) == 3
+    assert len(peer_writes) == 3
+    assert caught.value.pending_id
+    saved = timeline.pending_show(caught.value.pending_id)
+    assert saved["state"] == "pending"
+    assert saved["clash"]["conflicts"] == [
+        {"ref": "parent/clip:clip-3", "path": ["hold"]},
+    ]
+    touching = [receipt for receipt in saved["clash"]["receipts"] if receipt["touches_conflict"]]
+    assert touching
+    assert touching[-1]["publication_id"] == peer_writes[-1]["receipt"]["receipt_id"]
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    rebased = timeline.retry(caught.value, overwrite=True)
+    assert rebased["receipt"]["receipt_id"]
+    assert rebased["rebased"] is True
+    assert rebased["data"]["rebased"] is True
+    assert "rebased onto the newest timeline" in rebased["summary"]
+    assert timeline.clip("clip-3").duration == pytest.approx(7)
+    assert timeline.pending_show(caught.value.pending_id)["state"] == "landed"
+
+
+def test_e14_function_rerun_keeps_disjoint_concurrent_title_edit(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _seed_three_title_clips(timeline)
+    _, credential = daemon.credentials.provision("e14-title-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="e14-title-peer", credential=credential)
+    peer = type(timeline).open(
+        project, "film", client=peer_client, outbox_path=tmp_path / "title-peer.json",
+    )
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    injected = False
+    evaluations = []
+
+    def change_title_then_submit(project_id, timeline_id, body, **kwargs):
+        nonlocal injected
+        if body.get("label") == "E14 duration with disjoint title edit" and not injected:
+            injected = True
+            peer.commit(
+                lambda t: t.clip("clip-1").params.__setitem__("text", "Concurrent title"),
+                label="Concurrent title edit",
+                key="e14-concurrent-title-edit",
+            )
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", change_title_then_submit)
+
+    def set_duration(t):
+        evaluations.append(t.clip("clip-1").text)
+        t.clip("clip-3").hold_for(6)
+
+    result = timeline.commit(
+        set_duration, label="E14 duration with disjoint title edit", key="e14-disjoint-title-rerun",
+    )
+    assert result["receipt"]["receipt_id"]
+    assert len(evaluations) == 2
+    assert evaluations == ["Title 1", "Concurrent title"]
+    assert timeline.clip("clip-1").text == "Concurrent title"
+    assert timeline.clip("clip-3").duration == pytest.approx(6)
 
