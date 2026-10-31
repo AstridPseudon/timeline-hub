@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import copy
+import hashlib
+import json
 
 import pytest
 
@@ -50,6 +52,126 @@ def _clips(document):
         row["id"]: {key: row[key] for key in ("at", "volume", "opacity") if key in row}
         for row in document["parent"]["clips"]
     }
+
+
+def test_new_file_swap_recovery_reimports_after_saved_runtime_refusal(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "swap-recovery-data"))
+    source = _media_file(tmp_path / "swap-seed.png")
+    timeline.commit(
+        lambda t: t.add(source, at=0, hold=3, track="V1", id="swap-target"),
+        label="Seed swap target", key="swap-recovery-seed",
+    )
+    stale = Timeline.open(
+        project, "film", client=client, outbox_path=tmp_path / "swap-own-outbox.json"
+    )
+    replacement = _media_file(tmp_path / "swap-replacement.png", color="blue")
+    replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
+    evaluations = []
+
+    def edit(t):
+        evaluations.append(1)
+        t.clip("swap-target").swap_asset(str(replacement))
+
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    first_attempt = []
+
+    def refuse_first_attempt(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "Recover new file swap" and not first_attempt:
+            first_attempt.append(copy.deepcopy(body))
+            from astrid_runtime_client import ApiError
+
+            raise ApiError(409, "invalid_records", "simulated saved swap refusal", details={
+                "status": "refused", "reason": "invalid_records", "current": dict(stale.head),
+            })
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", refuse_first_attempt)
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(edit, label="Recover new file swap", key="swap-new-file-recovery")
+
+    pending_id = caught.value.pending_id
+    assert pending_id
+    saved = stale.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "function"
+    assert saved["parts"][0]["imports"][0]["object_id"] == replacement_digest
+    assert len(evaluations) == 1
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    reopened = Timeline.open(
+        project, "film", client=client, outbox_path=tmp_path / "swap-own-outbox.json"
+    )
+    landed = reopened.retry(pending_id, fn=edit)
+
+    assert landed["status"] in {"accepted", "merged", "landed"}
+    assert len(evaluations) == 2
+    assert len(landed["imports"]) == 1
+    assert landed["imports"][0]["object_id"] == replacement_digest
+    assert replacement_digest in str(landed["data"]["canonical_document"])
+    assert reopened.pending_show(pending_id)["state"] == "landed"
+
+
+def test_same_value_reviewed_list_recovers_through_shared_outbox_cli(
+    editing_case, tmp_path, monkeypatch, capsys,
+):
+    daemon, client, project, _setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "shared-outbox-data"))
+
+    from astrid.sdk.timeline import Timeline
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+    from astrid.core.cli.domain_product import run_product_family
+
+    _, credential = daemon.credentials.provision(
+        "same-value-list-peer",
+        ["handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+         "tasks:read", "tasks:write"],
+    )
+    peer_client = open_client(daemon, actor="same-value-list-peer", credential=credential)
+    stale = Timeline.open(project, "film", client=client)
+    peer = Timeline.open(project, "film", client=peer_client,
+                         outbox_path=tmp_path / "same-value-peer.json")
+    desired = "same value from both actors"
+    commands = stale.commit(
+        lambda t: t.bundle["parent"].update({"name": desired}),
+        label="Same value reviewed list", dry_run=True, merge="fields", reads=[],
+    )["data"]["commands"]
+
+    peer_result = peer.commit(
+        lambda t: t.bundle["parent"].update({"name": desired}),
+        label="Peer same value", key="same-value-peer-write",
+    )
+    assert peer_result["receipt"]["receipt_id"]
+    history_before_retry = len(client.timelines.history(project, "film", limit=100).data["items"])
+
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(commands, label="Same value reviewed list", key="same-value-reviewed-list",
+                     merge="fields", reads=[])
+    pending_id = caught.value.pending_id
+    assert pending_id
+    assert stale.pending_show(pending_id)["parts"][0]["commands"] == commands
+
+    # The CLI opens the actor's default shared outbox and should detect that the
+    # peer already landed the exact requested value without publishing again.
+    assert run_product_family(
+        "timelines", ["retry", "film", pending_id, "--project", project, "--json"],
+        client=client,
+    ) == 0
+    output = json.loads(capsys.readouterr().out)
+    assert output["ok"] is True
+    assert output["data"]["status"] == "landed"
+    assert output["data"]["pending_id"] == pending_id
+    assert "already has your value" in output["data"]["summary"]
+    assert len(client.timelines.history(project, "film", limit=100).data["items"]) == history_before_retry
+    assert Timeline.open(project, "film", client=client).pending_show(pending_id)["state"] == "landed"
 
 
 def test_pending_rederive_lost_reply_replays_exact_commit_once(editing_case, tmp_path, monkeypatch):
