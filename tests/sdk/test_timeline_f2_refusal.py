@@ -8,6 +8,7 @@ import json
 import pytest
 
 from astrid.sdk import timeline
+from astrid.sdk.timeline.commit import bundle_from_document
 from astrid.sdk.timeline.sync import CommitConflict
 from astrid_runtime_client import ApiError
 from tests.sdk import test_timeline_sync as sync_test
@@ -117,6 +118,30 @@ def test_explicit_retry_of_exhausted_function_reruns_saved_function(
     connected_fixture, monkeypatch,
 ):  # noqa: F811
     client, generated, path = connected_fixture
+
+    def authenticated_bundle(bundle, revision_id):
+        compiled = sync_test.compile_authoring_candidate(bundle).publication
+        document = {
+            "schema_version": 1,
+            "project_id": bundle["project_id"],
+            "timeline_id": bundle["timeline_id"],
+            "parent_revision": {
+                "revision_id": revision_id,
+                "content_digest": compiled["content_digest"],
+                "payload": compiled["parent_composition"],
+            },
+            "shot_revisions": compiled["shot_revisions"],
+            "internal_timeline_revisions": compiled["internal_timeline_revisions"],
+            "dependency_manifest": {
+                **compiled["dependency_manifest"], "documents": [],
+            },
+        }
+        return bundle_from_document(document)
+
+    # open_bundle(revision_id, publication_id) is the authenticated Runtime
+    # read used by fetch_bundle. Keep the fake's initial and advancing heads on
+    # that same contract so an explicit function retry can reevaluate them.
+    generated.bundles["r0"] = authenticated_bundle(generated.bundles["r0"], "r0")
     editor = timeline.open("p", "t", client=client, outbox_path=path)
     evaluations, sent = [], []
     commit_timeline = generated.commit_timeline
@@ -132,6 +157,12 @@ def test_explicit_retry_of_exhausted_function_reruns_saved_function(
         })
 
     monkeypatch.setattr(client.timelines, "history", timeline_history)
+    # These synthetic head advances have no provider-authored receipt records;
+    # overlap behavior is covered against real history in the runtime tests.
+    monkeypatch.setattr(
+        "astrid.sdk.timeline.commit_session._function_rerun_conflict",
+        lambda *_args: None,
+    )
 
     def refuse_three_times(*args, **kwargs):
         sent.append(kwargs["idempotency_key"])
@@ -144,11 +175,15 @@ def test_explicit_retry_of_exhausted_function_reruns_saved_function(
             command = {"schema_version": 1, "op": "clip.move", "version": "1",
                        "select": "parent/clip:a", "args": {"on": ordinal}}
             revision = f"retry-head-{ordinal}"
-            generated.bundles[revision] = sync_test.execute(base, [command]).bundle
+            plan = sync_test.execute(base, [command])
+            generated.bundles[revision] = authenticated_bundle(plan.bundle, revision)
             generated.head = {"revision_id": revision, "publication_id": f"pub-{revision}"}
             generated.publications[revision] = generated.head["publication_id"]
-            history.append({"revision_id": revision, "publication_id": generated.head["publication_id"],
-                            "previous": previous})
+            history.append({
+                "revision_id": revision,
+                "publication_id": generated.head["publication_id"],
+                "previous": previous,
+            })
             raise ApiError(409, "conflict", "head advanced", details={
                 "status": "conflict", "reason": "guard_changed",
                 "current": copy.deepcopy(generated.head),
