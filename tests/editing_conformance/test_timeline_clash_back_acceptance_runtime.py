@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import uuid
 
 import pytest
@@ -666,7 +667,7 @@ def test_j5_two_actors_retry_one_record_and_group_id_closes_other_actor(
     assert peer.pending_show(pending_id)["state"] == "landed"
 
 
-def test_f3_idempotency_mismatch_is_refused_without_pending_edit(editing_case, tmp_path):
+def test_f3_idempotency_mismatch_is_refused_and_saved(editing_case, tmp_path):
     daemon, _client, project, timeline = editing_case
     _seed_clip(timeline, tmp_path)
     peer_client, peer = _peer(daemon, project, tmp_path, actor="f3-key-owner")
@@ -678,23 +679,39 @@ def test_f3_idempotency_mismatch_is_refused_without_pending_edit(editing_case, t
     )
     from astrid.sdk.timeline.sync import CommitConflict
 
+    evaluations = []
+
+    def edit(t):
+        evaluations.append(True)
+        t.move("parent/clip:b", on=8)
+
     with pytest.raises(CommitConflict) as caught:
-        timeline.commit(lambda t: t.move("parent/clip:b", on=8), label="Different edit",
-                        key="f3-shared-key")
+        timeline.commit(edit, label="Different edit", key="f3-shared-key")
 
     error = caught.value
-    assert error.pending_id is None
+    assert error.pending_id
     assert error.failure["details"]["status"] == "refused"
     assert error.failure["details"]["reason"] == "idempotency_mismatch"
-    retry = timeline.retry(error)
-    assert retry["status"] == "refused"
-    assert retry["pending_id"] is None
-    assert retry["data"] == error.failure
+    assert evaluations == [True]
+
+    saved = timeline.pending_show(error.pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "function"
+    assert saved["failure"] == error.failure
+    assert saved["clash"]["runtime"]["reason"] == "idempotency_mismatch"
+    assert saved["flight"]["key"] == "f3-shared-key"
+    body = json.loads(saved["flight"]["body"])
+    assert saved["parts"][0]["commands"] == body["commands"]
+    assert saved["parts"][0]["base"] == {
+        "revision_id": body["base_revision_id"], "publication_id": body["base_publication_id"]
+    }
+    assert saved["parts"][0]["commands"][0]["args"]["on"] == 8
 
     with timeline.session.outbox.locked():
         state = timeline.session._state()
-    assert state["rejected"]["commands"]
-    assert state["rejected"]["commands"][0]["args"]["on"] == 8
+    assert state["pending"] == [] and state["flight"] is None
+    assert "rejected" not in state
+    assert state["pending_changes"][error.pending_id]["failure"] == error.failure
     assert peer_client.timelines.history(project, "film", limit=100).data["items"][-1]["label"] == "Reserve key"
 
 
