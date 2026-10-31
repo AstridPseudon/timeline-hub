@@ -10,7 +10,7 @@ from typing import Any, cast
 
 from ._common import PARENT_SHOT, TimelineEditError
 from .checkout import Checkout
-from .sync import CommitConflict, TimelineSession, _pending_clash, _pin
+from .sync import CommitConflict, TimelineSession, _OutboxChanged, _pending_clash, _pin
 
 
 def emit_document_commands(before, after):
@@ -591,9 +591,7 @@ class Timeline(Checkout):
                 raise error
             base = _pin(conflict["details"]["current"])
         else:
-            if not function and state["base"] != self._basis:
-                raise TimelineEditError("session base changed; reopen before committing")
-            base = state["base"]
+            base = self._basis if not function and state["base"] != self._basis else state["base"]
             count = 0
 
         while True:
@@ -626,18 +624,36 @@ class Timeline(Checkout):
                 # and retain this conservative dependency at each step boundary.
                 for step in steps:
                     step.setdefault("reads", []).append({"kind": "scope", "ref": "timeline", "path": []})
+            evaluation = {"kind": "function" if function else "label", "count": count,
+                          "synthetic_function_scope": bool(function and reads is None and merge != "atomic"),
+                          "media_cache": copy.deepcopy(working._media_cache),
+                          "identity_cache": copy.deepcopy(working._identity_cache)}
+            if not function and state["base"] != self._basis:
+                if dry_run or pending_id is not None:
+                    raise TimelineEditError("session base changed; reopen before committing")
+                error = self.session.save_interrupted(working._commands, base=base, label=commit_label,
+                                                      steps=steps, merge=effective_merge, reads=reads,
+                                                      key=idempotency_key, evaluation=evaluation)
+                self._adopt(self._base_bundle)
+                raise error
             try:
                 result = self.session.submit(
                     working._commands, label=commit_label, steps=steps, merge=effective_merge, reads=reads,
                     idempotency_key=idempotency_key, dry_run=dry_run, expected_state=state, base=base,
-                    evaluation={"kind": "function" if function else "label", "count": count,
-                                "synthetic_function_scope": bool(function and reads is None and merge != "atomic"),
-                                "media_cache": copy.deepcopy(working._media_cache),
-                                "identity_cache": copy.deepcopy(working._identity_cache)},
+                    evaluation=evaluation,
                     pending_id=pending_id,
                     pending_path=pending_path,
                     pending_how="rerun" if function else "rederive",
                 )
+            except _OutboxChanged:
+                if dry_run or pending_id is not None:
+                    raise
+                error = self.session.save_interrupted(working._commands, base=base, label=commit_label,
+                                                      steps=steps, merge=effective_merge, reads=reads,
+                                                      key=idempotency_key, evaluation=evaluation)
+                if working is self:
+                    self._adopt(self._base_bundle)
+                raise error
             except CommitConflict as exc:
                 if exc.pending_id is not None and working is self:
                     self._adopt(self._base_bundle)
@@ -744,8 +760,6 @@ class Timeline(Checkout):
             raise TimelineEditError("commit(command_list) requires a clean local session")
         with self.session.outbox.locked():
             state = self.session._state()
-        if state["base"] != self._basis:
-            raise TimelineEditError("session base changed; reopen before committing")
         steps = []
         for ordinal, command in enumerate(commands):
             patch = (copy.deepcopy(command.get("args", {}).get("changes", []))
@@ -754,12 +768,26 @@ class Timeline(Checkout):
                           "command_ordinals": [ordinal], "patch": patch})
         try:
             list_reads = [] if reads is None and merge == "fields" else reads
+            if state["base"] != self._basis:
+                if dry_run or pending_id is not None:
+                    raise TimelineEditError("session base changed; reopen before committing")
+                raise self.session.save_interrupted(commands, base=self._basis, label=label,
+                                                    steps=steps, merge=merge, reads=list_reads,
+                                                    key=idempotency_key, evaluation={"kind": "list"})
             result = self.session.submit(commands, label=label, steps=steps, merge=merge, reads=list_reads,
                                          idempotency_key=idempotency_key, dry_run=dry_run,
                                          expected_state=state, base=state["base"],
                                          pending_id=pending_id, pending_path=pending_path,
                                          pending_how="rederive")
+        except _OutboxChanged:
+            if dry_run or pending_id is not None:
+                raise
+            raise self.session.save_interrupted(commands, base=self._basis, label=label,
+                                                steps=steps, merge=merge, reads=list_reads,
+                                                key=idempotency_key, evaluation={"kind": "list"})
         except CommitConflict as exc:
+            if exc.failure.get("code") == "local_outbox_changed":
+                raise
             if exc.failure.get("details", {}).get("status") == "conflict":
                 raise CommitConflict(exc.failure, label=label, fixed_list=True,
                                      timeline_id=self.session.timeline_id,
