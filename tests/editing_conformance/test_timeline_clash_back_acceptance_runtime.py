@@ -198,8 +198,9 @@ def test_reviewed_list_runtime_refusal_is_saved_and_recovered(editing_case, tmp_
     saved = stale.pending_show(caught.value.pending_id)
     assert saved["state"] == "pending"
     assert saved["origin"] == "list"
-    assert saved["failure"]["details"]["status"] == caught.value.failure["details"]["status"]
-    assert "provider consumed manifest differs from its sequential parent allocation" in saved["failure"]["message"]
+    assert saved["failure"]["details"] == caught.value.failure["details"]
+    assert saved["failure"]["message"] == caught.value.failure["message"]
+    assert saved["failure"]["message"]
     assert saved["parts"][0]["commands"] == commands
     assert saved["clash"]["pending_id"] == caught.value.pending_id
     assert "rejected" not in stale.session._state()
@@ -211,7 +212,18 @@ def test_reviewed_list_runtime_refusal_is_saved_and_recovered(editing_case, tmp_
     recovered = reopened.pending_show(caught.value.pending_id)
     assert recovered["state"] == "pending"
     assert recovered["parts"][0]["commands"] == commands
-    assert replacement_digest in str(commands)
+    part = recovered["parts"][0]
+    base, imports = part["base"], part["imports"]
+    assert replacement_digest in str(part["commands"])
+
+    retry = reopened.retry(caught.value.pending_id)
+    assert retry["status"] == "refused"
+    still_pending = reopened.pending_show(caught.value.pending_id)
+    assert still_pending["state"] == "pending"
+    assert still_pending["parts"][0]["base"] == base
+    assert still_pending["parts"][0]["commands"] == commands
+    assert still_pending["parts"][0]["imports"] == imports
+    assert replacement_digest in str(still_pending["parts"][0]["commands"])
 
 
 @pytest.mark.parametrize("same_process", [True, False])
