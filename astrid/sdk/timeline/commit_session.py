@@ -470,7 +470,7 @@ class Timeline(Checkout):
             return super().undo(cast(int, steps), client=client, **options)
         if steps is not None and not isinstance(steps, dict) and steps != 1:
             raise TimelineEditError("publication undo cannot be combined with draft steps")
-        return self.session.undo(publications, steps=None if steps == 1 else steps, **options)
+        return self._accepted(self.session.undo(publications, steps=None if steps == 1 else steps, **options))
 
     def _capture_free_edits(self):
         if self.bundle != self._command_bundle:
