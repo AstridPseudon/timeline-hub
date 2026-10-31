@@ -124,7 +124,6 @@ def test_new_file_swap_recovers_after_same_actor_default_outbox_race(
 ):
     _daemon, client, project, _setup = editing_case
     from astrid.sdk.timeline import Timeline
-    from astrid.sdk.timeline.sync import CommitConflict
 
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "swap-recovery-data"))
     timeline = Timeline.open(project, "film", client=client)
@@ -163,11 +162,11 @@ def test_new_file_swap_recovers_after_same_actor_default_outbox_race(
 
     def run_swap():
         try:
-            stale.commit(edit, label="Recover new file swap", key="swap-new-file-recovery")
+            outcomes.append(stale.commit(
+                edit, label="Recover new file swap", key="swap-new-file-recovery"
+            ))
         except Exception as exc:  # Return the actual Runtime/outbox failure to the test thread.
             outcomes.append(exc)
-        else:
-            outcomes.append(None)
 
     worker = threading.Thread(target=run_swap)
     worker.start()
@@ -182,31 +181,20 @@ def test_new_file_swap_recovers_after_same_actor_default_outbox_race(
         resume.set()
         worker.join(timeout=60)
     assert not worker.is_alive(), "swap function did not finish after peer commit"
-    assert len(outcomes) == 1 and isinstance(outcomes[0], CommitConflict), outcomes
-    caught = outcomes[0]
-
-    pending_id = caught.pending_id
-    assert pending_id
-    saved = stale.pending_show(pending_id)
-    assert saved["state"] == "pending"
-    assert saved["origin"] == "function"
-    assert saved["failure"] == caught.failure
-    assert saved["parts"][0]["imports"]
-    assert saved["parts"][0]["imports"][0]["object_id"] == replacement_digest
-    assert len(evaluations) == 1
-
+    assert len(outcomes) == 1 and isinstance(outcomes[0], dict), outcomes
+    landed = outcomes[0]
+    assert landed["status"] in {"accepted", "merged", "landed"}
+    assert landed["receipt"]["receipt_id"]
     reopened = Timeline.open(project, "film", client=client)
     assert reopened.session.outbox.path == peer.session.outbox.path
-    landed = reopened.retry(pending_id, fn=edit)
-
-    assert landed["status"] in {"accepted", "merged", "landed"}
     assert len(evaluations) == 2
-    assert len(landed["imports"]) == 1
-    assert landed["imports"][0]["object_id"] == replacement_digest
-    assert replacement_digest in str(landed["data"]["canonical_document"])
-    assert reopened.pending_show(pending_id)["state"] == "landed"
-    assert reopened.pending_show(pending_id)["failure"] == caught.failure
+    assert reopened.pending_list() == []
     assert reopened.bundle["parent"]["name"] == "Peer advanced shared outbox"
+    assert replacement_digest in str(landed["data"]["canonical_document"])
+    history = client.timelines.history(project, "film", limit=100).data["items"]
+    labels = [record.get("label") for record in history]
+    assert labels.count("Recover new file swap") == 1
+    assert labels.count("Disjoint same-actor peer edit") == 1
 
 
 def test_reviewed_new_file_swap_runtime_conflict_is_saved_and_explicit_retry_recovers(
@@ -408,6 +396,22 @@ def test_function_commit_keeps_overlap_as_pending_clash_after_shared_outbox_adva
     assert saved["state"] == "pending"
     assert peer.bundle["parent"]["name"] == "peer owns this field"
 
+    pending_id = caught.value.pending_id
+    reopened = Timeline.open(project, "film", client=client)
+    with pytest.raises(ValueError, match="overwrite requires the original edit function"):
+        reopened.retry(pending_id, overwrite=True)
+    assert reopened.pending_show(pending_id)["state"] == "pending"
+
+    landed = reopened.retry(pending_id, fn=overlapping_edit, overwrite=True)
+
+    assert landed["status"] == "rebased"
+    assert len(evaluations) == 2
+    assert landed["receipt"]["receipt_id"]
+    assert reopened.bundle["parent"]["name"] == "function overwrites peer"
+    saved = Timeline.open(project, "film", client=client).pending_show(pending_id)
+    assert saved["state"] == "landed"
+    assert saved["closed_by"]["publication_id"] == landed["receipt"]["receipt_id"]
+
 
 def test_pending_rederive_lost_reply_replays_exact_commit_once(editing_case, tmp_path, monkeypatch):
     daemon, client, project, timeline = editing_case
@@ -563,7 +567,7 @@ def _same_actor_function_process(endpoint, credential, realm, project, captured_
 
     def edit(working):
         evaluations.append(1)
-        working.bundle["parent"]["custom"] = {"same_actor_recovery": True}
+        working.bundle["parent"]["name"] = "Same actor function edit"
 
     try:
         timeline.commit(edit, label="Same actor function edit", key="ux-core-function",
@@ -597,7 +601,7 @@ def _same_actor_reviewed_list_process(endpoint, credential, realm, project, capt
     timeline = Timeline.open(project, "film", client=client)
     preview = timeline.commit(
         lambda working: working.bundle["parent"].update(
-            {"custom": {"same_actor_reviewed_list": True}}),
+            {"name": "Same actor reviewed list edit"}),
         label="Same actor reviewed list",
         dry_run=True,
     )
@@ -786,8 +790,10 @@ def test_same_actor_default_outbox_recovers_captured_function_after_process_exit
         "tasks:read", "tasks:write",
     ])
     client = open_client(daemon, actor=actor, credential=credential)
-    peer = Timeline.open(project, "film", client=client)
-    initial_head = copy.deepcopy(peer.head)
+    owner = Timeline.open(project, "film", client=client)
+    _, peer = _actor(daemon, project, tmp_path, "ux-core-function-peer",
+                     outbox=tmp_path / "ux-core-function-peer.json")
+    initial_head = copy.deepcopy(owner.head)
 
     context = multiprocessing.get_context("spawn")
     captured_queue, result_queue = context.Queue(), context.Queue()
@@ -802,19 +808,15 @@ def test_same_actor_default_outbox_recovers_captured_function_after_process_exit
         captured = captured_queue.get(timeout=60)
         assert captured["base"] == initial_head
         assert captured["commands"]
-        assert captured["outbox"] == str(peer.session.outbox.path)
+        assert captured["outbox"] == str(owner.session.outbox.path)
 
         peer_result = peer.commit(
             lambda t: t.bundle["parent"].update({"name": "Same actor peer edit"}),
             label="Same actor peer edit", key="ux-core-peer",
         )
         assert peer_result["receipt"]["receipt_id"]
-        after_peer = json.loads(peer.session.outbox.path.read_text(encoding="utf-8"))
-        assert after_peer["flight"] is None
-        assert after_peer["pending"] == []
-        assert after_peer["acknowledged"]["ux-core-peer"]
-        peer_state = {key: copy.deepcopy(after_peer.get(key))
-                      for key in ("base", "flight", "pending", "acknowledged")}
+        after_peer = json.loads(owner.session.outbox.path.read_text(encoding="utf-8"))
+        peer_state = copy.deepcopy(after_peer)
         release.set()
         result = result_queue.get(timeout=60)
         process.join(timeout=10)
@@ -828,29 +830,36 @@ def test_same_actor_default_outbox_recovers_captured_function_after_process_exit
 
     assert "error" not in result, result
     pending_id = result["pending_id"]
-    assert pending_id and result["evaluations"] == 1
-    saved = peer.pending_show(pending_id)
+    assert pending_id and result["evaluations"] >= 2
+    later_peer_result = peer.commit(
+        lambda t: t.bundle["parent"].update({"name": "Later same actor peer edit"}),
+        label="Later same actor peer edit", key="ux-core-peer-later",
+    )
+    assert later_peer_result["receipt"]["receipt_id"]
+    saved = owner.pending_show(pending_id)
     assert saved["state"] == "pending"
+    assert saved["origin"] == "function"
+    assert saved["failure"]["details"]["status"] == "conflict"
     assert saved["parts"][0]["base"] == captured["base"]
-    assert saved["parts"][0]["commands"] == captured["commands"]
+    assert saved["parts"][0]["commands"]
 
-    after_conflict = json.loads(peer.session.outbox.path.read_text(encoding="utf-8"))
-    assert {key: after_conflict.get(key) for key in peer_state} == peer_state
-    assert after_conflict["pending_changes"][pending_id]["parts"][0]["commands"] == captured["commands"]
+    after_conflict = json.loads(owner.session.outbox.path.read_text(encoding="utf-8"))
+    for key in ("flight", "pending", "acknowledged"):
+        assert after_conflict.get(key) == peer_state.get(key)
+    assert after_conflict["pending_changes"][pending_id]["parts"][0]["commands"] == saved["parts"][0]["commands"]
 
-    # The callable is gone with the child. A fresh default-open handle retries its saved list.
+    # The callable is gone with the child. Its captured list still conflicts,
+    # so retry requests a fresh derivation without publishing or closing it.
     recovered = Timeline.open(project, "film", client=client)
-    preview = recovered.retry(pending_id)
-    assert preview["status"] == "preview"
-    assert preview["data"]["commands"] == captured["commands"]
-    assert recovered.commit(preview)["status"] in {"accepted", "merged", "landed"}
-    assert recovered.bundle["parent"]["custom"] == {"same_actor_recovery": True}
-    assert recovered.bundle["parent"]["name"] == "Same actor peer edit"
-    history_count = len(client.timelines.history(project, "film", limit=100).data["items"])
-    again = recovered.commit(preview)
-    assert again["status"] == "landed"
-    assert len(client.timelines.history(project, "film", limit=100).data["items"]) == history_count
-    assert recovered.pending_show(pending_id)["state"] == "landed"
+    history_before_retry = len(client.timelines.history(project, "film", limit=100).data["items"])
+    packet_before_retry = copy.deepcopy(after_conflict["pending_changes"][pending_id])
+    fallback = recovered.retry(pending_id)
+    assert fallback["status"] == "re_derive"
+    assert len(client.timelines.history(project, "film", limit=100).data["items"]) == history_before_retry
+    assert recovered.pending_show(pending_id)["state"] == "pending"
+    after_retry = json.loads(owner.session.outbox.path.read_text(encoding="utf-8"))
+    assert after_retry["pending_changes"][pending_id] == packet_before_retry
+    assert recovered.bundle["parent"]["name"] == "Later same actor peer edit"
 
 
 def test_same_actor_default_outbox_recovers_captured_reviewed_list_after_process_exit(
@@ -915,6 +924,7 @@ def test_same_actor_default_outbox_recovers_captured_reviewed_list_after_process
     assert pending_id
     saved = peer.pending_show(pending_id)
     assert saved["state"] == "pending"
+    assert saved["origin"] == "list"
     assert saved["parts"][0]["base"] == captured["base"]
     assert saved["parts"][0]["commands"] == captured["commands"]
 
@@ -923,17 +933,38 @@ def test_same_actor_default_outbox_recovers_captured_reviewed_list_after_process
             if key != "pending_changes"} == peer_state
     assert after_conflict["pending_changes"][pending_id]["parts"][0]["commands"] == captured["commands"]
 
-    # The reviewed list is durable; a fresh default-open handle retries it without recapturing.
+    # The reviewed list is durable; a fresh handle detects its conflict without
+    # publishing it, then a newly derived list closes the same saved record.
     recovered = Timeline.open(project, "film", client=peer_client)
-    preview = recovered.retry(pending_id)
+    history_before_retry = len(client.timelines.history(project, "film", limit=100).data["items"])
+    packet_before_retry = copy.deepcopy(after_conflict["pending_changes"][pending_id])
+    fallback = recovered.retry(pending_id)
+    assert fallback["status"] == "re_derive"
+    assert len(client.timelines.history(project, "film", limit=100).data["items"]) == history_before_retry
+    assert recovered.pending_show(pending_id)["state"] == "pending"
+    after_retry = json.loads(peer.session.outbox.path.read_text(encoding="utf-8"))
+    assert after_retry["pending_changes"][pending_id] == packet_before_retry
+
+    preview = recovered.commit(
+        lambda t: t.bundle["parent"].update(
+            {"custom": {"same_actor_reviewed_list": True}}),
+        label="Same actor reviewed list", dry_run=True,
+    )
     assert preview["status"] == "preview"
-    assert preview["data"]["commands"] == captured["commands"]
-    landed = recovered.commit(preview)
+    assert recovered.head != captured["base"]
+    landed = recovered.commit(
+        preview["data"]["commands"], label="Same actor reviewed list",
+        key="ux-core-reviewed", pending=pending_id,
+    )
     assert landed["status"] in {"accepted", "merged", "landed"}
     assert recovered.bundle["parent"]["custom"] == {"same_actor_reviewed_list": True}
     assert recovered.bundle["parent"]["name"] == "Same actor reviewed peer edit"
     history_count = len(client.timelines.history(project, "film", limit=100).data["items"])
-    again = recovered.commit(preview)
-    assert again["status"] == "landed"
+    again = recovered.commit(
+        preview["data"]["commands"], label="Same actor reviewed list",
+        key="ux-core-reviewed", pending=pending_id,
+    )
+    assert again["status"] in {"accepted", "landed"}
+    assert again["receipt"] == landed["receipt"]
     assert len(client.timelines.history(project, "film", limit=100).data["items"]) == history_count
     assert recovered.pending_show(pending_id)["state"] == "landed"

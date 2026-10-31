@@ -774,9 +774,23 @@ class Timeline(Checkout):
             except _OutboxChanged:
                 if dry_run or pending_id is not None:
                     raise
+                if function and count < 3:
+                    with self.session.outbox.locked():
+                        latest = self.session._state()
+                    if (not latest["pending"] and latest["flight"] is None
+                            and latest["base"] != state["base"]):
+                        # A peer using this actor's shared outbox completed while
+                        # the function was evaluating. Re-read its new head and
+                        # let the normal overlap guard protect the re-evaluation.
+                        state = latest
+                        base = _pin(latest["base"])
+                        continue
                 error = self.session.save_interrupted(working._commands, base=base, label=commit_label,
                                                       steps=steps, merge=effective_merge, reads=reads,
                                                       key=idempotency_key, evaluation=evaluation)
+                if function:
+                    error.retry_fn = function
+                    self._retry_functions[error.pending_id] = function
                 if working is self:
                     self._adopt(self._base_bundle)
                 raise error
@@ -901,6 +915,17 @@ class Timeline(Checkout):
                           "command_ordinals": [ordinal], "patch": patch})
         try:
             list_reads = [] if reads is None and merge == "fields" else reads
+            replay = self.session.retry(
+                idempotency_key,
+                matches=lambda body: (body.get("commands") == commands
+                                      and body.get("label") == label
+                                      and body.get("steps") == steps
+                                      and body.get("merge") == merge
+                                      and body.get("reads") == list_reads),
+                dry_run=dry_run,
+            )
+            if replay is not None:
+                return replay
             flight = state.get("flight")
             if flight is not None and pending_id is not None:
                 body = json.loads(flight["body"])

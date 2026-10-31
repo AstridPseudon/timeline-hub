@@ -530,6 +530,48 @@ def test_key_alias_submits_fixed_command_list_with_exact_key(connected):
     assert json.loads(generated.calls[-1][0])["commands"] == commands
 
 
+def test_fixed_list_replays_acknowledged_key_without_idempotency_mismatch(connected):
+    tl = opened(connected)
+    _, generated, _ = connected
+    commands = [{"schema_version": 1, "op": "clip.move", "version": "1",
+                 "select": "parent/clip:a", "args": {"on": 6}}]
+
+    first = tl.commit(commands, label="Fixed list", key="fixed-list-key")
+    replay = opened(connected).commit(commands, label="Fixed list", key="fixed-list-key")
+
+    assert first["receipt"] == replay["receipt"]
+    assert replay["replayed"] is True
+    assert len(generated.calls) == 2
+    assert generated.calls[0] == generated.calls[1]
+
+
+def test_function_reruns_after_shared_outbox_advance_during_evaluation(connected, monkeypatch):
+    tl = opened(connected)
+    peer = opened(connected)
+    _, generated, _ = connected
+    # This fake's bundle omits the canonical document used by the production
+    # overlap guard; overlap behavior is covered by the runtime-backed tests.
+    monkeypatch.setattr(commit_session, "_function_rerun_conflict", lambda *args: None)
+    observed = []
+
+    def edit(working):
+        observed.append(at(working, "b"))
+        if len(observed) == 1:
+            peer.commit(lambda other: other.move("parent/clip:b", 8),
+                        label="Shared outbox peer", key="shared-outbox-peer")
+        working.move("parent/clip:a", 4)
+
+    result = tl.commit(edit, label="Disjoint shared outbox rerun", key="shared-outbox-function")
+
+    assert result["receipt"]["receipt_id"]
+    assert observed == [0, 8]
+    assert at(tl) == 4
+    assert at(tl, "b") == 8
+    assert tl.pending_list() == []
+    assert json.loads(tl.session.outbox.path.read_text())["pending"] == []
+    assert len(generated.accepted) == 2
+
+
 def test_failed_ack_persistence_reconciles_without_running_function(connected, monkeypatch):
     tl = opened(connected)
     _, generated, _ = connected

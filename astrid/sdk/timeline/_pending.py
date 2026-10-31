@@ -82,4 +82,5 @@ def clash(record):
             "head": copy.deepcopy(record["head"]),
             "runtime": {"reason": copy.deepcopy(details.get("reason")),
                         "conflicts": copy.deepcopy(details.get("conflicts", []))},
-            "next": f'tl.retry("{record["id"]}")'}
+            "next": (f'tl.retry("{record["id"]}", your_function)' if record["origin"] == "function"
+                     else f'tl.retry("{record["id"]}")')}
