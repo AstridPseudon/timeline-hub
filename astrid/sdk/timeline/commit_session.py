@@ -501,6 +501,26 @@ class Timeline(Checkout):
             raise TimelineEditError("pass only one of key or idempotency_key")
         if key is not None:
             idempotency_key = key
+        if pending is not None and idempotency_key is not None and isinstance(label_or_fn, list):
+            actors = "self" if getattr(self.session, "_explicit_outbox", False) else "all"
+            landed = [(path, record) for path, record in self._pending_records_with_paths(actors)
+                      if (record.get("id") == pending or record.get("key") == pending)
+                      and record.get("state") == "landed"]
+            if len(landed) == 1:
+                record = landed[0][1]
+                replay_label = label or "Timeline edit"
+                list_reads = [] if reads is None and merge == "fields" else reads
+
+                def matches(body):
+                    return (body.get("group_id") == record["id"]
+                            and body.get("commands") == label_or_fn
+                            and body.get("label") == replay_label
+                            and body.get("merge") == merge
+                            and body.get("reads") == list_reads)
+
+                replay = self.session.retry(idempotency_key, matches=matches, dry_run=dry_run)
+                if replay is not None:
+                    return replay
         pending_target = (self._resolve_pending(pending) if pending is not None else
                           self._resolve_pending_key(idempotency_key) if idempotency_key is not None else None)
         pending_id, pending_path = pending_target if pending_target is not None else (None, None)
@@ -651,6 +671,10 @@ class Timeline(Checkout):
 
     def retry(self, err_or_ref, fn=None):
         """Retry a saved edit, retaining an exhausted function when available."""
+        if isinstance(err_or_ref, CommitConflict) and not err_or_ref.pending_id:
+            return {"status": "refused", "pending_id": None,
+                    "data": copy.deepcopy(err_or_ref.failure),
+                    "summary": str(err_or_ref), "next": None}
         ref = getattr(err_or_ref, "pending_id", None) or err_or_ref
         retry_fn = fn if fn is not None else getattr(err_or_ref, "retry_fn", None)
         from . import retry
