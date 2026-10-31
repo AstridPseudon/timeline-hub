@@ -1061,10 +1061,20 @@ class TimelineSession:
             if state["flight"] == flight:
                 self._flight_body(state, flight, idempotency_key, dry_run)
                 if not dry_run:
-                    if flight.get('explicit_key', idempotency_key is not None):
+                    external_pending = (flight.get('pending_id') is not None
+                                        and flight.get('pending_path') is not None
+                                        and Path(flight['pending_path']).resolve() != self.outbox.path.resolve())
+                    if flight.get('explicit_key', idempotency_key is not None) or external_pending:
                         acknowledged = state.setdefault('acknowledged', {})
                         logical_key = flight.get('logical_key', flight['key'])
                         acknowledged[logical_key] = copy.deepcopy(flight)
+                        if external_pending:
+                            acknowledged[logical_key]['pending_ack'] = {
+                                'revision_id': data['accepted_revision_id'],
+                                'publication_id': receipt['receipt_id'],
+                                'publisher': self.identity['actor_id'],
+                                'receipt': copy.deepcopy(receipt),
+                            }
                     state["base"] = _pin({"revision_id": data["accepted_revision_id"],
                                            "publication_id": receipt["receipt_id"]})
                     del state["pending"][:flight["count"]]
