@@ -676,3 +676,82 @@ def test_update_alias_accepts_pack_and_skill():
     assert args.handler is skills_cli._cmd_sync
     assert args.pack == "rendering"
     assert args.skill == ["worlds"]
+
+
+def test_timeline_main_skill_stays_under_budget_and_covers_first_run():
+    skill = Path(__file__).parents[1] / "astrid/packs/timeline/docs/SKILL.md"
+    content = skill.read_text(encoding="utf-8")
+    frontmatter, body = content.split("---", 2)[1:]
+
+    assert len(content.split()) < 500
+    assert "video" in frontmatter.lower() and "timeline" in frontmatter.lower()
+    assert "timelines list --recent" in body
+    assert "ask the user and name the candidates" in body
+    assert "same Python that runs Astrid" in " ".join(body.split())
+    assert "timelines create" in body and "t.add(path, at=at" in body
+    assert 'Timeline.open("<project>", "<timeline>")' in body
+    assert "timelines visualize" in body and 'r[\"data\"][\"editor_url\"]' in body
+    assert "astrid-timeline-series" in body
+    assert "Not possible yet" not in body
+
+
+def test_timeline_main_skill_code_blocks_run_with_scratch_runtime(real_runtime, tmp_path, monkeypatch):
+    import os
+    import re
+    import subprocess
+    import sys
+
+    from tests.helpers.runtime import runtime_checkout, vendored_runtime_commit
+
+    runtime_root = runtime_checkout(vendored_runtime_commit())
+    daemon = real_runtime(tmp_path / "timeline-skill-realm", support_root=tmp_path / "timeline-skill-support",
+                          commit=vendored_runtime_commit(), authoring_profile="astrid")
+    env = {
+        **os.environ,
+        "PYTHONPATH": f"{Path(__file__).parents[1]}:{runtime_root}",
+        "ASTRID_RUNTIME_CHECKOUT": str(runtime_root),
+        "ASTRID_RUNTIME_DATA_ROOT": str(tmp_path / "timeline-skill-data"),
+        "ASTRID_TIMELINE_EVAL_ENDPOINT": daemon.endpoint,
+        "ASTRID_TIMELINE_EVAL_CREDENTIAL": str(daemon.credential_path),
+        "ASTRID_TIMELINE_EVAL_REALM_ID": daemon.service.realm["id"],
+        "ASTRID_TIMELINE_EVAL_ACTOR_ID": "owner",
+    }
+    project = daemon.service.create_project({"slug": "skill-demo", "name": "Skill demo"})["id"]
+    monkeypatch.setenv("ASTRID_TIMELINE_EVAL_ENDPOINT", daemon.endpoint)
+    monkeypatch.setenv("ASTRID_TIMELINE_EVAL_CREDENTIAL", str(daemon.credential_path))
+    monkeypatch.setenv("ASTRID_TIMELINE_EVAL_REALM_ID", daemon.service.realm["id"])
+    monkeypatch.setenv("ASTRID_TIMELINE_EVAL_ACTOR_ID", "owner")
+
+    created = subprocess.run(
+        [sys.executable, "-m", "astrid", "timelines", "create", "--project", project,
+         "--slug", "intro", "--name", "Intro"],
+        cwd=tmp_path, env=env, text=True, capture_output=True, timeout=120,
+    )
+    assert created.returncode == 0, created.stdout + created.stderr
+
+    from astrid.sdk.timeline.api import Timeline
+
+    source = Path(__file__).parent / "fixtures/reshape/hype_regression/main.mp4"
+    still = Path(__file__).parent / "fixtures/reshape/hype_regression/poster.png"
+    tl = Timeline.open(project, "intro")
+    tl.commit(lambda t: t.add(str(source), at=0, track="V1", id="intro"), label="Seed intro",
+              idempotency_key="seed-intro")
+
+    skill = Path(__file__).parents[1] / "astrid/packs/timeline/docs/SKILL.md"
+    blocks = re.findall(r"```(?:python|bash)\n(.*?)\n```", skill.read_text(encoding="utf-8"), re.S)
+    assert len(blocks) == 3
+    replacements = {
+        "<project>": project,
+        "<clip-one>": str(still),
+        "<clip-two>": str(still),
+    }
+    for block in blocks:
+        replacements["<timeline>"] = "intro" if block.startswith("from astrid.sdk") else "new-opening"
+        for marker, value in replacements.items():
+            block = block.replace(marker, value)
+        if block.startswith("from astrid.sdk"):
+            exec(compile(block, str(skill), "exec"), {"__name__": "__main__"})
+        else:
+            result = subprocess.run(["bash", "-c", block], cwd=tmp_path, env=env, text=True,
+                                    capture_output=True, timeout=120)
+            assert result.returncode == 0, result.stdout + result.stderr
