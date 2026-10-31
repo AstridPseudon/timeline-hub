@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import copy
+import re
 import uuid
 
 from ._command_state import CommandError
@@ -214,7 +215,10 @@ def _summary(record, conflicts, receipts, targets=()):
     target = targets[0] if targets else None
     where = f' ({target})' if target else ''
     if match:
-        who = f" ({match['publisher']})" if match.get('publisher') else ''
+        publisher = match.get('publisher')
+        if isinstance(publisher, str) and re.fullmatch(r'astrid-[0-9a-fA-F]+', publisher):
+            publisher = 'another writer'
+        who = f' ({publisher})' if publisher else ''
         return (f'"{label}" was not committed: "{match.get("label") or "Another edit"}"{who} '
                 f'changed a conflicting part{where} after your edit was made. Your edit is saved as '
                 f'{pending_id}; nothing is lost.')
