@@ -105,7 +105,8 @@ For a new reusable pack, follow the supported authoring path in
    `documentation: {kind: skill, path: docs/SKILL.md}`. Add optional extra
    skills only as declared `kind: skill` resources at
    `docs/<name>/SKILL.md`; adjacent guides, references, templates, and assets
-   remain ordinary supporting files.
+   remain ordinary supporting files. Follow the
+   [skill-writing guidance](references/writing-skills.md).
 4. For a standalone pack, keep code and declaration in the pack. For a
    wrapper, keep the external repository unchanged and use a thin adapter plus
    its normal dependency/install route; do not vendor arbitrary upstream code.
@@ -158,7 +159,8 @@ composed by the existing skill sync. Its authored source is
 
 Before handoff, confirm that the pack's manifest and every contribution pass
 the static validator, that all declared paths stay inside the pack, and that a
-cold agent can discover and inspect the capability from the SDK. Run a smoke
+cold agent can discover and inspect the capability from the SDK. Check that
+documentation is accurate and examples run as written. Run a smoke
 invocation only when the requested change includes runtime behavior and the
 required runtime/dependencies are available. Write and review the pack's tests
 with the [pack testing skill](../pack-testing/SKILL.md), and regenerate the
