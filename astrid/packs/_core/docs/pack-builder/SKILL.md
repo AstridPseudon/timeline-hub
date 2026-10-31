@@ -45,14 +45,14 @@ The detailed contracts are maintained in these authoritative guides:
 - [Pack testing](../pack-testing/SKILL.md) — where a pack's tests go, which
   lane they run in, how to test an action (unit, real Runtime daemon, editing
   scenario), and the known-failures rules.
-- [Video editing skill](../../../video_editing/docs/SKILL.md) — existing timeline
-  editing route; the [rendering skill](../../../rendering/docs/SKILL.md) is the
-  downstream render/evidence compatibility layer.
+- [Timeline skill](../../../timeline/docs/SKILL.md) — edit runtime timelines;
+  the [rendering skill](../../../rendering/docs/SKILL.md) covers rendering,
+  worlds, effects, and generated elements.
 
 The runnable starter source is
 [`astrid/core/pack/cli_basic.py`](../../../../../astrid/core/pack/cli_basic.py);
 its focused contract tests are
-[`tests/core/pack/test_cli_scaffold_f08.py`](../../../../../tests/core/pack/test_cli_scaffold_f08.py).
+[`tests/packs/test_pack_layout_contract.py`](../../../../../tests/packs/test_pack_layout_contract.py).
 Link to those sources rather than maintaining another template or schema here.
 
 Read only the linked guide needed for the current choice. Do not copy its
