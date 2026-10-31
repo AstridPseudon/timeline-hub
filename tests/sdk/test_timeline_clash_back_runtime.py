@@ -40,6 +40,10 @@ def _injected_conflict(timeline, *, ref, path):
     })
 
 
+def _raise_injected_conflict(timeline, **kwargs):
+    raise _injected_conflict(timeline, **kwargs)
+
+
 def _set_clip(timeline, clip_id, **values):
     parent = timeline.bundle["parent"]
     for root in (parent, parent.get("config", {})):
@@ -622,6 +626,48 @@ def _same_actor_reviewed_list_process(endpoint, credential, realm, project, capt
         result_queue.put({"error": "same-actor reviewed-list commit unexpectedly succeeded"})
 
 
+def _reciprocal_retry_process(endpoint, credential, realm, project, actor, pending_id,
+                              barrier, result_queue):
+    """Retry a peer's saved conflict and refuse both requests at the same barrier."""
+    from astrid.sdk.client import AstridClient
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    client = AstridClient.open(
+        endpoint=endpoint,
+        credential=credential,
+        realm_id=realm,
+        actor_id=actor,
+        client_name="ux-core-reciprocal-retry",
+        client_version="1",
+        protocol_version="workspace.v1",
+    )
+    timeline = Timeline.open(project, "film", client=client)
+    generated = client._remote._transport._generated
+
+    def refuse_together(*_args, **_kwargs):
+        barrier.wait(timeout=30)
+        from astrid_runtime_client import ApiError
+
+        raise ApiError(422, "invalid_records", "injected retry refusal", details={
+            "status": "refused", "reason": "invalid_records", "current": dict(timeline.head),
+        })
+
+    generated.commit_timeline = refuse_together
+    try:
+        preview = timeline.retry(pending_id)
+        result = timeline.commit(preview)
+    except CommitConflict as caught:
+        result_queue.put({"pending_id": pending_id, "status": "refused",
+                          "saved_pending_id": caught.pending_id})
+    except Exception as caught:  # Return child failures to the parent as test evidence.
+        import traceback
+        result_queue.put({"pending_id": pending_id, "error": repr(caught),
+                          "traceback": traceback.format_exc()})
+    else:
+        result_queue.put({"pending_id": pending_id, "status": result.get("status")})
+
+
 def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
     daemon, _client, project, setup = editing_case
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "astrid-data"))
@@ -771,6 +817,79 @@ def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
     expected["c5"]["volume"] = 0.3
     expected["c6"]["opacity"] = 0.5
     assert _clips(bundle_from_document(a1._runtime_document)) == expected
+
+
+def test_reciprocal_refused_retries_finish_and_persist(editing_case, tmp_path, monkeypatch):
+    daemon, _client, project, setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "reciprocal-retry-data"))
+
+    import json
+    import multiprocessing
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    realm = daemon.service.realm["id"]
+    actors = {}
+    for name in ("ux-retry-a", "ux-retry-b"):
+        _, credential = daemon.credentials.provision(name, [
+            "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+            "tasks:read", "tasks:write",
+        ])
+        client = open_client(daemon, actor=name, credential=credential)
+        actors[name] = (credential, client, Timeline.open(project, "film", client=client))
+
+    pending_ids = {}
+    for name, (_credential, client, timeline) in actors.items():
+        preview = timeline.commit(
+            lambda t, actor=name: t.bundle["parent"].update({"name": actor}),
+            label=f"{name} saved edit", dry_run=True,
+        )
+        generated = client._remote._transport._generated
+        generated.commit_timeline = lambda *_args, _timeline=timeline, **_kwargs: (
+            _raise_injected_conflict(_timeline, ref="parent", path=("name",))
+        )
+        with pytest.raises(CommitConflict) as caught:
+            timeline.commit(preview["data"]["commands"], label=f"{name} saved edit")
+        pending_ids[name] = caught.value.pending_id
+        assert pending_ids[name]
+
+    context = multiprocessing.get_context("spawn")
+    barrier, result_queue = context.Barrier(2), context.Queue()
+    processes = [
+        context.Process(
+            target=_reciprocal_retry_process,
+            args=(daemon.endpoint, credential, realm, project, actor,
+                  pending_ids[peer], barrier, result_queue),
+        )
+        for actor, peer, (credential, _client, _timeline) in (
+            ("ux-retry-a", "ux-retry-b", actors["ux-retry-a"]),
+            ("ux-retry-b", "ux-retry-a", actors["ux-retry-b"]),
+        )
+    ]
+    for process in processes:
+        process.start()
+    try:
+        results = [result_queue.get(timeout=60) for _ in processes]
+        for process in processes:
+            process.join(timeout=10)
+            assert not process.is_alive(), "reciprocal retry child process did not exit"
+            assert process.exitcode == 0
+    finally:
+        for process in processes:
+            if process.is_alive():
+                process.terminate()
+                process.join(timeout=10)
+
+    assert all(result.get("status") == "refused" for result in results), results
+    assert all(result.get("saved_pending_id") == result["pending_id"] for result in results), results
+    for actor, (_credential, _client, timeline) in actors.items():
+        state = json.loads(timeline.session.outbox.path.read_text(encoding="utf-8"))
+        record = state["pending_changes"][pending_ids[actor]]
+        assert state["flight"] is None
+        assert record["state"] == "pending"
+        assert record["failure"]["details"]["status"] == "refused"
+    result_queue.close()
 
 
 def test_same_actor_default_outbox_recovers_captured_function_after_process_exit(
