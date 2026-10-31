@@ -122,4 +122,4 @@ The earlier [audio-v11 diagnostic](../runs/matrix-minkhole/audio-v11/sentence-re
 5. **Finish dialogue and sound.** The current voice is temporary narration. If on-camera speech must match the new words, test a dialogue/lip-sync pass after timing is settled; then review final sound and picture together.
 6. **Render and repeat the same evidence loop.** Check every cut, sentence transition, measured gap and effect boundary, then open the finished video for review.
 
-Local media links above are workspace deliverables, not portable source assets. Astrid’s managed run and digest-verified artifacts remain the durable render evidence. See the [rendering skill](../astrid/packs/rendering/skill/SKILL.md) for the supported editing and visualization contract.
+Local media links above are workspace deliverables, not portable source assets. Astrid’s managed run and digest-verified artifacts remain the durable render evidence. See the [timeline skill](../astrid/packs/timeline/docs/SKILL.md) for editing and visualization, and the [rendering skill](../astrid/packs/rendering/docs/SKILL.md) for renders.

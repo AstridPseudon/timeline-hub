@@ -411,6 +411,7 @@ H3 two-pass latent upscaling is a separate graph change, not the default finishi
 
 ## Execution references
 
-- [Astrid timeline editing/rendering](../astrid/packs/rendering/skill/SKILL.md)
+- [Timeline editing](../astrid/packs/timeline/docs/SKILL.md) and
+  [rendering](../astrid/packs/rendering/docs/SKILL.md)
 - Use the installed `edit-comfy-workflow` skill for endpoint wiring and `run-comfy-workflow` for runtime execution.
 - Use Astrid's creative-work route and the selected capability's current contract for managed VibeComfy invocation/publication. Do not invent CLI verbs or write directly into runtime storage.

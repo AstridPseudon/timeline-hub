@@ -75,8 +75,9 @@ Use **Astrid timeline editing → review-mode render → integrated filmstrip in
 
 | Operation | Authoritative reference |
 | --- | --- |
-| Discover the project, inspect and save timelines, render and open results | [Astrid timeline workflow skill](../astrid/packs/rendering/skill/SKILL.md) |
-| Work with clip placement, trims, speed and timeline composition | [Timeline cookbook](../astrid/packs/rendering/skill/references/timeline-cookbook.md) |
+| Discover the project, inspect and save timelines | [Timeline skill](../astrid/packs/timeline/docs/SKILL.md) |
+| Render and open results | [Rendering skill](../astrid/packs/rendering/docs/SKILL.md) |
+| Work with clip placement, trims, speed and timeline composition | [Timeline cookbook](../astrid/packs/timeline/docs/references/timeline-cookbook.md) |
 | Sample rendered frames; inspect tracks, audio, speech and pinned targets | [Timeline visualization contract](../astrid/packs/rendering/executors/timeline_visualize/STAGE.md) |
 | Obtain transcription through the supported capability | [Editorial skill](../astrid/packs/editorial/skill/SKILL.md) and [transcription contract](../astrid/packs/editorial/executors/transcribe/STAGE.md) |
 | Find the capability for generating replacement speech or edited media | [Creative-work routing skill](../astrid/packs/_core/docs/creative-work/SKILL.md) |
@@ -192,4 +193,4 @@ Once the timing is settled, choose the final voice and test any needed lip-sync 
 
 Apply visual replacements across all affected shots, including reflections and interaction. Finish background sound and dialogue transitions. Re-render and repeat the same cut, phrase and waveform review on the final output.
 
-Deliver the video, exact render identity, current script, timing evidence and a short statement of remaining work. The [rendering skill](../astrid/packs/rendering/skill/SKILL.md) documents supported Astrid operations; the [audio integration document](../docs/plans/timeline-inspector-audio-integration.md) records implementation status and verification limits.
+Deliver the video, exact render identity, current script, timing evidence and a short statement of remaining work. The [rendering skill](../astrid/packs/rendering/docs/SKILL.md) documents supported rendering operations; the [audio integration document](../docs/plans/timeline-inspector-audio-integration.md) records implementation status and verification limits.
