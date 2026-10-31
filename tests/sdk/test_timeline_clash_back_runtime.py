@@ -52,6 +52,50 @@ def _clips(document):
     }
 
 
+def _a5_clash_process(endpoint, credential, realm, project, result_queue):
+    from astrid.sdk.client import AstridClient
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    client = AstridClient.open(
+        endpoint=endpoint,
+        credential=credential,
+        realm_id=realm,
+        actor_id="j6-a5",
+        client_name="j6-clash-recovery",
+        client_version="1",
+        protocol_version="workspace.v1",
+    )
+    timeline = Timeline.open(project, "film", client=client)
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    injected = []
+    evaluations = []
+
+    def exhaust_a5(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "A5 opacity" and len(injected) < 3:
+            injected.append(body)
+            raise _injected_conflict(timeline, ref="parent/clip:c6", path=("opacity",))
+        return original(project_id, timeline_id, body, **kwargs)
+
+    generated.commit_timeline = exhaust_a5
+
+    def a5_edit(t):
+        evaluations.append(1)
+        _set_clip(t, "c6", opacity=0.5)
+
+    try:
+        timeline.commit(a5_edit, label="A5 opacity", key="j6-a5")
+    except CommitConflict as caught:
+        result_queue.put({
+            "pending_id": caught.pending_id,
+            "injected": len(injected),
+            "evaluations": len(evaluations),
+        })
+    else:
+        result_queue.put({"error": "A5 commit unexpectedly succeeded"})
+
+
 def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
     daemon, _client, project, setup = editing_case
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "astrid-data"))
@@ -76,15 +120,14 @@ def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
             project,
             tmp_path,
             name,
-            outbox=None if name in {"j6-a1", "j6-a5"} else tmp_path / f"{name}.json",
+            outbox=None if name == "j6-a1" else tmp_path / f"{name}.json",
         )
-        for name in ("j6-a1", "j6-a2", "j6-a3", "j6-a4", "j6-a5")
+        for name in ("j6-a1", "j6-a2", "j6-a3", "j6-a4")
     }
     a1_client, a1 = actors["j6-a1"]
     _, a2 = actors["j6-a2"]
     a3_client, a3 = actors["j6-a3"]
     a4_client, a4 = actors["j6-a4"]
-    a5_client, a5 = actors["j6-a5"]
     assert all(timeline.head == initial_head for _, timeline in actors.values())
 
     def a1_edit(t):
@@ -156,28 +199,31 @@ def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
     assert len(a4_runs) == 2
     assert a4.pending_show(a4_id)["state"] == "landed"
 
-    generated = a5_client._remote._transport._generated
-    original = generated.commit_timeline
-    injected = []
+    import multiprocessing
 
-    def exhaust_a5(project_id, timeline_id, body, **kwargs):
-        if body.get("label") == "A5 opacity" and len(injected) < 3:
-            injected.append(body)
-            raise _injected_conflict(a5, ref="parent/clip:c6", path=("opacity",))
-        return original(project_id, timeline_id, body, **kwargs)
-
-    monkeypatch.setattr(generated, "commit_timeline", exhaust_a5)
-    a5_evaluations = []
-
-    def a5_edit(t):
-        a5_evaluations.append(1)
-        _set_clip(t, "c6", opacity=0.5)
-
-    with pytest.raises(CommitConflict) as a5_caught:
-        a5.commit(a5_edit, label="A5 opacity", key="j6-a5")
-    a5_id = a5_caught.value.pending_id
-    assert a5_id and len(injected) == 3 and len(a5_evaluations) == 3
-    monkeypatch.setattr(generated, "commit_timeline", original)
+    _, a5_credential = daemon.credentials.provision(
+        "j6-a5",
+        ["handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+         "tasks:read", "tasks:write"],
+    )
+    context = multiprocessing.get_context("spawn")
+    result_queue = context.Queue()
+    a5_process = context.Process(
+        target=_a5_clash_process,
+        args=(daemon.endpoint, a5_credential, daemon.service.realm["id"], project, result_queue),
+    )
+    a5_process.start()
+    a5_process.join(timeout=60)
+    if a5_process.is_alive():
+        a5_process.terminate()
+        a5_process.join(timeout=10)
+        pytest.fail("A5 child process did not exit")
+    assert a5_process.exitcode == 0
+    a5_result = result_queue.get(timeout=5)
+    assert "error" not in a5_result, a5_result
+    a5_id = a5_result["pending_id"]
+    assert a5_id and a5_result["injected"] == 3 and a5_result["evaluations"] == 3
+    result_queue.close()
 
     # A5 has exited. A1 discovers the durable record and publishes its saved-list fallback.
     assert any(record["id"] == a5_id for record in a1.pending_list(actors="all"))
