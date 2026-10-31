@@ -160,18 +160,41 @@ def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_ca
             ))
         t.clip("b").swap_asset(str(replacement))
 
-    result = stale.commit(edit, label="Swap b", key="swap-new-file")
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(edit, label="Swap b", key="swap-new-file", merge="fields", reads=[])
+
+    assert caught.value.failure["details"]["status"] == "refused"
+    assert caught.value.failure["details"]["reason"] == "invalid_records"
+    assert caught.value.failure["message"] == "invalid_records"
+    pending_id = caught.value.pending_id
+    assert pending_id
+    saved = stale.pending_show(pending_id)
+    assert saved["id"] == pending_id
+    assert saved["state"] == "pending"
+    assert saved["failure"] == caught.value.failure
+    assert saved["failure"]["message"] == "invalid_records"
+
+    result = stale.retry(caught.value)
 
     assert result["status"] in {"accepted", "merged"}
-    assert result["attempts"] == 2
     assert len(evaluations) == 2
     assert len(peer_writes) == 1
     assert peer_writes[0]["receipt"]["receipt_id"]
+    assert result["receipt"]["receipt_id"]
     assert len(result["imports"]) == 1
     assert result["imports"][0]["object_id"] == replacement_digest
     assert result["imports"][0]["generation_id"]
     assert result["imports"][0]["variant_id"]
-    assert replacement_digest in str(result["data"]["canonical_document"])
+    canonical = result["data"]["canonical_document"]
+    assert replacement_digest in str(canonical)
+    clip = canonical["parent_revision"]["payload"]["clips"][0]
+    assert clip["id"] == "b"
+    assert clip["at"] == 6
+    assert clip["asset"] == replacement_digest
+    closed = _assert_closed(stale, pending_id)
+    assert closed["closed_by"]["publication_id"] == result["receipt"]["receipt_id"]
 
 
 def test_reviewed_list_runtime_refusal_is_saved_and_recovered(editing_case, tmp_path, monkeypatch):
