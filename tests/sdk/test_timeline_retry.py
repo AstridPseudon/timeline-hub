@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+import threading
 import uuid
 from contextlib import nullcontext
 from pathlib import Path
@@ -982,6 +983,122 @@ def test_retry_returns_history_receipt_when_another_actor_already_landed(monkeyp
     )
     assert set(result) == {"status", "pending_id", "data", "summary", "next", "record"}
     assert timeline.session.submissions == []
+
+
+def test_two_actors_retrying_same_record_have_one_winner_and_one_landed_result(
+    monkeypatch, tmp_path,
+):
+    timelines = {
+        actor: FakeTimeline(tmp_path / f"{actor}.json")
+        for actor in ("actor-1", "actor-2")
+    }
+    history = []
+    history_lock = threading.Lock()
+    ready = threading.Barrier(2)
+    for actor, timeline in timelines.items():
+        timeline.session.identity["actor_id"] = actor
+        timeline.session.state["pending_changes"]["pc_saved"]["parts"][0]["group_id"] = "pc_saved"
+
+    monkeypatch.setattr(retry_module, "_probe", lambda *args: {
+        "would_status": "accepted", "evaluated_head": HEAD, "canonical_document": {}})
+    monkeypatch.setattr(retry_module, "_preview_diff", lambda *args: {"changes": []})
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, copy.deepcopy(history)))
+
+    def submit_for(timeline):
+        def submit(*args, **kwargs):
+            ready.wait(timeout=10)
+            with history_lock:
+                if history:
+                    from astrid.sdk.timeline.sync import CommitConflict
+
+                    raise CommitConflict({"details": {"status": "conflict"}},
+                                         pending_id=kwargs["pending_id"], label="Recut")
+                actor = timeline.session.identity["actor_id"]
+                entry = {"group_id": "pc_saved", "publication_id": "pub-winner",
+                         "revision_id": "r3", "publisher": actor,
+                         "receipt": {"receipt_id": "receipt-winner"}}
+                history.append(entry)
+                from astrid.sdk.timeline.sync import _settle_pending
+
+                record = timeline.session.state["pending_changes"][kwargs["pending_id"]]
+                _settle_pending(record, expected_part=kwargs["pending_part"],
+                                actor_id=actor, publication_id="pub-winner",
+                                receipt_id="receipt-winner", how="retry", base=HEAD)
+                return {"status": "accepted", "receipt": {"receipt_id": "receipt-winner"}}
+        return submit
+
+    previews = {actor: retry_module.retry(timeline, "pc_saved")
+                for actor, timeline in timelines.items()}
+    assert all(preview["status"] == "preview" for preview in previews.values())
+    for timeline in timelines.values():
+        timeline.session.submit = submit_for(timeline)
+
+    results = {}
+    failures = []
+
+    def commit(actor):
+        try:
+            results[actor] = retry_module.commit_preview(timelines[actor], previews[actor])
+        except Exception as exc:  # Keep thread failures visible in the parent test.
+            failures.append(exc)
+
+    workers = [threading.Thread(target=commit, args=(actor,)) for actor in timelines]
+    for worker in workers:
+        worker.start()
+    for worker in workers:
+        worker.join(timeout=10)
+
+    assert not any(worker.is_alive() for worker in workers)
+    assert failures == []
+    assert sorted(result["status"] for result in results.values()) == ["accepted", "landed"]
+    landed_actor = next(actor for actor, result in results.items() if result["status"] == "landed")
+    winner = next(actor for actor, result in results.items() if result["status"] == "accepted")
+    saved = timelines[landed_actor].session.state["pending_changes"]["pc_saved"]
+    assert saved["state"] == "landed"
+    assert saved["closed_by"]["actor_id"] == winner
+    assert timelines[landed_actor].session.submissions == []
+
+
+def test_multipart_prefix_replay_is_part_landed_and_suffix_remains_landable(
+    monkeypatch, tmp_path,
+):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    suffix = copy.deepcopy(record["parts"][0])
+    suffix["base"] = HEAD
+    suffix["commands"] = [{"op": "clip.move", "select": "clip:b", "args": {"on": 8}}]
+    suffix["commit_options"] = {"label": "Follow-up", "steps": [], "merge": "fields"}
+    record["parts"][0]["group_id"] = record["id"]
+    record["parts"].append(suffix)
+    record["part"] = 0
+    record["receipts"] = []
+    prefix_entry = {"group_id": record["id"], "publication_id": "pub-prefix",
+                    "revision_id": "r3", "publisher": "actor-2",
+                    "receipt": {"receipt_id": "receipt-prefix"}}
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [prefix_entry]))
+
+    replay = retry_module.retry(timeline, "pc_saved")
+
+    assert replay["status"] == "part_landed"
+    assert replay["record"]["state"] == "pending"
+    assert replay["record"]["part"] == 1
+    assert replay["record"]["receipts"] == ["receipt-prefix"]
+
+    monkeypatch.setattr(retry_module, "_probe", lambda *args: {
+        "would_status": "accepted", "evaluated_head": HEAD, "canonical_document": {}})
+    monkeypatch.setattr(retry_module, "_preview_diff", lambda *args: {"changes": []})
+    preview = retry_module.retry(timeline, "pc_saved")
+
+    assert preview["status"] == "preview"
+    assert preview["data"]["commands"] == suffix["commands"]
+    landed = retry_module.commit_preview(timeline, preview)
+
+    assert landed["status"] == "accepted"
+    assert timeline.session.submissions[0][0][0] == suffix["commands"]
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    assert saved["state"] == "landed"
+    assert saved["part"] == 1
+    assert saved["receipts"] == ["receipt-prefix", "pub-accepted"]
 
 
 def test_retry_returns_uniform_result_for_saved_landed_record(monkeypatch, tmp_path):
