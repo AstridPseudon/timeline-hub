@@ -768,7 +768,8 @@ class Timeline(Checkout):
                         working._commands, base=original_base, label=commit_label, steps=steps,
                         merge=effective_merge, reads=reads, key=idempotency_key,
                         evaluation=evaluation, failure=overlap, release_flight=state.get("flight"),
-                        release_dry_run=dry_run)
+                        release_dry_run=dry_run, pending_id=pending_id,
+                        pending_path=pending_path, pending_part=pending_part)
                     error.retry_fn = function
                     self._retry_functions[error.pending_id] = function
                     raise error
