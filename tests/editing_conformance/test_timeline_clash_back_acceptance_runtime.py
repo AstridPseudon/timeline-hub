@@ -136,12 +136,14 @@ def test_j1_overlapping_list_survives_restart_and_rederive_closes_record(
     )
 
 
+# Restore once Runtime returns a genuine conflict (or accepts the verified sequential media proof).
+@pytest.mark.xfail(strict=True, reason="Runtime invalid_records refusals must remain definitive")
 def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_case, tmp_path):
     daemon, client, project, timeline = editing_case
     _seed_clip(timeline, tmp_path)
     stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "swap-stale.json")
     _, peer = _peer(daemon, project, tmp_path, actor="swap-peer")
-    replacement = _media_file(tmp_path / "replacement.png", color="blue")
+    replacement = _media_file(tmp_path / "replacement.png", color="purple")
     replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
     seeded_digest = "sha256:" + hashlib.sha256((tmp_path / "b.png").read_bytes()).hexdigest()
     assert replacement_digest != seeded_digest
@@ -151,6 +153,7 @@ def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_ca
 
     def edit(t):
         evaluations.append(t.bundle["parent"]["clips"][0]["at"])
+        t.clip("b").swap_asset(str(replacement))
         if not peer_writes:
             # Land a real Runtime write after this function has loaded its base,
             # while its first evaluation is still in progress.
@@ -158,7 +161,6 @@ def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_ca
                 lambda current: current.move("parent/clip:b", on=6),
                 label="W2 move b", key="swap-peer-hold",
             ))
-        t.clip("b").swap_asset(str(replacement))
 
     result = stale.commit(edit,
                           label="Swap b", key="swap-new-file", merge="fields", reads=[])
@@ -173,6 +175,100 @@ def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_ca
     assert result["imports"][0]["generation_id"]
     assert result["imports"][0]["variant_id"]
     assert replacement_digest in str(result["data"]["canonical_document"])
+
+
+def test_function_swap_runtime_refusal_is_saved_and_inspectable_after_restart(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale_path = tmp_path / "function-refusal-stale.json"
+    stale = type(timeline).open(project, "film", client=client, outbox_path=stale_path)
+    original_base = dict(stale.head)
+    _, peer = _peer(daemon, project, tmp_path, actor="function-refusal-peer")
+    replacement = _media_file(tmp_path / "function-refusal-replacement.png", color="purple")
+    replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
+    seeded_digest = "sha256:" + hashlib.sha256((tmp_path / "b.png").read_bytes()).hexdigest()
+    assert replacement_digest != seeded_digest
+
+    evaluated = []
+    peer_writes = []
+    attempted = []
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+
+    def capture_attempt(project_id_arg, timeline_id_arg, body, **kwargs):
+        if body.get("label") == "Function media swap":
+            attempted.append(copy.deepcopy(body))
+        return original(project_id_arg, timeline_id_arg, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", capture_attempt)
+
+    def edit(t):
+        evaluated.append(t.bundle["parent"]["clips"][0]["at"])
+        t.clip("b").swap_asset(str(replacement))
+        evaluated.append({
+            "imports": [
+                copy.deepcopy(item)
+                for entry in t._media_cache.values()
+                for item in entry.get("imports", ())
+            ],
+        })
+        if not peer_writes:
+            peer_writes.append(peer.commit(
+                lambda current: current.move("parent/clip:b", on=6),
+                label="W2 move b", key="function-refusal-peer-move",
+            ))
+
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(edit, label="Function media swap", key="function-refusal-swap",
+                     merge="fields", reads=[])
+
+    assert caught.value.failure["details"]["status"] == "refused"
+    assert caught.value.failure["details"]["reason"] == "invalid_records"
+    assert caught.value.pending_id
+    assert len(evaluated) == 2
+    assert len(peer_writes) == 1
+    assert peer_writes[0]["receipt"]["receipt_id"]
+
+    assert len(attempted) == 1
+    assert attempted[0]["base_revision_id"] == original_base["revision_id"]
+    assert attempted[0]["base_publication_id"] == original_base["publication_id"]
+    expected_commands = attempted[0]["commands"]
+    expected_imports = evaluated[1]["imports"]
+    assert len(expected_imports) == 1
+    assert expected_imports[0]["object_id"] == replacement_digest
+    assert expected_imports[0]["generation_id"]
+    assert expected_imports[0]["variant_id"]
+
+    saved = stale.pending_show(caught.value.pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "function"
+    assert saved["failure"]["details"]["status"] == "refused"
+    assert saved["failure"]["details"]["reason"] == "invalid_records"
+    assert saved["parts"][0]["base"] == original_base
+    assert saved["parts"][0]["commands"] == expected_commands
+    assert saved["parts"][0]["imports"] == expected_imports
+
+    reopened = type(timeline).open(
+        project, "film", client=client, outbox_path=stale_path
+    )
+    recovered = reopened.pending_show(caught.value.pending_id)
+    assert recovered["origin"] == "function"
+    assert recovered["failure"]["details"]["status"] == "refused"
+    assert recovered["failure"]["details"]["reason"] == "invalid_records"
+    assert recovered["parts"][0]["base"] == original_base
+    assert recovered["parts"][0]["commands"] == expected_commands
+    assert recovered["parts"][0]["imports"] == expected_imports
+
+    retry = reopened.retry(caught.value.pending_id)
+    assert retry["status"] == "refused"
+    assert retry["pending_id"] == caught.value.pending_id
+    assert retry["data"]["details"]["status"] == "refused"
+    assert retry["data"]["details"]["reason"] == "invalid_records"
+    assert reopened.pending_show(caught.value.pending_id)["state"] == "pending"
 
 
 def test_reviewed_list_runtime_refusal_is_saved_and_recovered(editing_case, tmp_path, monkeypatch):
