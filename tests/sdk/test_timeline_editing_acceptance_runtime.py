@@ -62,10 +62,10 @@ def _snapshot(timeline):
     return copy.deepcopy(timeline._runtime_document)
 
 
-def _media_file(path):
+def _media_file(path, *, color="red"):
     """Create a tiny deterministic PNG without an external fixture or install."""
     subprocess.run(
-        ["ffmpeg", "-v", "error", "-f", "lavfi", "-i", "color=c=red:s=16x16:r=1",
+        ["ffmpeg", "-v", "error", "-f", "lavfi", "-i", f"color=c={color}:s=16x16:r=1",
          "-frames:v", "1", "-threads", "1", "-c:v", "png", str(path)],
         check=True,
         stdout=subprocess.PIPE,

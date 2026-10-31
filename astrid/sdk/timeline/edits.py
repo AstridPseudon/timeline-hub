@@ -27,7 +27,7 @@ from astrid.sdk.timeline.doc import _free_key, _row_start, _set_length
 from astrid.sdk.timeline.model import Clip, Cut, Word, music_keyword, validate_param_value
 
 _ASSET_REGISTRY_FIELDS = ("media_id", "content_sha256", "type", "duration", "resolution", "size", "size_bytes",
-                          "handle", "filename", "pixel_provenance")
+                          "handle", "filename", "pixel_provenance", "generationId", "variantId")
 
 
 class _EditMixin:

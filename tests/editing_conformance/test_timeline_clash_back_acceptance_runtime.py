@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import copy
+import hashlib
 import uuid
 
 import pytest
@@ -132,6 +134,234 @@ def test_j1_overlapping_list_survives_restart_and_rederive_closes_record(
         _history(peer_client, project)[-1]["receipt"]["result"]["canonical_document"]
         == landed["data"]["canonical_document"]
     )
+
+
+def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_case, tmp_path):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "swap-stale.json")
+    _, peer = _peer(daemon, project, tmp_path, actor="swap-peer")
+    replacement = _media_file(tmp_path / "replacement.png", color="blue")
+    replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
+    seeded_digest = "sha256:" + hashlib.sha256((tmp_path / "b.png").read_bytes()).hexdigest()
+    assert replacement_digest != seeded_digest
+
+    evaluations = []
+    peer_writes = []
+
+    def edit(t):
+        evaluations.append(t.bundle["parent"]["clips"][0]["at"])
+        if not peer_writes:
+            # Land a real Runtime write after this function has loaded its base,
+            # while its first evaluation is still in progress.
+            peer_writes.append(peer.commit(
+                lambda current: current.move("parent/clip:b", on=6),
+                label="W2 move b", key="swap-peer-hold",
+            ))
+        t.clip("b").swap_asset(str(replacement))
+
+    result = stale.commit(edit, label="Swap b", key="swap-new-file")
+
+    assert result["status"] in {"accepted", "merged"}
+    assert result["attempts"] == 2
+    assert len(evaluations) == 2
+    assert len(peer_writes) == 1
+    assert peer_writes[0]["receipt"]["receipt_id"]
+    assert len(result["imports"]) == 1
+    assert result["imports"][0]["object_id"] == replacement_digest
+    assert result["imports"][0]["generation_id"]
+    assert result["imports"][0]["variant_id"]
+    assert replacement_digest in str(result["data"]["canonical_document"])
+
+
+def test_function_swap_runtime_refusal_is_saved_and_retry_reruns(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(
+        project, "film", client=client, outbox_path=tmp_path / "function-swap-stale.json"
+    )
+    _, peer = _peer(daemon, project, tmp_path, actor="function-swap-peer")
+    replacement = _media_file(tmp_path / "function-replacement.png", color="purple")
+    replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
+    seeded_digest = "sha256:" + hashlib.sha256((tmp_path / "b.png").read_bytes()).hexdigest()
+    assert replacement_digest != seeded_digest
+
+    evaluations = []
+    peer_writes = []
+    imports_by_evaluation = []
+
+    def edit(t):
+        evaluations.append(t.bundle["parent"]["clips"][0]["at"])
+        t.clip("b").swap_asset(str(replacement))
+        imports_by_evaluation.append([
+            copy.deepcopy(item)
+            for entry in t._media_cache.values()
+            for item in entry.get("imports", ())
+        ])
+
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+
+    def advance_head_before_function_swap(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "Function media swap" and not peer_writes:
+            peer_writes.append(peer.commit(
+                lambda current: current.move("parent/clip:b", on=6),
+                label="W2 move b", key="function-swap-peer-move",
+            ))
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", advance_head_before_function_swap)
+
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(
+            edit, label="Function media swap", key="function-media-swap",
+            merge="fields", reads=[],
+        )
+
+    failure = caught.value.failure["details"]
+    assert failure["status"] == "refused"
+    assert failure["reason"] == "invalid_records"
+    assert caught.value.failure["message"] == "sequential command metadata differs from the prepared candidate"
+    assert peer_writes[0]["receipt"]["receipt_id"]
+    assert len(evaluations) == 1
+    assert len(imports_by_evaluation[0]) == 1
+    pending_id = caught.value.pending_id
+    assert pending_id
+    saved = stale.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "function"
+    assert saved["failure"]["details"] == failure
+    assert saved["parts"][0]["commit_options"]["merge"] == "fields"
+    assert saved["parts"][0]["commit_options"]["reads"] == []
+    assert saved["parts"][0]["evaluation"]["count"] == 1
+    assert saved["parts"][0]["commands"]
+    saved_imports = saved["parts"][0]["imports"]
+    assert saved_imports == imports_by_evaluation[0]
+    assert len(saved_imports) == 1
+    assert saved_imports[0]["object_id"] == replacement_digest
+    assert saved_imports[0]["generation_id"]
+    assert saved_imports[0]["variant_id"]
+    assert saved["clash"]["pending_id"] == pending_id
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    landed = stale.retry(caught.value)
+    assert landed["status"] in {"accepted", "merged"}
+    assert len(evaluations) == 2
+    assert len(imports_by_evaluation) == 2
+    assert len(imports_by_evaluation[1]) == 1
+    assert imports_by_evaluation[1][0]["object_id"] == replacement_digest
+    assert imports_by_evaluation[1][0]["generation_id"]
+    assert imports_by_evaluation[1][0]["variant_id"]
+    assert len(landed["imports"]) == 1
+    assert landed["imports"][0]["object_id"] == replacement_digest
+    assert landed["imports"][0]["generation_id"]
+    assert landed["imports"][0]["variant_id"]
+    assert replacement_digest in str(landed["data"]["canonical_document"])
+    closed = _assert_closed(stale, pending_id)
+    assert closed["closed_by"]["publication_id"] == landed["receipt"]["receipt_id"]
+
+
+def test_reviewed_list_runtime_refusal_is_saved_and_recovered(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "list-stale.json")
+    _, peer = _peer(daemon, project, tmp_path, actor="metadata-peer")
+    replacement = _media_file(tmp_path / "reviewed-replacement.png", color="green")
+    replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
+    seeded_digest = "sha256:" + hashlib.sha256((tmp_path / "b.png").read_bytes()).hexdigest()
+    assert replacement_digest != seeded_digest
+    evaluated = {}
+
+    def review(t):
+        t.clip("b").swap_asset(str(replacement))
+        evaluated["imports"] = [
+            copy.deepcopy(item)
+            for entry in t._media_cache.values()
+            for item in entry.get("imports", ())
+        ]
+
+    preview = stale.commit(
+        review, label="Reviewed media swap",
+        dry_run=True, merge="fields", reads=[],
+    )
+    commands = preview["data"]["commands"]
+    assert len(evaluated["imports"]) == 1
+    assert any(command["op"] == "media.admit" for command in commands)
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    peer_writes = []
+    attempted = []
+
+    def advance_head_before_reviewed_list(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "Reviewed media swap" and not peer_writes:
+            attempted.append({
+                "base": {
+                    "revision_id": body["base_revision_id"],
+                    "publication_id": body["base_publication_id"],
+                },
+                "commands": body["commands"],
+            })
+            peer_writes.append(peer.commit(
+                lambda t: t.move("parent/clip:b", on=6),
+                label="W2 move b", key="metadata-peer-move",
+            ))
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", advance_head_before_reviewed_list)
+
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        with stale.session.outbox.locked():
+            expected_state = stale.session._state()
+        steps = [
+            {"id": f"step-{index + 1}", "label": "Reviewed media swap", "intent": "",
+             "tags": [], "command_ordinals": [index],
+             "patch": (copy.deepcopy(command.get("args", {}).get("changes", []))
+                       if command.get("op") == "doc.patch" else [])}
+            for index, command in enumerate(commands)
+        ]
+        stale.session.submit(
+            commands, label="Reviewed media swap", steps=steps, merge="fields", reads=[],
+            idempotency_key="metadata-list-race", expected_state=expected_state,
+            base=expected_state["base"], imports=evaluated["imports"],
+        )
+
+    assert peer_writes[0]["receipt"]["receipt_id"]
+    assert caught.value.failure["details"]["status"] in {"conflict", "refused", "invalid"}
+    assert caught.value.pending_id
+    saved = stale.pending_show(caught.value.pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "list"
+    assert saved["failure"]["details"]["status"] == caught.value.failure["details"]["status"]
+    assert "sequential command metadata differs from the prepared candidate" in saved["failure"]["message"]
+    assert saved["parts"][0]["base"] == attempted[0]["base"]
+    assert saved["parts"][0]["commands"] == commands
+    assert saved["parts"][0]["commands"] == attempted[0]["commands"]
+    imports = saved["parts"][0]["imports"]
+    assert imports == evaluated["imports"]
+    assert len(imports) == 1
+    assert imports[0]["object_id"] == replacement_digest
+    assert imports[0]["generation_id"]
+    assert imports[0]["variant_id"]
+    assert saved["clash"]["pending_id"] == caught.value.pending_id
+    assert "rejected" not in stale.session._state()
+
+    saved_base = saved["parts"][0]["base"]
+    saved_commands = saved["parts"][0]["commands"]
+    saved_imports = saved["parts"][0]["imports"]
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    reopened = type(timeline).open(
+        project, "film", client=client, outbox_path=tmp_path / "list-stale.json"
+    )
+    recovered = reopened.pending_show(caught.value.pending_id)
+    assert recovered["state"] == "pending"
+    assert recovered["parts"][0]["base"] == saved_base
+    assert recovered["parts"][0]["commands"] == saved_commands == commands
+    assert recovered["parts"][0]["imports"] == saved_imports
+    assert recovered["parts"][0]["imports"][0]["object_id"] == replacement_digest
 
 
 @pytest.mark.parametrize("same_process", [True, False])
