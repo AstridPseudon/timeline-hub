@@ -105,11 +105,26 @@ def _landed(timeline, path, record):
         _, entries = clash._history(timeline.session, base)
     except Exception:  # noqa: BLE001 - history is only a recovery confirmation path
         return None
-    matches = [item for item in entries if item.get("group_id") == record["id"]]
     index = record.get("part", 0)
-    if type(index) is not int or index < 0 or len(matches) <= index:
-        return None
-    entry = matches[index]
+    entry = None
+    for flight in flights:
+        owner = flight.get("pending_path")
+        if (flight.get("pending_id") != record["id"] or not owner
+                or Path(owner).resolve() != Path(path).resolve()
+                or flight.get("pending_part") != index or not flight.get("key")):
+            continue
+        matches = [item for item in entries
+                   if item.get("publisher") == timeline.session.identity["actor_id"]
+                   and isinstance(item.get("receipt"), dict)
+                   and item["receipt"].get("idempotency_key") == flight["key"]]
+        if len(matches) == 1:
+            entry = matches[0]
+            break
+    if entry is None:
+        matches = [item for item in entries if item.get("group_id") == record["id"]]
+        if type(index) is not int or index < 0 or len(matches) <= index:
+            return None
+        entry = matches[index]
     publication = entry.get("publication_id")
     if publication is None:
         publication = entry.get("receipt", {}).get("receipt_id")
