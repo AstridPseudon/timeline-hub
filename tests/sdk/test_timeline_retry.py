@@ -806,6 +806,72 @@ def test_legacy_ack_without_pending_part_leaves_record_for_history_recovery(
     assert recovered["closed_by"]["publication_id"] == "pub-accepted"
 
 
+def _legacy_ack_history_setup(timeline, *, flight_changes=None, entry_changes=None):
+    path = timeline.session.outbox.path
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["parts"][0]["group_id"] = "assembly-existing"
+    flight = {
+        "key": "flight-idempotency-key",
+        "pending_id": record["id"],
+        "pending_path": str(path),
+        "pending_part": 0,
+    }
+    flight.update(flight_changes or {})
+    timeline.session.state["acknowledged"] = {"logical-key": flight}
+    entry = {
+        "group_id": "assembly-existing",
+        "publication_id": "pub-history",
+        "revision_id": "r3",
+        "publisher": "actor-1",
+        "receipt": {"receipt_id": "receipt-history",
+                    "idempotency_key": "flight-idempotency-key"},
+    }
+    entry.update(entry_changes or {})
+    return path, record, entry
+
+
+def test_landed_recovers_legacy_cross_actor_flight_by_exact_history_identity(
+    monkeypatch, tmp_path,
+):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    path, record, entry = _legacy_ack_history_setup(timeline)
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
+
+    landed = retry_module._landed(timeline, path, record)
+
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    assert landed["status"] == "landed"
+    assert landed["data"]["publication_id"] == "pub-history"
+    assert saved["state"] == "landed"
+    assert saved["closed_by"] == {
+        "actor_id": "actor-1", "publication_id": "pub-history", "how": "retry"}
+
+
+@pytest.mark.parametrize("flight_changes, entry_changes", [
+    ({"key": "different-flight-key"}, {}),
+    ({}, {"publisher": "actor-2"}),
+    ({}, {"receipt": {"receipt_id": "receipt-history",
+                      "idempotency_key": "unrelated-flight-key"}}),
+    ({"pending_path": "/another/outbox.json"}, {}),
+    ({"pending_id": "another-pending-id"}, {}),
+    ({"pending_part": 1}, {}),
+])
+def test_landed_does_not_close_from_unrelated_or_unowned_history(
+    monkeypatch, tmp_path, flight_changes, entry_changes,
+):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    path, record, entry = _legacy_ack_history_setup(
+        timeline, flight_changes=flight_changes, entry_changes=entry_changes,
+    )
+    before = copy.deepcopy(timeline.session.state["pending_changes"]["pc_saved"])
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
+
+    landed = retry_module._landed(timeline, path, record)
+
+    assert landed is None
+    assert timeline.session.state["pending_changes"]["pc_saved"] == before
+
+
 def test_multi_part_preview_ack_advances_without_closing(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     record = timeline.session.state["pending_changes"]["pc_saved"]
