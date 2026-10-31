@@ -434,3 +434,116 @@ def test_j5_two_actors_retry_one_record_and_group_id_closes_other_actor(
     assert owner_record["closed_by"]["actor_id"] == "j5-peer"
     assert owner_record["closed_by"]["how"] == "retry"
     assert peer.pending_show(pending_id)["state"] == "landed"
+
+
+def test_f3_non_clash_refusal_after_cross_actor_conflict_stays_refused(
+    editing_case,
+    tmp_path,
+    monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(
+        project, "film", client=client, outbox_path=tmp_path / "f3-stale.json"
+    )
+    _, peer = _peer(daemon, project, tmp_path, actor="f3-peer")
+    commands = _move_commands(stale, on=4, label="F3 reviewed move")
+    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="F3 peer move", key="f3-peer-move")
+
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(commands, label="F3 reviewed move", key="f3-reviewed-move")
+    pending_id = caught.value.pending_id
+    assert pending_id
+    saved = stale.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["clash"]["schema"] == "astrid.clash/2"
+
+    # The Runtime may refuse a saved intent for a reason unrelated to a clash.
+    # Retry must preserve that terminal result instead of manufacturing a re-derive.
+    import astrid.sdk.timeline.retry as retry_module
+
+    refusal = {"status": "refused", "reason": "invalid_command",
+               "message": "F3 injected non-clash refusal"}
+    probes = []
+
+    def refuse_probe(_session, request):
+        probes.append(request)
+        return dict(refusal)
+
+    monkeypatch.setattr(retry_module, "_probe", refuse_probe)
+    history_before = _history(client, project)
+    result = stale.retry(pending_id)
+    assert result["status"] == "refused"
+    assert result["data"] == refusal
+    assert result["pending_id"] == pending_id
+    assert len(probes) == 1
+    assert stale.pending_show(pending_id)["state"] == "pending"
+    assert _history(client, project) == history_before
+
+
+def test_f4_rederived_same_key_lost_reply_returns_one_receipt_and_guards_intent(
+    editing_case,
+    tmp_path,
+    monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(
+        project, "film", client=client, outbox_path=tmp_path / "f4-stale.json"
+    )
+    _, peer = _peer(daemon, project, tmp_path, actor="f4-peer")
+    commands = _move_commands(stale, on=4, label="F4 reviewed move")
+    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="F4 peer move", key="f4-peer-move")
+
+    from astrid.sdk.timeline.sync import CommitConflict, CommitOutcomeUnknown, TimelineEditError
+    from astrid_runtime_client import ApiError
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(commands, label="F4 reviewed move", key="f4-reviewed-move")
+    pending_id = caught.value.pending_id
+    assert pending_id
+    rederived = stale.retry(pending_id)
+    assert rederived["status"] == "re_derive"
+    stale = type(timeline).open(
+        project, "film", client=client, outbox_path=stale.session.outbox.path
+    )
+
+    preview = stale.commit(
+        lambda t: t.move("parent/clip:b", on=8), label="F4 reviewed move", dry_run=True
+    )
+    history_before = _history(client, project)
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    lost = []
+
+    def lose_reply(project_id_arg, timeline_id_arg, body, **kwargs):
+        result = original(project_id_arg, timeline_id_arg, body, **kwargs)
+        if body.get("label") == "F4 reviewed move" and body.get("group_id") == pending_id and not lost:
+            lost.append((kwargs["idempotency_key"], body["commands"]))
+            raise ApiError(503, "not_ready", "F4 simulated lost response after acceptance")
+        return result
+
+    monkeypatch.setattr(generated, "commit_timeline", lose_reply)
+    with pytest.raises(CommitOutcomeUnknown):
+        stale.commit(
+            preview["data"]["commands"], label="F4 reviewed move",
+            key="f4-reviewed-move", pending=pending_id,
+        )
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    landed = stale.commit()
+    assert landed["receipt"]["receipt_id"]
+    assert len(lost) == 1
+    assert len(_history(client, project)) == len(history_before) + 1
+    assert _history(client, project)[-1]["group_id"] == pending_id
+    closed = _assert_closed(stale, pending_id)
+    assert closed["receipts"] == [landed["receipt"]["receipt_id"]]
+    assert closed["closed_by"]["publication_id"] == landed["receipt"]["receipt_id"]
+
+    # The original logical key stays bound to the accepted intent after recovery.
+    with pytest.raises(TimelineEditError, match="idempotency key belongs to another edit"):
+        stale.session.retry(
+            "f4-reviewed-move", matches=lambda body: body.get("label") == "F4 different intent"
+        )
+    assert len(_history(client, project)) == len(history_before) + 1
