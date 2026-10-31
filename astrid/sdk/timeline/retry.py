@@ -74,16 +74,57 @@ def _landed(timeline, path, record):
                 "summary": f'"{label}" already landed as {publication}{suffix}; '
                            f'{record["id"]} is closed. Nothing was sent.', "next": None,
                 "record": copy.deepcopy(record)}
+    # An acknowledged cross-actor flight identifies the exact owner and part;
+    # its group may predate this pending record and is not a unique marker.
+    with timeline.session.outbox.locked():
+        state = timeline.session._state()
+        flights = copy.deepcopy(list(state.get("acknowledged", {}).values()))
+    for flight in flights:
+        owner = flight.get("pending_path")
+        entry = flight.get("pending_ack")
+        if (flight.get("pending_id") == record["id"] and owner
+                and Path(owner).resolve() == Path(path).resolve()
+                and flight.get("pending_part") == record.get("part", 0)
+                and isinstance(entry, dict) and entry.get("revision_id")
+                and entry.get("publication_id") and entry.get("publisher") == timeline.session.identity["actor_id"]):
+            closed = _close(path, record, timeline.session, entry, flight.get("pending_how", "retry"))
+            publication = entry["publication_id"]
+            if closed.get("state") != "landed":
+                return {"status": "part_landed", "pending_id": record["id"],
+                        "data": {"publication_id": publication, "part": closed.get("part")},
+                        "summary": f'Part of "{record.get("label") or "Timeline edit"}" landed as {publication}; '
+                                   f'{record["id"]} still has saved work.',
+                        "next": f'tl.retry({record["id"]!r})', "record": closed}
+            return {"status": "landed", "pending_id": record["id"],
+                    "data": {"publication_id": publication, "receipt": copy.deepcopy(entry["receipt"])},
+                    "summary": f'"{record.get("label") or "Timeline edit"}" already landed as {publication}; '
+                               f'{record["id"]} is closed. Nothing was sent.',
+                    "next": None, "record": closed}
     base = _pin(record["parts"][0]["base"])
     try:
         _, entries = clash._history(timeline.session, base)
     except Exception:  # noqa: BLE001 - history is only a recovery confirmation path
         return None
-    matches = [item for item in entries if item.get("group_id") == record["id"]]
     index = record.get("part", 0)
-    if type(index) is not int or index < 0 or len(matches) <= index:
-        return None
-    entry = matches[index]
+    entry = None
+    for flight in flights:
+        owner = flight.get("pending_path")
+        if (flight.get("pending_id") != record["id"] or not owner
+                or Path(owner).resolve() != Path(path).resolve()
+                or flight.get("pending_part") != index or not flight.get("key")):
+            continue
+        matches = [item for item in entries
+                   if item.get("publisher") == timeline.session.identity["actor_id"]
+                   and isinstance(item.get("receipt"), dict)
+                   and item["receipt"].get("idempotency_key") == flight["key"]]
+        if len(matches) == 1:
+            entry = matches[0]
+            break
+    if entry is None:
+        matches = [item for item in entries if item.get("group_id") == record["id"]]
+        if type(index) is not int or index < 0 or len(matches) <= index:
+            return None
+        entry = matches[index]
     publication = entry.get("publication_id")
     if publication is None:
         publication = entry.get("receipt", {}).get("receipt_id")
