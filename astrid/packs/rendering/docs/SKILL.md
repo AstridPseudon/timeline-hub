@@ -194,11 +194,15 @@ Runtime merges changes that do not touch the same things (`status` is then
   `r["data"]["diff"]` for approval, then commit that preview. A reviewed list
   that still clashes returns `re_derive` because a list already merges
   disjoint fields. A function edit retried from another process can also return
-  `preview` for approval instead of committing immediately. Only call
-  `tl.retry(err)` when `err.pending_id` is set: other `CommitConflict`s, such as
-  a Runtime refusal or an idempotency mismatch, have no saved edit to retry.
-  The CLI path is `astrid timelines retry <timeline> <id|key> --project
-  <project>`; a preview prints the matching `--commit TOKEN` command.
+  `preview` for approval instead of committing immediately. Runtime refusals
+  and idempotency mismatches are also saved as pending records;
+  `tl.retry(err)` returns `refused` for them. Inspect the record, fix the edit,
+  then retry it or drop it. Follow `err.fix` for this recovery; the exception
+  text may say to retry directly. The CLI path is `astrid timelines retry
+  <timeline> <id|key> --project <project>`; a preview prints the matching
+  `--commit TOKEN` command.
+  Call `tl.retry(err)` when `err.pending_id` is set; without one, there is no
+  saved record to recover.
 - A function rerun that overlaps intervening edits is saved as a clash; use
   `tl.retry(id, overwrite=True)` only when you intend to rebase over those edits.
 - **Commit a preview:** `tl.commit(r)` is for a `preview` result. Do not pass a
@@ -223,8 +227,8 @@ Runtime merges changes that do not touch the same things (`status` is then
   `pending_id`. Recover with `tl.retry(err)`, or use the pending id after a
   restart. Inspect the saved record and returned `preview` or `re_derive`
   result before committing; only re-run the producer to derive new commands
-  after that inspection. A `CommitConflict` without `pending_id` still has no
-  saved edit and is not retryable.
+  after that inspection. If an error has no `pending_id`, there is no saved
+  record to recover.
 
 ## Keys, retries and undo
 
@@ -258,13 +262,20 @@ for ep in episodes:                                      # "ep-001" … "ep-100"
         r = tl.commit(add_outro, label="Add outro", idempotency_key=f"outro-{ep}")
         record(ep, status=r["data"]["status"], receipt=r["receipt"]["receipt_id"])
     except CommitConflict as exc:                        # first: it is a TimelineEditError
-        if not exc.pending_id:                            # no saved record: this refusal is not retryable
+        if not exc.pending_id:
             record(ep, status="refused", detail=str(exc))
             continue
         try:
             r = tl.retry(exc)                             # functions rerun; reviewed lists may preview or re-derive
-            record(ep, status=r["status"], detail=r.get("summary"),
-                   pending_id=r.get("pending_id"))
+            if r["status"] == "preview":
+                record(ep, status="needs_approval", detail=r.get("summary"),
+                       pending_id=r.get("pending_id"))
+            elif r["status"] == "re_derive":
+                record(ep, status="re_derive", detail=r.get("summary"),
+                       pending_id=r.get("pending_id"))
+            else:
+                record(ep, status=r["status"], detail=r.get("summary"),
+                       pending_id=r.get("pending_id"))
         except Exception as retry_exc:                    # keep this episode from stopping the series
             record(ep, status="retry_error", detail=str(retry_exc),
                    pending_id=exc.pending_id)
@@ -272,13 +283,18 @@ for ep in episodes:                                      # "ep-001" … "ep-100"
         record(ep, status="error", detail=str(exc))
 ```
 
-Continue past a clash and report it at the end. A `CommitConflict` without
-`pending_id` has no saved record, so do not call `tl.retry`; record it as a
-refusal and continue. Catch errors raised during recovery inside the loop so
-one bad retry cannot stop later timelines. `tl.retry(exc)` gives a function a
-fresh bounded evaluation budget. A reviewed list returns a preview if it still
-applies, or `re_derive` if it still clashes; commit only previews. Rerunning
-the loop is safe: landed keys return their receipts. To skip
+Continue past a clash and report it at the end. Runtime refusals, including
+idempotency mismatches, have saved pending records; `tl.retry(exc)` returns
+`refused` for these. Inspect the record, fix the edit, then retry or drop it.
+If an error has no `pending_id`, record it and continue without retrying. Catch
+errors raised during recovery inside the loop so one bad retry cannot stop
+later timelines. `tl.retry(exc)` gives a function a fresh bounded evaluation
+budget. A reviewed list returns a preview if it still applies; keep its pending
+id and record `needs_approval` for later review. If it returns `re_derive`,
+rerun the producer on a fresh timeline, preview the result, then commit the new
+commands with the original key and `pending=<saved id>`. Repeat the loop only
+for landed or idempotent outcomes; failed, refused, preview, and re-derive
+outcomes need their recorded follow-up first. To skip
 a timeline, check first and record it: `if not any(c.id == "sponsor-card"
 for c in tl.clips()): record(ep, status="skipped"); continue`.
 

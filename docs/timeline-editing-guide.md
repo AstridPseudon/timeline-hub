@@ -220,9 +220,12 @@ Runtime merges disjoint changes from different authors. When a change
 clashes, a function can be evaluated again on the new head, up to three
 evaluations total. A fixed list is refused as submitted. A real clash saves a
 pending record and raises `CommitConflict`; inspect `err.clash["summary"]` and
-recover with `tl.retry(err)` only when `err.pending_id` is set. A conflict
-without a pending id (such as an idempotency mismatch or a Runtime refusal)
-has no saved edit to retry; report it as a refusal and continue.
+recover with `tl.retry(err)` when `err.pending_id` is set. Runtime refusals,
+including idempotency mismatches, are saved as pending records too, and
+`tl.retry(err)` returns `refused` for them. Inspect the record, fix the edit,
+then retry or drop it. Follow `err.fix` for refusal recovery; the exception
+text may say to retry directly. An error without `pending_id` has no saved
+record to recover.
 
 `tl.retry(err)` re-runs function intent. For reviewed lists, it returns a
 `preview` if the list still applies, or `re_derive` if it still clashes
@@ -239,8 +242,8 @@ the exact commands captured for that evaluation and their original base, and
 the SDK raises `CommitConflict` with `pending_id`. Call `tl.retry(err)`, or
 resume by that id after a restart. Inspect the saved record and the returned
 `preview` or `re_derive` result before committing. Only after inspecting the
-saved intent should you deliberately re-derive and preview new commands. A
-`CommitConflict` without `pending_id` has no saved record and is not retryable.
+saved intent should you deliberately re-derive and preview new commands. An
+error without `pending_id` has no saved record to recover.
 
 `timelines discard` clears queued working-copy commands but keeps saved pending
 records. It is not a required step before another edit. `CommitConflict` is a
@@ -303,13 +306,20 @@ for ep in episodes:
         r = tl.commit(swap_sponsor, label="Swap sponsor", idempotency_key=f"sponsor-{ep}")
         record(ep, status=r["data"]["status"], receipt=r["receipt"]["receipt_id"])
     except CommitConflict as exc:                    # before the general case
-        if not exc.pending_id:                        # refusals without saved records are not retryable
+        if not exc.pending_id:
             record(ep, status="refused", detail=str(exc))
             continue
         try:
             r = tl.retry(exc)
-            record(ep, status=r["status"], detail=r.get("summary"),
-                   pending_id=r.get("pending_id"))
+            if r["status"] == "preview":
+                record(ep, status="needs_approval", detail=r.get("summary"),
+                       pending_id=r.get("pending_id"))
+            elif r["status"] == "re_derive":
+                record(ep, status="re_derive", detail=r.get("summary"),
+                       pending_id=r.get("pending_id"))
+            else:
+                record(ep, status=r["status"], detail=r.get("summary"),
+                       pending_id=r.get("pending_id"))
         except Exception as retry_exc:                # recovery failure is recorded per timeline
             record(ep, status="retry_error", detail=str(retry_exc),
                    pending_id=exc.pending_id)
@@ -318,11 +328,13 @@ for ep in episodes:
 ```
 
 Each outcome is written as it happens, so a crash loses nothing. Continue
-past a clash and report failures individually. Do not call `tl.retry` when a
-`CommitConflict` has no `pending_id`. Catch recovery errors inside the per
-timeline handler so they cannot stop the series. Rerunning the loop is safe:
-landed keys return their receipts, and an unknown outcome is settled by the
-same key. For "the end of V1", compute
+past a clash and report failures individually. A refusal result keeps its
+pending id; inspect the record, fix the edit, then retry or drop it. If an
+error has no `pending_id`, record it and continue without retrying. Catch
+recovery errors inside the per timeline handler so they cannot stop the
+series. Repeat the loop only for landed or idempotent outcomes; failed,
+refused, preview, and re-derive outcomes need their recorded follow-up first.
+For "the end of V1", compute
 it from V1's clips; `t.duration` also counts V2 and titles. There is no
 transaction across timelines. A preview list belongs to one timeline: apply
 the reviewed literal list to the approved episode rather than rerunning its
