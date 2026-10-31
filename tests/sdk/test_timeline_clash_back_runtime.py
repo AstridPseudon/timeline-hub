@@ -6,7 +6,7 @@ import copy
 
 import pytest
 
-from tests.sdk.test_timeline_editing_acceptance_runtime import _media_file
+from tests.sdk.test_timeline_editing_acceptance_runtime import _media_file, _timeline_history
 
 pytest_plugins = ("tests.sdk.test_timeline_editing_acceptance_runtime",)
 
@@ -50,6 +50,83 @@ def _clips(document):
         row["id"]: {key: row[key] for key in ("at", "volume", "opacity") if key in row}
         for row in document["parent"]["clips"]
     }
+
+
+def test_pending_rederive_lost_reply_replays_exact_commit_once(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict, CommitOutcomeUnknown, TimelineEditError
+    from astrid_runtime_client import ApiError
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _, credential = daemon.credentials.provision(
+        "j6-f4-peer",
+        ["handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+         "tasks:read", "tasks:write"],
+    )
+    peer_client = open_client(daemon, actor="j6-f4-peer", credential=credential)
+    peer = Timeline.open(project, "film", client=peer_client, outbox_path=tmp_path / "f4-peer.json")
+
+    stale_commands = timeline.commit(
+        lambda t: t.bundle["parent"].update({"name": "stale edit"}),
+        label="F4 pending edit", dry_run=True,
+    )["data"]["commands"]
+    peer.commit(
+        lambda t: t.bundle["parent"].update({"name": "peer edit"}),
+        label="F4 peer edit", key="j6-f4-peer-edit",
+    )
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(stale_commands, label="F4 pending edit", key="j6-f4-edit")
+    pending_id = caught.value.pending_id
+    assert pending_id
+    assert timeline.retry(pending_id)["status"] == "re_derive"
+
+    timeline = Timeline.open(
+        project, "film", client=client, outbox_path=timeline.session.outbox.path
+    )
+    commands = timeline.commit(
+        lambda t: t.bundle["parent"].update({"name": "rederived edit"}),
+        label="F4 pending edit", dry_run=True,
+    )["data"]["commands"]
+    assert commands != stale_commands
+
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    sent = []
+
+    def lose_first_reply(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "F4 pending edit":
+            sent.append((copy.deepcopy(body), kwargs["idempotency_key"]))
+            result = original(project_id, timeline_id, body, **kwargs)
+            if len(sent) == 1:
+                raise ApiError(503, "not_ready", "simulated lost F4 reply after acceptance")
+            return result
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", lose_first_reply)
+    history_before = _timeline_history(client, project, "film")
+    with pytest.raises(CommitOutcomeUnknown, match="No reply could be verified"):
+        timeline.commit(commands, label="F4 pending edit", key="j6-f4-edit", pending=pending_id)
+
+    recovered = timeline.commit(
+        commands, label="F4 pending edit", key="j6-f4-edit", pending=pending_id
+    )
+    duplicate = timeline.commit(
+        commands, label="F4 pending edit", key="j6-f4-edit", pending=pending_id
+    )
+    assert recovered["receipt"] == duplicate["receipt"]
+    assert len(sent) == 3
+    assert sent[0] == sent[1] == sent[2]
+    assert len(_timeline_history(client, project, "film")) == len(history_before) + 1
+
+    changed_commands = copy.deepcopy(commands)
+    changed_commands[0]["args"]["changes"][0]["value"] = "changed under the same key"
+    with pytest.raises(TimelineEditError, match="idempotency key belongs to another edit"):
+        timeline.commit(
+            changed_commands, label="F4 pending edit", key="j6-f4-edit", pending=pending_id
+        )
+    assert len(sent) == 3
+    assert len(_timeline_history(client, project, "film")) == len(history_before) + 1
 
 
 def _a5_clash_process(endpoint, credential, realm, project, result_queue):
