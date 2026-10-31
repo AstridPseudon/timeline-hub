@@ -83,6 +83,7 @@ def test_packet_names_touching_receipt():
     base = copy.deepcopy(realm.head)
     receipt = realm.call([realm.move('parent/clip:clip-a', 6.006)])
     realm.entries[-1]['records']['label'] = 'Move clip-a'
+    realm.entries[-1]['publisher'] = 'astrid-0123456789abcdef'
     conflict = {'kind': 'value_conflict', 'ref': 'parent/clip:clip-a', 'path': ['at'],
                 'base': {'state': 'absent'}, 'theirs': {'state': 'absent'},
                 'ours': {'state': 'absent'}}
@@ -92,9 +93,12 @@ def test_packet_names_touching_receipt():
     assert packet['schema'] == 'astrid.clash/2'
     assert packet['conflicts'] == [conflict]
     assert packet['receipts'][0]['publication_id'] == receipt['receipt']['receipt_id']
+    assert packet['receipts'][0]['publisher'] == 'astrid-0123456789abcdef'
     assert packet['receipts'][0]['touches_conflict'] is True
     assert packet['receipts'][0]['touched']
     assert 'Move' in packet['summary']
+    assert 'another writer' in packet['summary']
+    assert 'astrid-0123456789abcdef' not in packet['summary']
     assert 'pc_saved' in packet['summary']
     assert packet['next'] == "tl.retry('pc_saved')"
 
@@ -117,3 +121,43 @@ def test_packet_without_history_still_has_summary():
     assert 'Recut' in packet['summary']
     assert 'pc_saved' in packet['summary']
     assert 'Move' not in packet['summary']
+
+
+def test_conflict_summary_uses_clip_facing_target():
+    realm = DetachedRealm()
+    base = copy.deepcopy(realm.head)
+    conflict = {'kind': 'value_conflict', 'ref': 'parent/clip:clip-a', 'path': ['at'],
+                'base': {'state': 'absent'}, 'theirs': {'state': 'absent'},
+                'ours': {'state': 'absent'}}
+    packet = explain(PacketSession(realm), _pending(base, realm.head, conflict))
+
+    assert 'clip clip-a start time' in packet['summary']
+    assert 'parent/config/clips/id:' not in packet['summary']
+
+
+def test_function_clash_summary_names_peer_receipt_without_field_match():
+    from astrid.sdk.timeline.clash import _summary
+
+    receipt = {'label': 'Peer move', 'publisher': 'peer-1',
+               'publication_id': 'pub-peer', 'touches_conflict': False}
+    record = {'id': 'pc-function', 'label': 'Arrange', 'origin': 'function'}
+
+    summary = _summary(record, [], [receipt])
+
+    assert 'Peer move' in summary
+    assert 'peer-1' in summary
+
+
+def test_conflict_target_describes_verified_removal_and_equal_values():
+    from astrid.sdk.timeline.clash import _target
+
+    base = SimpleNamespace(document={'parent_revision': {'payload': {
+        'config': {'clips': [{'id': 'clip-a', 'cut_id': 'c1', 'layer_name': 'v1'}]}}}})
+    removed = SimpleNamespace(document={'parent_revision': {'payload': {'config': {'clips': []}}}})
+    conflict = {'ref': 'parent/clip:clip-a', 'path': ['at'],
+                'ours': {'state': 'absent'}, 'theirs': {'state': 'absent'}}
+
+    assert _target(conflict, base, removed) == 'clip c1.v1 was removed'
+    assert _target({**conflict, 'ours': {'state': 'present', 'value': 4},
+                    'theirs': {'state': 'present', 'value': 4}}, base) == (
+        'clip c1.v1 start time already has 4')

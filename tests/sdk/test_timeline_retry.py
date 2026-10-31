@@ -152,7 +152,20 @@ def test_retry_returns_redrive_state_for_conflict(monkeypatch, tmp_path):
 
     assert result["status"] == "re_derive"
     assert 'pending="pc_saved"' in result["summary"]
-    assert "tl.commit(make_edit" in result["next"]
+    assert "make_edit is your function" in result["next"]
+    assert "\n" in result["next"]
+    assert "idempotency_key='recut'" in result["next"]
+    assert "          key=" not in result["next"]
+
+
+def test_pending_conflict_string_does_not_repeat_its_summary():
+    error = CommitConflict({"details": {"status": "conflict"}},
+                           pending_id="pc-1", label="Move clip")
+
+    message = str(error)
+
+    assert message.count('nothing was committed') == 1
+    assert 'tl.retry("pc-1")' in message
 
 
 def test_function_retry_returns_commit_result_and_reuses_label_key(monkeypatch, tmp_path):
@@ -631,4 +644,88 @@ def test_retry_returns_history_receipt_when_another_actor_already_landed(monkeyp
         '"Recut" already landed as pub-retry (by actor-2); '
         'pc_saved is closed. Nothing was sent.'
     )
+    assert timeline.session.submissions == []
+
+
+def _same_value_conflict_setup(monkeypatch, timeline, *, partial=False):
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["failure"]["details"]["conflicts"] = [
+        {"ref": "parent/clip:a", "path": ["at"]},
+        {"ref": "parent/clip:b", "path": ["at"]},
+    ]
+    record["diff"] = [
+        {"op": "set", "ref": "parent/clip:a", "path": ["at"], "value": 4},
+        {"op": "set", "ref": "parent/clip:b", "path": ["at"], "value": 6},
+    ]
+    entry = {"publication_id": "pub-peer", "revision_id": "r3", "publisher": "actor-2",
+             "receipt": {"receipt_id": "receipt-peer"}}
+    packet = {"receipts": [{"publication_id": "pub-peer", "publisher": "actor-2",
+                            "touches_conflict": True}]}
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
+    monkeypatch.setattr(retry_module.clash, "_closures", lambda *args: (
+        SimpleNamespace(), SimpleNamespace(images={"parent": {"payload": {}}})))
+    monkeypatch.setattr(retry_module, "canonical_site",
+                        lambda _closure, ref, path: ("parent", [ref, *path]))
+    monkeypatch.setattr(retry_module, "value_at", lambda _payload, _ref, _path:
+                        {"state": "present", "value": 4 if _path[-2] == "parent/clip:a"
+                         else 5 if partial else 6})
+    monkeypatch.setattr(retry_module.clash, "_target",
+                        lambda conflict, *args: f"clip {conflict['ref'][-1]} start time")
+    monkeypatch.setattr(retry_module.clash, "explain", lambda *args: copy.deepcopy(packet))
+    probe_calls = []
+
+    def probe(*args):
+        probe_calls.append(args)
+        return {"would_status": "conflict",
+                "details": {"conflicts": record["failure"]["details"]["conflicts"]}}
+
+    monkeypatch.setattr(retry_module, "_probe", probe)
+    return probe_calls
+
+
+def test_retry_closes_when_every_conflict_already_has_desired_value(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    probe_calls = _same_value_conflict_setup(monkeypatch, timeline)
+
+    result = retry_module.retry(timeline, "pc_saved")
+
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    assert result["status"] == "landed"
+    assert result["summary"] == (
+        "Nothing to do: clip a start time, clip b start time already has your value "
+        "(set by actor-2); pc_saved is closed.")
+    assert saved["state"] == "landed"
+    assert saved["closed_by"] == {
+        "actor_id": "actor-2", "publication_id": "pub-peer", "how": "already_applied"}
+    assert probe_calls == []
+    assert timeline.session.submissions == []
+
+
+def test_retry_partial_same_value_conflict_stays_pending_and_rederive(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    probe_calls = _same_value_conflict_setup(monkeypatch, timeline, partial=True)
+
+    result = retry_module.retry(timeline, "pc_saved")
+
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    assert result["status"] == "re_derive"
+    assert saved["state"] == "pending"
+    assert saved["closed_by"] is None
+    assert probe_calls
+    assert timeline.session.submissions == []
+
+
+def test_retry_already_applied_is_idempotent(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    probe_calls = _same_value_conflict_setup(monkeypatch, timeline)
+    first = retry_module.retry(timeline, "pc_saved")
+    closed_by = copy.deepcopy(timeline.session.state["pending_changes"]["pc_saved"]["closed_by"])
+    receipts = list(timeline.session.state["pending_changes"]["pc_saved"]["receipts"])
+
+    second = retry_module.retry(timeline, "pc_saved")
+
+    assert first["status"] == second["status"] == "landed"
+    assert timeline.session.state["pending_changes"]["pc_saved"]["closed_by"] == closed_by
+    assert timeline.session.state["pending_changes"]["pc_saved"]["receipts"] == receipts
+    assert probe_calls == []
     assert timeline.session.submissions == []

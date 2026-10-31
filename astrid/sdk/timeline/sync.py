@@ -65,7 +65,12 @@ class CommitConflict(TimelineEditError):
         self.fix = self.presentation["fix"]
         self.outcome = self.presentation["outcome"]
         self.cause = self.presentation["cause"]
-        super().__init__(f"{self.headline.rstrip('.')}. {self.fix}")
+        if pending_id is not None and not retry_clash:
+            message = (f'{self.headline.rstrip(".")}. {self.detail.rstrip(".")}. '
+                       f'Retry it with tl.retry("{pending_id}").')
+        else:
+            message = f"{self.headline.rstrip('.')}. {self.fix}"
+        super().__init__(message)
 
 
 class _OutboxChanged(TimelineEditError):
