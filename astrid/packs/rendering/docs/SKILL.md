@@ -184,6 +184,10 @@ Runtime merges changes that do not touch the same things (`status` is then
 
 - **What you'll see:** a clash raises `CommitConflict`. Its `err.clash["summary"]`
   explains what changed, and the refused edit is saved as a pending change.
+  `err.clash["conflicts"]` preserves Runtime details; `kind` and `choices` are
+  metadata, not a resolution menu. A `state: "absent"` placeholder alone does
+  not mean a clip was deleted: use the human-readable `summary` and matching
+  receipt to understand the edit, then follow `next` to recover.
 - **Recover it:** call `r = tl.retry(err)`. For a function edit, this re-runs
   the function on the current timeline and commits it when one of its bounded
   attempts succeeds. A reviewed list that still applies returns `preview`; show
