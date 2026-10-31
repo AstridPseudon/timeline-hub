@@ -279,7 +279,7 @@ def _settle_pending(record, *, expected_part, actor_id, publication_id, how, bas
         return False
     index = record.get("part", 0)
     receipt_id = receipt_id or publication_id
-    if (expected_part is not None and index != expected_part) or receipt_id in record.get("receipts", []):
+    if expected_part is None or index != expected_part or receipt_id in record.get("receipts", []):
         return False
     record.setdefault("receipts", []).append(receipt_id)
     if index + 1 < len(record.get("parts", [])):
