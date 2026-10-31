@@ -408,6 +408,22 @@ def test_function_commit_keeps_overlap_as_pending_clash_after_shared_outbox_adva
     assert saved["state"] == "pending"
     assert peer.bundle["parent"]["name"] == "peer owns this field"
 
+    pending_id = caught.value.pending_id
+    reopened = Timeline.open(project, "film", client=client)
+    with pytest.raises(ValueError, match="overwrite requires the original edit function"):
+        reopened.retry(pending_id, overwrite=True)
+    assert reopened.pending_show(pending_id)["state"] == "pending"
+
+    landed = reopened.retry(pending_id, fn=overlapping_edit, overwrite=True)
+
+    assert landed["status"] == "rebased"
+    assert len(evaluations) == 2
+    assert landed["receipt"]["receipt_id"]
+    assert reopened.bundle["parent"]["name"] == "function overwrites peer"
+    saved = Timeline.open(project, "film", client=client).pending_show(pending_id)
+    assert saved["state"] == "landed"
+    assert saved["closed_by"]["publication_id"] == landed["receipt"]["receipt_id"]
+
 
 def test_pending_rederive_lost_reply_replays_exact_commit_once(editing_case, tmp_path, monkeypatch):
     daemon, client, project, timeline = editing_case
