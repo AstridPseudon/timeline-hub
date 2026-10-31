@@ -361,6 +361,17 @@ def _already_applied(timeline, path, record, packet):
             "next": None}
 
 
+def _refused(record, failure, data):
+    from ._commit_wording import present_failure
+
+    presentation = present_failure(failure)
+    next_action = f'tl.pending_show({record["id"]!r})'
+    return {"status": "refused", "pending_id": record["id"], "data": copy.deepcopy(data),
+            "summary": (f'{presentation["headline"]}. {presentation["detail"]} '
+                        'Inspect the saved edit and fix it or drop it.'),
+            "next": next_action}
+
+
 def retry(timeline, ref, fn=None, *, overwrite=False):
     """Retry a saved record, returning a reviewable preview or terminal state."""
     if fn is None and callable(getattr(ref, "retry_fn", None)):
@@ -378,10 +389,7 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
     failure = record.get("failure") or {}
     if ((failure.get("details") or {}).get("status") in {"refused", "invalid"}
             and (record.get("origin") != "function" or fn is None)):
-        return {"status": "refused", "pending_id": record["id"],
-                "data": copy.deepcopy(failure),
-                "summary": "The Runtime refused this edit; inspect the saved edit and fix it or drop it.",
-                "next": f'tl.pending_show("{record["id"]}")'}
+        return _refused(record, failure, failure)
     captured_function_list = record.get("origin") == "function" and fn is None
     if fn is not None:
         refreshed = _refresh_function_base(timeline, record)
@@ -473,10 +481,8 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
                 f'tl.retry({record["id"]!r}, your_function)'
             )
         return result
-    message = data.get("message") or details.get("message") or details.get("reason") or "The Runtime refused this edit."
-    return {"status": "refused", "pending_id": record["id"], "data": copy.deepcopy(data),
-            "summary": f'{message} Inspect the saved edit and fix it or drop it.',
-            "next": f'tl.pending_show({record["id"]!r})'}
+    failure = {"message": data.get("message") or details.get("message"), "details": details}
+    return _refused(record, failure, data)
 
 
 def commit_preview(timeline, result):

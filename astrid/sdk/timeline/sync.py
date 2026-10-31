@@ -39,6 +39,8 @@ class _CommitFailure(TimelineEditError):
     def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
                  timeline_id=None, project_id=None, pending_id=None, clash=None, retry_clash=False):
         self.failure = copy.deepcopy(failure)
+        self.code = failure.get("code")
+        self.details = copy.deepcopy(failure.get("details") or {})
         self.pending_id = pending_id
         self.clash = copy.deepcopy(clash)
         from ._commit_wording import present_failure
