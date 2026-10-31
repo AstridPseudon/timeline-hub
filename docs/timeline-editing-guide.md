@@ -233,6 +233,15 @@ has no saved edit to retry; report it as a refusal and continue.
 re-derived edit lands. In the CLI, use `timelines pending list/show` and
 `timelines retry`; a preview prints the valid `--commit TOKEN` command.
 
+For a same-actor writer sharing a local Runtime session, `session base changed`
+and `outbox changed during evaluation` also save a pending record. It contains
+the exact commands captured for that evaluation and their original base, and
+the SDK raises `CommitConflict` with `pending_id`. Call `tl.retry(err)`, or
+resume by that id after a restart. Inspect the saved record and the returned
+`preview` or `re_derive` result before committing. Only after inspecting the
+saved intent should you deliberately re-derive and preview new commands. A
+`CommitConflict` without `pending_id` has no saved record and is not retryable.
+
 `timelines discard` clears queued working-copy commands but keeps saved pending
 records. It is not a required step before another edit. `CommitConflict` is a
 subclass of `TimelineEditError`, so an `except` for it must come first.
