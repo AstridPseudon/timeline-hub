@@ -327,17 +327,27 @@ def test_cli_final_refusal_can_be_reviewed_discarded_and_replanned(command, caps
     generated.refusal = ApiError(409, "refused", "edit refused", details={"status": status})
     assert run("edit", "t", "--project", "p", "--clip", "a", "--on", "5", "--json") == 1
     capsys.readouterr()
-    rejected = json.loads(generated.path.read_bytes())
-    assert rejected["pending"] == [] and rejected["flight"] is None
-    assert len(rejected["rejected"]["commands"]) == 1
+    saved = json.loads(generated.path.read_bytes())
+    assert saved["pending"] == [] and saved["flight"] is None
+    assert not saved.get("rejected")
+    assert len(saved["pending_changes"]) == 1
+    pending_id, record = next(iter(saved["pending_changes"].items()))
+    assert record["state"] == "pending"
+    assert record["parts"][0]["commands"]
     assert run("status", "t", "--project", "p", "--json") == 0
     assert json.loads(capsys.readouterr().out)["data"]["connected_session"] == {
-        "status": "rejected", "command_count": 1, "pending_changes": 0,
+        "status": "clear", "pending_changes": 1,
     }
     assert run("status", "t", "--project", "p", "--text") == 0
-    assert "last request was refused" in capsys.readouterr().out
-    assert run("discard", "t", "--project", "p") == 0
-    assert "discarded recoverable connected-session commands" in capsys.readouterr().out
+    assert "1 pending change(s) saved" in capsys.readouterr().out
+    assert run("pending", "list", "t", "--project", "p", "--json") == 0
+    listed = json.loads(capsys.readouterr().out)["data"]["pending_changes"]
+    assert [row["id"] for row in listed] == [pending_id]
+    assert run("pending", "show", "t", pending_id, "--project", "p", "--json") == 0
+    shown = json.loads(capsys.readouterr().out)["data"]
+    assert shown["failure"]["details"]["status"] == status
+    assert run("pending", "drop", "t", pending_id, "--project", "p", "--json") == 0
+    assert json.loads(capsys.readouterr().out)["data"]["state"] == "dropped"
     generated.refusal = None
     assert run("edit", "t", "--project", "p", "--clip", "b", "--on", "7", "--json") == 0
     capsys.readouterr()

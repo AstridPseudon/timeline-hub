@@ -403,8 +403,10 @@ def test_normal_commit_output_keeps_summary_and_receipt(normal_commit, monkeypat
     output = capsys.readouterr().out
     lines = output.splitlines()
     assert lines[0] == 'Committed "Summary Film" as publication-1.'
-    assert lines[1] == "changed: 2 clips in 1 cut"
-    assert lines[2] == "next: timelines edit film --project project-1"
+    assert lines[1].startswith("accepted revision ")
+    assert "publication-1" in lines[1]
+    assert lines[2] == "changed: 2 clips in 1 cut"
+    assert lines[3] == "next: timelines edit film --project project-1"
     assert len(output) < 1000 and "canonical_document" not in output and "{" not in output
     assert order == ["edits", "cuts", "commit"]
     assert sent[-1]["label"] == "Summary Film"

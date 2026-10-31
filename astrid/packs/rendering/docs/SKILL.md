@@ -198,8 +198,8 @@ Runtime merges changes that do not touch the same things (`status` is then
   and idempotency mismatches are also saved as pending records;
   `tl.retry(err)` returns `refused` for them. Inspect the record, fix the edit,
   then retry it or drop it. Follow `err.fix` for this recovery; the exception
-  text may say to retry directly. The CLI path is `astrid timelines retry
-  <timeline> <id|key> --project <project>`; a preview prints the matching
+  text may say to retry directly. The CLI path is
+  `astrid timelines retry <timeline> <pending-id> --project <project>`; a preview prints the matching
   `--commit TOKEN` command.
   Call `tl.retry(err)` when `err.pending_id` is set; without one, there is no
   saved record to recover.
@@ -336,7 +336,7 @@ it says no reply could be verified. Messages read *what went wrong*, *where*, *w
 | No pending timeline edits | The function changed nothing; record it as skipped |
 | No clip/word matches a name | Check `show`; in a loop, skip that timeline |
 | The source file is too short for this length | Trim in, or choose a shorter hold |
-| The timeline changed | `CommitConflict`; inspect `err.clash`, then recover with `tl.retry(err)` or `timelines retry` |
+| The timeline changed | `CommitConflict`; inspect `err.clash`, then recover with `tl.retry(err)` or `timelines retry <timeline> <id-or-key> --project <project>` |
 | A previous request has an unknown outcome | Repeat the same call with the same key |
 
 ## Looking at the result

@@ -10,6 +10,31 @@ from astrid.core.cli.domain_output import DomainResult, print_result
 from astrid.sdk.contracts import ErrorObject
 
 
+class _StoreProxy:
+    """Keep parser construction independent of the optional Runtime client."""
+
+    @staticmethod
+    def resolve_ids(*args, **kwargs):
+        from astrid.sdk.timeline import store
+
+        return store.resolve_ids(*args, **kwargs)
+
+
+store = _StoreProxy()
+
+
+class _JournalProxy:
+    """Delay the Runtime protocol import until a log command actually runs."""
+
+    def __getattr__(self, name):
+        from astrid.sdk.timeline import journal
+
+        return getattr(journal, name)
+
+
+journal = _JournalProxy()
+
+
 def configure_log(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("ref", help="Timeline UUID, ULID, or slug.")
     parser.add_argument("--project", required=True, help="Owning project id or immutable slug.")
@@ -32,8 +57,6 @@ def _row(record: Any) -> str:
 
 
 def run_log(parsed: Any) -> int:
-    from astrid.sdk.timeline import journal, store
-
     project_id, timeline_id, _head = store.resolve_ids(
         parsed.project, parsed.ref, client=parsed.client
     )

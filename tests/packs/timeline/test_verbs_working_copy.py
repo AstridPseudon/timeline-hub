@@ -729,7 +729,10 @@ def test_commit_conflict_names_the_writer_and_offers_discard_first(tmp_path, cap
     assert result["error"]["details"]["conflicts"]
     assert len(calls) == len(failures) == 1
     assert (failures[0].status, failures[0].code) == (409, "conflict")
-    assert result["error"]["details"] == failures[0].details
+    details = result["error"]["details"]
+    assert {key: details[key] for key in failures[0].details} == failures[0].details
+    pending_id = details["pending_id"]
+    assert details["clash"]["pending_id"] == pending_id
     assert calls[0]["base_revision_id"] == "rev-0"
     assert calls[0]["base_publication_id"] == "bootstrap"
     assert calls[0]["label"] == "Local Film" and calls[0]["merge"] == "atomic"
@@ -743,7 +746,8 @@ def test_commit_conflict_names_the_writer_and_offers_discard_first(tmp_path, cap
 
     assert message.splitlines()[0].startswith(f"not published: {who}, and you both changed:")
     assert "parent" in message
-    assert "next: timelines discard film --project project-1, then timelines checkout film --project project-1 --fresh, and re-apply your edit." in message
+    assert f"your edit is saved as {pending_id}" in message
+    assert f"astrid timelines retry film {pending_id} --project project-1" in message
     assert "force overwrite is refused" in message
     assert "to overwrite theirs" not in message
     assert "astrid.e\n" not in message and "astrid.e " not in message
