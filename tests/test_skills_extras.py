@@ -135,10 +135,19 @@ def test_timeline_extras_list_and_selective_cli_install(tmp_path: Path) -> None:
     assert "timeline-series" in listing.stdout
     assert "timeline-narrated" in listing.stdout
     assert "timeline-review" in listing.stdout
+    assert "timeline-shots" in listing.stdout
 
     subprocess.run(
         [sys.executable, "-m", "astrid", "skills", "install", "timeline",
          "--skill", "series", "--harness", "claude"],
+        check=True,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    subprocess.run(
+        [sys.executable, "-m", "astrid", "skills", "install", "timeline",
+         "--skill", "shots", "--harness", "claude"],
         check=True,
         capture_output=True,
         text=True,
@@ -150,4 +159,4 @@ def test_timeline_extras_list_and_selective_cli_install(tmp_path: Path) -> None:
         for skill_id, entry in state["skills"]["claude"]["skills"].items()
         if entry.get("selected")
     }
-    assert selected == {"timeline-series"}
+    assert selected == {"timeline-series", "timeline-shots"}

@@ -692,6 +692,7 @@ def test_timeline_main_skill_stays_under_budget_and_covers_first_run():
     assert 'Timeline.open("<project>", "<timeline>")' in body
     assert "timelines visualize" in body and 'r[\"data\"][\"editor_url\"]' in body
     assert "`timeline-series`" in body
+    assert "`timeline-shots`" in body
     assert "astrid-timeline-series" not in body
     assert "Not possible yet" not in body
 

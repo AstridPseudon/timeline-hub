@@ -52,6 +52,7 @@ def test_every_extra_python_example_runs_and_lands_on_scratch_runtime(
     p3_editing_case, tmp_path, monkeypatch,
 ):
     _daemon, client, project, timeline = p3_editing_case
+    shot_project = _daemon.service.create_project({"slug": "p3-shot-reuse", "name": "P3 shot reuse"})["id"]
     voice_file = _voice_file(tmp_path / "narration.wav", seconds=4)
 
     def seed(t):
@@ -199,12 +200,14 @@ def test_every_extra_python_example_runs_and_lands_on_scratch_runtime(
         PACK / "docs" / "series" / "SKILL.md",
         PACK / "docs" / "narrated" / "SKILL.md",
         PACK / "docs" / "review" / "SKILL.md",
+        PACK / "docs" / "shots" / "SKILL.md",
     ]
     examples = [example for path in skill_paths for example in _python_examples(path)]
-    assert len(examples) == 4
+    assert len(examples) == 5
 
-    namespace = {"project": project, "timeline": "film", "episodes": ["film"]}
-    for example in examples:
+    namespace = {"project": project, "timeline": "film", "episodes": ["film"],
+                 }
+    for example in examples[:-1]:
         exec(compile(example, "timeline extra skill example", "exec"), namespace)
 
     landed = Timeline.open(project, "film", client=client)
@@ -215,6 +218,35 @@ def test_every_extra_python_example_runs_and_lands_on_scratch_runtime(
     assert clips["hit"]["at"] == pytest.approx(3.7)
     assert clips["outro"]["hold"] == pytest.approx(2.0)
     assert clips["intro"]["at"] == pytest.approx(1.0)
+
+    created = client.timelines.create_empty(
+        project=shot_project,
+        timeline_id="shot-reuse",
+        name="Shot reuse",
+        idempotency_key="p3-examples-create-shot-reuse",
+    )
+    assert created.ok, created.as_dict()
+    shot_timeline = Timeline.open(shot_project, "shot-reuse", client=client,
+                                  outbox_path=tmp_path / "shot-reuse-outbox.json")
+    shot_timeline.commit(lambda t: t.track("Shots", kind="visual"),
+                         label="Seed reusable shot track", key="p3-example-reuse-track")
+    from astrid.sdk.timeline.commit import bundle_from_document
+    source_bundle = bundle_from_document(_snapshot(shot_timeline))
+    source_birth = _sequential_births(source_bundle, [
+        dict(occurrence_id="occ-source", shot_id="shot-source", name="Source",
+             track="Shots", on=0, duration=4),
+    ])
+    shot_timeline.commit(source_birth, label="Seed reusable shot", key="p3-example-reuse-source")
+    exec(compile(examples[-1], "timeline extra skill example", "exec"), {
+        "project": shot_project, "timeline": "shot-reuse", "source_occurrence_id": "occ-source",
+    })
+
+    reused = Timeline.open(shot_project, "shot-reuse", client=client)
+    reused_placements = {row["occurrence_id"]: row for row in reused.bundle["placements"]}
+    assert reused_placements["occ-reprise-1"]["placement"]["start_ms"] == 12000
+    assert reused_placements["occ-reprise-2"]["placement"]["start_ms"] == 15000
+    assert reused_placements["occ-reprise-1"]["shot_id"] == "shot-reprise-1"
+    assert reused_placements["occ-reprise-2"]["shot_id"] == "shot-reprise-2"
 
     placements = {row["occurrence_id"]: row for row in landed.bundle["placements"]}
     assert placements["occ-earlier"]["placement"]["start_ms"] == 0
