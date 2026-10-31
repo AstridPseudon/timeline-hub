@@ -1318,11 +1318,6 @@ def test_legacy_ack_without_pending_part_refuses_ambiguous_or_mismatched_evidenc
     assert timeline.session.state["pending_changes"]["pc_saved"] == before
 
 
-# Restore this history-only case when legacy flights carry durable exact request identity.
-@pytest.mark.xfail(
-    strict=True,
-    reason="requires durable exact request identity for legacy-flight settlement",
-)
 def test_landed_recovers_legacy_cross_actor_flight_by_exact_history_identity(
     monkeypatch, tmp_path,
 ):

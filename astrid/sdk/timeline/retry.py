@@ -188,18 +188,20 @@ def _landed(timeline, path, record):
                       if flight.get("pending_id") == record["id"]
                       and flight.get("pending_path")
                       and Path(flight["pending_path"]).resolve() == Path(path).resolve()
-                      and flight.get("pending_identity") is None]
+                      and flight.get("pending_identity") is None
+                      and "body" in flight]
     if legacy_flights:
         entry = _legacy_flight_entry(timeline.session, record, legacy_flights, entries)
         if entry is None:
             return None
     if entry is None and any(flight.get("pending_id") == record["id"]
-                             and flight.get("pending_identity") is None for flight in flights):
+                             and flight.get("pending_identity") is None
+                             and "body" in flight for flight in flights):
         return None
     for flight in flights:
         if entry is not None:
             break
-        if flight.get("pending_identity") is None:
+        if flight.get("pending_identity") is None and "body" in flight:
             continue
         owner = flight.get("pending_path")
         if (flight.get("pending_id") != record["id"] or not owner
