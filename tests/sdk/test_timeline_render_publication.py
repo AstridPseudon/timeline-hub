@@ -107,6 +107,7 @@ def test_requester_lost_commit_ack_retries_identical_v2_flight_after_restart(tmp
     restarted = TimelineSession.open('p', 't', client=session.client, outbox_path=generated.path)
     result = publish(restarted, proposal, group_id='stitch-group')
     assert generated.calls[0] == generated.calls[1]
+    assert saved['body'] == generated.calls[0][0].decode()
     assert json.loads(generated.calls[0][0])['group_id'] == 'stitch-group'
     assert json.loads(saved['body'])['group_id'] == 'stitch-group'
     assert saved['key'] == 'publish' and result['render_task_id'] == 'render-1'
@@ -172,6 +173,7 @@ def test_runtime_refusal_keeps_full_structured_details_and_never_admits_render(t
     assert state['flight'] is None
     pending, = state['pending_changes'].values()
     assert pending['state'] == 'pending'
+    assert pending['flight'] is not None
     assert pending['failure']['details'] == details
 
 
