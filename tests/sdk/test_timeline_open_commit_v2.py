@@ -750,6 +750,15 @@ def test_function_rerun_guard_saves_flight_and_dependent_suffix_in_order(connect
     assert record["parts"][1]["base"] == original_base
     assert record["receipts"] == [] and record["closed_by"] is None
 
+    saved_suffix = copy.deepcopy(record["parts"][1])
+    with pytest.raises(CommitConflict) as repeated:
+        tl.commit(edit, label="Rerun edit", key="rerun-key")
+
+    repeated_record = json.loads(path.read_text())["pending_changes"][error.value.pending_id]
+    assert repeated.value.pending_id == error.value.pending_id
+    assert repeated_record["part"] == 0
+    assert repeated_record["parts"][1] == saved_suffix
+
 
 def test_failed_ack_persistence_reconciles_without_running_function(connected, monkeypatch):
     tl = opened(connected)
