@@ -79,9 +79,14 @@ def _landed(timeline, path, record):
         actor = closed.get("actor_id")
         label = record.get("label") or "Timeline edit"
         suffix = f" (by {actor})" if actor else ""
-        return {"status": "landed", "pending_id": record["id"],
+        data = {"publication_id": publication} if publication is not None else {}
+        receipts = record.get("receipts") or []
+        if receipts:
+            data["receipt"] = {"receipt_id": receipts[-1]}
+        return {"status": "landed", "pending_id": record["id"], "data": data,
                 "summary": f'"{label}" already landed as {publication}{suffix}; '
-                           f'{record["id"]} is closed. Nothing was sent.', "next": None}
+                           f'{record["id"]} is closed. Nothing was sent.', "next": None,
+                "record": copy.deepcopy(record)}
     base = _pin(record["parts"][0]["base"])
     try:
         _, entries = clash._history(timeline.session, base)
@@ -319,7 +324,10 @@ def _already_applied(timeline, path, record, packet):
     closed = _close(path, record, timeline.session, entry, "already_applied")
     if closed.get("state") != "landed":
         return None
-    return {"status": "landed", "pending_id": record["id"], "record": closed,
+    data = {"publication_id": publication_id}
+    if isinstance(entry.get("receipt"), dict):
+        data["receipt"] = copy.deepcopy(entry["receipt"])
+    return {"status": "landed", "pending_id": record["id"], "data": data, "record": closed,
             "summary": (f"Nothing to do: {', '.join(matched_fields)} already has your value "
                         f"(set by {next(iter(actors))}); {record['id']} is closed."),
             "next": None}
