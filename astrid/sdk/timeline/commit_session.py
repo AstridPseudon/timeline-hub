@@ -750,7 +750,7 @@ class Timeline(Checkout):
                     error = self.session.save_interrupted(
                         working._commands, base=original_base, label=commit_label, steps=steps,
                         merge=effective_merge, reads=reads, key=idempotency_key,
-                        evaluation=evaluation, failure=overlap)
+                        evaluation=evaluation, failure=overlap, release_flight=state.get("flight"))
                     error.retry_fn = function
                     self._retry_functions[error.pending_id] = function
                     raise error
