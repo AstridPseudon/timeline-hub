@@ -78,6 +78,8 @@ def _legacy_flight_entry(session, record, flights, entries):
             body = json.loads(flight["body"])
             if not isinstance(body, dict) or not flight["key"] or flight["path"] != session.path:
                 continue
+            if flight.get("pending_part") not in (None, record.get("part", 0)):
+                continue
             part_matches = []
             if ("parts" not in record and flight.get("pending_part") in (None, 0)
                     and _legacy_request_matches(record, flight, session)):
@@ -186,14 +188,19 @@ def _landed(timeline, path, record):
                       if flight.get("pending_id") == record["id"]
                       and flight.get("pending_path")
                       and Path(flight["pending_path"]).resolve() == Path(path).resolve()
-                      and (flight.get("pending_part") is None or "parts" not in record)]
+                      and flight.get("pending_identity") is None]
     if legacy_flights:
         entry = _legacy_flight_entry(timeline.session, record, legacy_flights, entries)
         if entry is None:
             return None
+    if entry is None and any(flight.get("pending_id") == record["id"]
+                             and flight.get("pending_identity") is None for flight in flights):
+        return None
     for flight in flights:
         if entry is not None:
             break
+        if flight.get("pending_identity") is None:
+            continue
         owner = flight.get("pending_path")
         if (flight.get("pending_id") != record["id"] or not owner
                 or Path(owner).resolve() != Path(path).resolve()
