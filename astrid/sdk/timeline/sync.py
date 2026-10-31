@@ -46,7 +46,8 @@ class CommitConflict(TimelineEditError):
                      'preview again with dry_run=True, then commit the reviewed commands.'),
             )
         if pending_id is not None and self.failure.get("details", {}).get("status") != "conflict":
-            self.presentation["fix"] = f'Inspect the saved edit with tl.pending_show("{pending_id}") and re-derive it.'
+            self.presentation["fix"] = (f'Inspect the saved edit with tl.pending_show("{pending_id}"), '
+                                        'fix the edit, then retry or drop it.')
             self.presentation.update(pending_id=pending_id, clash=copy.deepcopy(clash))
         elif pending_id is not None:
             self.presentation["fix"] = (
@@ -266,9 +267,10 @@ def _retry_conflict(record, replacement):
     if record is None or record.get("state") != "pending":
         return
     record.setdefault("versions", []).append({key: copy.deepcopy(record.get(key))
-                                               for key in ("failure", "head", "diff", "attempts")})
+                                               for key in ("failure", "head", "diff", "attempts", "flight")})
     record["attempts"] = int(record.get("attempts", 0)) + 1
     record["failure"] = replacement["failure"]
+    record["flight"] = copy.deepcopy(replacement.get("flight"))
     record["head"] = replacement["head"]
     record["diff"] = None
     record.pop("clash", None)
@@ -857,9 +859,7 @@ class TimelineSession:
             details = getattr(exc, "details", {})
             if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
-                save_pending = release_conflict or (
-                    details.get("status") == "refused" and details.get("reason") == "invalid_records"
-                )
+                save_pending = release_conflict or details.get("status") != "conflict"
                 record = None
                 external_conflict = None
                 with self.outbox.locked():
@@ -893,6 +893,15 @@ class TimelineSession:
                                 pending_id = flight.get("pending_id")
                                 target_path = flight.get("pending_path")
                                 if pending_id and target_path and target_path != str(self.outbox.path):
+                                    target_outbox = Outbox(Path(target_path))
+                                    with target_outbox.locked():
+                                        target = target_outbox.read()
+                                        saved = target.get("pending_changes", {}).get(pending_id)
+                                        if saved is None or saved.get("state") != "pending":
+                                            raise TimelineEditError("saved edit is unavailable; original flight retained")
+                                        _retry_conflict(saved, replacement)
+                                        target_outbox.write(target)
+                                        record = copy.deepcopy(saved)
                                     external_conflict = (target_path, pending_id, replacement)
                                 elif pending_id and pending_id in state.get("pending_changes", {}):
                                     record = state["pending_changes"][pending_id]
@@ -905,7 +914,8 @@ class TimelineSession:
                                     from ._pending import clash
                                     record["clash"] = clash(record)
                                     record["clash"]["next"] = f'tl.pending_show("{record["id"]}")'
-                                    state["pending_changes"][record["id"]] = copy.deepcopy(record)
+                                    if external_conflict is None:
+                                        state["pending_changes"][record["id"]] = copy.deepcopy(record)
                                 state["pending"] = []
                                 state["flight"] = None
                                 state.pop("conflict", None)
@@ -924,16 +934,6 @@ class TimelineSession:
                             state.pop("pending_close_path", None)
                             state.pop("pending_how", None)
                         self.outbox.write(state)
-                if external_conflict is not None:
-                    target_path, pending_id, replacement = external_conflict
-                    target_outbox = Outbox(Path(target_path))
-                    with target_outbox.locked():
-                        target = target_outbox.read()
-                        saved = target.get("pending_changes", {}).get(pending_id)
-                        if saved is not None:
-                            _retry_conflict(saved, replacement)
-                            target_outbox.write(target)
-                            record = copy.deepcopy(saved)
                 if record is not None:
                     try:
                         diff = _pending_diff(self, record)
