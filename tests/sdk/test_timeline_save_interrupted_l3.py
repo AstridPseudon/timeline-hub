@@ -120,8 +120,8 @@ def test_function_clash_is_retained_in_shared_outbox(tmp_path, monkeypatch):
     assert record["parts"][0]["evaluation"] == {"kind": "function", "count": 2}
     assert record["flight"]["evaluation"] == {"kind": "function", "count": 2}
     assert reopened["pending_changes"][error.pending_id]["state"] == "pending"
-    assert reopened["pending"] == []
-    assert reopened["flight"] is None
+    assert reopened["pending"] == [{"op": "timeline.move", "args": {"on": 4}}]
+    assert reopened["flight"] == {}
 
 
 def test_duplicate_pending_key_error_says_to_use_pending_id(tmp_path, monkeypatch):
