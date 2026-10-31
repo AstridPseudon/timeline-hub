@@ -69,12 +69,20 @@ def test_case1_fps_removal_refusal_reason_and_wording(editing_case):
     assert exc.failure["details"]["status"] == "invalid"
     assert exc.failure["details"]["reason"] == "invalid_document"
     assert exc.headline == "This edit is not valid; nothing was committed"
-    assert exc.fix == "Fix the edit and commit again; the timeline is unchanged."
+    assert exc.fix == (
+        f'Inspect the saved edit with tl.pending_show("{exc.pending_id}"), '
+        "fix the edit, then retry or drop it."
+    )
     assert exc.outcome == "not_applied"
     assert exc.detail == exc.failure["message"] == (
         "candidate: all authored fps declarations must retain their typed locations")
     assert len(_history(client, project)) == len(history_before)
     assert _snapshot(timeline) == before
+    state = json.loads(timeline.session.outbox.path.read_bytes())
+    assert state["flight"] is None
+    saved = state["pending_changes"][exc.pending_id]
+    assert saved["state"] == "pending"
+    assert saved["failure"]["details"] == exc.failure["details"]
 
 
 def test_case2_stale_literal_list_conflict_is_not_rerun(editing_case, tmp_path, monkeypatch):
@@ -93,8 +101,10 @@ def test_case2_stale_literal_list_conflict_is_not_rerun(editing_case, tmp_path, 
     )["data"]["commands"]
     stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "stale.json")
     other = type(timeline).open(project, "film", client=peer_client, outbox_path=tmp_path / "peer.json")
-    peer_edit = other.commit(lambda t: t.bundle["parent"].update({"name": "Concurrent list change"}),
-                             label="Concurrent list change", key="e14r1-peer-change")
+    peer_edit = other.commit(
+        lambda t: t.bundle["parent"].update({"custom": {"peer_edit": True}}),
+        label="Concurrent list change", key="e14r1-peer-change",
+    )
     assert peer_edit["receipt"]["receipt_id"]
     generated = client._remote._transport._generated
     original = generated.commit_timeline
@@ -123,6 +133,45 @@ def test_case2_stale_literal_list_conflict_is_not_rerun(editing_case, tmp_path, 
     record = saved["pending_changes"][exc.pending_id]
     assert record["state"] == "pending"
     assert record["parts"][0]["commands"] == fixed
+
+
+def test_case2_stale_literal_list_merges_disjoint_fields_without_rerun(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _, peer_credential = daemon.credentials.provision("e14r1-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="e14r1-peer", credential=peer_credential)
+    fixed = timeline.commit(
+        lambda t: t.bundle["parent"].update({"custom": {"literal_edit": True}}),
+        label="Preview fixed list", dry_run=True,
+    )["data"]["commands"]
+    stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "stale.json")
+    other = type(timeline).open(project, "film", client=peer_client, outbox_path=tmp_path / "peer.json")
+    peer_edit = other.commit(lambda t: t.bundle["parent"].update({"name": "Concurrent list change"}),
+                             label="Concurrent list change", key="e14r1-peer-change")
+    assert peer_edit["receipt"]["receipt_id"]
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    attempts = []
+
+    def count_submission(*args, **kwargs):
+        attempts.append(copy.deepcopy(args[2]))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", count_submission)
+    applied = stale.commit(fixed, label="Apply reviewed list", key="e14r1-fixed-list")
+    assert len(attempts) == 1
+    assert applied["data"]["status"] == "merged"
+    parent = applied["data"]["canonical_document"]["parent_revision"]["payload"]
+    assert parent["name"] == "Concurrent list change"
+    assert parent["custom"] == {"literal_edit": True}
+    assert _snapshot(stale) == applied["data"]["canonical_document"]
+    saved = json.loads((tmp_path / "stale.json").read_bytes())
+    assert saved["flight"] is None
+    assert saved.get("pending_changes", {}) == {}
 
 
 @pytest.mark.parametrize("kind", ["function", "list"])

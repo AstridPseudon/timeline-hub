@@ -8,8 +8,8 @@ import pytest
 from astrid.sdk.timeline._command_state import ABSENT, present
 from astrid.sdk.timeline import Timeline
 from astrid.sdk.timeline.sync import CommitConflict
-from tests.editing_conformance.test_clash_classifier_differential import editing_case
 from tests.editing_conformance.test_commit_runtime_m1 import open_client
+from tests.sdk.test_timeline_editing_acceptance_runtime import editing_case
 
 
 def patch(*changes):

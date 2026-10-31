@@ -60,7 +60,9 @@ def test_sheet_lost_ack_checkout_suffix_exact_retry_and_original_guards(connecte
             tl.flush()
         state = json.loads(path.read_bytes())
         assert state['pending'] == [] and state['flight'] is None
-        assert state['rejected']['commands'] == [suffix]
+        record = next(iter(state['pending_changes'].values()))
+        assert record['parts'][0]['commands'] == [suffix]
+        assert record['failure']['details']['status'] == 'conflict'
         assert tl.clip('a').start == 7
     else:
         accepted = tl.flush()

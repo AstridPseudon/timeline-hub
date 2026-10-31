@@ -414,6 +414,8 @@ class Timeline(Checkout):
                                        track=track, clip_id=clip_id, asset_alias=asset_alias)
         from .commands import execute
 
+        verified = {**copy.deepcopy(verified), "object_id": pin["object_id"],
+                    "pin": {"media_id": pin["object_id"], "content_digest": pin["object_id"]}}
         capture_bundle = (self._execution_bundle(self._command_bundle)
                           if self._runtime_document is not None else self._command_bundle)
         commands = execute(capture_bundle, commands,
@@ -485,20 +487,35 @@ class Timeline(Checkout):
             inputs = _media_admission_inputs(
                 before, after, self.session.client._remote._transport,
             )
+            preview_media = self._verified_media
             if inputs:
+                from astrid.sdk.timeline_media_replacement import _verified
+
+                preview_media = [row for row in self._verified_media
+                                 if not any(row.get("pin") == item["pin"] for item in inputs)]
+                for item in inputs:
+                    if "selection" in item:
+                        _, verified = _verified(self.session.client._remote._transport,
+                                                self.session.project_id, item["selection"])
+                        row = {**copy.deepcopy(verified), "object_id": item["pin"]["media_id"],
+                               "pin": copy.deepcopy(item["pin"])}
+                    else:
+                        row = next((row for row in self._verified_media if row.get("pin") == item["pin"]), None)
+                    if row is not None and row not in preview_media:
+                        preview_media.append(row)
                 commands.append({"schema_version": 1, "op": "media.admit", "version": "1",
                                  "select": None, "args": {"inputs": inputs}})
-            self._append(commands, label="Edit document")
+            self._append(commands, label="Edit document", verified_media=preview_media)
             self._free_edits = True
 
-    def _append(self, commands, *, label, intent="", tags=(), reads=None):
+    def _append(self, commands, *, label, intent="", tags=(), reads=None, verified_media=None):
         from .commands import CommandError, execute
 
         try:
             bundle = (self._execution_bundle(self._command_bundle)
                       if self._runtime_document is not None or any(command.get("op") == "doc.patch" for command in commands)
                       else self._command_bundle)
-            plan = execute(bundle, commands, verified_media=self._verified_media)
+            plan = execute(bundle, commands, verified_media=self._verified_media if verified_media is None else verified_media)
         except CommandError as exc:
             if exc.kind == "unsupported_operation" and any(command.get("op") == "doc.patch" for command in commands):
                 raise TimelineEditError(

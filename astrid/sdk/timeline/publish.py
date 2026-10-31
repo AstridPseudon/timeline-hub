@@ -37,7 +37,9 @@ def _media_admission_inputs(base: Mapping[str, Any], candidate: Mapping[str, Any
     publication = compile_authoring_candidate(candidate).publication
     inputs = [{"pin": copy.deepcopy(pin)} for pin in publication["dependency_manifest"]["media"]
               if pin not in source["dependency_manifest"]["media"]]
-    old_selections = list(registry_selections(base))
+    from .commit import bundle_from_document
+
+    old_selections = list(registry_selections(bundle_from_document(source)))
     for association in registry_selections(candidate):
         if association in old_selections:
             continue
