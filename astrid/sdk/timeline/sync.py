@@ -293,9 +293,10 @@ def _settle_pending(record, *, expected_part, actor_id, publication_id, how, bas
     return True
 
 
-def _retry_conflict(record, replacement):
-    if record is None or record.get("state") != "pending":
-        return
+def _retry_conflict(record, replacement, *, expected_part=None):
+    if (record is None or record.get("state") != "pending"
+            or (expected_part is not None and record.get("part", 0) != expected_part)):
+        raise TimelineEditError("saved edit is unavailable or has advanced; original flight retained")
     index = record.get("part", 0)
     record.setdefault("versions", []).append({key: copy.deepcopy(record.get(key))
                                                for key in ("failure", "head", "diff", "attempts", "flight", "parts", "part", "label", "origin")})
@@ -1000,14 +1001,16 @@ class TimelineSession:
                                 saved = target.get("pending_changes", {}).get(pending_id)
                                 if saved is None or saved.get("state") != "pending":
                                     raise TimelineEditError("saved edit is unavailable; original flight retained")
-                                _retry_conflict(saved, replacement)
+                                _retry_conflict(saved, replacement, expected_part=flight.get("pending_part"))
                                 target_outbox.write(target)
                                 record = copy.deepcopy(saved)
                                 external_conflict = (target_path, pending_id, replacement)
                             elif pending_id and pending_id in state.get("pending_changes", {}):
                                 record = state["pending_changes"][pending_id]
-                                _retry_conflict(record, replacement)
+                                _retry_conflict(record, replacement, expected_part=flight.get("pending_part"))
                                 record = copy.deepcopy(record)
+                            elif pending_id:
+                                raise TimelineEditError("saved edit is unavailable; original flight retained")
                             else:
                                 record = replacement
                                 state.setdefault("pending_changes", {})[record["id"]] = record
