@@ -889,6 +889,39 @@ def test_multi_part_preview_ack_advances_without_closing(monkeypatch, tmp_path):
     assert timeline.session.submissions[0][1]["pending_id"] == "pc_saved"
 
 
+def test_retry_after_repeated_refusal_uses_rederived_commands_before_suffix(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["origin"] = "function"
+    record["failure"]["details"].update(status="conflict", reason="guard_changed")
+    current = [{"op": "clip.move", "select": "clip:b", "args": {"on": 9}}]
+    suffix = copy.deepcopy(record["parts"][0])
+    suffix["base"] = HEAD
+    suffix["commands"] = [{"op": "clip.move", "select": "clip:a", "args": {"on": 12}}]
+    suffix["commit_options"] = {"label": "Follow-up", "steps": [], "merge": "fields"}
+    record["parts"][0]["commands"] = copy.deepcopy(current)
+    record["parts"].append(suffix)
+    stable_id = record["id"]
+    monkeypatch.setattr(retry_module, "_probe", lambda *args: {
+        "would_status": "accepted", "evaluated_head": HEAD, "canonical_document": {}})
+    monkeypatch.setattr(retry_module, "_preview_diff", lambda *args: {"changes": []})
+
+    preview = retry_module.retry(timeline, stable_id)
+
+    assert preview["data"]["commands"] == current
+    result = retry_module.commit_preview(timeline, preview)
+
+    assert result["status"] == "accepted"
+    args, kwargs = timeline.session.submissions[0]
+    assert args[0] == current
+    assert kwargs["pending_id"] == stable_id
+    saved = timeline.session.state["pending_changes"][stable_id]
+    assert saved["id"] == stable_id
+    assert saved["part"] == 1
+    assert saved["parts"][1]["commands"] == suffix["commands"]
+    assert [part["commands"] for part in saved["parts"]] == [current, suffix["commands"]]
+
+
 def test_commit_preview_accepts_records_without_saved_steps(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     timeline.session.state["pending_changes"]["pc_saved"]["parts"][0]["commit_options"].pop("steps")

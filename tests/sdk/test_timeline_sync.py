@@ -760,6 +760,41 @@ def test_final_refusal_saves_and_releases_dependent_queued_suffix(connected, mon
     assert path.read_bytes() == before
 
 
+def test_rederived_refusal_replaces_current_part_and_keeps_suffix_ordered(connected):
+    session = open_session(connected)
+    _, generated, path = connected
+    session.queue_move("parent/clip:a", 5)
+    generated.refusal = ApiError(409, "refused", "edit is not allowed",
+                                 details={"status": "refused", "reason": "policy"})
+    with pytest.raises(CommitConflict) as refused:
+        session.flush(idempotency_key="repeat-refusal")
+
+    suffix = capture_move(initial_bundle(), "parent/clip:b", 8)
+    current = capture_move(initial_bundle(), "parent/clip:a", 6)
+    state = session._state()
+    record = state["pending_changes"][refused.value.pending_id]
+    record["parts"].append({"base": copy.deepcopy(state["base"]), "commands": [suffix],
+                            "commit_options": {"label": "Follow-up", "steps": [], "merge": "fields"}})
+    session.outbox.write(state)
+    pending_id = record["id"]
+
+    with pytest.raises(CommitConflict):
+        session.submit(
+            [current], label="Re-derived edit", steps=[], idempotency_key="repeat-refusal",
+            expected_state=session._state(), base=session._state()["base"],
+            pending_id=pending_id, pending_path=str(path), pending_part=0,
+            pending_how="rerun", evaluation={"kind": "function", "count": 1},
+        )
+
+    saved = json.loads(path.read_bytes())["pending_changes"][pending_id]
+    assert saved["id"] == pending_id
+    assert saved["parts"][0]["commands"] == [current]
+    assert saved["parts"][1]["commands"] == [suffix]
+    assert [part["commands"] for part in saved["parts"]] == [[current], [suffix]]
+    assert json.loads(generated.calls[-1][0])["commands"] == [current]
+    assert saved["flight"]["key"] != "repeat-refusal"
+
+
 def test_final_conflict_saves_flight_and_dependent_suffix_as_separate_parts(connected, monkeypatch):
     session = open_session(connected)
     _, generated, path = connected

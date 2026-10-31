@@ -293,11 +293,17 @@ def _settle_pending(record, *, expected_part, actor_id, publication_id, how, bas
     return True
 
 
-def _retry_conflict(record, replacement):
-    if record is None or record.get("state") != "pending":
-        return
+def _retry_conflict(record, replacement, *, expected_part=None):
+    if (record is None or record.get("state") != "pending"
+            or (expected_part is not None and record.get("part", 0) != expected_part)):
+        raise TimelineEditError("saved edit is unavailable or has advanced; original flight retained")
+    index = record.get("part", 0)
     record.setdefault("versions", []).append({key: copy.deepcopy(record.get(key))
-                                               for key in ("failure", "head", "diff", "attempts", "flight")})
+                                               for key in ("failure", "head", "diff", "attempts", "flight", "parts", "part", "label", "origin")})
+    record["parts"][index] = copy.deepcopy(replacement["parts"][0])
+    record["parts"].extend(copy.deepcopy(replacement["parts"][1:]))
+    record["label"] = replacement["label"]
+    record["origin"] = replacement["origin"]
     record["attempts"] = int(record.get("attempts", 0)) + 1
     record["failure"] = replacement["failure"]
     record["flight"] = copy.deepcopy(replacement.get("flight"))
@@ -754,7 +760,8 @@ class TimelineSession:
                            release_conflict=release_conflict)
 
     def save_interrupted(self, commands, *, base, label, steps, merge, reads, key, evaluation,
-                         failure=None, release_flight=None, release_dry_run=False):
+                         failure=None, release_flight=None, release_dry_run=False,
+                         pending_id=None, pending_path=None, pending_part=None):
         """Save captured intent without changing another writer's queue or flight."""
         from ._pending import clash, snapshot
 
@@ -773,7 +780,7 @@ class TimelineSession:
                              if isinstance(entry, dict) for item in entry.get("imports", [])]
         if key is not None:
             flight["logical_key"] = key
-        with self.outbox.locked():
+        with _retry_outbox_locks(self.outbox, pending_path if pending_id else None):
             state = self._state()
             failure = copy.deepcopy(failure) if failure is not None else {
                 "code": "local_outbox_changed", "message": "session base changed",
@@ -787,21 +794,27 @@ class TimelineSession:
             if owned:
                 self._flight_body(state, release_flight, None, release_dry_run)
                 record["parts"].extend(snapshot(state, release_flight, failure)["parts"][1:])
-            records = state.setdefault("pending_changes", {})
+            external = pending_id and pending_path and Path(pending_path).resolve() != self.outbox.path.resolve()
+            target_outbox = Outbox(Path(pending_path)) if external else self.outbox
+            target = target_outbox.read() if external else state
+            records = target.setdefault("pending_changes", {})
             matches = [item for item in records.values()
-                       if key is not None and item.get("state") == "pending" and item.get("key") == key]
+                       if item.get("state") == "pending" and
+                       (item.get("id") == pending_id if pending_id is not None else
+                        key is not None and item.get("key") == key)]
             if len(matches) > 1:
                 raise TimelineEditError(f"pending key {key!r} is ambiguous; use a pending id")
+            if pending_id is not None and (not matches or (pending_part is not None
+                                                          and matches[0].get("part", 0) != pending_part)):
+                raise TimelineEditError("saved edit is unavailable or has advanced; original flight retained")
             if matches:
                 replacement = record
                 record = matches[0]
                 _retry_conflict(record, replacement)
-                if owned:
-                    index = record.get("part", 0)
-                    record["parts"][index] = replacement["parts"][0]
-                    record["parts"].extend(replacement["parts"][1:])
             else:
                 records[record["id"]] = record
+            if external:
+                target_outbox.write(target)
             if owned:
                 state["base"] = _pin(failure["details"]["current"])
                 state["pending"] = []
@@ -988,14 +1001,16 @@ class TimelineSession:
                                 saved = target.get("pending_changes", {}).get(pending_id)
                                 if saved is None or saved.get("state") != "pending":
                                     raise TimelineEditError("saved edit is unavailable; original flight retained")
-                                _retry_conflict(saved, replacement)
+                                _retry_conflict(saved, replacement, expected_part=flight.get("pending_part"))
                                 target_outbox.write(target)
                                 record = copy.deepcopy(saved)
                                 external_conflict = (target_path, pending_id, replacement)
                             elif pending_id and pending_id in state.get("pending_changes", {}):
                                 record = state["pending_changes"][pending_id]
-                                _retry_conflict(record, replacement)
+                                _retry_conflict(record, replacement, expected_part=flight.get("pending_part"))
                                 record = copy.deepcopy(record)
+                            elif pending_id:
+                                raise TimelineEditError("saved edit is unavailable; original flight retained")
                             else:
                                 record = replacement
                                 state.setdefault("pending_changes", {})[record["id"]] = record
