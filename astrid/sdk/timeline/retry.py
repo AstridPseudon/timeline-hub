@@ -330,6 +330,8 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
     if fn is None and callable(getattr(ref, "retry_fn", None)):
         fn = ref.retry_fn
     path, record = _record(timeline, ref)
+    if overwrite and fn is None:
+        raise ValueError("overwrite requires the original edit function")
     if record.get("state") not in {"pending", "landed"}:
         return {"status": "refused", "pending_id": record.get("id"),
                 "summary": f'Cannot retry a pending change in state {record.get("state")!r}.',
@@ -346,6 +348,8 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
         return landed
     if record.get("state") == "landed":
         return _landed(timeline, path, record)
+    if record.get("origin") == "function" and fn is None:
+        raise ValueError("retrying a saved function edit requires the original edit function")
     if fn is not None:
         refreshed = _refresh_function_base(timeline, record)
         options = {"_overwrite": True} if overwrite else {}

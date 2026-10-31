@@ -50,10 +50,13 @@ class CommitConflict(TimelineEditError):
                                         'fix the edit, then retry or drop it.')
             self.presentation.update(pending_id=pending_id, clash=copy.deepcopy(clash))
         elif pending_id is not None:
+            retry_call = (f'tl.retry("{pending_id}", your_function)'
+                          if isinstance(clash, dict) and clash.get("origin") == "function"
+                          else f'tl.retry("{pending_id}")')
             self.presentation["fix"] = (
                 f'Someone else changed this timeline after your edit was made, so "{label or "Timeline edit"}" '
                 f'was not committed. Your edit is saved as {pending_id}; nothing is lost. '
-                f'Retry it with tl.retry("{pending_id}").')
+                f'Retry it with {retry_call}.')
             self.presentation.update(pending_id=pending_id, clash=copy.deepcopy(clash))
             if retry_clash:
                 self.presentation["headline"] = (
@@ -67,7 +70,7 @@ class CommitConflict(TimelineEditError):
         self.cause = self.presentation["cause"]
         if pending_id is not None and not retry_clash:
             message = (f'{self.headline.rstrip(".")}. {self.detail.rstrip(".")}. '
-                       f'Retry it with tl.retry("{pending_id}").')
+                       f'{self.fix}')
         else:
             message = f"{self.headline.rstrip('.')}. {self.fix}"
         super().__init__(message)
@@ -759,7 +762,16 @@ class TimelineSession:
                             "current": copy.deepcopy(state["base"]), "conflicts": []}}
             captured = {"base": copy.deepcopy(base), "pending": copy.deepcopy(commands)}
             record = snapshot(captured, flight, failure)
-            state.setdefault("pending_changes", {})[record["id"]] = record
+            records = state.setdefault("pending_changes", {})
+            matches = [item for item in records.values()
+                       if key is not None and item.get("state") == "pending" and item.get("key") == key]
+            if len(matches) > 1:
+                raise TimelineEditError(f"pending key {key!r} is ambiguous; use a pending id")
+            if matches:
+                record = matches[0]
+                _retry_conflict(record, snapshot(captured, flight, failure))
+            else:
+                records[record["id"]] = record
             if (state.get("conflict", {}).get("details", {}).get("status") == "conflict"
                     and (state.get("evaluation") or {}).get("kind") == "function"):
                 state["base"] = _pin(failure["details"]["current"])
@@ -787,7 +799,6 @@ class TimelineSession:
         error = CommitConflict(failure, label=label, timeline_id=self.timeline_id,
                                project_id=self.project_id, pending_id=record["id"],
                                clash=record.get("clash") or clash(record))
-        error.args = ("session base changed; " + str(error),)
         return error
 
     def submit(self, commands, *, label, steps, merge="fields", reads=None,

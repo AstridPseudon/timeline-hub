@@ -265,7 +265,8 @@ def explain(session, record):
         targets = []
     packet['summary'] = _summary(record, conflicts, packet['receipts'] or [], targets)
     pending_id = record.get('id')
-    packet['next'] = f'tl.retry({pending_id!r})' if pending_id else 'tl.pending_list()'
+    packet['next'] = (f'tl.retry({pending_id!r}, your_function)' if record.get('origin') == 'function'
+                      else f'tl.retry({pending_id!r})') if pending_id else 'tl.pending_list()'
     return packet
 
 

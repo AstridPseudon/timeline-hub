@@ -777,6 +777,9 @@ class Timeline(Checkout):
                 error = self.session.save_interrupted(working._commands, base=base, label=commit_label,
                                                       steps=steps, merge=effective_merge, reads=reads,
                                                       key=idempotency_key, evaluation=evaluation)
+                if function:
+                    error.retry_fn = function
+                    self._retry_functions[error.pending_id] = function
                 if working is self:
                     self._adopt(self._base_bundle)
                 raise error
