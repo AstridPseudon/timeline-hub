@@ -268,6 +268,20 @@ def test_function_overwrite_by_pending_id_closes_saved_record(monkeypatch, tmp_p
         "actor_id": "actor-1", "publication_id": "pub-accepted", "how": "rerun"}
 
 
+def test_function_overwrite_requires_original_function_and_keeps_record_pending(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["origin"] = "function"
+    before = copy.deepcopy(record)
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, []))
+
+    with pytest.raises(ValueError, match="overwrite requires the original edit function"):
+        retry_module.retry(timeline, "pc_saved", overwrite=True)
+
+    assert timeline.session.state["pending_changes"]["pc_saved"] == before
+    assert timeline.session.submissions == []
+
+
 def test_function_retry_leaves_unknown_flight_for_commit_reconciliation(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     timeline.session.state["flight"] = {"key": "possibly-sent"}
@@ -747,6 +761,26 @@ def test_retry_returns_history_receipt_when_another_actor_already_landed(monkeyp
         '"Recut" already landed as pub-retry (by actor-2); '
         'pc_saved is closed. Nothing was sent.'
     )
+    assert set(result) == {"status", "pending_id", "data", "summary", "next", "record"}
+    assert timeline.session.submissions == []
+
+
+def test_retry_returns_uniform_result_for_saved_landed_record(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["state"] = "landed"
+    record["closed_by"] = {"actor_id": "actor-2", "publication_id": "pub-retry", "how": "retry"}
+    record["receipts"] = ["receipt-retry"]
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: pytest.fail("history not needed"))
+
+    result = retry_module.retry(timeline, "pc_saved")
+
+    assert result["status"] == "landed"
+    assert result["data"] == {
+        "publication_id": "pub-retry", "receipt": {"receipt_id": "receipt-retry"}}
+    assert set(result) == {"status", "pending_id", "data", "summary", "next", "record"}
+    assert result["record"] == record
+    assert result["next"] is None
     assert timeline.session.submissions == []
 
 
@@ -794,6 +828,9 @@ def test_retry_closes_when_every_conflict_already_has_desired_value(monkeypatch,
 
     saved = timeline.session.state["pending_changes"]["pc_saved"]
     assert result["status"] == "landed"
+    assert result["data"] == {
+        "publication_id": "pub-peer", "receipt": {"receipt_id": "receipt-peer"}}
+    assert set(result) == {"status", "pending_id", "data", "record", "summary", "next"}
     assert result["summary"] == (
         "Nothing to do: clip a start time, clip b start time already has your value "
         "(set by actor-2); pc_saved is closed.")
