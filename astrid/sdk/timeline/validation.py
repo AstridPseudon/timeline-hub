@@ -108,6 +108,31 @@ def _typed_fps_paths(bundle: Mapping[str, Any]) -> set[str]:
     return paths
 
 
+def _shared_alias_fps_paths(baseline: Mapping[str, Any], candidate: Mapping[str, Any]) -> set[str]:
+    """Match a retained physical clock when shared placement changes its local alias."""
+    before_rows = {row["occurrence_id"]: row for row in baseline.get("placements", [])}
+    after_rows = {row["occurrence_id"]: row for row in candidate.get("placements", [])}
+    before_sources = baseline.get("source_mapping", {}).get("shots", {})
+    after_sources = candidate.get("source_mapping", {}).get("shots", {})
+    before_paths, after_paths = _typed_fps_paths(baseline), _typed_fps_paths(candidate)
+    retained = set()
+    for occurrence, before in before_rows.items():
+        after = after_rows.get(occurrence)
+        if after is None:
+            continue
+        old_id, new_id = before.get("shot_id"), after.get("shot_id")
+        old_path = f"shots[{old_id!r}].internal_timeline.output.fps"
+        new_path = f"shots[{new_id!r}].internal_timeline.output.fps"
+        old_source, new_source = before_sources.get(old_id), after_sources.get(new_id)
+        if (old_path in before_paths and new_path in after_paths
+                and isinstance(old_source, Mapping) and isinstance(new_source, Mapping)
+                and all(old_source.get(key) and old_source.get(key) == new_source.get(key)
+                        for key in ("shot_id", "revision_id", "internal_timeline_id",
+                                    "internal_timeline_revision_id", "internal_timeline_content_digest"))):
+            retained.add(old_path)
+    return retained
+
+
 def _fps_basis(bundle: Mapping[str, Any]) -> str:
     """Fingerprint authored rates and their physical clock owners, not timing edits."""
     config = bundle["parent"]["config"]
@@ -242,6 +267,8 @@ def _validate_fps(
         candidate, baseline, restoration_records, inverse_records)
         | _authenticated_deleted_shot_fps_removals(
             candidate, baseline, restoration_records, inverse_records))
+    if baseline is not None:
+        removed |= _shared_alias_fps_paths(baseline, candidate)
     if (baseline is not None
             and not _typed_fps_paths(baseline) <= (_typed_fps_paths(candidate) | removed)):
         _fail("candidate", "all authored fps declarations must retain their typed locations")
