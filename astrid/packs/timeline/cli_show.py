@@ -281,7 +281,7 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
     title = f"Timeline {data.get('timeline_id')} · project {parsed.project or data.get('project_id')} · {state}"
     if revision:
         title += f"\n  revision {revision}"
-    project = str(parsed.project or data.get("project_id"))
+    project = str(data.get("project_slug") or parsed.project or data.get("project_id"))
     timeline = str(parsed.ref or data.get("timeline_id"))
     show_base = ["python3", "-m", "astrid", "timelines", "show", timeline, "--project", project]
     source_args = (["--draft", str(parsed.draft)] if working_info is not None
@@ -375,10 +375,6 @@ def print_cut_table(parsed: argparse.Namespace, bundle_opener: Any) -> int:
     lines.append("one moment on screen: " + shlex.join(visual) + " --at SECONDS   ·   every N frames: --range A..B --every-frames N")
     lines.append("how one cut moves: " + shlex.join(visual + ["--view", "motion", "--cut", "N"])
                  + "   ·   lint: " + shlex.join(["python3", "-m", "astrid", "timelines", "lint", timeline, "--project", project]))
-    from astrid.packs.timeline.cli import _editing_navigation
-
-    edit = _editing_navigation(project=project, timeline=timeline)
-    lines.append(f"edit: {edit['commands']['checkout']}   (guide: {edit['guide']})")
     lines.append("per-track layer rows: --layers · SDK envelope (complete): --json")
     if provenance_target is not None and getattr(provenance_target, "clip", None) is not None:
         from astrid.sdk.timeline_views import render_asset_provenance

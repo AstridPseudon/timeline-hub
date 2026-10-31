@@ -15,65 +15,34 @@ convention, the stable exit codes, and the two operational families
 
 from __future__ import annotations
 
+import sys
+
 
 def _print_entrypoint_help() -> None:
     print(
-        """Astrid command gateway — Python SDK + CLI
+        f"""Astrid: make and edit video timelines with a human. The Runtime on this
+computer owns every project, timeline and media file.
 
-The canonical Python boundary is ``import astrid`` (see docs/reference/sdk.md).
-This gateway is the CLI entry point for the seven product families,
-workspace status, operational families (doctor, backup), and external tools.
+Start here:
+  astrid status                      Runtime, current project, recent timelines
+  astrid projects list               your projects (* = current)
+  astrid timelines list --recent     timelines, last edited first
+  astrid projects create SLUG --name NAME --select
+  astrid timelines create --name NAME          (in the current project)
 
-Usage:
-  python3 -m astrid <family> <command> [options]
-  python3 -m astrid help
+Edit and look (Python: {sys.executable}):
+  from astrid.sdk.timeline.api import Timeline
+  tl = Timeline.open("<project>", "<timeline>")
+  tl.commit(fn, label="…")           one commit = one undo
+  astrid timelines visualize <timeline>        composed frames, no render
 
-Product families:
-  python3 -m astrid projects ...
-  python3 -m astrid timelines ...
-  python3 -m astrid media ...
-  python3 -m astrid tasks ...
-  python3 -m astrid runs ...
-
-Timeline evidence:
-  python3 -m astrid timelines visualize --project PROJECT [--timeline-slug REF]
-      [--format FORMAT[,FORMAT...]] [--json]
-      (paired rendered filmstrip; use --range/--at/--shot to focus)
-
-Latest project render:
-  python3 -m astrid runs open [RUN_ID] [--project PROJECT] [--json]
-
-Operational families:
-  python3 -m astrid status [--json]
-  python3 -m astrid doctor [--json]
-  python3 -m astrid backup {create,restore,export,tombstone,recover,purge} [--json]
-  python3 -m astrid dev {status,promote,reclaim} [--ref REF] [--dry-run] [--json]
-  python3 -m astrid auth {login,status,logout,revoke}
-
-External tools:
-  python3 -m astrid hivemind search QUERY [--limit N] [--json]
-
-Nested mounts (manifest-owned):
-  python3 -m astrid timelines shots ...
-  python3 -m astrid media references ...
-
-Options:
-  --json      product commands print the five-key SDK envelope
-              (ok/data/error/receipt/idempotency_key); doctor emits its
-              diagnostic object; backup emits its runtime result object
-  -h, --help  show help
-
-Notes:
-  python3 -m astrid is the package entry point.
-  Use ``python3 -m astrid help`` for the full family census, kernel/pack
-  ownership, nested mounts, and stable exit codes.
-
-Ownership handoff:
-  Product commands connect to the selected runtime through the generated
-  client. Follow the typed next_action: it distinguishes a missing runtime
-  install from a runtime that only needs configuration or startup.
+Agent skill: astrid/SKILL.md; editing: packs/timeline/SKILL.md
+Families: projects timelines media tasks runs preferences documents
+          doctor backup   ·   `astrid <family> --help` for each
+If a command says the Runtime is unavailable: run the Astrid install line again.
 """
     )
+
 
 
 def _product_help_text() -> str:

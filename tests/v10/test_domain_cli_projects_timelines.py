@@ -2542,13 +2542,84 @@ def test_dispatch_timelines_shots_routes_through_product_dispatch(
     assert seen["args"] == ["timelines", "shots", "list", "--project", "demo"]
 
 
-def test_projects_list_default_matches_explicit_json(capsys) -> None:
+def test_projects_list_default_is_readable_and_json_remains_available(capsys) -> None:
     client = _FakeClient()
     assert _run("projects", ["list"], client=client) == 0
     default = capsys.readouterr().out
+    assert "Demo" in default and "demo" in default
     assert _run("projects", ["list", "--json"], client=client) == 0
-    assert default == capsys.readouterr().out
-    assert json.loads(default)["ok"] is True
+    assert json.loads(capsys.readouterr().out)["ok"] is True
+
+
+def test_projects_create_selects_only_when_requested_and_prints_next_step(capsys) -> None:
+    client = _FakeClient()
+    assert _run("projects", ["create", "demo", "--name", "Demo", "--select"], client=client) == 0
+    assert [name for name, _ in client.calls] == ["projects.create", "projects.select"]
+    output = capsys.readouterr().out
+    assert "Created project Demo (demo)" in output and "selected: yes" in output
+
+
+def test_first_run_timeline_journey_uses_selection_recent_history_and_project_list(real_runtime, tmp_path, capsys) -> None:
+    from astrid.sdk.client import AstridClient
+    from astrid.sdk.timeline import Timeline
+
+    daemon = real_runtime(authoring_profile="astrid")
+    with AstridClient.open(
+        endpoint=daemon.endpoint,
+        credential=daemon.credential_path,
+        realm_id=daemon.service.realm["id"],
+        actor_id="owner",
+        client_name="timeline-first-run-test",
+        client_version="1",
+        protocol_version="workspace.v1",
+    ) as client:
+        assert _run("projects", ["create", "first-run", "--name", "First Run", "--select", "--json"], client=client) == 0
+        assert json.loads(capsys.readouterr().out)["ok"] is True
+        assert _run("timelines", ["create", "--name", "Yesterday Cut", "--json"], client=client) == 0
+        created = json.loads(capsys.readouterr().out)
+        assert created["ok"] is True
+
+        clips = []
+        for index, color in enumerate(("red", "green", "blue"), 1):
+            clip = tmp_path / f"clip-{index}.png"
+            subprocess.run(
+                ["ffmpeg", "-v", "error", "-f", "lavfi", "-i", f"color=c={color}:s=16x16:r=1",
+                 "-frames:v", "1", "-threads", "1", str(clip)],
+                check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+            clips.append(clip)
+        timeline_id = created["data"]["timeline_id"]
+        timeline = Timeline.open("first-run", timeline_id, client=client, outbox_path=tmp_path / "timeline.json")
+        landed = timeline.commit(
+            lambda t: [t.add(clip, at=(index - 1) * 4, hold=4, track="V1", id="intro" if index == 1 else f"clip-{index}")
+                       for index, clip in enumerate(clips, 1)],
+            label="Add source clips",
+            key="first-run-add-clips",
+        )
+        assert landed["status"] in {"accepted", "merged"}
+
+        assert _run("timelines", ["list", "--recent", "--json"], client=client) == 0
+        recent = json.loads(capsys.readouterr().out)["data"]
+        assert recent[0]["timeline_id"] == timeline_id
+        assert recent[0]["project"] == "first-run"
+        assert _run("timelines", ["history", timeline_id, "--limit", "1", "--json"], client=client) == 0
+        assert json.loads(capsys.readouterr().out)["ok"] is True
+        tightened = timeline.commit(lambda t: t.clip("intro").hold_for(2), label="Tighten intro", key="first-run-tighten-intro")
+        assert tightened["status"] in {"accepted", "merged"}
+        assert _run("projects", ["list"], client=client) == 0
+        project_listing = capsys.readouterr().out
+        assert "* First Run  first-run  1" in project_listing
+
+
+def test_timelines_show_footer_omits_retired_effect_and_checkout_routes(monkeypatch, capsys) -> None:
+    from astrid.packs.timeline import cli, cli_show
+
+    monkeypatch.setattr(cli_show, "print_cut_table", lambda *_args: (print("cuts"), 0)[1])
+    parsed = SimpleNamespace(json=False)
+    assert cli._print_cut_table(parsed, None) == 0
+    output = capsys.readouterr().out
+    assert output == "cuts\n"
+    assert "astrid-tools" not in output and "timeline_document" not in output
 
 
 def test_timelines_render_review_is_public_admitted_input(capsys):

@@ -1,7 +1,7 @@
 ---
 name: "astrid"
 short_description: "Astrid — the file-based toolkit for making video, image, and audio art alongside a human."
-description: "Use for Astrid orientation: connect to the workspace runtime, find or open project work, choose the creative-work route, and use Hivemind for shared knowledge."
+description: "Use for anything in Astrid: make, find, open and edit video timelines; list projects; import media; generate images, video and audio."
 ---
 
 # Astrid
@@ -22,7 +22,7 @@ Choose the route by the requested result. Read only that route's guidance:
 | --- | --- |
 | Generate with the user's own ComfyUI: "my ComfyUI", "my saved workflow", local generation | [Run on your own ComfyUI](../../vibecomfy/docs/SKILL.md#run-on-your-own-comfyui) |
 | Find a project, inspect a run, or open a render | The CLI recipes below |
-| **Edit a timeline** (clips, timing, text, layout, effects), then publish and point the user to the editor (render only if asked) | [Timeline editing](../../rendering/docs/SKILL.md) |
+| **Edit a timeline** (clips, timing, text, layout, effects), then publish and point the user to the editor (render only if asked) | [Timeline editing](../../timeline/docs/SKILL.md) |
 | Generate images, video, or audio (including Foley); understand, assemble, compare, or publish work | [Creative work](creative-work/SKILL.md), then the relevant pack |
 | Reuse a character or other saved subject | [References](../../media/docs/references.md) |
 | Build your own reusable tool, workflow, or visual element | [Pack builder](pack-builder/SKILL.md) |
@@ -61,11 +61,19 @@ commands work from a terminal without changing PATH.
 
 ## Start here
 
-Timeline editing skill: `astrid/packs/rendering/docs/SKILL.md` (the `timeline` package is CLI code with no skill).
+Run Astrid commands and SDK scripts with the Python shown at the top of this
+synced skill. The Runtime owns all work; find it only through these commands.
 
-Before acting on a project from a terminal, run `python3 -m astrid projects current`.
-If no project is selected, ask the user which project to use. Always name the
-project in your reply.
+1. Run `astrid status` to see the Runtime, selected project and recent timelines.
+2. Find work with `astrid projects list` and `astrid timelines list --recent`.
+   If more than one timeline fits, ask the user and name the candidates. Never
+   guess from files. Switch projects with `astrid projects select <project>`.
+3. Start a project with `astrid projects create <slug> --name "<name>" --select`;
+   create its timeline with `astrid timelines create --name "<name>"`.
+4. Read [timeline editing](../../timeline/docs/SKILL.md) to edit and look.
+5. Name the project and timeline in your reply, with the editor link.
+
+If the Runtime is unavailable, run the Astrid install line again.
 
 ## Preferences and project documents
 
