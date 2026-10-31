@@ -5,7 +5,6 @@ import copy
 import hashlib
 import json
 import uuid
-from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
 
@@ -13,7 +12,7 @@ from . import clash
 from ._command_state import ABSENT, equal, present
 from ._commit_patch import canonical_site
 from ._doc_patch import value_at
-from .sync import _response
+from .sync import _response, _settle_pending
 from .outbox import Outbox
 
 
@@ -52,22 +51,10 @@ def _close(path, record, session, entry, how):
         saved = state.get("pending_changes", {}).get(record["id"]) if isinstance(state, dict) else None
         if saved is None:
             return record
-        if (saved.get("state") == "pending"
-                and saved.get("part", 0) == record.get("part", 0)
-                and receipt not in saved.get("receipts", [])):
-            index = saved.get("part", 0)
-            parts = saved.get("parts") or []
-            saved.setdefault("receipts", []).append(receipt)
-            if index + 1 < len(parts):
-                saved["part"] = index + 1
-                parts[index + 1]["base"] = copy.deepcopy(base)
+        if _settle_pending(saved, expected_part=record.get("part", 0), actor_id=actor,
+                           publication_id=publication, receipt_id=receipt, how=how, base=base):
+            if saved.get("state") == "pending":
                 saved["attempts"] = int(saved.get("attempts", 1))
-            else:
-                saved["state"] = "landed"
-                saved["closed_by"] = {"actor_id": actor,
-                                       "publication_id": publication, "how": how}
-            saved["rev"] = int(saved.get("rev", 0)) + 1
-            saved["updated_at"] = datetime.now(timezone.utc).isoformat()
             outbox.write(state)
         return copy.deepcopy(saved)
 
@@ -495,7 +482,7 @@ def commit_preview(timeline, result):
             imports=copy.deepcopy(part.get("imports", [])),
             expected_state=expected, base={"revision_id": request["base_revision_id"],
                                             "publication_id": request["base_publication_id"]},
-            pending_id=pending_id, pending_path=path, pending_how="retry")
+            pending_id=pending_id, pending_path=path, pending_part=current.get("part", 0), pending_how="retry")
         return timeline._accepted(submitted)
     except Exception as exc:
         # Timeline.commit() reconciles durable unknown outcomes on the next call.

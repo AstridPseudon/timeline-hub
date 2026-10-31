@@ -125,7 +125,8 @@ class FakeSession:
             from astrid.sdk.timeline.sync import _settle_pending
 
             record = self.state["pending_changes"][pending_id]
-            _settle_pending(record, actor_id=self.identity["actor_id"],
+            _settle_pending(record, expected_part=kwargs.get("pending_part", record.get("part", 0)),
+                            actor_id=self.identity["actor_id"],
                             publication_id="pub-accepted", how=kwargs["pending_how"],
                             base=HEAD)
         return {"status": "accepted", "receipt": {"receipt_id": "pub-accepted"}}
@@ -761,6 +762,50 @@ def test_close_ignores_stale_part_after_another_actor_advances_record(tmp_path):
     assert saved == before
 
 
+@pytest.mark.parametrize("part", [0, 1])
+def test_legacy_ack_without_pending_part_leaves_record_for_history_recovery(
+    monkeypatch, tmp_path, part,
+):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    if part:
+        saved["parts"].append(copy.deepcopy(saved["parts"][0]))
+        saved["part"] = 1
+        saved["receipts"] = ["pub-prior"]
+        saved["parts"][1]["base"] = {"revision_id": "r3", "publication_id": "pub-prior"}
+    before = copy.deepcopy(saved)
+
+    # Older durable flights have no pending_part, so their ack cannot identify
+    # which saved part it belongs to. Leave recovery to commit history.
+    from astrid.sdk.timeline.sync import _settle_pending
+
+    legacy_flight = {"pending_id": "pc_saved"}
+    assert not _settle_pending(
+        saved, expected_part=legacy_flight.get("pending_part"), actor_id="actor-1",
+        publication_id="pub-accepted", how="retry", base=HEAD,
+    )
+    assert saved == before
+
+    entries = [
+        {"group_id": "pc_saved", "publication_id": "pub-prior", "revision_id": "r3",
+         "publisher": "actor-1", "receipt": {"receipt_id": "pub-prior"}},
+        {"group_id": "pc_saved", "publication_id": "pub-accepted", "revision_id": "r4",
+         "publisher": "actor-1", "receipt": {"receipt_id": "pub-accepted"}},
+    ] if part else [
+        {"group_id": "pc_saved", "publication_id": "pub-accepted", "revision_id": "r3",
+         "publisher": "actor-1", "receipt": {"receipt_id": "pub-accepted"}},
+    ]
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, entries))
+
+    result = retry_module.retry(timeline, "pc_saved")
+
+    recovered = timeline.session.state["pending_changes"]["pc_saved"]
+    assert result["status"] == "landed"
+    assert recovered["state"] == "landed"
+    assert recovered["receipts"] == [*before.get("receipts", []), "pub-accepted"]
+    assert recovered["closed_by"]["publication_id"] == "pub-accepted"
+
+
 def test_multi_part_preview_ack_advances_without_closing(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     record = timeline.session.state["pending_changes"]["pc_saved"]
@@ -975,7 +1020,8 @@ def test_refused_function_retry_recovers_saved_suffix_once_in_receipt_order(monk
         publication = publications[index]
         base = {"revision_id": f"r{index + 3}", "publication_id": publication}
         timeline.session.state["base"] = base
-        _settle_pending(saved, actor_id="actor-1", publication_id=publication,
+        _settle_pending(saved, expected_part=kwargs.get("pending_part", saved.get("part", 0)),
+                        actor_id="actor-1", publication_id=publication,
                         how=kwargs["pending_how"], base=base)
         return accepted[index]
 
