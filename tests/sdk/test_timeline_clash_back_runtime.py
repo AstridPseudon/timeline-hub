@@ -1205,6 +1205,143 @@ def test_runtime_multipart_conflict_retries_prefix_and_suffix_across_reopens(
     assert reopened.clip("multipart-target").at == pytest.approx(7)
 
 
+def test_cross_actor_history_recovers_saved_part_during_delayed_ack(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, _client, project, setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "cross-actor-part-data"))
+
+    import threading
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+    from astrid_runtime_client import ApiError
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    source = _media_file(tmp_path / "cross-actor-part.png")
+    setup.commit(
+        lambda t: t.add(source, at=0, hold=3, track="V1", id="cross-actor-target"),
+        label="Seed cross actor target", key="cross-actor-seed",
+    )
+    _, owner_credential = daemon.credentials.provision("cross-actor-owner", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    _, recovery_credential = daemon.credentials.provision("cross-actor-recovery", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    owner_client = open_client(daemon, actor="cross-actor-owner", credential=owner_credential)
+    recovery_client = open_client(
+        daemon, actor="cross-actor-recovery", credential=recovery_credential,
+    )
+    owner = Timeline.open(project, "film", client=owner_client)
+    recovery = Timeline.open(project, "film", client=recovery_client)
+
+    entered, release = threading.Event(), threading.Event()
+    generated = owner_client._remote._transport._generated
+    original = generated.commit_timeline
+
+    def conflict_after_suffix(project_id, timeline_id, body, **kwargs):
+        entered.set()
+        if not release.wait(timeout=60):
+            raise TimeoutError("saved suffix was not queued before the conflict")
+        raise ApiError(409, "conflict", "simulated retryable conflict", details={
+            "status": "conflict", "reason": "injected_conflict",
+            "conflicts": [], "current": dict(owner.head),
+        })
+
+    monkeypatch.setattr(generated, "commit_timeline", conflict_after_suffix)
+    prefix = owner.session.queue_move("parent/clip:cross-actor-target", 5)
+    outcomes = []
+
+    def save_multipart_record():
+        try:
+            owner.session.commit(prefix, idempotency_key="cross-actor-prefix", label="Cross actor edit")
+        except Exception as exc:
+            outcomes.append(exc)
+
+    worker = threading.Thread(target=save_multipart_record)
+    worker.start()
+    try:
+        assert entered.wait(timeout=60), "part 0 did not reach the simulated conflict barrier"
+        suffix_owner = Timeline.open(project, "film", client=owner_client,
+                                     outbox_path=owner.session.outbox.path)
+        suffix = suffix_owner.session.queue_move("parent/clip:cross-actor-target", 7)
+    finally:
+        release.set()
+        worker.join(timeout=60)
+    assert not worker.is_alive(), "part 0 did not finish saving the dependent suffix"
+    assert len(outcomes) == 1 and isinstance(outcomes[0], CommitConflict), outcomes
+    pending_id = outcomes[0].pending_id
+    assert pending_id
+    saved = owner.pending_show(pending_id)
+    assert [part["commands"] for part in saved["parts"]] == [[prefix], [suffix]]
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    preview = owner.retry(pending_id)
+    assert preview["status"] == "preview"
+
+    ack_entered, release_ack = threading.Event(), threading.Event()
+    sent_parts = []
+
+    def accept_then_delay_ack(project_id, timeline_id, body, **kwargs):
+        sent_parts.append(copy.deepcopy(body["commands"]))
+        result = original(project_id, timeline_id, body, **kwargs)
+        if body["commands"] == [prefix]:
+            ack_entered.set()
+            if not release_ack.wait(timeout=60):
+                raise TimeoutError("history recovery did not release part 0 acknowledgement")
+        return result
+
+    monkeypatch.setattr(generated, "commit_timeline", accept_then_delay_ack)
+    owner_results = []
+
+    def send_part_zero():
+        try:
+            owner_results.append(owner.commit(preview))
+        except Exception as exc:
+            owner_results.append(exc)
+
+    delayed = threading.Thread(target=send_part_zero)
+    delayed.start()
+    try:
+        assert ack_entered.wait(timeout=60), "Runtime did not accept part 0 before the delayed ack"
+        recovered_part = recovery.retry(pending_id)
+        assert recovered_part["status"] == "part_landed", recovered_part
+        assert recovered_part["record"]["part"] == 1
+        assert len(recovered_part["record"]["receipts"]) == 1
+        assert len(set(recovered_part["record"]["receipts"])) == 1
+    finally:
+        release_ack.set()
+        delayed.join(timeout=60)
+    assert not delayed.is_alive(), "delayed part 0 acknowledgement did not finish"
+    assert len(owner_results) == 1 and isinstance(owner_results[0], dict), owner_results
+
+    after_ack = recovery.pending_show(pending_id)
+    assert after_ack["part"] == 1
+    assert len(after_ack["receipts"]) == 1
+    assert len(set(after_ack["receipts"])) == 1
+
+    suffix_preview = recovery.retry(pending_id)
+    assert suffix_preview["status"] == "preview"
+    recovery_generated = recovery_client._remote._transport._generated
+    recovery_commit = recovery_generated.commit_timeline
+
+    def count_recovery_suffix(project_id, timeline_id, body, **kwargs):
+        sent_parts.append(copy.deepcopy(body["commands"]))
+        return recovery_commit(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(recovery_generated, "commit_timeline", count_recovery_suffix)
+    suffix_result = recovery.commit(suffix_preview)
+    assert suffix_result["status"] in {"accepted", "merged", "landed"}
+    final = recovery.pending_show(pending_id)
+    assert final["state"] == "landed"
+    assert len(final["receipts"]) == 2
+    assert len(set(final["receipts"])) == 2
+    assert sent_parts.count([suffix]) == 1
+    assert recovery.clip("cross-actor-target").at == pytest.approx(7)
+
+
 def test_same_actor_default_outbox_recovers_captured_reviewed_list_after_process_exit(
     editing_case, tmp_path, monkeypatch,
 ):
