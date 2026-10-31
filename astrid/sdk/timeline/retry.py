@@ -120,7 +120,7 @@ def _part(record):
     return parts[index]
 
 
-def _refresh_function_base(timeline, record):
+def _refresh_function_base(timeline, record, *, overwrite=False):
     """Move an exhausted function retry's empty outbox to a verified head."""
     session = timeline.session
     with session.outbox.locked():
@@ -134,6 +134,8 @@ def _refresh_function_base(timeline, record):
         state["base"] = _pin(head)
         state.pop("conflict", None)
         state.pop("evaluation", None)
+        if overwrite:
+            state["evaluation"] = {"retry_overwrite": True}
         session.outbox.write(state)
     return True
 
@@ -267,13 +269,9 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
     if record.get("state") == "landed":
         return _landed(timeline, path, record)
     if fn is not None:
-        refreshed = _refresh_function_base(timeline, record)
-        part = _part(record)
-        original_base = None if overwrite else _pin(part["base"])
-        options = part.get("commit_options") or {}
+        refreshed = _refresh_function_base(timeline, record, overwrite=overwrite)
         result = timeline.commit(fn, label=record.get("label"), key=record.get("key"),
-                                 pending=record["id"], reads=options.get("reads"),
-                                 _function_base=original_base)
+                                 pending=record["id"])
         receipt = result.get("receipt") if isinstance(result, dict) else None
         receipt_id = receipt.get("receipt_id") if isinstance(receipt, dict) else None
         if refreshed and receipt_id and result.get("status") in {"accepted", "merged", "rebased"}:

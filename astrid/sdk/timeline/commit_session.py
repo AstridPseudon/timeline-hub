@@ -553,7 +553,25 @@ class Timeline(Checkout):
             state = self.session._state()
         evaluation = state.get("evaluation") or {}
         count = evaluation.get("count", 0)
-        original_base = _pin(_function_base or evaluation.get("original_base") or state["base"])
+        retry_function_base = None
+        retry_function_reads = None
+        if function and pending_id is not None:
+            actors = "self" if getattr(self.session, "_explicit_outbox", False) else "all"
+            pending_record = next(
+                (record for path, record in self._pending_records_with_paths(actors)
+                 if record.get("id") == pending_id and str(path) == pending_path), None)
+            if pending_record is not None:
+                parts = pending_record.get("parts") or []
+                part_index = pending_record.get("part", 0)
+                if type(part_index) is int and 0 <= part_index < len(parts):
+                    retry_part = parts[part_index]
+                    if not evaluation.get("retry_overwrite"):
+                        retry_function_base = retry_part.get("base")
+                    retry_function_reads = (retry_part.get("commit_options") or {}).get("reads")
+        if function and reads is None and retry_function_reads is not None:
+            reads = copy.deepcopy(retry_function_reads)
+        original_base = _pin(_function_base or retry_function_base
+                             or evaluation.get("original_base") or state["base"])
         if function and state["flight"] is not None and evaluation.get("kind") == "function":
             flight = state["flight"]
             logical_key = flight.get("logical_key", flight["key"] if flight.get("explicit_key") else None)
@@ -618,7 +636,8 @@ class Timeline(Checkout):
                 raise TimelineEditError("no pending timeline edits")
             steps = copy.deepcopy(working._steps)
             effective_merge = merge
-            rerun = bool(function and (count > 1 or _function_base is not None))
+            rerun = bool(function and (count > 1 or _function_base is not None
+                                       or retry_function_base is not None))
             if rerun:
                 effective_merge = "fields"
             elif reads is None and (function or working._free_edits
