@@ -36,7 +36,7 @@ def snapshot(state, flight, failure):
             "key": logical_key or "clash-" + uuid.uuid4().hex[:12], "key_generated": generated,
             "label": body.get("label") or "Timeline edit",
             "origin": "function" if isinstance(evaluation, dict) and evaluation.get("kind") == "function" else "list",
-            "parts": parts, "part": 0, "failure": copy.deepcopy(failure),
+            "parts": parts, "part": 0, "flight": copy.deepcopy(flight), "failure": copy.deepcopy(failure),
             "head": copy.deepcopy(details.get("current")), "diff": None, "attempts": 1,
             "receipts": [], "closed_by": None, "versions": [],
             "created_at": now, "updated_at": now, "dropped_reason": None}
