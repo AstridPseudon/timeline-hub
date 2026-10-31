@@ -24,6 +24,7 @@ from astrid.sdk.timeline_restructure import (
     walls_of,
 )
 from tests.editing_conformance import test_commit_runtime_source_copy
+from tests.timeline.test_audio_import_runtime import realm, session_for  # noqa: F401
 
 saved_source = test_commit_runtime_source_copy.saved_source
 
@@ -1158,6 +1159,82 @@ def test_friendly_duplicate_reports_setup_and_copy_receipt_with_complete_fresh_m
     for source_shot, copy_shot in shot_map.items():
         assert copied_content['shots'][copy_shot]['internal_timeline']['clips'] == source_content['shots'][source_shot]['internal_timeline']['clips']
     assert document('t') == original
+
+
+def test_friendly_duplicate_adopts_imported_media_on_a_clean_timeline(realm, tmp_path):
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    from astrid.sdk.contracts import DomainResult
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from astrid.sdk.timeline.commit_session import Timeline
+
+    service, writer, candidate = realm
+    project = candidate['project_id']
+    source_id = 'imported-source'
+    service.create_timeline(project, source_id, idempotency_key='create-imported-source')
+    session = session_for(service, writer, candidate, tmp_path / 'fixture-outbox.json')
+
+    def head_for(project_id, timeline_id):
+        return writer.list_timeline_commits(project_id, timeline_id)['head']
+
+    def open_composition(project_id, timeline_id):
+        head = head_for(project_id, timeline_id)
+        return DomainResult.success({'native_inspection': {'project_id': project_id, 'timeline_id': timeline_id},
+                                     'summary': {'head_revision_id': head['revision_id']}})
+
+    def open_bundle(project_id, timeline_id, *, revision_id=None, publication_id=None):
+        head = head_for(project_id, timeline_id)
+        document = service._timeline_commits()[0].revision_closure(
+            project_id, timeline_id, revision_id or head['revision_id'])
+        bundle = bundle_from_document(document)
+        bundle['base_parent']['publication_id'] = publication_id or head['publication_id']
+        return DomainResult.success({'bundle': bundle})
+
+    session.client.timelines.open_composition = open_composition
+    session.client.timelines.open_bundle = open_bundle
+
+    def create_empty(**kw):
+        service.create_timeline(project, kw['timeline_id'], idempotency_key=kw['idempotency_key'])
+        return SimpleNamespace(ok=True, data={'timeline_id': kw['timeline_id']}, receipt=None)
+
+    session.client.timelines.create_empty = create_empty
+    source = Timeline.open(project, source_id, client=session.client,
+                           outbox_path=tmp_path / 'imported-source-outbox.json')
+    image = Path(__file__).resolve().parents[1] / 'fixtures' / 'storyboard-assets' / 'open.png'
+    source.commit(lambda timeline: timeline.add(image, at=0, hold=1, id='opening'), label='Import PNG')
+
+    duplicate = source.duplicate(as_='variant-a')
+    copied = Timeline.open(project, 'variant-a', client=session.client,
+                           outbox_path=tmp_path / 'variant-outbox.json')
+
+    assert duplicate['timeline_id'] == 'variant-a'
+    clip = next(clip for clip in copied.clips() if clip.id == 'opening')
+    assert clip.asset in copied._registry(clip.shot_id)
+    from astrid.core.timeline.parent_registry import effective_parent_registry
+
+    source_assets = effective_parent_registry(source.bundle['parent'])['assets']
+    assert copied._registry(clip.shot_id)[clip.asset]['media_id'] == source_assets[clip.asset]['media_id']
+
+
+def test_duplicate_adopts_parent_asset_aliases_used_by_child_clips():
+    from astrid.sdk.timeline_duplicate import copy_content
+
+    source = flat_film()
+    asset_id = 'media-imported-png'
+    media_id = 'sha256:' + 'a' * 64
+    source['parent']['registry'] = {'assets': {asset_id: {'media_id': media_id, 'type': 'image'}}}
+    source['shots']['film']['internal_timeline']['clips'].append({
+        'id': 'imported-png', 'clipType': 'image', 'track': 'plate', 'asset': asset_id,
+        'at': 0, 'from': 0, 'to': 1, 'hold': 1, 'params': {},
+    })
+
+    duplicate, _notes = copy_content(source, source, new_slug='copy')
+    copied_shot = next(iter(duplicate['shots'].values()))
+
+    assert asset_id not in source['shots']['film']['internal_timeline']['registry']['assets']
+    assert copied_shot['internal_timeline']['registry']['assets'][asset_id] == {
+        'media_id': media_id, 'type': 'image'}
 
 
 def test_retime_gives_each_occurrence_of_a_repeated_cut_its_own_timing(saved_source):
