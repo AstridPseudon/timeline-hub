@@ -975,18 +975,26 @@ def test_e14_function_lost_fallback_previews_then_merges_disjoint_edit(
     assert preview["pending_id"] == caught.value.pending_id
     assert len(evaluations) == 3
 
-    # This edit lands after preview. The saved list is fields-mergeable with it.
+    # The callable read parent.name, so a change after preview invalidates its result.
     late_peer_edit = peer.commit(
         lambda t: t.bundle["parent"].update({"name": "Peer edit after preview"}),
         label="Peer edit after preview",
         key="e14-fallback-peer-after-preview",
     )
     assert late_peer_edit["receipt"]["receipt_id"]
-    merged = reopened.commit(preview)
-    assert merged["data"]["status"] == "merged"
-    assert merged["receipt"]["receipt_id"]
-    assert reopened.bundle["parent"]["name"] == "Peer edit after preview"
-    assert reopened.bundle["parent"]["custom"] == {"function_edit": True}
+    history_after_peer = _history(client, project)
+    with pytest.raises(CommitConflict) as late_conflict:
+        reopened.commit(preview)
+    assert late_conflict.value.pending_id == caught.value.pending_id
+    saved = reopened.pending_list()
+    assert any(record["id"] == caught.value.pending_id and record["state"] == "pending"
+               for record in saved)
+    current = type(timeline).open(
+        project, "film", client=client, outbox_path=tmp_path / "fallback-current.json"
+    )
+    assert current.bundle["parent"]["name"] == "Peer edit after preview"
+    assert current.bundle["parent"].get("custom") != {"function_edit": True}
+    assert len(_history(client, project)) == len(history_after_peer)
     assert len(evaluations) == 3
 
 
