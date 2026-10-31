@@ -1382,6 +1382,98 @@ def test_runtime_multipart_conflict_retries_prefix_and_suffix_across_reopens(
     assert reopened.clip("multipart-target").at == pytest.approx(7)
 
 
+def test_runtime_function_multipart_retry_lands_prefix_then_closes_suffix(
+    editing_case, tmp_path, monkeypatch,
+):
+    _daemon, client, project, setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "function-multipart-data"))
+
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitRefused
+    from astrid_runtime_client import ApiError
+
+    source = _media_file(tmp_path / "function-multipart-target.png")
+    setup.commit(
+        lambda t: [
+            t.add(source, at=0, hold=3, track="V1", id="function-multipart-target"),
+            t.add(source, at=10, hold=3, track="V1", id="function-multipart-suffix"),
+        ],
+        label="Seed function multipart target", key="function-multipart-seed",
+    )
+    timeline = Timeline.open(project, "film", client=client)
+    suffix_owner = Timeline.open(project, "film", client=client)
+    assert timeline.session.outbox.path == suffix_owner.session.outbox.path
+    original_base = dict(timeline.head)
+
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+
+    def refuse_initial_function(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "Function multipart edit":
+            raise ApiError(422, "invalid_records", "save function multipart retry", details={
+                "status": "refused", "reason": "invalid_records", "current": dict(timeline.head),
+            })
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", refuse_initial_function)
+
+    def edit(working):
+        working.move("parent/clip:function-multipart-target", on=5)
+
+    with pytest.raises(CommitRefused) as caught:
+        timeline.commit(edit, label="Function multipart edit", key="function-multipart-key")
+
+    pending_id = caught.value.pending_id
+    assert pending_id
+    saved = timeline.pending_show(pending_id)
+    assert saved["origin"] == "function"
+    assert saved["parts"][0]["base"] == original_base
+
+    suffix_commands = suffix_owner.session.queue_move("parent/clip:function-multipart-suffix", 7)
+    with suffix_owner.session.outbox.locked():
+        state = suffix_owner.session._state()
+        state["pending"] = []
+        suffix = copy.deepcopy(saved["parts"][0])
+        suffix["base"] = original_base
+        suffix["commands"] = [suffix_commands]
+        suffix["commit_options"] = {
+            "label": "Function multipart suffix",
+            "steps": [{
+                "id": "function-suffix", "label": "Function multipart suffix",
+                "intent": "Move the target to 7", "tags": [], "command_ordinals": [0],
+                "patch": [], "reads": [],
+            }],
+            "merge": "fields",
+        }
+        state["pending_changes"][pending_id]["parts"].append(suffix)
+        suffix_owner.session.outbox.write(state)
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    reopened = Timeline.open(project, "film", client=client)
+    prefix = reopened.retry(pending_id, fn=edit)
+    assert prefix["status"] == "part_landed"
+    assert prefix["next"] == f"tl.retry({pending_id!r})"
+    assert prefix["next"]
+    after_prefix = reopened.pending_show(pending_id)
+    assert after_prefix["state"] == "pending"
+    assert after_prefix["part"] == 1
+    assert len(after_prefix["receipts"]) == 1
+    assert after_prefix["parts"][1]["commands"] == [suffix_commands]
+    assert reopened.clip("function-multipart-target").at == pytest.approx(5)
+
+    suffix_preview = reopened.retry(pending_id)
+    assert suffix_preview["status"] == "preview"
+    assert suffix_preview["data"]["commands"] == [suffix_commands]
+    suffix_result = reopened.commit(suffix_preview)
+    assert suffix_result["status"] in {"accepted", "merged", "landed"}
+    final = reopened.pending_show(pending_id)
+    assert final["state"] == "landed"
+    assert len(final["receipts"]) == 2
+    assert len(set(final["receipts"])) == 2
+    assert reopened.clip("function-multipart-target").at == pytest.approx(5)
+    assert reopened.clip("function-multipart-suffix").at == pytest.approx(7)
+
+
 def test_runtime_part_advance_clears_predecessor_conflict_before_same_value_suffix(
     editing_case, tmp_path, monkeypatch,
 ):
