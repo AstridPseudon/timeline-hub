@@ -267,9 +267,10 @@ def _retry_conflict(record, replacement):
     if record is None or record.get("state") != "pending":
         return
     record.setdefault("versions", []).append({key: copy.deepcopy(record.get(key))
-                                               for key in ("failure", "head", "diff", "attempts")})
+                                               for key in ("failure", "head", "diff", "attempts", "flight")})
     record["attempts"] = int(record.get("attempts", 0)) + 1
     record["failure"] = replacement["failure"]
+    record["flight"] = copy.deepcopy(replacement.get("flight"))
     record["head"] = replacement["head"]
     record["diff"] = None
     record.pop("clash", None)
