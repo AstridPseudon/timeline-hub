@@ -290,6 +290,29 @@ def test_conflict_reevaluation_keeps_logical_key_and_uses_fresh_wire_key(connect
     assert session.resolve_acknowledged("logical-key")["receipt"] == result["receipt"]
 
 
+def test_fresh_timeline_open_after_clash_observes_runtime_head(connected, tmp_path):
+    from astrid.sdk import timeline
+
+    client, generated, path = connected
+    stale = timeline.open("project-slug", "timeline-slug", client=client, outbox_path=path)
+    peer_path = tmp_path / "peer-outbox.json"
+    peer = timeline.open("project-slug", "timeline-slug", client=client,
+                         outbox_path=peer_path)
+    generated.path = peer_path
+    peer.session.move("parent/clip:a", 2)
+    generated.path = path
+
+    with pytest.raises(CommitConflict):
+        stale.session.move("parent/clip:a", 4)
+
+    assert generated.head == {"revision_id": "r1", "publication_id": "pub1"}
+    reopened = timeline.open("project-slug", "timeline-slug", client=client, outbox_path=path)
+
+    assert reopened.session._state()["base"] == generated.head
+    assert reopened._basis == generated.head
+    assert client.bundle_reads[-1] == ("r1", "pub1")
+
+
 def test_conflict_attempt_unknown_outcome_replays_exact_wire_request_after_reopen(connected):
     session = open_session(connected)
     _, generated, path = connected

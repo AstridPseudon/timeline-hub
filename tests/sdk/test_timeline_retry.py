@@ -252,7 +252,7 @@ def test_function_record_probe_preserves_original_base_and_guards(monkeypatch, t
     )
 
 
-def test_function_fallback_removes_marked_synthetic_scope_without_mutating_saved_record(tmp_path):
+def test_function_retry_preserves_synthetic_scope_and_saved_record(tmp_path):
     record = _record()
     part = record["parts"][0]
     part["evaluation"] = {"kind": "function", "synthetic_function_scope": True}
@@ -269,13 +269,13 @@ def test_function_fallback_removes_marked_synthetic_scope_without_mutating_saved
 
     assert request["base_revision_id"] == BASE["revision_id"]
     assert request["base_publication_id"] == BASE["publication_id"]
-    assert request["merge"] == "fields"
-    assert request["reads"] == []
-    assert request["steps"] == [{"id": "s1"}, {"id": "s2"}]
+    assert request["merge"] == "atomic"
+    assert "reads" not in request
+    assert request["steps"] == part["commit_options"]["steps"]
     assert record == before
 
 
-def test_function_fallback_removes_only_sdk_added_step_read(tmp_path):
+def test_function_retry_preserves_all_step_reads_and_omits_batch_reads(tmp_path):
     record = _record()
     part = record["parts"][0]
     caller_read = {"kind": "scope", "ref": "clip:a", "path": ["start"]}
@@ -288,12 +288,14 @@ def test_function_fallback_removes_only_sdk_added_step_read(tmp_path):
             {"id": "s2", "reads": [synthetic_scope]},
         ],
     }
+    before = copy.deepcopy(record)
 
     request = retry_module._request(record, part)
 
-    assert request["merge"] == "fields"
-    assert request["reads"] == []
-    assert request["steps"] == [{"id": "s1", "reads": [caller_read]}, {"id": "s2"}]
+    assert request["merge"] == "atomic"
+    assert "reads" not in request
+    assert request["steps"] == part["commit_options"]["steps"]
+    assert record == before
 
 
 def test_function_retry_preserves_caller_reads_and_explicit_atomic(tmp_path):
@@ -378,6 +380,31 @@ def test_probe_reads_conflict_preview_before_generated_dto_rejects_it(tmp_path):
     assert result["would_status"] == "conflict"
     assert captured["method"] == "POST"
     assert captured["path"] == "/v1/projects/project/timelines/timeline/commit"
+
+
+def test_saved_function_reads_turn_stale_retry_preview_into_rederive(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    part = record["parts"][0]
+    dependency = {"kind": "scope", "ref": "timeline", "path": ["clips"]}
+    part["evaluation"] = {"kind": "function", "count": 1}
+    part["commit_options"]["reads"] = [dependency]
+    requests = []
+
+    def probe(session, request):
+        requests.append(copy.deepcopy(request))
+        assert request["reads"] == [dependency]
+        return {"would_status": "conflict", "details": {"conflicts": [dependency]}}
+
+    monkeypatch.setattr(retry_module, "_probe", probe)
+    monkeypatch.setattr(retry_module, "_preview_diff",
+                        lambda *args: pytest.fail("a stale function result must not be previewed as safe"))
+    monkeypatch.setattr(retry_module.clash, "explain", lambda *args: {"receipts": []})
+
+    result = retry_module.retry(timeline, "pc_saved")
+
+    assert requests[0]["reads"] == [dependency]
+    assert result["status"] == "re_derive"
 
 
 def test_atomic_probe_omits_unset_reads(monkeypatch, tmp_path):
