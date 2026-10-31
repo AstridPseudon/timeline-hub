@@ -174,6 +174,79 @@ def test_same_value_reviewed_list_recovers_through_shared_outbox_cli(
     assert Timeline.open(project, "film", client=client).pending_show(pending_id)["state"] == "landed"
 
 
+def test_function_commit_uses_head_advanced_by_same_actor_default_outbox(
+    editing_case, tmp_path, monkeypatch,
+):
+    _daemon, client, project, _setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "shared-function-data"))
+
+    from astrid.sdk.timeline import Timeline
+
+    stale = Timeline.open(project, "film", client=client)
+    peer = Timeline.open(project, "film", client=client)
+    assert stale.session.outbox.path == peer.session.outbox.path
+    assert stale.head == peer.head
+
+    peer_result = peer.commit(
+        lambda t: t.bundle["parent"].update({"name": "same-actor peer edit"}),
+        label="Same actor peer edit", key="shared-function-peer",
+    )
+    assert peer_result["status"] in {"accepted", "merged", "landed"}
+
+    observed_names = []
+
+    def edit_on_head(t):
+        observed_names.append(t.bundle["parent"]["name"])
+        t.bundle["parent"]["custom"] = {"function_saw_peer_head": True}
+
+    landed = stale.commit(
+        edit_on_head, label="Function after shared outbox advance",
+        key="shared-function-after-peer", reads=[],
+    )
+
+    assert landed["status"] in {"accepted", "merged", "landed"}
+    assert observed_names == ["same-actor peer edit"]
+    assert stale.bundle["parent"]["name"] == "same-actor peer edit"
+    assert stale.bundle["parent"]["custom"] == {"function_saw_peer_head": True}
+    assert stale.pending_list() == []
+
+
+def test_function_commit_keeps_overlap_as_pending_clash_after_shared_outbox_advance(
+    editing_case, tmp_path, monkeypatch,
+):
+    _daemon, client, project, _setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "shared-overlap-data"))
+
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    stale = Timeline.open(project, "film", client=client)
+    peer = Timeline.open(project, "film", client=client)
+    peer.commit(
+        lambda t: t.bundle["parent"].update({"name": "peer owns this field"}),
+        label="Same actor overlapping peer edit", key="shared-overlap-peer",
+    )
+
+    evaluations = []
+
+    def overlapping_edit(t):
+        evaluations.append(t.bundle["parent"]["name"])
+        t.bundle["parent"]["name"] = "function overwrites peer"
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(
+            overlapping_edit, label="Overlapping function after shared outbox advance",
+            key="shared-overlap-function", reads=[],
+        )
+
+    assert evaluations == ["peer owns this field"]
+    assert caught.value.failure["details"]["reason"] == "intervening_write"
+    assert caught.value.pending_id
+    saved = stale.pending_show(caught.value.pending_id)
+    assert saved["state"] == "pending"
+    assert peer.bundle["parent"]["name"] == "peer owns this field"
+
+
 def test_pending_rederive_lost_reply_replays_exact_commit_once(editing_case, tmp_path, monkeypatch):
     daemon, client, project, timeline = editing_case
     from astrid.sdk.timeline import Timeline
