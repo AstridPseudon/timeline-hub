@@ -132,6 +132,21 @@ tl.undo(publications=[receipt_id], idempotency_key="undo-42")
 tl = Checkout.draft(P, TL)   tl.find("the conclusion")  tl.time('end of c30')  tl.words()
 tl.check().brief()  tl.changes()
 ```
+When a commit raises `CommitConflict`, call `tl.retry(err)` only if
+`err.pending_id` is set. A function retry may commit after re-running, or return
+a preview for approval. A reviewed list that still applies returns a preview;
+one that still clashes returns `re_derive` because lists already merge
+disjoint fields. Commit only a `preview`; re-run the function that produced a
+`re_derive` result on a fresh `Timeline.open`, preview it, then commit the new
+commands with `idempotency_key=` and `pending=<saved id>`. A conflict without a
+pending id (for example, an idempotency mismatch or a Runtime refusal) has no
+saved edit and cannot be retried with `tl.retry`.
+
+For CLI recovery, use `astrid timelines pending list TL --project P`, then
+`astrid timelines pending show TL ID --project P`. Run the printed
+`astrid timelines retry TL ID --project P` command; if it returns a preview,
+use the printed `--commit TOKEN` command. Re-deriving requires Python.
+
 `on`/`until` a word mean its START (`after "word"` = its end); `until c30b` = when c30b STARTS; `until end of c30`
 ends with that cut. Clip methods return the clip, so they chain: `tl.clip("c30.cover").on('"x"').hold_for(1.2)`.
 `on(33.9)` with a plain number is timeline seconds; on a clip in a cut it is stored as an offset from that cut's start (`+0.8s`, `+2f`), so it moves with the cut.
@@ -166,7 +181,7 @@ film; `plays-on` (`--music plays-on`, Python `music="plays_on"`) leaves it whole
 before the film (the re-flow report then says `music: the bed ends at …`). Fix that with `for` in the `sound` section.
 
 The native session never overwrites a change published after its original
-capture: Runtime rebases disjoint commands and refuses real clashes. Its outbox
+capture: Runtime applies disjoint commands to the current head and refuses real clashes. Its outbox
 keeps the original request and identity across retries. Commit an explicit
 candidate for detached edits; do not use two writers on one draft as a
 substitute for Runtime's guarded commands.

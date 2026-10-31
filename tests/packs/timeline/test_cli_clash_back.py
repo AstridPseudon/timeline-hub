@@ -67,6 +67,32 @@ def test_pending_show_emits_saved_clash_packet_json(monkeypatch, capsys):
     assert data["clash"]["summary"] == "Saved"
 
 
+def test_pending_human_output_summarizes_records_and_recovery(monkeypatch, capsys):
+    timeline = _Timeline()
+    timeline.records = [{
+        "id": "pc-one", "state": "pending", "origin": "function", "label": "Recut",
+        "attempts": 2, "failure": {"details": {"reason": "clip hold changed"}},
+    }]
+    monkeypatch.setattr(cli_pending, "_open", lambda parsed: timeline)
+    parsed = _parse(_Client(), ["pending", "list", "film", "--project", "p"])
+
+    assert parsed.handler(parsed) == 0
+    output = capsys.readouterr().out
+    assert "pc-one  pending  function  2  Recut  clip hold changed" in output
+    assert "astrid timelines pending show film <id> --project p" in output
+
+    timeline.pending_show = lambda ref: {
+        **timeline.records[0], "id": ref, "diff": {"changes": [{"path": "clip/a/hold"}]},
+        "clash": {"summary": "Saved"},
+    }
+    parsed = _parse(_Client(), ["pending", "show", "film", "pc-one", "--project", "p"])
+    assert parsed.handler(parsed) == 0
+    output = capsys.readouterr().out
+    assert "summary: Saved" in output
+    assert '"path": "clip/a/hold"' in output
+    assert "next: astrid timelines retry film pc-one --project p" in output
+
+
 def test_retry_preview_has_stable_json_shape_and_token(monkeypatch, capsys):
     timeline = _Timeline()
     monkeypatch.setattr(cli_pending, "_open", lambda parsed: timeline)
@@ -110,6 +136,43 @@ def test_retry_rejects_stale_token_without_sending(monkeypatch, capsys):
     result = json.loads(capsys.readouterr().out)
     assert result["error"]["code"] == "timeline_edit_error"
     assert "stale" in result["error"]["message"]
+    assert "astrid timelines retry film pc-one --project p again" in result["error"]["message"]
+
+
+def test_retry_human_output_prints_valid_cli_preview_command(monkeypatch, capsys):
+    timeline = _Timeline()
+    monkeypatch.setattr(cli_pending, "_open", lambda parsed: timeline)
+    parsed = _parse(_Client(), ["retry", "film", "pc-one", "--project", "p"])
+
+    assert parsed.handler(parsed) == 0
+    output = capsys.readouterr().out
+    assert "next: astrid timelines retry film pc-one --project p --commit fresh-token" in output
+    assert "tl.commit(r)" not in output
+
+
+def test_retry_rederive_human_output_explains_python_route(monkeypatch, capsys):
+    timeline = _Timeline()
+    timeline.retry_result = {"status": "re_derive", "pending_id": "pc-one",
+                             "summary": "The reviewed list still clashes.",
+                             "next": "preview = tl.commit(make_edit, dry_run=True)"}
+    monkeypatch.setattr(cli_pending, "_open", lambda parsed: timeline)
+    parsed = _parse(_Client(), ["retry", "film", "pc-one", "--project", "p"])
+
+    assert parsed.handler(parsed) == 0
+    output = capsys.readouterr().out
+    assert "re-derive needs Python; see SKILL.md ‘When to re-derive’" in output
+    assert "make_edit" not in output
+
+
+def test_landed_retry_token_reports_existing_publication(monkeypatch, capsys):
+    timeline = _Timeline()
+    timeline.retry_result = {"status": "landed", "pending_id": "pc-one",
+                             "summary": '"Recut" already landed as txn-123; pc-one is closed. Nothing was sent.'}
+    monkeypatch.setattr(cli_pending, "_open", lambda parsed: timeline)
+    parsed = _parse(_Client(), ["retry", "film", "pc-one", "--project", "p", "--commit", "old-token"])
+
+    assert parsed.handler(parsed) == 0
+    assert "already landed as txn-123" in capsys.readouterr().out
 
 
 def test_cli_conflict_error_keeps_packet_fields():
@@ -164,3 +227,19 @@ def test_discard_reports_pending_records_kept(monkeypatch, capsys):
 
     assert cli_working._cmd_discard(parsed) == 0
     assert "kept 3 pending change(s)" in capsys.readouterr().out
+
+
+def test_editing_docs_explain_retry_and_rederive_contract():
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[3]
+    skill = (root / "astrid/packs/rendering/docs/SKILL.md").read_text()
+    reference = (root / "astrid/packs/rendering/docs/references/editing.md").read_text()
+    guide = (root / "docs/timeline-editing-guide.md").read_text()
+    for document in (skill, reference, guide):
+        assert "err.pending_id" in document
+        assert "re_derive" in document
+        assert "idempotency_key=" in document
+        assert "timelines rebase" not in document.lower()
+    assert "Commit only a `preview`" in guide
+    assert "retry_error" in skill and "retry_error" in guide
