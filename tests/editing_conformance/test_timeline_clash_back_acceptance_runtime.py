@@ -160,18 +160,35 @@ def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_ca
             ))
         t.clip("b").swap_asset(str(replacement))
 
-    result = stale.commit(edit, label="Swap b", key="swap-new-file")
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(edit, label="Swap b", key="swap-new-file", merge="fields", reads=[])
+
+    failure = caught.value.failure
+    assert failure["details"]["status"] == "refused"
+    assert failure["details"]["reason"] == "invalid_records"
+    assert caught.value.pending_id
+    record = stale.pending_show(caught.value.pending_id)
+    assert record["id"] == caught.value.pending_id
+    assert record["state"] == "pending"
+    assert record["failure"]["details"]["status"] == "refused"
+    assert record["failure"]["details"]["reason"] == "invalid_records"
+    assert "sequential command metadata differs from the prepared candidate" in record["failure"]["message"]
+    original_imports = record["parts"][0]["imports"]
+    result = stale.retry(caught.value)
 
     assert result["status"] in {"accepted", "merged"}
-    assert result["attempts"] == 2
     assert len(evaluations) == 2
     assert len(peer_writes) == 1
     assert peer_writes[0]["receipt"]["receipt_id"]
     assert len(result["imports"]) == 1
+    assert result["imports"] == original_imports
     assert result["imports"][0]["object_id"] == replacement_digest
     assert result["imports"][0]["generation_id"]
     assert result["imports"][0]["variant_id"]
     assert replacement_digest in str(result["data"]["canonical_document"])
+    assert _assert_closed(stale, caught.value.pending_id)["state"] == "landed"
 
 
 def test_reviewed_list_runtime_refusal_is_saved_and_recovered(editing_case, tmp_path, monkeypatch):
