@@ -582,6 +582,59 @@ def _same_actor_function_process(endpoint, credential, realm, project, captured_
                           "evaluations": len(evaluations)})
 
 
+def _abrupt_function_process(endpoint, credential, realm, project, captured_queue,
+                             release, result_queue):
+    """Exit without normal teardown once the durable refusal has been saved."""
+    import os
+
+    from astrid.sdk.client import AstridClient
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    client = AstridClient.open(
+        endpoint=endpoint,
+        credential=credential,
+        realm_id=realm,
+        actor_id="ux-core-abrupt",
+        client_name="ux-core-abrupt-recovery",
+        client_version="1",
+        protocol_version="workspace.v1",
+    )
+    timeline = Timeline.open(project, "film", client=client)
+    capture = Timeline._capture_free_edits
+
+    def capture_then_wait(working):
+        capture(working)
+        if working._commands:
+            captured_queue.put({"base": copy.deepcopy(working._basis),
+                                "commands": copy.deepcopy(working._commands),
+                                "outbox": str(working.session.outbox.path)})
+            if not release.wait(timeout=60):
+                raise TimeoutError("peer did not release captured function edit")
+
+    Timeline._capture_free_edits = capture_then_wait
+
+    def edit(working):
+        working.bundle["parent"]["name"] = "Abrupt function edit"
+
+    try:
+        timeline.commit(edit, label="Abrupt refusal recovery", key="ux-core-abrupt-edit", reads=[])
+    except CommitConflict as caught:
+        result_queue.put({"pending_id": caught.pending_id})
+        result_queue.close()
+        result_queue.join_thread()
+        os._exit(31)
+    except BaseException as caught:
+        result_queue.put({"error": repr(caught)})
+        result_queue.close()
+        result_queue.join_thread()
+        os._exit(32)
+    result_queue.put({"error": "abrupt child commit unexpectedly succeeded"})
+    result_queue.close()
+    result_queue.join_thread()
+    os._exit(33)
+
+
 def _same_actor_reviewed_list_process(endpoint, credential, realm, project, captured_queue,
                                       release, result_queue):
     """Pause after a reviewed command list is captured while a same-actor peer commits."""
@@ -860,6 +913,177 @@ def test_same_actor_default_outbox_recovers_captured_function_after_process_exit
     after_retry = json.loads(owner.session.outbox.path.read_text(encoding="utf-8"))
     assert after_retry["pending_changes"][pending_id] == packet_before_retry
     assert recovered.bundle["parent"]["name"] == "Later same actor peer edit"
+
+
+def test_abrupt_exit_after_saved_refusal_reopens_and_completes_recovery(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, _client, project, _setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "abrupt-refusal-data"))
+
+    import multiprocessing
+    from astrid.sdk.timeline import Timeline
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    actor = "ux-core-abrupt"
+    _, credential = daemon.credentials.provision(actor, [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    client = open_client(daemon, actor=actor, credential=credential)
+    owner = Timeline.open(project, "film", client=client)
+    peer = Timeline.open(project, "film", client=client)
+    initial_head = copy.deepcopy(owner.head)
+
+    context = multiprocessing.get_context("spawn")
+    captured_queue, result_queue = context.Queue(), context.Queue()
+    release = context.Event()
+    process = context.Process(
+        target=_abrupt_function_process,
+        args=(daemon.endpoint, credential, daemon.service.realm["id"], project,
+              captured_queue, release, result_queue),
+    )
+    process.start()
+    try:
+        captured = captured_queue.get(timeout=60)
+        assert captured["base"] == initial_head
+        assert captured["commands"]
+        assert captured["outbox"] == str(owner.session.outbox.path)
+
+        peer_result = peer.commit(
+            lambda t: t.bundle["parent"].update({"name": "Peer wins before crash"}),
+            label="Peer wins before crash", key="ux-core-abrupt-peer",
+        )
+        assert peer_result["receipt"]["receipt_id"]
+        release.set()
+        process.join(timeout=60)
+        assert not process.is_alive(), "abrupt refusal child did not exit"
+        assert process.exitcode == 31
+    finally:
+        release.set()
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=10)
+
+    result = result_queue.get(timeout=5)
+    assert "error" not in result, result
+    pending_id = result["pending_id"]
+    assert pending_id
+    reopened = Timeline.open(project, "film", client=client, outbox_path=owner.session.outbox.path)
+    saved = reopened.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "function"
+    assert saved["failure"]["details"]["status"] == "conflict"
+
+    fallback = reopened.retry(pending_id)
+    assert fallback["status"] == "re_derive"
+    preview = reopened.commit(
+        lambda t: t.bundle["parent"].update({"custom": {"recovered_after_crash": True}}),
+        label="Abrupt refusal recovery", dry_run=True,
+    )
+    landed = reopened.commit(
+        preview["data"]["commands"], label="Abrupt refusal recovery",
+        key="ux-core-abrupt-edit", pending=pending_id,
+    )
+    assert landed["status"] in {"accepted", "merged", "landed"}
+    assert reopened.bundle["parent"]["name"] == "Peer wins before crash"
+    assert reopened.bundle["parent"]["custom"] == {"recovered_after_crash": True}
+    assert reopened.pending_show(pending_id)["state"] == "landed"
+
+
+def test_runtime_multipart_conflict_retries_prefix_and_suffix_across_reopens(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "multipart-recovery-data"))
+
+    import threading
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+    from astrid_runtime_client import ApiError
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    source = _media_file(tmp_path / "multipart-target.png")
+    timeline.commit(
+        lambda t: t.add(source, at=0, hold=3, track="V1", id="multipart-target"),
+        label="Seed multipart target", key="multipart-seed",
+    )
+    path = timeline.session.outbox.path
+    entered, release = threading.Event(), threading.Event()
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    _, credential = daemon.credentials.provision("multipart-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="multipart-peer", credential=credential)
+
+    def conflict_after_suffix(project_id, timeline_id, body, **kwargs):
+        entered.set()
+        if not release.wait(timeout=60):
+            raise TimeoutError("multipart suffix was not queued")
+        peer = Timeline.open(
+            project, "film", client=peer_client, outbox_path=tmp_path / "multipart-peer.json"
+        )
+        peer_result = peer.commit(
+            lambda t: t.bundle["parent"].update({"name": "Disjoint multipart peer"}),
+            label="Disjoint multipart peer", key="multipart-peer",
+        )
+        assert peer_result["receipt"]["receipt_id"]
+        raise ApiError(409, "conflict", "simulated retryable conflict", details={
+            "status": "conflict", "reason": "injected_conflict",
+            "conflicts": [], "current": dict(peer.head),
+        })
+
+    monkeypatch.setattr(generated, "commit_timeline", conflict_after_suffix)
+    prefix = timeline.session.queue_move("parent/clip:multipart-target", 5)
+    outcomes = []
+
+    def send_prefix():
+        try:
+            timeline.session.commit(
+                prefix, idempotency_key="multipart-prefix", label="Multipart prefix"
+            )
+        except Exception as exc:
+            outcomes.append(exc)
+
+    worker = threading.Thread(target=send_prefix)
+    worker.start()
+    try:
+        assert entered.wait(timeout=60)
+        suffix_timeline = Timeline.open(project, "film", client=client, outbox_path=path)
+        suffix = suffix_timeline.session.queue_move("parent/clip:multipart-target", 7)
+    finally:
+        release.set()
+        worker.join(timeout=60)
+    assert not worker.is_alive(), "multipart prefix did not finish after refusal"
+    assert len(outcomes) == 1 and isinstance(outcomes[0], CommitConflict), outcomes
+    pending_id = outcomes[0].pending_id
+    assert pending_id
+    saved_packet = json.loads(path.read_text(encoding="utf-8"))["pending_changes"][pending_id]
+    assert [part["commands"] for part in saved_packet["parts"]] == [[prefix], [suffix]]
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    reopened = Timeline.open(project, "film", client=client, outbox_path=path)
+    first_preview = reopened.retry(pending_id)
+    assert first_preview["status"] == "preview", first_preview
+    first = reopened.commit(first_preview)
+    assert first["status"] in {"accepted", "merged", "landed", "part_landed"}
+    after_prefix = reopened.pending_show(pending_id)
+    assert after_prefix["state"] == "pending"
+    assert after_prefix["part"] == 1
+    assert len(after_prefix["receipts"]) == 1
+
+    reopened = Timeline.open(project, "film", client=client, outbox_path=path)
+    second_preview = reopened.retry(pending_id)
+    assert second_preview["status"] == "preview"
+    second = reopened.commit(second_preview)
+    assert second["status"] in {"accepted", "merged", "landed"}
+    final = reopened.pending_show(pending_id)
+    assert final["state"] == "landed"
+    assert len(final["receipts"]) == 2
+    assert len(set(final["receipts"])) == 2
+    assert reopened.clip("multipart-target").at == pytest.approx(7)
 
 
 def test_same_actor_default_outbox_recovers_captured_reviewed_list_after_process_exit(

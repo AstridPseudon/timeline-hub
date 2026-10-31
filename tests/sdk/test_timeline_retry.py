@@ -12,9 +12,82 @@ import pytest
 from astrid.sdk.timeline import retry as retry_module
 from astrid.sdk.timeline.sync import CommitConflict
 
+pytest_plugins = ("tests.sdk.test_timeline_editing_acceptance_runtime",)
+
 
 BASE = {"revision_id": "r1", "publication_id": "p1"}
 HEAD = {"revision_id": "r2", "publication_id": "p2"}
+
+
+def test_function_retry_saves_explicit_read_conflicts_in_record_and_packet(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "explicit-read-data"))
+
+    from astrid.sdk.timeline import Timeline
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _, credential = daemon.credentials.provision("explicit-read-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="explicit-read-peer", credential=credential)
+    initial_name = timeline.bundle["parent"]["name"]
+    peer_names = []
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+
+    def advance_read_scope_before_each_attempt(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "Function with explicit parent read":
+            value = f"Peer read change {len(peer_names) + 1}"
+            peer = Timeline.open(
+                project, "film", client=peer_client,
+                outbox_path=tmp_path / f"explicit-read-peer-{len(peer_names)}.json",
+            )
+            peer_result = peer.commit(
+                lambda t: t.bundle["parent"].update({"name": value}),
+                label=value, key=f"explicit-read-peer-{len(peer_names)}",
+            )
+            assert peer_result["receipt"]["receipt_id"]
+            peer_names.append(value)
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", advance_read_scope_before_each_attempt)
+    evaluations = []
+
+    def edit_from_read(t):
+        evaluations.append(t.bundle["parent"]["name"])
+        t.bundle["parent"]["custom"] = {"derived_from": t.bundle["parent"]["name"]}
+
+    dependency = {"kind": "scope", "ref": "parent", "path": []}
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(
+            edit_from_read,
+            label="Function with explicit parent read",
+            key="function-explicit-parent-read",
+            merge="fields",
+            reads=[dependency],
+        )
+
+    assert len(peer_names) == len(evaluations) == 3
+    assert evaluations[0] == initial_name
+    pending_id = caught.value.pending_id
+    assert pending_id
+    saved = timeline.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "function"
+    assert saved["parts"][0]["commit_options"]["reads"] == [dependency]
+    assert saved["failure"]["details"]["status"] == "conflict"
+    conflict_rows = saved["failure"]["details"]["conflicts"]
+    assert conflict_rows
+    assert any(row.get("kind") == "dependency_changed" for row in conflict_rows), conflict_rows
+    assert any(row.get("ref") == "parent" and row.get("path") == []
+               for row in conflict_rows), conflict_rows
+    packet = saved["clash"]
+    assert packet["schema"] == "astrid.clash/2"
+    assert packet["conflicts"] == conflict_rows
+    assert any(row.get("touches_conflict") for row in packet["receipts"]), packet
 
 
 def _record():
