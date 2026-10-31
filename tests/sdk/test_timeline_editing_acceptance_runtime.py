@@ -829,8 +829,9 @@ def test_e14_function_conflict_reruns_but_literal_list_conflict_stays_fixed(
     assert len(_history(client, project)) == len(before_list_conflict) + 1
 
 
+@pytest.mark.parametrize("retry_ref", ["error", "id"])
 def test_function_rerun_saves_overlapping_user_edit_and_explicit_retry_rebases(
-    editing_case, tmp_path, monkeypatch,
+    editing_case, tmp_path, monkeypatch, retry_ref,
 ):
     daemon, client, project, timeline = editing_case
     from astrid.sdk.timeline import Timeline
@@ -870,12 +871,29 @@ def test_function_rerun_saves_overlapping_user_edit_and_explicit_retry_rebases(
     current = Timeline.open(project, "film", client=client, outbox_path=tmp_path / "rerun-current.json")
     assert current.clip("clip-3").duration == pytest.approx(3.0)
 
-    rebased = timeline.retry(caught.value, overwrite=True)
+    if retry_ref == "error":
+        rebased = timeline.retry(caught.value, overwrite=True)
+    else:
+        rebased = timeline.retry(caught.value.pending_id, fn=set_all_durations, overwrite=True)
     assert rebased["status"] in {"accepted", "merged", "rebased"}
     assert "Rebased" in rebased["summary"]
     assert "clip-3" in rebased["summary"] and "hold" in rebased["summary"]
     landed = Timeline.open(project, "film", client=client, outbox_path=tmp_path / "rerun-landed.json")
     assert landed.clip("clip-3").duration == pytest.approx(2.0)
+
+    later = timeline.commit(
+        lambda t: t.bundle["parent"].update({"name": "Commit after overwrite retry"}),
+        label="Commit after overwrite retry",
+        key=f"rerun-after-overwrite-{retry_ref}",
+    )
+    assert later["receipt"]["receipt_id"]
+    assert timeline.bundle["parent"]["name"] == "Commit after overwrite retry"
+    saved_after_retry = timeline.pending_show(caught.value.pending_id)
+    assert saved_after_retry["state"] == "landed"
+    assert saved_after_retry["closed_by"] == {
+        "actor_id": client._remote._transport._last_handshake["actor_id"],
+        "publication_id": rebased["receipt"]["receipt_id"], "how": "rerun",
+    }
 
 
 def test_function_rerun_preserves_disjoint_user_title_edit(editing_case, tmp_path, monkeypatch):
@@ -892,6 +910,9 @@ def test_function_rerun_preserves_disjoint_user_title_edit(editing_case, tmp_pat
     ])
     peer = Timeline.open(project, "film", client=open_client(daemon, actor="rerun-title-peer", credential=credential),
                          outbox_path=tmp_path / "rerun-title-peer.json")
+    history_before = _history(client, project)
+    observed_titles = []
+    initial_title = timeline.bundle["parent"].get("name")
 
     def edit_title_then_submit(project_id, timeline_id, body, **kwargs):
         if timeline_id == "film" and body.get("label") == "Function duration disjoint rerun":
@@ -905,6 +926,7 @@ def test_function_rerun_preserves_disjoint_user_title_edit(editing_case, tmp_pat
     monkeypatch.setattr(generated, "commit_timeline", edit_title_then_submit)
 
     def set_all_durations(t):
+        observed_titles.append(t.bundle["parent"].get("name"))
         for index in range(1, 4):
             t.clip(f"clip-{index}").set_duration(2.0)
 
@@ -912,6 +934,8 @@ def test_function_rerun_preserves_disjoint_user_title_edit(editing_case, tmp_pat
                              key="rerun-duration-disjoint")
     assert result["receipt"]["receipt_id"]
     landed = Timeline.open(project, "film", client=client, outbox_path=tmp_path / "rerun-disjoint-landed.json")
+    assert observed_titles == [initial_title, "User title"]
+    assert len(_history(client, project)) == len(history_before) + 2
     assert landed.bundle["parent"]["name"] == "User title"
     assert [landed.clip(f"clip-{index}").duration for index in range(1, 4)] == [2.0, 2.0, 2.0]
 
@@ -975,18 +999,26 @@ def test_e14_function_lost_fallback_previews_then_merges_disjoint_edit(
     assert preview["pending_id"] == caught.value.pending_id
     assert len(evaluations) == 3
 
-    # This edit lands after preview. The saved list is fields-mergeable with it.
+    # The callable read parent.name, so a change after preview invalidates its result.
     late_peer_edit = peer.commit(
         lambda t: t.bundle["parent"].update({"name": "Peer edit after preview"}),
         label="Peer edit after preview",
         key="e14-fallback-peer-after-preview",
     )
     assert late_peer_edit["receipt"]["receipt_id"]
-    merged = reopened.commit(preview)
-    assert merged["data"]["status"] == "merged"
-    assert merged["receipt"]["receipt_id"]
-    assert reopened.bundle["parent"]["name"] == "Peer edit after preview"
-    assert reopened.bundle["parent"]["custom"] == {"function_edit": True}
+    history_after_peer = _history(client, project)
+    with pytest.raises(CommitConflict) as late_conflict:
+        reopened.commit(preview)
+    assert late_conflict.value.pending_id == caught.value.pending_id
+    saved = reopened.pending_list()
+    assert any(record["id"] == caught.value.pending_id and record["state"] == "pending"
+               for record in saved)
+    current = type(timeline).open(
+        project, "film", client=client, outbox_path=tmp_path / "fallback-current.json"
+    )
+    assert current.bundle["parent"]["name"] == "Peer edit after preview"
+    assert current.bundle["parent"].get("custom") != {"function_edit": True}
+    assert len(_history(client, project)) == len(history_after_peer)
     assert len(evaluations) == 3
 
 
