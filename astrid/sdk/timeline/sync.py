@@ -11,6 +11,7 @@ import json
 import re
 import shlex
 import uuid
+from contextlib import ExitStack, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import quote
@@ -20,6 +21,19 @@ from astrid.core.receipts.contract import CommandReceipt
 from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.outbox import Outbox, request_bytes
 from astrid.sdk.workspace_client import WorkspaceClientError
+
+
+@contextmanager
+def _retry_outbox_locks(outbox, target_path):
+    """Acquire distinct outboxes in canonical path order for reciprocal retries."""
+    boxes = {outbox.path.resolve(): outbox}
+    if target_path:
+        target = Outbox(Path(target_path))
+        boxes.setdefault(target.path.resolve(), target)
+    with ExitStack() as stack:
+        for path in sorted(boxes):
+            stack.enter_context(boxes[path].locked())
+        yield
 
 class CommitConflict(TimelineEditError):
     def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
@@ -941,7 +955,8 @@ class TimelineSession:
                 save_pending = release_conflict or details.get("status") != "conflict"
                 record = None
                 external_conflict = None
-                with self.outbox.locked():
+                target_path = flight.get("pending_path") if save_pending and flight.get("pending_id") else None
+                with _retry_outbox_locks(self.outbox, target_path):
                     state = self._state()
                     if state["flight"] == flight:
                         self._flight_body(state, flight, idempotency_key, dry_run)
@@ -950,16 +965,15 @@ class TimelineSession:
                             replacement = snapshot(state, flight, failure)
                             pending_id = flight.get("pending_id")
                             target_path = flight.get("pending_path")
-                            if pending_id and target_path and target_path != str(self.outbox.path):
+                            if pending_id and target_path and Path(target_path).resolve() != self.outbox.path.resolve():
                                 target_outbox = Outbox(Path(target_path))
-                                with target_outbox.locked():
-                                    target = target_outbox.read()
-                                    saved = target.get("pending_changes", {}).get(pending_id)
-                                    if saved is None or saved.get("state") != "pending":
-                                        raise TimelineEditError("saved edit is unavailable; original flight retained")
-                                    _retry_conflict(saved, replacement)
-                                    target_outbox.write(target)
-                                    record = copy.deepcopy(saved)
+                                target = target_outbox.read()
+                                saved = target.get("pending_changes", {}).get(pending_id)
+                                if saved is None or saved.get("state") != "pending":
+                                    raise TimelineEditError("saved edit is unavailable; original flight retained")
+                                _retry_conflict(saved, replacement)
+                                target_outbox.write(target)
+                                record = copy.deepcopy(saved)
                                 external_conflict = (target_path, pending_id, replacement)
                             elif pending_id and pending_id in state.get("pending_changes", {}):
                                 record = state["pending_changes"][pending_id]
