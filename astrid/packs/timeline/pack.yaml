@@ -1,0 +1,8 @@
+schema_version: 3
+id: timeline
+name: Astrid Timeline
+version: 1.0.0
+documentation:
+  kind: skill
+  path: docs/SKILL.md
+resources: []
