@@ -138,9 +138,11 @@ a preview for approval. A reviewed list that still applies returns a preview;
 one that still clashes returns `re_derive` because lists already merge
 disjoint fields. Commit only a `preview`; re-run the function that produced a
 `re_derive` result on a fresh `Timeline.open`, preview it, then commit the new
-commands with `idempotency_key=` and `pending=<saved id>`. A conflict without a
-pending id (for example, an idempotency mismatch or a Runtime refusal) has no
-saved edit and cannot be retried with `tl.retry`.
+commands with `idempotency_key=` and `pending=<saved id>`. Runtime refusals and
+idempotency mismatches are saved as pending records too; `tl.retry(err)` returns
+`refused` for them. Inspect the record, fix the edit, then retry or drop it.
+Follow `err.fix` for refusal recovery; the exception text may say to retry
+directly. An error without `pending_id` has no saved record to recover.
 
 For CLI recovery, use `astrid timelines pending list TL --project P`, then
 `astrid timelines pending show TL ID --project P`. Run the printed
@@ -154,8 +156,8 @@ the exact captured commands and their original base. The SDK raises
 id after a restart. Inspect the saved record and any `preview` or `re_derive`
 result before committing. If re-derivation is needed, first inspect the saved
 intent, then deliberately produce and preview new commands. Do not rerun the
-producer before inspecting the saved record. A conflict without `pending_id`
-has no saved edit and cannot be retried.
+producer before inspecting the saved record. An error without `pending_id` has
+no saved edit to recover.
 
 `on`/`until` a word mean its START (`after "word"` = its end); `until c30b` = when c30b STARTS; `until end of c30`
 ends with that cut. Clip methods return the clip, so they chain: `tl.clip("c30.cover").on('"x"').hold_for(1.2)`.
