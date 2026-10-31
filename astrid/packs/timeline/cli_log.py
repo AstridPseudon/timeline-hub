@@ -8,7 +8,6 @@ from typing import Any
 
 from astrid.core.cli.domain_output import DomainResult, print_result
 from astrid.sdk.contracts import ErrorObject
-from astrid.sdk.timeline import journal, store
 
 
 def configure_log(parser: argparse.ArgumentParser) -> None:
@@ -33,6 +32,8 @@ def _row(record: Any) -> str:
 
 
 def run_log(parsed: Any) -> int:
+    from astrid.sdk.timeline import journal, store
+
     project_id, timeline_id, _head = store.resolve_ids(
         parsed.project, parsed.ref, client=parsed.client
     )
