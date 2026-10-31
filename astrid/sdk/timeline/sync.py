@@ -750,7 +750,7 @@ class TimelineSession:
                            release_conflict=release_conflict)
 
     def save_interrupted(self, commands, *, base, label, steps, merge, reads, key, evaluation,
-                         failure=None, release_flight=None):
+                         failure=None, release_flight=None, release_dry_run=False):
         """Save captured intent without changing another writer's queue or flight."""
         from ._pending import clash, snapshot
 
@@ -781,7 +781,7 @@ class TimelineSession:
                      and state.get("conflict", {}).get("details", {}).get("status") == "conflict"
                      and (state.get("evaluation") or {}).get("kind") == "function")
             if owned:
-                self._flight_body(state, release_flight, None, False)
+                self._flight_body(state, release_flight, None, release_dry_run)
                 record["parts"].extend(snapshot(state, release_flight, failure)["parts"][1:])
             records = state.setdefault("pending_changes", {})
             matches = [item for item in records.values()
