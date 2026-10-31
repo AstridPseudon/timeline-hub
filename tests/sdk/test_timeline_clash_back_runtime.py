@@ -1369,17 +1369,42 @@ def test_runtime_multipart_conflict_retries_prefix_and_suffix_across_reopens(
     assert after_prefix["part"] == 1
     assert len(after_prefix["receipts"]) == 1
     assert after_prefix["parts"][1]["commands"] == [suffix]
+    assert after_prefix["failure"] == {}
+    assert after_prefix["head"] is None
+    assert after_prefix["diff"] == [{
+        "op": "set", "ref": "parent", "path": ["clips", "id:multipart-target", "at"],
+        "before": {"state": "present", "value": 5.0}, "value": 7.0,
+    }]
 
     reopened = Timeline.open(project, "film", client=client, outbox_path=path)
     second_preview = reopened.retry(pending_id)
     assert second_preview["status"] == "preview"
-    second = reopened.commit(second_preview)
-    assert second["status"] in {"accepted", "merged", "landed"}
+
+    peer = Timeline.open(
+        project, "film", client=peer_client, outbox_path=tmp_path / "multipart-peer.json"
+    )
+    peer_move = peer.session.queue_move("parent/clip:multipart-target", 7)
+    peer_result = peer.session.commit(
+        peer_move, idempotency_key="multipart-peer-suffix",
+        label="Peer lands multipart suffix value",
+    )
+    assert peer_result["receipt"]["receipt_id"]
+
+    with pytest.raises(CommitConflict) as suffix_conflict:
+        reopened.commit(second_preview)
+    assert suffix_conflict.value.pending_id == pending_id
+
+    history_before_closure = len(client.timelines.history(project, "film", limit=100).data["items"])
+    same_value = reopened.retry(pending_id)
+    assert same_value["status"] == "landed"
+    assert same_value["record"]["part"] == 1
+    assert same_value["record"]["closed_by"]["how"] == "already_applied"
+    assert "already has your value" in same_value["summary"]
+    assert len(client.timelines.history(project, "film", limit=100).data["items"]) == history_before_closure
     final = reopened.pending_show(pending_id)
     assert final["state"] == "landed"
     assert len(final["receipts"]) == 2
     assert len(set(final["receipts"])) == 2
-    assert reopened.clip("multipart-target").at == pytest.approx(7)
 
 
 def test_cross_actor_history_recovers_saved_part_during_delayed_ack(
