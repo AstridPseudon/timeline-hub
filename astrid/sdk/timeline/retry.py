@@ -261,6 +261,12 @@ def retry(timeline, ref, fn=None):
         return {"status": "refused", "pending_id": record.get("id"),
                 "summary": f'Cannot retry a pending change in state {record.get("state")!r}.',
                 "next": None}
+    failure = record.get("failure") or {}
+    if (failure.get("details") or {}).get("status") in {"refused", "invalid"}:
+        return {"status": "refused", "pending_id": record["id"],
+                "data": copy.deepcopy(failure),
+                "summary": "The Runtime refused this edit; inspect the saved record and re-derive it.",
+                "next": None}
     landed = _landed(timeline, path, record)
     if landed is not None:
         return landed
