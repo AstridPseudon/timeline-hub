@@ -4,8 +4,8 @@ Read this reference when authoring or validating a timeline document. The
 runtime owns the saved document; these examples describe the renderable JSON
 boundary rather than a local storage format.
 
-The canonical end-to-end workflow is the [Astrid timeline skill](../SKILL.md);
-the private composed-evidence backend contract is [Timeline Visualize](../../actions/timeline_visualize/STAGE.md).
+Load `timeline` for the canonical end-to-end workflow. This reference covers
+the renderable JSON boundary.
 
 ## Minimal renderable config
 
@@ -25,8 +25,8 @@ not use it as an unregistered effects namespace.
 
 Visual tracks render in reversed array order: put overlay tracks before the
 source track to draw them on top. Use a track per editing concern (for example
-brand, captions, effects, b-roll, source) and descriptive clip ids. Read the
-[small timeline example](../../../../../examples/hype.timeline.json) for structure.
+brand, captions, effects, b-roll, source) and descriptive clip ids. Read
+`examples/hype.timeline.json` in the Astrid source tree for structure.
 
 `output.resolution` and `output.fps` are legacy hints, not the authoritative
 canvas. Set `theme_overrides.visual.canvas` when changing the canvas, and match

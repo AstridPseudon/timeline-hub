@@ -10,8 +10,8 @@ description: >
 # Timeline editing
 
 How to change a timeline well. Elsewhere: [render, inspect, transfer and
-worlds](references/render-inspect-transfer.md); addresses, moments and the sheet in
-[the editing front door](references/editing.md); recipes in the [video editing
+worlds](references/render-inspect-transfer.md); load `timeline` for edits and
+`timeline-narrated` for word, beat and shot work; recipes in the [video editing
 skill](../../video_editing/docs/SKILL.md); new media from [creative
 work](../../_core/docs/creative-work/SKILL.md). The connected
 runtime owns every timeline and revision; change them only through the CLI or
@@ -343,8 +343,8 @@ it says no reply could be verified. Messages read *what went wrong*, *where*, *w
 
 A commit and a read-back prove timing and structure, not appearance. After any
 visual edit, and after a correction, look at composed frames with `timelines
-visualize` (no video render; use it as often as helps). [How to look](references/how-to-look.md)
-says which view. Render only when the person asks. Report the revision, the
+visualize` (no video render; use it as often as helps). Load `timeline` for its
+how-to-look reference. Render only when the person asks. Report the revision, the
 moments you looked at, the times to check and the editor link,
 `https://astrid.haus/tools/video-editor?project=<project-id>&timeline=<timeline-id>`
 (`<project-id>` from `projects show <project> --json`; `<timeline-id>` from

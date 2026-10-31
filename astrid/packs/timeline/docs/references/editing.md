@@ -99,7 +99,8 @@ result = tl.commit(lambda t: t.clip("c30.cover").until("Astrid"),
                    label="Cover until Astrid", idempotency_key="cover-42")
 ```
 
-Python functions are the taught edit path; see the [editing skill](../SKILL.md).
+Python functions are the taught edit path; load `timeline` for the main path
+and `timeline-narrated` for word and shot edits.
 The detached `Checkout` surface below edits the local copy. This candidate-file route is supported
 (CLI only; a Python preview or reviewed list is not a file). Save an explicit candidate, then commit it through Runtime:
 

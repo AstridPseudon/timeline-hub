@@ -17,10 +17,9 @@ between those operations. Do not route native input-only inspection through
 this executor, and do not use fixture JSON, seed maps, or prior result files
 as an agent's source of truth.
 
-Use the canonical [Astrid timeline skill](../../skill/SKILL.md) for the
-end-to-end workflow and its [timeline cookbook](../../skill/references/timeline-cookbook.md)
-for renderable document examples; this stage is the executor contract for the
-evidence-producing visualization path.
+Load `timeline` for the end-to-end workflow and its `timeline-cookbook.md`
+reference for renderable document examples; this stage is the executor
+contract for the evidence-producing visualization path.
 
 Runtime keeps this executor registered as an internal execution backend. It
 is never bound to, or recorded in, a timeline `manifest.json`.
