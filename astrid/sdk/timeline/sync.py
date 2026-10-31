@@ -21,12 +21,6 @@ from astrid.sdk.timeline._common import TimelineEditError
 from astrid.sdk.timeline.outbox import Outbox, request_bytes
 from astrid.sdk.workspace_client import WorkspaceClientError
 
-_RACED_SEQUENTIAL_REFUSALS = (
-    "sequential command metadata differs from the prepared candidate",
-    "provider consumed manifest differs from its sequential parent allocation",
-)
-
-
 class CommitConflict(TimelineEditError):
     def __init__(self, failure, *, attempts=None, label=None, fixed_list=False,
                  timeline_id=None, project_id=None, pending_id=None, clash=None, retry_clash=False):
@@ -51,7 +45,10 @@ class CommitConflict(TimelineEditError):
                 fix=(f'Run astrid timelines discard {timeline_id} --project {project_id}, '
                      'preview again with dry_run=True, then commit the reviewed commands.'),
             )
-        if pending_id is not None:
+        if pending_id is not None and self.failure.get("details", {}).get("status") != "conflict":
+            self.presentation["fix"] = f'Inspect the saved edit with tl.pending_show("{pending_id}") and re-derive it.'
+            self.presentation.update(pending_id=pending_id, clash=copy.deepcopy(clash))
+        elif pending_id is not None:
             self.presentation["fix"] = (
                 f'Someone else changed this timeline after your edit was made, so "{label or "Timeline edit"}" '
                 f'was not committed. Your edit is saved as {pending_id}; nothing is lost. '
@@ -277,31 +274,6 @@ def _retry_conflict(record, replacement):
     record.pop("clash", None)
     record["rev"] = int(record.get("rev", 0)) + 1
     record["updated_at"] = datetime.now(timezone.utc).isoformat()
-
-
-def _raced_metadata_refusal(details, flight, *, message=None):
-    """Recognize Runtime's stale sequential metadata refusal for a reviewed list."""
-    if not isinstance(details, dict) or details.get("status") not in {"refused", "invalid"}:
-        return False
-    try:
-        body = json.loads(flight["body"])
-    except (KeyError, TypeError, ValueError):
-        return False
-    if body.get("base_revision_id") is None or body.get("base_publication_id") is None:
-        return False
-    message = " ".join(str(value) for value in (
-        message, details.get("reason"), details.get("message"), details.get("detail"),
-    ) if value).lower()
-    if not any(reason in message for reason in _RACED_SEQUENTIAL_REFUSALS):
-        return False
-    current = details.get("current")
-    if not isinstance(current, dict):
-        return False
-    try:
-        return _pin(current) != _pin({"revision_id": body["base_revision_id"],
-                                      "publication_id": body["base_publication_id"]})
-    except (KeyError, TypeError, ValueError):
-        return False
 
 
 class TimelineSession:
@@ -885,36 +857,13 @@ class TimelineSession:
             details = getattr(exc, "details", {})
             if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
-                raced_metadata_refusal = _raced_metadata_refusal(
-                    details, flight, message=getattr(exc, "message", exc),
-                )
-                raced_head = details.get("current") if isinstance(details, dict) else None
-                if (not raced_metadata_refusal and isinstance(details, dict)
-                        and details.get("status") in {"refused", "invalid"}
-                        and any(reason in str(getattr(exc, "message", exc)).lower()
-                                for reason in _RACED_SEQUENTIAL_REFUSALS)):
-                    # Some Runtime refusal envelopes omit `current`; observe the
-                    # authoritative pair before deciding whether this was a race.
-                    try:
-                        observed = self.client.timelines.history(
-                            self.project_id, self.timeline_id, cursor=None, limit=1,
-                        )
-                        head = observed.data.get("head") if observed.ok else None
-                        raced_metadata_refusal = _raced_metadata_refusal(
-                            {**details, "current": head}, flight,
-                            message=getattr(exc, "message", exc),
-                        )
-                        if raced_metadata_refusal:
-                            raced_head = head
-                    except Exception:  # noqa: BLE001 - preserve the original Runtime refusal
-                        pass
                 record = None
                 external_conflict = None
                 with self.outbox.locked():
                     state = self._state()
                     if state["flight"] == flight:
                         self._flight_body(state, flight, idempotency_key, dry_run)
-                        if details.get("status") in {"refused", "invalid"} and not raced_metadata_refusal:
+                        if details.get("status") in {"refused", "invalid"} and not release_conflict:
                             # Preserve the full queue for review, including any
                             # suffix captured against the flight's optimistic
                             # effects, and release it so it cannot run without them.
@@ -949,6 +898,11 @@ class TimelineSession:
                                 else:
                                     record = replacement
                                     state.setdefault("pending_changes", {})[record["id"]] = record
+                                if record is not None and details.get("status") != "conflict":
+                                    from ._pending import clash
+                                    record["clash"] = clash(record)
+                                    record["clash"]["next"] = f'tl.pending_show("{record["id"]}")'
+                                    state["pending_changes"][record["id"]] = copy.deepcopy(record)
                                 state["pending"] = []
                                 state["flight"] = None
                                 state.pop("conflict", None)
@@ -962,10 +916,6 @@ class TimelineSession:
                                 # Function commits retain the known conflict only
                                 # while bounded reevaluation remains available.
                                 state["conflict"] = copy.deepcopy(failure)
-                                if raced_metadata_refusal:
-                                    # The precise Runtime refusal is retryable only
-                                    # after its independently observed head advanced.
-                                    state["conflict"]["details"]["status"] = "conflict"
                         if release_conflict or details.get("status") != "conflict":
                             state.pop("pending_close", None)
                             state.pop("pending_close_path", None)
@@ -996,19 +946,15 @@ class TimelineSession:
                                 saved["updated_at"] = datetime.now(timezone.utc).isoformat()
                                 self.outbox.write(latest)
                                 record = copy.deepcopy(saved)
-                    if external_conflict is None:
+                    if external_conflict is None and details.get("status") == "conflict":
                         record = _pending_clash(self, record)
                 from ._pending import clash
-                conflict = CommitConflict(failure, fixed_list=release_conflict and (
-                                              details.get("status") == "conflict" or raced_metadata_refusal),
-                                          timeline_id=self.timeline_id, project_id=self.project_id,
-                                          label=record["label"] if record else None,
-                                          pending_id=record["id"] if record else None,
-                                          retry_clash=bool(flight.get("pending_id") and record),
-                                          clash=record.get("clash") or clash(record) if record else None)
-                conflict.raced_metadata_refusal = raced_metadata_refusal
-                conflict.current_head = copy.deepcopy(raced_head)
-                raise conflict from exc
+                raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
+                                     timeline_id=self.timeline_id, project_id=self.project_id,
+                                     label=record["label"] if record else None,
+                                     pending_id=record["id"] if record else None,
+                                     retry_clash=bool(flight.get("pending_id") and record),
+                                     clash=record.get("clash") or clash(record) if record else None) from exc
             raise CommitOutcomeUnknown(exc, key=_display_key(flight)) from exc  # Keep the durable flight byte-for-byte retryable.
         try:
             data, receipt = _ack(result, body, flight, self.identity)

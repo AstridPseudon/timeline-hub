@@ -703,10 +703,9 @@ class Timeline(Checkout):
             except CommitConflict as exc:
                 if exc.pending_id is not None and working is self:
                     self._adopt(self._base_bundle)
-                retryable = (exc.failure["details"].get("status") == "conflict"
-                             or getattr(exc, "raced_metadata_refusal", False))
+                retryable = exc.failure["details"].get("status") == "conflict"
                 if not function or not retryable or count >= 3:
-                    if function and count >= 3:
+                    if function and retryable and count >= 3:
                         exhausted = CommitConflict(exc.failure, attempts=count, label=commit_label,
                                                    timeline_id=self.session.timeline_id,
                                                    project_id=self.session.project_id,
@@ -715,7 +714,7 @@ class Timeline(Checkout):
                         exhausted.retry_fn = function
                         raise exhausted from exc
                     raise
-                base = _pin(getattr(exc, "current_head", None) or exc.failure["details"]["current"])
+                base = _pin(exc.failure["details"]["current"])
                 with self.session.outbox.locked():
                     state = self.session._state()
                     evaluation = state.get("evaluation") or evaluation
@@ -822,7 +821,7 @@ class Timeline(Checkout):
                                          idempotency_key=idempotency_key, dry_run=dry_run,
                                          expected_state=state, base=state["base"],
                                          pending_id=pending_id, pending_path=pending_path,
-                                         pending_how="rederive")
+                                         pending_how="rederive", imports=_imports_in_commands(commands))
         except CommitConflict as exc:
             if exc.failure.get("details", {}).get("status") == "conflict":
                 raise CommitConflict(exc.failure, label=label, fixed_list=True,
