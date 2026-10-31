@@ -6,7 +6,7 @@ import copy
 
 import pytest
 
-from tests.sdk.test_timeline_editing_acceptance_runtime import _media_file
+from tests.sdk.test_timeline_editing_acceptance_runtime import _media_file, _timeline_history
 
 pytest_plugins = ("tests.sdk.test_timeline_editing_acceptance_runtime",)
 
@@ -52,6 +52,83 @@ def _clips(document):
     }
 
 
+def test_pending_rederive_lost_reply_replays_exact_commit_once(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict, CommitOutcomeUnknown, TimelineEditError
+    from astrid_runtime_client import ApiError
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _, credential = daemon.credentials.provision(
+        "j6-f4-peer",
+        ["handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+         "tasks:read", "tasks:write"],
+    )
+    peer_client = open_client(daemon, actor="j6-f4-peer", credential=credential)
+    peer = Timeline.open(project, "film", client=peer_client, outbox_path=tmp_path / "f4-peer.json")
+
+    stale_commands = timeline.commit(
+        lambda t: t.bundle["parent"].update({"name": "stale edit"}),
+        label="F4 pending edit", dry_run=True,
+    )["data"]["commands"]
+    peer.commit(
+        lambda t: t.bundle["parent"].update({"name": "peer edit"}),
+        label="F4 peer edit", key="j6-f4-peer-edit",
+    )
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(stale_commands, label="F4 pending edit", key="j6-f4-edit")
+    pending_id = caught.value.pending_id
+    assert pending_id
+    assert timeline.retry(pending_id)["status"] == "re_derive"
+
+    timeline = Timeline.open(
+        project, "film", client=client, outbox_path=timeline.session.outbox.path
+    )
+    commands = timeline.commit(
+        lambda t: t.bundle["parent"].update({"name": "rederived edit"}),
+        label="F4 pending edit", dry_run=True,
+    )["data"]["commands"]
+    assert commands != stale_commands
+
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    sent = []
+
+    def lose_first_reply(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "F4 pending edit":
+            sent.append((copy.deepcopy(body), kwargs["idempotency_key"]))
+            result = original(project_id, timeline_id, body, **kwargs)
+            if len(sent) == 1:
+                raise ApiError(503, "not_ready", "simulated lost F4 reply after acceptance")
+            return result
+        return original(project_id, timeline_id, body, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", lose_first_reply)
+    history_before = _timeline_history(client, project, "film")
+    with pytest.raises(CommitOutcomeUnknown, match="No reply could be verified"):
+        timeline.commit(commands, label="F4 pending edit", key="j6-f4-edit", pending=pending_id)
+
+    recovered = timeline.commit(
+        commands, label="F4 pending edit", key="j6-f4-edit", pending=pending_id
+    )
+    duplicate = timeline.commit(
+        commands, label="F4 pending edit", key="j6-f4-edit", pending=pending_id
+    )
+    assert recovered["receipt"] == duplicate["receipt"]
+    assert len(sent) == 3
+    assert sent[0] == sent[1] == sent[2]
+    assert len(_timeline_history(client, project, "film")) == len(history_before) + 1
+
+    changed_commands = copy.deepcopy(commands)
+    changed_commands[0]["args"]["changes"][0]["value"] = "changed under the same key"
+    with pytest.raises(TimelineEditError, match="idempotency key belongs to another edit"):
+        timeline.commit(
+            changed_commands, label="F4 pending edit", key="j6-f4-edit", pending=pending_id
+        )
+    assert len(sent) == 3
+    assert len(_timeline_history(client, project, "film")) == len(history_before) + 1
+
+
 def _a5_clash_process(endpoint, credential, realm, project, result_queue):
     from astrid.sdk.client import AstridClient
     from astrid.sdk.timeline import Timeline
@@ -94,6 +171,94 @@ def _a5_clash_process(endpoint, credential, realm, project, result_queue):
         })
     else:
         result_queue.put({"error": "A5 commit unexpectedly succeeded"})
+
+
+def _same_actor_function_process(endpoint, credential, realm, project, captured_queue,
+                                  release, result_queue):
+    """Pause after function commands are captured while a same-actor peer commits."""
+    from astrid.sdk.client import AstridClient
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    client = AstridClient.open(
+        endpoint=endpoint,
+        credential=credential,
+        realm_id=realm,
+        actor_id="ux-core-same-actor",
+        client_name="ux-core-clash-recovery",
+        client_version="1",
+        protocol_version="workspace.v1",
+    )
+    timeline = Timeline.open(project, "film", client=client)
+    capture = Timeline._capture_free_edits
+
+    def capture_then_wait(working):
+        capture(working)
+        if working._commands:
+            captured_queue.put({"base": copy.deepcopy(working._basis),
+                                "commands": copy.deepcopy(working._commands),
+                                "outbox": str(working.session.outbox.path)})
+            if not release.wait(timeout=60):
+                raise TimeoutError("peer did not release captured function edit")
+
+    Timeline._capture_free_edits = capture_then_wait
+    evaluations = []
+
+    def edit(working):
+        evaluations.append(1)
+        working.bundle["parent"]["custom"] = {"same_actor_recovery": True}
+
+    try:
+        timeline.commit(edit, label="Same actor function edit", key="ux-core-function",
+                        reads=[])
+    except CommitConflict as caught:
+        result_queue.put({"pending_id": caught.pending_id, "evaluations": len(evaluations)})
+    except Exception as caught:  # Return child failures to the parent as test evidence.
+        import traceback
+        result_queue.put({"error": repr(caught), "traceback": traceback.format_exc()})
+    else:
+        result_queue.put({"error": "same-actor commit unexpectedly succeeded",
+                          "evaluations": len(evaluations)})
+
+
+def _same_actor_reviewed_list_process(endpoint, credential, realm, project, captured_queue,
+                                      release, result_queue):
+    """Pause after a reviewed command list is captured while a same-actor peer commits."""
+    from astrid.sdk.client import AstridClient
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    client = AstridClient.open(
+        endpoint=endpoint,
+        credential=credential,
+        realm_id=realm,
+        actor_id="ux-core-same-actor",
+        client_name="ux-core-reviewed-recovery",
+        client_version="1",
+        protocol_version="workspace.v1",
+    )
+    timeline = Timeline.open(project, "film", client=client)
+    preview = timeline.commit(
+        lambda working: working.bundle["parent"].update(
+            {"custom": {"same_actor_reviewed_list": True}}),
+        label="Same actor reviewed list",
+        dry_run=True,
+    )
+    commands = copy.deepcopy(preview["data"]["commands"])
+    captured_queue.put({"base": copy.deepcopy(timeline._basis),
+                        "commands": commands,
+                        "outbox": str(timeline.session.outbox.path)})
+    try:
+        if not release.wait(timeout=60):
+            raise TimeoutError("peer did not release captured reviewed list")
+        timeline.commit(commands, label="Same actor reviewed list", key="ux-core-reviewed")
+    except CommitConflict as caught:
+        result_queue.put({"pending_id": caught.pending_id})
+    except Exception as caught:  # Return child failures to the parent as test evidence.
+        import traceback
+        result_queue.put({"error": repr(caught), "traceback": traceback.format_exc()})
+    else:
+        result_queue.put({"error": "same-actor reviewed-list commit unexpectedly succeeded"})
 
 
 def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
@@ -245,3 +410,173 @@ def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
     expected["c5"]["volume"] = 0.3
     expected["c6"]["opacity"] = 0.5
     assert _clips(bundle_from_document(a1._runtime_document)) == expected
+
+
+def test_same_actor_default_outbox_recovers_captured_function_after_process_exit(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, _client, project, _setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "same-actor-data"))
+
+    import json
+    import multiprocessing
+    from astrid.sdk.timeline import Timeline
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    actor = "ux-core-same-actor"
+    _, credential = daemon.credentials.provision(actor, [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    client = open_client(daemon, actor=actor, credential=credential)
+    peer = Timeline.open(project, "film", client=client)
+    initial_head = copy.deepcopy(peer.head)
+
+    context = multiprocessing.get_context("spawn")
+    captured_queue, result_queue = context.Queue(), context.Queue()
+    release = context.Event()
+    process = context.Process(
+        target=_same_actor_function_process,
+        args=(daemon.endpoint, credential, daemon.service.realm["id"], project,
+              captured_queue, release, result_queue),
+    )
+    process.start()
+    try:
+        captured = captured_queue.get(timeout=60)
+        assert captured["base"] == initial_head
+        assert captured["commands"]
+        assert captured["outbox"] == str(peer.session.outbox.path)
+
+        peer_result = peer.commit(
+            lambda t: t.bundle["parent"].update({"name": "Same actor peer edit"}),
+            label="Same actor peer edit", key="ux-core-peer",
+        )
+        assert peer_result["receipt"]["receipt_id"]
+        after_peer = json.loads(peer.session.outbox.path.read_text(encoding="utf-8"))
+        assert after_peer["flight"] is None
+        assert after_peer["pending"] == []
+        assert after_peer["acknowledged"]["ux-core-peer"]
+        peer_state = {key: copy.deepcopy(after_peer.get(key))
+                      for key in ("base", "flight", "pending", "acknowledged")}
+        release.set()
+        result = result_queue.get(timeout=60)
+        process.join(timeout=10)
+        assert not process.is_alive(), "same-actor child process did not exit"
+        assert process.exitcode == 0
+    finally:
+        release.set()
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=10)
+
+    assert "error" not in result, result
+    pending_id = result["pending_id"]
+    assert pending_id and result["evaluations"] == 1
+    saved = peer.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["parts"][0]["base"] == captured["base"]
+    assert saved["parts"][0]["commands"] == captured["commands"]
+
+    after_conflict = json.loads(peer.session.outbox.path.read_text(encoding="utf-8"))
+    assert {key: after_conflict.get(key) for key in peer_state} == peer_state
+    assert after_conflict["pending_changes"][pending_id]["parts"][0]["commands"] == captured["commands"]
+
+    # The callable is gone with the child. A fresh default-open handle retries its saved list.
+    recovered = Timeline.open(project, "film", client=client)
+    preview = recovered.retry(pending_id)
+    assert preview["status"] == "preview"
+    assert preview["data"]["commands"] == captured["commands"]
+    assert recovered.commit(preview)["status"] in {"accepted", "merged", "landed"}
+    assert recovered.bundle["parent"]["custom"] == {"same_actor_recovery": True}
+    assert recovered.bundle["parent"]["name"] == "Same actor peer edit"
+    history_count = len(client.timelines.history(project, "film", limit=100).data["items"])
+    again = recovered.commit(preview)
+    assert again["status"] == "landed"
+    assert len(client.timelines.history(project, "film", limit=100).data["items"]) == history_count
+    assert recovered.pending_show(pending_id)["state"] == "landed"
+
+
+def test_same_actor_default_outbox_recovers_captured_reviewed_list_after_process_exit(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, client, project, _setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "same-actor-list-data"))
+
+    import json
+    import multiprocessing
+    from astrid.sdk.timeline import Timeline
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    actor = "ux-core-same-actor"
+    _, credential = daemon.credentials.provision(actor, [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor=actor, credential=credential)
+    peer = Timeline.open(project, "film", client=peer_client)
+    initial_head = copy.deepcopy(peer.head)
+
+    context = multiprocessing.get_context("spawn")
+    captured_queue, result_queue = context.Queue(), context.Queue()
+    release = context.Event()
+    process = context.Process(
+        target=_same_actor_reviewed_list_process,
+        args=(daemon.endpoint, credential, daemon.service.realm["id"], project,
+              captured_queue, release, result_queue),
+    )
+    process.start()
+    try:
+        captured = captured_queue.get(timeout=60)
+        assert captured["base"] == initial_head
+        assert captured["commands"]
+        assert captured["outbox"] == str(peer.session.outbox.path)
+
+        peer_result = peer.commit(
+            lambda t: t.bundle["parent"].update({"name": "Same actor reviewed peer edit"}),
+            label="Same actor reviewed peer edit", key="ux-core-reviewed-peer",
+        )
+        assert peer_result["receipt"]["receipt_id"]
+        after_peer = json.loads(peer.session.outbox.path.read_text(encoding="utf-8"))
+        assert after_peer["flight"] is None
+        assert after_peer["pending"] == []
+        assert after_peer["acknowledged"]["ux-core-reviewed-peer"]
+        peer_state = {key: copy.deepcopy(value) for key, value in after_peer.items()
+                      if key != "pending_changes"}
+        release.set()
+        result = result_queue.get(timeout=60)
+        process.join(timeout=10)
+        assert not process.is_alive(), "same-actor reviewed-list child process did not exit"
+        assert process.exitcode == 0
+    finally:
+        release.set()
+        if process.is_alive():
+            process.terminate()
+            process.join(timeout=10)
+
+    assert "error" not in result, result
+    pending_id = result["pending_id"]
+    assert pending_id
+    saved = peer.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["parts"][0]["base"] == captured["base"]
+    assert saved["parts"][0]["commands"] == captured["commands"]
+
+    after_conflict = json.loads(peer.session.outbox.path.read_text(encoding="utf-8"))
+    assert {key: value for key, value in after_conflict.items()
+            if key != "pending_changes"} == peer_state
+    assert after_conflict["pending_changes"][pending_id]["parts"][0]["commands"] == captured["commands"]
+
+    # The reviewed list is durable; a fresh default-open handle retries it without recapturing.
+    recovered = Timeline.open(project, "film", client=peer_client)
+    preview = recovered.retry(pending_id)
+    assert preview["status"] == "preview"
+    assert preview["data"]["commands"] == captured["commands"]
+    landed = recovered.commit(preview)
+    assert landed["status"] in {"accepted", "merged", "landed"}
+    assert recovered.bundle["parent"]["custom"] == {"same_actor_reviewed_list": True}
+    assert recovered.bundle["parent"]["name"] == "Same actor reviewed peer edit"
+    history_count = len(client.timelines.history(project, "film", limit=100).data["items"])
+    again = recovered.commit(preview)
+    assert again["status"] == "landed"
+    assert len(client.timelines.history(project, "film", limit=100).data["items"]) == history_count
+    assert recovered.pending_show(pending_id)["state"] == "landed"

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import copy
 import hashlib
+import json
 import uuid
 from collections.abc import Mapping
 from datetime import datetime, timezone
@@ -10,7 +11,7 @@ from typing import Any, cast
 
 from ._common import PARENT_SHOT, TimelineEditError
 from .checkout import Checkout
-from .sync import CommitConflict, TimelineSession, _pending_clash, _pin
+from .sync import CommitConflict, TimelineSession, _OutboxChanged, _pending_clash, _pin
 
 
 def emit_document_commands(before, after):
@@ -501,6 +502,26 @@ class Timeline(Checkout):
             raise TimelineEditError("pass only one of key or idempotency_key")
         if key is not None:
             idempotency_key = key
+        if pending is not None and idempotency_key is not None and isinstance(label_or_fn, list):
+            actors = "self" if getattr(self.session, "_explicit_outbox", False) else "all"
+            landed = [(path, record) for path, record in self._pending_records_with_paths(actors)
+                      if (record.get("id") == pending or record.get("key") == pending)
+                      and record.get("state") == "landed"]
+            if len(landed) == 1:
+                record = landed[0][1]
+                replay_label = label or "Timeline edit"
+                list_reads = [] if reads is None and merge == "fields" else reads
+
+                def matches(body):
+                    return (body.get("group_id") == record["id"]
+                            and body.get("commands") == label_or_fn
+                            and body.get("label") == replay_label
+                            and body.get("merge") == merge
+                            and body.get("reads") == list_reads)
+
+                replay = self.session.retry(idempotency_key, matches=matches, dry_run=dry_run)
+                if replay is not None:
+                    return replay
         pending_target = (self._resolve_pending(pending) if pending is not None else
                           self._resolve_pending_key(idempotency_key) if idempotency_key is not None else None)
         pending_id, pending_path = pending_target if pending_target is not None else (None, None)
@@ -571,9 +592,7 @@ class Timeline(Checkout):
                 raise error
             base = _pin(conflict["details"]["current"])
         else:
-            if not function and state["base"] != self._basis:
-                raise TimelineEditError("session base changed; reopen before committing")
-            base = state["base"]
+            base = self._basis if not function and state["base"] != self._basis else state["base"]
             count = 0
 
         while True:
@@ -606,18 +625,36 @@ class Timeline(Checkout):
                 # and retain this conservative dependency at each step boundary.
                 for step in steps:
                     step.setdefault("reads", []).append({"kind": "scope", "ref": "timeline", "path": []})
+            evaluation = {"kind": "function" if function else "label", "count": count,
+                          "synthetic_function_scope": bool(function and reads is None and merge != "atomic"),
+                          "media_cache": copy.deepcopy(working._media_cache),
+                          "identity_cache": copy.deepcopy(working._identity_cache)}
+            if not function and state["base"] != self._basis:
+                if dry_run or pending_id is not None:
+                    raise TimelineEditError("session base changed; reopen before committing")
+                error = self.session.save_interrupted(working._commands, base=base, label=commit_label,
+                                                      steps=steps, merge=effective_merge, reads=reads,
+                                                      key=idempotency_key, evaluation=evaluation)
+                self._adopt(self._base_bundle)
+                raise error
             try:
                 result = self.session.submit(
                     working._commands, label=commit_label, steps=steps, merge=effective_merge, reads=reads,
                     idempotency_key=idempotency_key, dry_run=dry_run, expected_state=state, base=base,
-                    evaluation={"kind": "function" if function else "label", "count": count,
-                                "synthetic_function_scope": bool(function and reads is None and merge != "atomic"),
-                                "media_cache": copy.deepcopy(working._media_cache),
-                                "identity_cache": copy.deepcopy(working._identity_cache)},
+                    evaluation=evaluation,
                     pending_id=pending_id,
                     pending_path=pending_path,
                     pending_how="rerun" if function else "rederive",
                 )
+            except _OutboxChanged:
+                if dry_run or pending_id is not None:
+                    raise
+                error = self.session.save_interrupted(working._commands, base=base, label=commit_label,
+                                                      steps=steps, merge=effective_merge, reads=reads,
+                                                      key=idempotency_key, evaluation=evaluation)
+                if working is self:
+                    self._adopt(self._base_bundle)
+                raise error
             except CommitConflict as exc:
                 if exc.pending_id is not None and working is self:
                     self._adopt(self._base_bundle)
@@ -651,6 +688,10 @@ class Timeline(Checkout):
 
     def retry(self, err_or_ref, fn=None):
         """Retry a saved edit, retaining an exhausted function when available."""
+        if isinstance(err_or_ref, CommitConflict) and not err_or_ref.pending_id:
+            return {"status": "refused", "pending_id": None,
+                    "data": copy.deepcopy(err_or_ref.failure),
+                    "summary": str(err_or_ref), "next": None}
         ref = getattr(err_or_ref, "pending_id", None) or err_or_ref
         retry_fn = fn if fn is not None else getattr(err_or_ref, "retry_fn", None)
         from . import retry
@@ -720,8 +761,6 @@ class Timeline(Checkout):
             raise TimelineEditError("commit(command_list) requires a clean local session")
         with self.session.outbox.locked():
             state = self.session._state()
-        if state["base"] != self._basis:
-            raise TimelineEditError("session base changed; reopen before committing")
         steps = []
         for ordinal, command in enumerate(commands):
             patch = (copy.deepcopy(command.get("args", {}).get("changes", []))
@@ -730,12 +769,36 @@ class Timeline(Checkout):
                           "command_ordinals": [ordinal], "patch": patch})
         try:
             list_reads = [] if reads is None and merge == "fields" else reads
+            flight = state.get("flight")
+            if flight is not None and pending_id is not None:
+                body = json.loads(flight["body"])
+                if (flight.get("pending_id") != pending_id or body.get("commands") != commands
+                        or body.get("label") != label or body.get("steps") != steps
+                        or body.get("merge") != merge or body.get("reads") != list_reads
+                        or body.get("dry_run", False) != dry_run):
+                    raise TimelineEditError("retry the original in-flight request before another edit")
+                return self._accepted(self.session.flush(idempotency_key=idempotency_key,
+                                                         dry_run=dry_run, release_conflict=True))
+            if state["base"] != self._basis:
+                if dry_run or pending_id is not None:
+                    raise TimelineEditError("session base changed; reopen before committing")
+                raise self.session.save_interrupted(commands, base=self._basis, label=label,
+                                                    steps=steps, merge=merge, reads=list_reads,
+                                                    key=idempotency_key, evaluation={"kind": "list"})
             result = self.session.submit(commands, label=label, steps=steps, merge=merge, reads=list_reads,
                                          idempotency_key=idempotency_key, dry_run=dry_run,
                                          expected_state=state, base=state["base"],
                                          pending_id=pending_id, pending_path=pending_path,
                                          pending_how="rederive")
+        except _OutboxChanged:
+            if dry_run or pending_id is not None:
+                raise
+            raise self.session.save_interrupted(commands, base=self._basis, label=label,
+                                                steps=steps, merge=merge, reads=list_reads,
+                                                key=idempotency_key, evaluation={"kind": "list"})
         except CommitConflict as exc:
+            if exc.failure.get("code") == "local_outbox_changed":
+                raise
             if exc.failure.get("details", {}).get("status") == "conflict":
                 raise CommitConflict(exc.failure, label=label, fixed_list=True,
                                      timeline_id=self.session.timeline_id,

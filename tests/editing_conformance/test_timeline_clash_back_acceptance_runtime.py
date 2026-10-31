@@ -434,3 +434,100 @@ def test_j5_two_actors_retry_one_record_and_group_id_closes_other_actor(
     assert owner_record["closed_by"]["actor_id"] == "j5-peer"
     assert owner_record["closed_by"]["how"] == "retry"
     assert peer.pending_show(pending_id)["state"] == "landed"
+
+
+def test_f3_idempotency_mismatch_is_refused_without_pending_edit(editing_case, tmp_path):
+    daemon, _client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    peer_client, peer = _peer(daemon, project, tmp_path, actor="f3-key-owner")
+
+    peer.commit(lambda t: t.move("parent/clip:b", on=4), label="Reserve key",
+                key="f3-shared-key")
+    timeline = type(timeline).open(
+        project, "film", client=_client, outbox_path=tmp_path / "f3-target.json"
+    )
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(lambda t: t.move("parent/clip:b", on=8), label="Different edit",
+                        key="f3-shared-key")
+
+    error = caught.value
+    assert error.pending_id is None
+    assert error.failure["details"]["status"] == "refused"
+    assert error.failure["details"]["reason"] == "idempotency_mismatch"
+    retry = timeline.retry(error)
+    assert retry["status"] == "refused"
+    assert retry["pending_id"] is None
+    assert retry["data"] == error.failure
+
+    with timeline.session.outbox.locked():
+        state = timeline.session._state()
+    assert state["rejected"]["commands"]
+    assert state["rejected"]["commands"][0]["args"]["on"] == 8
+    assert peer_client.timelines.history(project, "film", limit=100).data["items"][-1]["label"] == "Reserve key"
+
+
+def test_f4_rederived_list_replay_is_idempotent_across_actors(
+    editing_case,
+    tmp_path,
+    monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    _seed_clip(timeline, tmp_path)
+    stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "f4-stale.json")
+    commands = _move_commands(stale, on=4, label="F4 reviewed move")
+    _peer_client, peer = _peer(daemon, project, tmp_path, actor="f4-clash-peer")
+    peer.commit(lambda t: t.move("parent/clip:b", on=6), label="F4 peer move", key="f4-peer-move")
+
+    from astrid.sdk.timeline.sync import CommitConflict, CommitOutcomeUnknown, TimelineEditError
+    from astrid_runtime_client import ApiError
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(commands, label="F4 reviewed move", key="f4-rederive-key")
+    pending_id = caught.value.pending_id
+    assert pending_id
+    stale = type(timeline).open(
+        project, "film", client=client, outbox_path=tmp_path / "f4-stale.json"
+    )
+    retry = stale.retry(pending_id)
+    assert retry["status"] == "re_derive"
+
+    preview = stale.commit(
+        lambda t: t.move("parent/clip:b", on=8), label="F4 reviewed move", dry_run=True
+    )
+    rederived = preview["data"]["commands"]
+    history_before = _history(client, project)
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    lost_reply = []
+
+    def accept_then_lose_reply(project_id_arg, timeline_id_arg, body, **kwargs):
+        result = original(project_id_arg, timeline_id_arg, body, **kwargs)
+        if body.get("label") == "F4 reviewed move" and not lost_reply:
+            lost_reply.append(result)
+            raise ApiError(503, "not_ready", "simulated lost rederive response")
+        return result
+
+    monkeypatch.setattr(generated, "commit_timeline", accept_then_lose_reply)
+    with pytest.raises(CommitOutcomeUnknown):
+        stale.commit(rederived, label="F4 reviewed move", key="f4-rederive-key", pending=pending_id)
+    monkeypatch.setattr(generated, "commit_timeline", original)
+
+    recovered = stale.commit()
+    landed = stale.commit(
+        rederived, label="F4 reviewed move", key="f4-rederive-key", pending=pending_id
+    )
+    repeated = stale.commit(
+        rederived, label="F4 reviewed move", key="f4-rederive-key", pending=pending_id
+    )
+    assert recovered["receipt"]["receipt_id"] == landed["receipt"]["receipt_id"]
+    assert landed["receipt"]["receipt_id"] == repeated["receipt"]["receipt_id"]
+    assert len(_history(client, project)) == len(history_before) + 1
+    assert _history(client, project)[-1]["group_id"] == pending_id
+    _assert_closed(stale, pending_id, how="rederive")
+
+    changed = _move_commands(stale, on=10, label="F4 reviewed move")
+    with pytest.raises(TimelineEditError):
+        stale.commit(changed, label="F4 reviewed move", key="f4-rederive-key", pending=pending_id)
+    assert len(_history(client, project)) == len(history_before) + 1

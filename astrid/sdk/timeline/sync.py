@@ -65,6 +65,10 @@ class CommitConflict(TimelineEditError):
         super().__init__(f"{self.headline.rstrip('.')}. {self.fix}")
 
 
+class _OutboxChanged(TimelineEditError):
+    """A different writer changed the outbox before this intent was queued."""
+
+
 class CommitOutcomeUnknown(TimelineEditError, WorkspaceClientError):
     """A sent request whose outcome cannot yet be verified."""
 
@@ -718,6 +722,41 @@ class TimelineSession:
         return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via,
                            release_conflict=release_conflict)
 
+    def save_interrupted(self, commands, *, base, label, steps, merge, reads, key, evaluation):
+        """Save captured intent without changing another writer's queue or flight."""
+        from ._pending import clash, snapshot
+
+        if key is not None and (not isinstance(key, str) or not key.strip()):
+            raise TimelineEditError("idempotency key must be nonempty")
+        body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
+                "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
+                "commands": copy.deepcopy(commands), "source": {"via": "python"}, "dry_run": False,
+                "label": label, "steps": copy.deepcopy(steps), "merge": merge}
+        if reads is not None:
+            body["reads"] = copy.deepcopy(reads)
+        flight = {"body": request_bytes(body).decode(), "count": len(commands),
+                  "key": key or "timeline-edit-" + uuid.uuid4().hex,
+                  "explicit_key": key is not None, "evaluation": copy.deepcopy(evaluation)}
+        flight["imports"] = [copy.deepcopy(item) for entry in evaluation.get("media_cache", {}).values()
+                             if isinstance(entry, dict) for item in entry.get("imports", [])]
+        if key is not None:
+            flight["logical_key"] = key
+        with self.outbox.locked():
+            state = self._state()
+            failure = {"code": "local_outbox_changed", "message": "session base changed",
+                       "details": {"status": "conflict", "reason": "local_outbox_changed",
+                                   "current": copy.deepcopy(state["base"]), "conflicts": []}}
+            captured = {"base": copy.deepcopy(base), "pending": copy.deepcopy(commands)}
+            record = snapshot(captured, flight, failure)
+            state.setdefault("pending_changes", {})[record["id"]] = record
+            self.outbox.write(state)
+        record = _pending_clash(self, record)
+        error = CommitConflict(failure, label=label, timeline_id=self.timeline_id,
+                               project_id=self.project_id, pending_id=record["id"],
+                               clash=record.get("clash") or clash(record))
+        error.args = ("session base changed; " + str(error),)
+        return error
+
     def submit(self, commands, *, label, steps, merge="fields", reads=None,
                idempotency_key=None, dry_run=False, expected_state, base=None, evaluation=None,
                pending_id=None, pending_path=None, pending_how="retry", group_id=None,
@@ -734,7 +773,7 @@ class TimelineSession:
 
         def prepare(state):
             if state != expected_state:
-                raise TimelineEditError("outbox changed during evaluation; nothing was submitted")
+                raise _OutboxChanged("outbox changed during evaluation; nothing was submitted")
             if state["pending"] or state["flight"] is not None:
                 if state.get("conflict", {}).get("details", {}).get("status") != "conflict":
                     raise TimelineEditError("retry the original in-flight request before another edit")
