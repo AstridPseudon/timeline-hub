@@ -18,6 +18,11 @@ from astrid.core.execution.generic_host import (
 from astrid.core._shared.boot_manifest import load_boot_manifest_hash
 
 
+@pytest.fixture(autouse=True)
+def _isolate_selected_source_schema(monkeypatch):
+    monkeypatch.delenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", raising=False)
+
+
 def _mock_host_launch(monkeypatch, fake_popen) -> None:
     # Fake process fixtures do not have a kernel command. Dedicated cases below
     # exercise publication and later-process recognition using native observations.
