@@ -380,6 +380,31 @@ def test_probe_reads_conflict_preview_before_generated_dto_rejects_it(tmp_path):
     assert captured["path"] == "/v1/projects/project/timelines/timeline/commit"
 
 
+def test_saved_function_reads_turn_stale_retry_preview_into_rederive(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    part = record["parts"][0]
+    dependency = {"kind": "scope", "ref": "timeline", "path": ["clips"]}
+    part["evaluation"] = {"kind": "function", "count": 1}
+    part["commit_options"]["reads"] = [dependency]
+    requests = []
+
+    def probe(session, request):
+        requests.append(copy.deepcopy(request))
+        assert request["reads"] == [dependency]
+        return {"would_status": "conflict", "details": {"conflicts": [dependency]}}
+
+    monkeypatch.setattr(retry_module, "_probe", probe)
+    monkeypatch.setattr(retry_module, "_preview_diff",
+                        lambda *args: pytest.fail("a stale function result must not be previewed as safe"))
+    monkeypatch.setattr(retry_module.clash, "explain", lambda *args: {"receipts": []})
+
+    result = retry_module.retry(timeline, "pc_saved")
+
+    assert requests[0]["reads"] == [dependency]
+    assert result["status"] == "re_derive"
+
+
 def test_atomic_probe_omits_unset_reads(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     record = timeline.session.state["pending_changes"]["pc_saved"]
