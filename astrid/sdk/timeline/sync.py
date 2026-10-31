@@ -811,6 +811,7 @@ class TimelineSession:
 
         release_conflict = (not isinstance(evaluation, dict)
                             or evaluation.get("kind") != "function"
+                            or evaluation.get("rerun", False)
                             or evaluation.get("count", 0) >= 3)
         return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, prepare=prepare,
                            release_conflict=release_conflict)

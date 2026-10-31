@@ -478,7 +478,7 @@ class Timeline(Checkout):
         return result
 
     def commit(self, label_or_fn="Timeline edit", *, label=None, merge="fields", dry_run=False,
-               reads=None, key=None, idempotency_key=None, pending=None):
+               reads=None, key=None, idempotency_key=None, pending=None, _function_base=None):
         """Accept staged edits, a fixed command list, or evaluate ``fn`` up to three times.
 
         Only an explicit conflict permits reevaluation. Calling again after a
@@ -553,6 +553,7 @@ class Timeline(Checkout):
             state = self.session._state()
         evaluation = state.get("evaluation") or {}
         count = evaluation.get("count", 0)
+        original_base = _pin(_function_base or evaluation.get("original_base") or state["base"])
         if function and state["flight"] is not None and evaluation.get("kind") == "function":
             flight = state["flight"]
             logical_key = flight.get("logical_key", flight["key"] if flight.get("explicit_key") else None)
@@ -617,7 +618,10 @@ class Timeline(Checkout):
                 raise TimelineEditError("no pending timeline edits")
             steps = copy.deepcopy(working._steps)
             effective_merge = merge
-            if reads is None and (function or working._free_edits
+            rerun = bool(function and (count > 1 or _function_base is not None))
+            if rerun:
+                effective_merge = "fields"
+            elif reads is None and (function or working._free_edits
                                   or any(command["op"] == "doc.patch" for command in working._commands)):
                 effective_merge = "atomic"
                 # Arbitrary Python may consult any part of the loaded closure.
@@ -627,6 +631,7 @@ class Timeline(Checkout):
                     step.setdefault("reads", []).append({"kind": "scope", "ref": "timeline", "path": []})
             evaluation = {"kind": "function" if function else "label", "count": count,
                           "synthetic_function_scope": bool(function and reads is None and merge != "atomic"),
+                          "original_base": original_base, "rerun": rerun,
                           "media_cache": copy.deepcopy(working._media_cache),
                           "identity_cache": copy.deepcopy(working._identity_cache)}
             if not function and state["base"] != self._basis:
@@ -639,8 +644,10 @@ class Timeline(Checkout):
                 raise error
             try:
                 result = self.session.submit(
-                    working._commands, label=commit_label, steps=steps, merge=effective_merge, reads=reads,
-                    idempotency_key=idempotency_key, dry_run=dry_run, expected_state=state, base=base,
+                    working._commands, label=commit_label, steps=steps, merge=effective_merge,
+                    reads=[] if rerun and reads is None else reads,
+                    idempotency_key=idempotency_key, dry_run=dry_run, expected_state=state,
+                    base=original_base if rerun else base,
                     evaluation=evaluation,
                     pending_id=pending_id,
                     pending_path=pending_path,
@@ -656,6 +663,9 @@ class Timeline(Checkout):
                     self._adopt(self._base_bundle)
                 raise error
             except CommitConflict as exc:
+                if function and exc.pending_id is not None:
+                    exc.retry_fn = function
+                    raise
                 if exc.pending_id is not None and working is self:
                     self._adopt(self._base_bundle)
                 if not function or exc.failure["details"].get("status") != "conflict" or count >= 3:
@@ -686,7 +696,7 @@ class Timeline(Checkout):
                 result["data"]["summary"] = result["summary"]
             return self._accepted(result)
 
-    def retry(self, err_or_ref, fn=None):
+    def retry(self, err_or_ref, fn=None, *, overwrite=False):
         """Retry a saved edit, retaining an exhausted function when available."""
         if isinstance(err_or_ref, CommitConflict) and not err_or_ref.pending_id:
             return {"status": "refused", "pending_id": None,
@@ -696,7 +706,7 @@ class Timeline(Checkout):
         retry_fn = fn if fn is not None else getattr(err_or_ref, "retry_fn", None)
         from . import retry
 
-        return retry.retry(self, ref, retry_fn)
+        return retry.retry(self, ref, retry_fn, overwrite=overwrite)
 
     def _pending_records_with_paths(self, actors):
         if actors not in {"self", "all"}:

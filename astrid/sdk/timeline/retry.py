@@ -252,7 +252,7 @@ def _summary_rederive(record, packet):
             f'with pending="{record["id"]}".')
 
 
-def retry(timeline, ref, fn=None):
+def retry(timeline, ref, fn=None, *, overwrite=False):
     """Retry a saved record, returning a reviewable preview or terminal state."""
     if fn is None and callable(getattr(ref, "retry_fn", None)):
         fn = ref.retry_fn
@@ -268,8 +268,12 @@ def retry(timeline, ref, fn=None):
         return _landed(timeline, path, record)
     if fn is not None:
         refreshed = _refresh_function_base(timeline, record)
+        part = _part(record)
+        original_base = None if overwrite else _pin(part["base"])
+        options = part.get("commit_options") or {}
         result = timeline.commit(fn, label=record.get("label"), key=record.get("key"),
-                                 pending=record["id"])
+                                 pending=record["id"], reads=options.get("reads"),
+                                 _function_base=original_base)
         receipt = result.get("receipt") if isinstance(result, dict) else None
         receipt_id = receipt.get("receipt_id") if isinstance(receipt, dict) else None
         if refreshed and receipt_id and result.get("status") in {"accepted", "merged", "rebased"}:
@@ -278,7 +282,16 @@ def retry(timeline, ref, fn=None):
                                  f'newest timeline; {record["id"]} is closed.')
             if isinstance(result.get("data"), dict):
                 result["data"]["summary"] = result["summary"]
+        if overwrite and receipt_id:
+            result["rebased"] = True
+            result["summary"] = result.get("summary", "").rstrip(".") + "; rebased onto the newest timeline."
+            if isinstance(result.get("data"), dict):
+                result["data"]["rebased"] = True
+                result["data"]["summary"] = result["summary"]
         return result
+
+    if overwrite:
+        raise ValueError("overwrite requires the original edit function")
 
     part = _part(record)
     request = _request(record, part)
