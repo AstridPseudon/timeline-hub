@@ -197,6 +197,51 @@ def test_function_retry_returns_commit_result_and_reuses_label_key(monkeypatch, 
     assert result["data"]["summary"] == result["summary"]
 
 
+def test_function_origin_retry_requires_original_function(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    timeline.session.state["pending_changes"]["pc_saved"]["origin"] = "function"
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, []))
+    monkeypatch.setattr(retry_module, "_probe", lambda *args: pytest.fail(
+        "a saved function must not be retried from its captured commands"))
+
+    with pytest.raises(ValueError, match="original edit function"):
+        retry_module.retry(timeline, "pc_saved")
+
+    assert timeline.session.submissions == []
+
+
+def test_function_overwrite_by_pending_id_closes_saved_record(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["origin"] = "function"
+    function = lambda working: None
+    from astrid.sdk.timeline.commit_session import Timeline
+
+    timeline._retry_functions = {"pc_saved": function}
+    committed = {"status": "accepted", "receipt": {"receipt_id": "pub-accepted"}}
+    calls = []
+
+    def commit(*args, **kwargs):
+        calls.append((args, kwargs))
+        timeline.session.submit([], label=kwargs["label"], steps=[],
+                                 pending_id=kwargs["pending"], pending_how="rerun")
+        return committed
+
+    timeline.commit = commit
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, []))
+
+    result = Timeline.retry(timeline, "pc_saved", overwrite=True)
+
+    assert calls == [((function,), {"label": "Recut", "key": "recut",
+                                    "pending": "pc_saved", "_overwrite": True})]
+    assert result is committed
+    assert result["status"] == "rebased"
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    assert saved["state"] == "landed"
+    assert saved["closed_by"] == {
+        "actor_id": "actor-1", "publication_id": "pub-accepted", "how": "rerun"}
+
+
 def test_function_retry_leaves_unknown_flight_for_commit_reconciliation(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     timeline.session.state["flight"] = {"key": "possibly-sent"}
