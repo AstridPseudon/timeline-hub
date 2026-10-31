@@ -982,7 +982,9 @@ class TimelineSession:
                     if external_conflict is None:
                         record = _pending_clash(self, record)
                 from ._pending import clash
-                raise CommitConflict(failure, fixed_list=release_conflict and details.get("status") == "conflict",
+                raise CommitConflict(failure, fixed_list=(release_conflict and details.get("status") == "conflict"
+                                                          and (not isinstance(flight.get("evaluation"), dict)
+                                                               or flight["evaluation"].get("kind") != "function")),
                                      timeline_id=self.timeline_id, project_id=self.project_id,
                                      label=record["label"] if record else None,
                                      pending_id=record["id"] if record else None,
