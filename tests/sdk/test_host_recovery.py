@@ -33,6 +33,7 @@ LEADER = ("import subprocess,sys,time;"
 class Harness:
     def __init__(self, tmp_path: Path, monkeypatch) -> None:
         self.tmp, self.mp = tmp_path, monkeypatch
+        monkeypatch.delenv("ASTRID_TIMELINE_SCHEMA_PYTHONPATH", raising=False)
         self.source = tmp_path / "source"
         (self.source / "astrid" / "packs").mkdir(parents=True)
         _materialize_source_closure(self.source)

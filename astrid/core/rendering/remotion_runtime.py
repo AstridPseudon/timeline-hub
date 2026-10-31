@@ -824,7 +824,7 @@ def _registry_probe(environment: Mapping[str, str], python: str, *, generator: b
         # later on sys.path (for example, an installed wheel behind a checkout
         # supplied in PYTHONPATH). Keep the remaining discovery paths intact.
         source = ('import sys,json; sys.path[0]=sys.argv[2]; '
-                  'sys.path[:]=[sys.argv[1]]+[p for p in sys.path if p != sys.argv[1]]; '
+                  'sys.path.insert(0,sys.argv[1]) if sys.argv[1] not in sys.path else None; '
                   'from astrid.core.rendering.remotion_runtime import _registry_observation; '
                   'print(json.dumps(_registry_observation(),sort_keys=True))')
         cwd = REPO_ROOT if generator else script_directory
