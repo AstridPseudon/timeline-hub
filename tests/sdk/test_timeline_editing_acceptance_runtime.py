@@ -812,7 +812,7 @@ def test_e14_function_conflict_reruns_but_literal_list_conflict_stays_fixed(
     stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "literal.json")
     other = type(timeline).open(project, "film", client=peer_client, outbox_path=tmp_path / "literal-peer.json")
     before_list_conflict = _history(client, project)
-    peer_edit = other.commit(lambda t: t.bundle["parent"].update({"name": "Second concurrent editor change"}),
+    peer_edit = other.commit(lambda t: t.bundle["parent"].update({"custom": {"peer_edit": True}}),
                              label="Second concurrent change", key="e14-peer-change-2")
     assert peer_edit["receipt"]["receipt_id"]
     assert len(_history(client, project)) == len(before_list_conflict) + 1
