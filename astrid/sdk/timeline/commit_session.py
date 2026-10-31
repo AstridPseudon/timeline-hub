@@ -418,7 +418,9 @@ class Timeline(Checkout):
                           if self._runtime_document is not None else self._command_bundle)
         commands = execute(capture_bundle, commands,
                            verified_media=[*self._verified_media, copy.deepcopy(verified)]).commands
-        self._verified_media.append(copy.deepcopy(verified))
+        self._verified_media.append({**copy.deepcopy(verified), "object_id": pin["object_id"],
+                                     "pin": {"media_id": pin["object_id"],
+                                             "content_digest": pin["object_id"]}})
         try:
             self._append(commands, label="Add media")
         except Exception:
