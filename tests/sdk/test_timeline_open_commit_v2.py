@@ -308,6 +308,9 @@ def test_declared_request_and_step_reads_and_atomic_are_preserved(connected):
 def test_function_reads_each_returned_head_and_recomputes_with_new_keys(connected, monkeypatch):
     tl = opened(connected)
     client, generated, _ = connected
+    # This fake advances heads without publication history; overlap behavior is
+    # covered against Runtime in test_timeline_clash_back_runtime.py.
+    monkeypatch.setattr(commit_session, "_function_rerun_conflict", lambda *args: None)
     original = generated.commit_timeline
     sent, evaluations = [], []
 
@@ -351,6 +354,9 @@ def test_declared_function_reads_allow_fields(connected):
 def test_three_evaluation_bound_saves_function_record(connected, monkeypatch):
     tl = opened(connected)
     _, generated, path = connected
+    # This fake advances heads without publication history; overlap behavior is
+    # covered against Runtime in test_timeline_clash_back_runtime.py.
+    monkeypatch.setattr(commit_session, "_function_rerun_conflict", lambda *args: None)
     evaluations, sent = [], []
 
     def refuse(*args, **kwargs):
@@ -383,7 +389,8 @@ def test_retry_delegates_pending_ref_and_retained_function(connected, monkeypatc
     calls = []
     monkeypatch.setattr(
         retry_module, "retry",
-        lambda owner, ref, fn=None: calls.append((owner, ref, fn)) or "retried",
+        lambda owner, ref, fn=None, *, overwrite=False:
+            calls.append((owner, ref, fn, overwrite)) or "retried",
     )
 
     def edit(working):
@@ -393,7 +400,7 @@ def test_retry_delegates_pending_ref_and_retained_function(connected, monkeypatc
     error.retry_fn = edit
     assert tl.retry(error) == "retried"
     assert tl.retry("pc-2", fn=edit) == "retried"
-    assert calls == [(tl, "pc-1", edit), (tl, "pc-2", edit)]
+    assert calls == [(tl, "pc-1", edit, False), (tl, "pc-2", edit, False)]
 
 
 def test_commit_retry_preview_delegates_to_retry_module(connected, monkeypatch):
@@ -816,6 +823,9 @@ def test_stale_local_handle_cannot_submit_at_another_sessions_base(connected):
 def test_unknown_retry_then_conflict_continues_with_persisted_evaluation_count(connected, monkeypatch):
     tl = opened(connected)
     _, generated, path = connected
+    # This fake advances heads without publication history; overlap behavior is
+    # covered against Runtime in test_timeline_clash_back_runtime.py.
+    monkeypatch.setattr(commit_session, "_function_rerun_conflict", lambda *args: None)
     original = generated.commit_timeline
     sent, evaluations = [], []
 
