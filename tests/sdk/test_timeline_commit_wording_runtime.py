@@ -85,6 +85,56 @@ def test_case1_fps_removal_refusal_reason_and_wording(editing_case):
     assert saved["failure"]["details"] == exc.failure["details"]
 
 
+def test_case2_stale_literal_list_conflict_is_not_rerun(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    from astrid.sdk.timeline.sync import CommitConflict
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    _, peer_credential = daemon.credentials.provision("e14r1-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer_client = open_client(daemon, actor="e14r1-peer", credential=peer_credential)
+    fixed = timeline.commit(
+        lambda t: t.bundle["parent"].update({"custom": {"literal_edit": True}}),
+        label="Preview fixed list", dry_run=True,
+    )["data"]["commands"]
+    stale = type(timeline).open(project, "film", client=client, outbox_path=tmp_path / "stale.json")
+    other = type(timeline).open(project, "film", client=peer_client, outbox_path=tmp_path / "peer.json")
+    peer_edit = other.commit(
+        lambda t: t.bundle["parent"].update({"custom": {"peer_edit": True}}),
+        label="Concurrent list change", key="e14r1-peer-change",
+    )
+    assert peer_edit["receipt"]["receipt_id"]
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    attempts = []
+
+    def count_submission(*args, **kwargs):
+        attempts.append(copy.deepcopy(args[2]))
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(generated, "commit_timeline", count_submission)
+    with pytest.raises(CommitConflict) as info:
+        stale.commit(fixed, label="Apply reviewed list", key="e14r1-fixed-list")
+    exc = info.value
+    assert len(attempts) == 1
+    assert exc.failure["details"]["status"] == "conflict"
+    assert exc.headline == "The timeline changed since this list was made; nothing was committed"
+    assert exc.detail == exc.failure["message"]
+    assert exc.fix == (
+        f'Someone else changed this timeline after your edit was made, so "Apply reviewed list" '
+        f'was not committed. Your edit is saved as {exc.pending_id}; nothing is lost. '
+        f'Retry it with tl.retry("{exc.pending_id}").')
+    assert exc.outcome == "not_applied"
+    saved = json.loads((tmp_path / "stale.json").read_bytes())
+    assert not saved.get("rejected")
+    assert len(saved["pending_changes"]) == 1
+    record = saved["pending_changes"][exc.pending_id]
+    assert record["state"] == "pending"
+    assert record["parts"][0]["commands"] == fixed
+
+
 def test_case2_stale_literal_list_merges_disjoint_fields_without_rerun(editing_case, tmp_path, monkeypatch):
     daemon, client, project, timeline = editing_case
     from tests.editing_conformance.test_commit_runtime_m1 import open_client
