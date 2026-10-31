@@ -326,7 +326,7 @@ def _already_applied(timeline, path, record, packet):
             "next": None}
 
 
-def retry(timeline, ref, fn=None):
+def retry(timeline, ref, fn=None, *, overwrite=False):
     """Retry a saved record, returning a reviewable preview or terminal state."""
     if fn is None and callable(getattr(ref, "retry_fn", None)):
         fn = ref.retry_fn
@@ -349,14 +349,24 @@ def retry(timeline, ref, fn=None):
         return _landed(timeline, path, record)
     if fn is not None:
         refreshed = _refresh_function_base(timeline, record)
+        options = {"_overwrite": True} if overwrite else {}
         result = timeline.commit(fn, label=record.get("label"), key=record.get("key"),
-                                 pending=record["id"])
+                                 pending=record["id"], **options)
         receipt = result.get("receipt") if isinstance(result, dict) else None
         receipt_id = receipt.get("receipt_id") if isinstance(receipt, dict) else None
-        if refreshed and receipt_id and result.get("status") in {"accepted", "merged", "rebased"}:
+        if receipt_id and result.get("status") in {"accepted", "merged", "rebased"} \
+                and (refreshed or overwrite):
             label = record.get("label") or "Timeline edit"
-            result["summary"] = (f'Committed "{label}" as {receipt_id} after re-running it on the '
-                                 f'newest timeline; {record["id"]} is closed.')
+            summary = (f'Committed "{label}" as {receipt_id} after re-running it on the '
+                       f'newest timeline; {record["id"]} is closed.')
+            if overwrite:
+                conflicts = ((record.get("failure") or {}).get("details") or {}).get("conflicts", [])
+                sites = [f'{item.get("ref", "?")} (/{"/".join(map(str, item.get("path", [])))})'
+                         for item in conflicts]
+                summary = (f'Rebased "{label}" as {receipt_id}; overwrote '
+                           f'{", ".join(sites) if sites else "the saved conflicting edits"}. '
+                           f'{record["id"]} is closed.')
+            result["summary"] = summary
             if isinstance(result.get("data"), dict):
                 result["data"]["summary"] = result["summary"]
         return result

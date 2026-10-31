@@ -731,7 +731,8 @@ class TimelineSession:
         return self._flush(idempotency_key=idempotency_key, dry_run=dry_run, via=via,
                            release_conflict=release_conflict)
 
-    def save_interrupted(self, commands, *, base, label, steps, merge, reads, key, evaluation):
+    def save_interrupted(self, commands, *, base, label, steps, merge, reads, key, evaluation,
+                         failure=None):
         """Save captured intent without changing another writer's queue or flight."""
         from ._pending import clash, snapshot
 
@@ -752,9 +753,10 @@ class TimelineSession:
             flight["logical_key"] = key
         with self.outbox.locked():
             state = self._state()
-            failure = {"code": "local_outbox_changed", "message": "session base changed",
-                       "details": {"status": "conflict", "reason": "local_outbox_changed",
-                                   "current": copy.deepcopy(state["base"]), "conflicts": []}}
+            failure = copy.deepcopy(failure) if failure is not None else {
+                "code": "local_outbox_changed", "message": "session base changed",
+                "details": {"status": "conflict", "reason": "local_outbox_changed",
+                            "current": copy.deepcopy(state["base"]), "conflicts": []}}
             captured = {"base": copy.deepcopy(base), "pending": copy.deepcopy(commands)}
             record = snapshot(captured, flight, failure)
             state.setdefault("pending_changes", {})[record["id"]] = record
