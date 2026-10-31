@@ -947,6 +947,29 @@ class Timeline(Checkout):
             if replay is not None:
                 return replay
             flight = state.get("flight")
+            if flight is not None and pending_id is None:
+                body = json.loads(flight["body"])
+                expected = {
+                    "api_version": 1,
+                    "project_id": self.session.project_id,
+                    "timeline_id": self.session.timeline_id,
+                    "base_revision_id": self._basis["revision_id"],
+                    "base_publication_id": self._basis["publication_id"],
+                    "commands": commands,
+                    "source": {"via": "python"},
+                    "dry_run": dry_run,
+                    "label": label,
+                    "steps": steps,
+                    "merge": merge,
+                }
+                if list_reads is not None:
+                    expected["reads"] = list_reads
+                logical_key = flight.get("logical_key", flight.get("key")
+                                         if flight.get("explicit_key") else None)
+                if logical_key != idempotency_key or body != expected:
+                    raise TimelineEditError("retry the original in-flight request before another edit")
+                return self._accepted(self.session.flush(idempotency_key=idempotency_key,
+                                                         dry_run=dry_run))
             if flight is not None and pending_id is not None:
                 body = json.loads(flight["body"])
                 if (flight.get("pending_id") != pending_id or body.get("commands") != commands
