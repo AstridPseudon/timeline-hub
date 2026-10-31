@@ -5,6 +5,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import threading
 
 import pytest
 
@@ -116,6 +117,96 @@ def test_new_file_swap_recovery_reimports_after_saved_runtime_refusal(
     assert landed["imports"][0]["object_id"] == replacement_digest
     assert replacement_digest in str(landed["data"]["canonical_document"])
     assert reopened.pending_show(pending_id)["state"] == "landed"
+
+
+def test_new_file_swap_recovers_after_same_actor_default_outbox_race(
+    editing_case, tmp_path, monkeypatch,
+):
+    _daemon, client, project, _setup = editing_case
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "swap-recovery-data"))
+    timeline = Timeline.open(project, "film", client=client)
+    source = _media_file(tmp_path / "swap-seed.png")
+    timeline.commit(
+        lambda t: t.add(source, at=0, hold=3, track="V1", id="swap-target"),
+        label="Seed swap target", key="swap-recovery-seed",
+    )
+    stale = Timeline.open(project, "film", client=client)
+    peer = Timeline.open(project, "film", client=client)
+    assert stale.session.outbox.path == peer.session.outbox.path
+    assert stale.head == peer.head
+    replacement = _media_file(tmp_path / "swap-replacement.png", color="blue")
+    replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
+    evaluations = []
+    imported = threading.Event()
+    resume = threading.Event()
+    outcomes = []
+
+    def edit(t):
+        evaluations.append(1)
+        t.clip("swap-target").swap_asset(str(replacement))
+
+    from astrid.sdk.timeline import media_add
+
+    select = media_add._selection
+
+    def import_then_pause(*args, **kwargs):
+        selected = select(*args, **kwargs)
+        imported.set()
+        if not resume.wait(timeout=60):
+            raise TimeoutError("same-actor peer did not release the imported swap")
+        return selected
+
+    monkeypatch.setattr(media_add, "_selection", import_then_pause)
+
+    def run_swap():
+        try:
+            stale.commit(edit, label="Recover new file swap", key="swap-new-file-recovery")
+        except Exception as exc:  # Return the actual Runtime/outbox failure to the test thread.
+            outcomes.append(exc)
+        else:
+            outcomes.append(None)
+
+    worker = threading.Thread(target=run_swap)
+    worker.start()
+    try:
+        assert imported.wait(timeout=60), "function did not import its local replacement"
+        peer_result = peer.commit(
+            lambda t: t.bundle["parent"].update({"name": "Peer advanced shared outbox"}),
+            label="Disjoint same-actor peer edit", key="swap-shared-outbox-peer",
+        )
+        assert peer_result["status"] in {"accepted", "merged", "landed"}
+    finally:
+        resume.set()
+        worker.join(timeout=60)
+    assert not worker.is_alive(), "swap function did not finish after peer commit"
+    assert len(outcomes) == 1 and isinstance(outcomes[0], CommitConflict), outcomes
+    caught = outcomes[0]
+
+    pending_id = caught.pending_id
+    assert pending_id
+    saved = stale.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "function"
+    assert saved["failure"] == caught.failure
+    assert saved["parts"][0]["imports"]
+    assert saved["parts"][0]["imports"][0]["object_id"] == replacement_digest
+    assert len(evaluations) == 1
+
+    reopened = Timeline.open(project, "film", client=client)
+    assert reopened.session.outbox.path == peer.session.outbox.path
+    landed = reopened.retry(pending_id, fn=edit)
+
+    assert landed["status"] in {"accepted", "merged", "landed"}
+    assert len(evaluations) == 2
+    assert len(landed["imports"]) == 1
+    assert landed["imports"][0]["object_id"] == replacement_digest
+    assert replacement_digest in str(landed["data"]["canonical_document"])
+    assert reopened.pending_show(pending_id)["state"] == "landed"
+    assert reopened.pending_show(pending_id)["failure"] == caught.failure
+    assert reopened.bundle["parent"]["name"] == "Peer advanced shared outbox"
 
 
 def test_same_value_reviewed_list_recovers_through_shared_outbox_cli(
