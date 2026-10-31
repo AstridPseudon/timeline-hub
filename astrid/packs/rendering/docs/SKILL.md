@@ -211,9 +211,14 @@ Runtime merges changes that do not touch the same things (`status` is then
   `timelines pending list <timeline> --project <project> --all-actors`; inspect
   one with `timelines pending show` or mark it dropped with `pending drop`.
   Agents using the same local Runtime session also share its outbox; if a
-  second agent gets `session base changed` or `outbox changed during evaluation`,
-  reopen with `Timeline.open` and rerun its function on the current head. That
-  error is not a saved clash and has no pending id.
+  same-actor writer gets `session base changed` or `outbox changed during
+  evaluation`, the SDK saves that evaluation's exact captured commands and
+  original base as a pending record, then raises `CommitConflict` with
+  `pending_id`. Recover with `tl.retry(err)`, or use the pending id after a
+  restart. Inspect the saved record and returned `preview` or `re_derive`
+  result before committing; only re-run the producer to derive new commands
+  after that inspection. A `CommitConflict` without `pending_id` still has no
+  saved edit and is not retryable.
 
 ## Keys, retries and undo
 

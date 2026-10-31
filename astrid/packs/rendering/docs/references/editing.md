@@ -147,6 +147,16 @@ For CLI recovery, use `astrid timelines pending list TL --project P`, then
 `astrid timelines retry TL ID --project P` command; if it returns a preview,
 use the printed `--commit TOKEN` command. Re-deriving requires Python.
 
+When a same-actor writer in a shared local Runtime session gets `session base
+changed` or `outbox changed during evaluation`, the pending record preserves
+the exact captured commands and their original base. The SDK raises
+`CommitConflict` with `pending_id`; recover with `tl.retry(err)`, or use that
+id after a restart. Inspect the saved record and any `preview` or `re_derive`
+result before committing. If re-derivation is needed, first inspect the saved
+intent, then deliberately produce and preview new commands. Do not rerun the
+producer before inspecting the saved record. A conflict without `pending_id`
+has no saved edit and cannot be retried.
+
 `on`/`until` a word mean its START (`after "word"` = its end); `until c30b` = when c30b STARTS; `until end of c30`
 ends with that cut. Clip methods return the clip, so they chain: `tl.clip("c30.cover").on('"x"').hold_for(1.2)`.
 `on(33.9)` with a plain number is timeline seconds; on a clip in a cut it is stored as an offset from that cut's start (`+0.8s`, `+2f`), so it moves with the cut.
