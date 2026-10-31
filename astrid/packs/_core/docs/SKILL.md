@@ -193,7 +193,7 @@ python3 -m astrid media references list --project <project> --include-archived -
 
 Use `timelines show`, `history`, `diff`, `visualize`, and `render` for
 timeline work. Look at your visual edits with `visualize` as often as helps
-([how to look](../../rendering/docs/references/how-to-look.md)); render only
+(`timeline`'s how-to-look reference); render only
 when the user asks, and point them to the editor link. Whole-document timeline saves are retired; edits are published
 through the detached authoring bundle. Read the [timeline editing skill](../../rendering/docs/SKILL.md)
 for the canonical authoring, Remotion, visualization, effects, and playback

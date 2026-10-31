@@ -147,7 +147,7 @@ def legacy_binding(bundle, target, field, declaration, sources):
                 asset = internal.get("registry", {}).get("assets", {}).get(clip.get("asset"), {})
                 if asset.get("media_id") != content["media_id"]:
                     continue
-                origin = Fraction(row["placement"]["start_ms"], 1000) + Fraction(str(clip["at"]))
+                origin = Fraction(str(row["placement"]["start_ms"])) / 1000 + Fraction(str(clip["at"]))
                 words = []
                 for segment in content["segments"]:
                     for index, word in enumerate(segment["words"]):
