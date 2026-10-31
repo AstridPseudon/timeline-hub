@@ -86,6 +86,7 @@ def test_runtime_refusal_is_not_retried_or_reclassified_and_saves_verified_paylo
     assert len(evaluations) == 1
     assert len(generated.calls) == 1
 
+    sent_body, sent_key = generated.calls[0]
     saved = json.loads(path.read_text(encoding="utf-8"))
     assert saved["pending"] == [] and saved["flight"] is None
     assert "conflict" not in saved and "rejected" not in saved
@@ -96,12 +97,19 @@ def test_runtime_refusal_is_not_retried_or_reclassified_and_saves_verified_paylo
     assert rejected["clash"]["pending_id"] == rejected["id"]
     assert rejected["clash"]["runtime"]["reason"] == "authority_revoked"
     packet = rejected["parts"][0]
+    assert rejected["flight"]["body"].encode() == sent_body
+    assert rejected["flight"]["key"] == sent_key == "refused-media-edit"
+    assert rejected["flight"]["imports"] == [import_record]
     assert packet["imports"] == [import_record]
     assert packet["evaluation"]["media_cache"][digest]["imports"] == [import_record]
     assert rejected["parts"][0]["evaluation"]["count"] == 1
 
     assert packet["base"] == {"revision_id": "r0", "publication_id": "pub0"}
-    assert any(command.get("args", {}).get("media") == pin for command in packet["commands"])
+    attempted = json.loads(rejected["flight"]["body"])
+    assert attempted["base_revision_id"] == "r0"
+    assert attempted["base_publication_id"] == "pub0"
+    assert packet["commands"] == attempted["commands"]
+    assert any(command.get("args", {}).get("media") == pin for command in attempted["commands"])
     assert caught.value.clash == rejected["clash"]
 
 
