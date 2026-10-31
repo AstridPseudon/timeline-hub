@@ -942,3 +942,79 @@ def test_retry_already_applied_is_idempotent(monkeypatch, tmp_path):
     assert timeline.session.state["pending_changes"]["pc_saved"]["receipts"] == receipts
     assert probe_calls == []
     assert timeline.session.submissions == []
+
+
+def test_refused_function_retry_recovers_saved_suffix_once_in_receipt_order(monkeypatch, tmp_path):
+    timeline = FakeTimeline(tmp_path / "outbox.json")
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["origin"] = "function"
+    record["failure"]["details"].update(status="conflict", reason="guard_changed")
+    suffix = copy.deepcopy(record["parts"][0])
+    suffix["base"] = HEAD
+    suffix["commands"] = [{"op": "clip.move", "select": "clip:b", "args": {"on": 8}}]
+    suffix["commit_options"] = {"label": "Follow-up", "steps": [], "merge": "fields"}
+    record["parts"].append(suffix)
+    history = lambda *args: (HEAD, [])
+    monkeypatch.setattr(retry_module.clash, "_history", history)
+    monkeypatch.setattr(retry_module, "_probe", lambda *args: {
+        "would_status": "accepted", "evaluated_head": HEAD, "canonical_document": {}})
+    monkeypatch.setattr(retry_module, "_preview_diff", lambda *args: {"changes": []})
+
+    accepted = [
+        {"status": "accepted", "receipt": {"receipt_id": "receipt-function"}},
+        {"status": "accepted", "receipt": {"receipt_id": "receipt-suffix"}},
+    ]
+    publications = ["pub-function", "pub-suffix"]
+
+    def submit(*args, **kwargs):
+        timeline.session.submissions.append((args, kwargs))
+        from astrid.sdk.timeline.sync import _settle_pending
+
+        saved = timeline.session.state["pending_changes"][kwargs["pending_id"]]
+        index = len(timeline.session.submissions) - 1
+        publication = publications[index]
+        base = {"revision_id": f"r{index + 3}", "publication_id": publication}
+        timeline.session.state["base"] = base
+        _settle_pending(saved, actor_id="actor-1", publication_id=publication,
+                        how=kwargs["pending_how"], base=base)
+        return accepted[index]
+
+    timeline.session.submit = submit
+
+    def commit(function, **kwargs):
+        assert function is edit_again
+        assert kwargs == {"label": "Recut", "key": "recut", "pending": "pc_saved"}
+        return timeline.session.submit([], pending_id=kwargs["pending"], pending_how="rerun")
+
+    def edit_again(working):
+        return None
+
+    timeline.commit = commit
+
+    first = retry_module.retry(timeline, "pc_saved", fn=edit_again)
+
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    assert first["receipt"]["receipt_id"] == "receipt-function"
+    assert saved["state"] == "pending"
+    assert saved["part"] == 1
+    assert saved["receipts"] == ["pub-function"]
+    assert saved["parts"][1]["base"] == {"revision_id": "r3", "publication_id": "pub-function"}
+
+    preview = retry_module.retry(timeline, "pc_saved")
+    second = retry_module.commit_preview(timeline, preview)
+
+    saved = timeline.session.state["pending_changes"]["pc_saved"]
+    assert second["receipt"]["receipt_id"] == "receipt-suffix"
+    assert saved["state"] == "landed"
+    assert saved["part"] == 1
+    assert saved["receipts"] == ["pub-function", "pub-suffix"]
+    assert saved["closed_by"] == {
+        "actor_id": "actor-1", "publication_id": "pub-suffix", "how": "retry"}
+    assert [kwargs["pending_how"] for _, kwargs in timeline.session.submissions] == ["rerun", "retry"]
+
+    durable = copy.deepcopy(saved)
+    final = retry_module.retry(timeline, "pc_saved")
+
+    assert final["status"] == "landed"
+    assert timeline.session.state["pending_changes"]["pc_saved"] == durable
+    assert len(timeline.session.submissions) == 2

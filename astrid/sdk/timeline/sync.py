@@ -750,7 +750,7 @@ class TimelineSession:
                            release_conflict=release_conflict)
 
     def save_interrupted(self, commands, *, base, label, steps, merge, reads, key, evaluation,
-                         failure=None):
+                         failure=None, release_flight=None, release_dry_run=False):
         """Save captured intent without changing another writer's queue or flight."""
         from ._pending import clash, snapshot
 
@@ -777,18 +777,28 @@ class TimelineSession:
                             "current": copy.deepcopy(state["base"]), "conflicts": []}}
             captured = {"base": copy.deepcopy(base), "pending": copy.deepcopy(commands)}
             record = snapshot(captured, flight, failure)
+            owned = (release_flight is not None and state.get("flight") == release_flight
+                     and state.get("conflict", {}).get("details", {}).get("status") == "conflict"
+                     and (state.get("evaluation") or {}).get("kind") == "function")
+            if owned:
+                self._flight_body(state, release_flight, None, release_dry_run)
+                record["parts"].extend(snapshot(state, release_flight, failure)["parts"][1:])
             records = state.setdefault("pending_changes", {})
             matches = [item for item in records.values()
                        if key is not None and item.get("state") == "pending" and item.get("key") == key]
             if len(matches) > 1:
                 raise TimelineEditError(f"pending key {key!r} is ambiguous; use a pending id")
             if matches:
+                replacement = record
                 record = matches[0]
-                _retry_conflict(record, snapshot(captured, flight, failure))
+                _retry_conflict(record, replacement)
+                if owned:
+                    index = record.get("part", 0)
+                    record["parts"][index] = replacement["parts"][0]
+                    record["parts"].extend(replacement["parts"][1:])
             else:
                 records[record["id"]] = record
-            if (state.get("conflict", {}).get("details", {}).get("status") == "conflict"
-                    and (state.get("evaluation") or {}).get("kind") == "function"):
+            if owned:
                 state["base"] = _pin(failure["details"]["current"])
                 state["pending"] = []
                 state["flight"] = None

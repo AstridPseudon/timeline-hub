@@ -9,6 +9,8 @@ import copy
 import hashlib
 import json
 import sys
+from concurrent.futures import ThreadPoolExecutor
+from threading import Event
 
 import pytest
 
@@ -577,6 +579,82 @@ def test_function_reruns_after_shared_outbox_advance_during_evaluation(connected
     assert tl.pending_list() == []
     assert json.loads(tl.session.outbox.path.read_text())["pending"] == []
     assert len(generated.accepted) == 2
+
+
+def test_function_rerun_guard_saves_flight_and_dependent_suffix_in_order(connected, monkeypatch):
+    tl = opened(connected)
+    _, generated, path = connected
+    entered, release = Event(), Event()
+    first_request = []
+
+    def conflict_after_suffix(_project, _timeline, body, *, idempotency_key):
+        first_request.append((copy.deepcopy(body), idempotency_key))
+        entered.set()
+        assert release.wait(10)
+        raise ApiError(409, "conflict", "peer changed the timeline", details={
+            "status": "conflict", "reason": "value_conflict",
+            "current": copy.deepcopy(generated.head),
+        })
+
+    monkeypatch.setattr(generated, "commit_timeline", conflict_after_suffix)
+    peer = execute(generated.bundles["r0"], [{
+        "schema_version": 1, "op": "clip.move", "version": "1",
+        "select": "parent/clip:a", "args": {"on": 9},
+    }]).bundle
+    generated.bundles["peer"] = peer
+    generated.head = {"revision_id": "peer", "publication_id": "pub-peer"}
+    generated.publications["peer"] = "pub-peer"
+
+    evaluations = []
+
+    def edit(working):
+        evaluations.append(working.head["revision_id"])
+        working.move("parent/clip:a", 5)
+
+    original_base = {"revision_id": "r0", "publication_id": "pub0"}
+
+    def overlap_on_rerun(_session, _original, current, *_bundles):
+        if current != original_base:
+            return {
+                "code": "intervening_write",
+                "message": "function rerun overlaps an intervening write",
+                "details": {"status": "conflict", "reason": "intervening_write",
+                            "current": copy.deepcopy(generated.head), "conflicts": []},
+            }
+        return None
+
+    monkeypatch.setattr(commit_session, "_function_rerun_conflict", overlap_on_rerun)
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        committing = pool.submit(tl.commit, edit, label="Rerun edit", key="rerun-key")
+        try:
+            assert entered.wait(10)
+            queueing = opened(connected).session
+            suffix = [queueing.queue_move("parent/clip:b", 7),
+                      queueing.queue_move("parent/clip:b", 8)]
+        finally:
+            release.set()
+        with pytest.raises(CommitConflict) as error:
+            committing.result(timeout=10)
+
+    durable = json.loads(path.read_text())
+    assert evaluations == ["r0", "peer"]
+    assert len(first_request) == 1
+    assert first_request[0][1] == "rerun-key"
+    assert generated.accepted == {}
+    assert durable["flight"] is None and durable["pending"] == []
+    assert len(durable["pending_changes"]) == 1
+    record = durable["pending_changes"][error.value.pending_id]
+    assert record["state"] == "pending"
+    assert record["key"] == "rerun-key"
+    assert record["flight"]["key"] == "rerun-key"
+    assert len(record["parts"]) == 2
+    assert record["parts"][0]["evaluation"]["kind"] == "function"
+    assert record["parts"][0]["evaluation"]["count"] == 2
+    assert json.loads(record["flight"]["body"])["commands"] == record["parts"][0]["commands"]
+    assert record["parts"][1]["commands"] == suffix
+    assert record["parts"][0]["base"] == original_base
+    assert record["parts"][1]["base"] == original_base
+    assert record["receipts"] == [] and record["closed_by"] is None
 
 
 def test_failed_ack_persistence_reconciles_without_running_function(connected, monkeypatch):
