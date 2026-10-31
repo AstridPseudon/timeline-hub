@@ -209,6 +209,77 @@ def test_new_file_swap_recovers_after_same_actor_default_outbox_race(
     assert reopened.bundle["parent"]["name"] == "Peer advanced shared outbox"
 
 
+def test_reviewed_new_file_swap_runtime_conflict_is_saved_and_explicit_retry_recovers(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, _client, project, setup = editing_case
+    from astrid.sdk.timeline.sync import CommitConflict
+
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "reviewed-swap-data"))
+    source = _media_file(tmp_path / "reviewed-swap-seed.png")
+    setup.commit(
+        lambda t: t.add(source, at=0, hold=3, track="V1", id="reviewed-swap-target"),
+        label="Seed reviewed swap target", key="reviewed-swap-seed",
+    )
+    _, stale = _actor(
+        daemon, project, tmp_path, "reviewed-swap-author",
+        outbox=tmp_path / "reviewed-swap-author.json",
+    )
+    _, peer = _actor(
+        daemon, project, tmp_path, "reviewed-swap-peer",
+        outbox=tmp_path / "reviewed-swap-peer.json",
+    )
+    replacement = _media_file(tmp_path / "reviewed-swap-replacement.png", color="blue")
+    peer_replacement = _media_file(tmp_path / "reviewed-swap-peer.png", color="green")
+    replacement_digest = "sha256:" + hashlib.sha256(replacement.read_bytes()).hexdigest()
+    evaluations = []
+
+    def edit(t):
+        evaluations.append(True)
+        t.clip("reviewed-swap-target").swap_asset(str(replacement))
+
+    reviewed = stale.commit(edit, label="Reviewed new file swap", dry_run=True)
+    assert reviewed["status"] == "preview"
+    commands = copy.deepcopy(reviewed["data"]["commands"])
+    assert commands
+    assert len(evaluations) == 1
+
+    peer_result = peer.commit(
+        lambda t: t.clip("reviewed-swap-target").swap_asset(str(peer_replacement)),
+        label="Peer replaces reviewed swap target", key="reviewed-swap-peer",
+    )
+    assert peer_result["status"] in {"accepted", "merged", "landed"}
+    peer_digest = "sha256:" + hashlib.sha256(peer_replacement.read_bytes()).hexdigest()
+    assert peer_digest in str(peer_result["data"]["canonical_document"])
+
+    with pytest.raises(CommitConflict) as caught:
+        stale.commit(
+            commands, label="Reviewed new file swap", key="reviewed-new-file-swap",
+        )
+
+    pending_id = caught.value.pending_id
+    assert pending_id
+    assert caught.value.failure["details"]["status"] == "conflict"
+    saved = stale.pending_show(pending_id)
+    assert saved["state"] == "pending"
+    assert saved["origin"] == "list"
+    assert saved["failure"] == caught.value.failure
+    assert saved["parts"][0]["commands"] == commands
+    assert saved["parts"][0]["imports"][0]["object_id"] == replacement_digest
+    assert len(evaluations) == 1
+
+    landed = stale.retry(pending_id, fn=edit, overwrite=True)
+
+    assert landed["status"] in {"accepted", "merged", "landed", "rebased"}
+    assert len(evaluations) == 2
+    assert len(landed["imports"]) == 1
+    assert landed["imports"][0]["object_id"] == replacement_digest
+    assert replacement_digest in str(landed["data"]["canonical_document"])
+    final = stale.pending_show(pending_id)
+    assert final["state"] == "landed"
+    assert final["failure"] == caught.value.failure
+
+
 def test_same_value_reviewed_list_recovers_through_shared_outbox_cli(
     editing_case, tmp_path, monkeypatch, capsys,
 ):
