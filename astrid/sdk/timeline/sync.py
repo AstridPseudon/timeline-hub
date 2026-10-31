@@ -726,6 +726,8 @@ class TimelineSession:
         """Save captured intent without changing another writer's queue or flight."""
         from ._pending import clash, snapshot
 
+        if key is not None and (not isinstance(key, str) or not key.strip()):
+            raise TimelineEditError("idempotency key must be nonempty")
         body = {"api_version": 1, "project_id": self.project_id, "timeline_id": self.timeline_id,
                 "base_revision_id": base["revision_id"], "base_publication_id": base["publication_id"],
                 "commands": copy.deepcopy(commands), "source": {"via": "python"}, "dry_run": False,
