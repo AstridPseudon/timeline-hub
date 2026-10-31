@@ -223,7 +223,7 @@ def test_function_swap_runtime_refusal_is_saved_and_retry_reruns(editing_case, t
     failure = caught.value.failure["details"]
     assert failure["status"] == "refused"
     assert failure["reason"] == "invalid_records"
-    assert failure["message"] == "sequential command metadata differs from the prepared candidate"
+    assert caught.value.failure["message"] == "sequential command metadata differs from the prepared candidate"
     assert peer_writes[0]["receipt"]["receipt_id"]
     assert len(evaluations) == 1
     assert len(imports_by_evaluation[0]) == 1
