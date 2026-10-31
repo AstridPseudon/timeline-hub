@@ -10,6 +10,9 @@ from pathlib import Path
 from urllib.parse import quote
 
 from . import clash
+from ._command_state import ABSENT, equal, present
+from ._commit_patch import canonical_site
+from ._doc_patch import value_at
 from .sync import _response
 from .outbox import Outbox
 
@@ -253,6 +256,76 @@ def _summary_rederive(record, packet, session):
             f'with pending="{record["id"]}".')
 
 
+def _already_applied(timeline, path, record, packet):
+    """Close a reviewed edit when every Runtime conflict now has its desired value."""
+    conflicts = ((record.get("failure") or {}).get("details") or {}).get("conflicts") or []
+    changes = record.get("diff")
+    if not conflicts or not isinstance(changes, list) or not changes:
+        return None
+
+    part = _part(record)
+    base = _pin(part.get("base") or record.get("base"))
+    try:
+        head, entries = clash._history(timeline.session, base)
+        base_closure, head_closure = clash._closures(timeline.session, base, head, entries)
+    except Exception:  # noqa: BLE001 - same best-effort boundary as clash enrichment
+        return None
+    if head_closure is None:
+        return None
+
+    expected = {}
+    for change in changes:
+        if not isinstance(change, dict) or change.get("op") not in {"set", "remove"}:
+            continue
+        try:
+            ref, site_path = canonical_site(base_closure, change["ref"], change.get("path", []))
+            address = (ref, tuple(site_path))
+            value = (present(change["value"]) if change["op"] == "set" else ABSENT)
+        except Exception:  # noqa: BLE001 - malformed or stale enrichment must fall back safely
+            continue
+        expected[address] = value
+
+    matching_receipts = [receipt for receipt in packet.get("receipts") or []
+                         if receipt.get("touches_conflict") and receipt.get("publication_id")]
+    if not matching_receipts:
+        return None
+
+    matched_fields = []
+    for conflict in conflicts:
+        try:
+            ref, site_path = canonical_site(base_closure, conflict["ref"], conflict.get("path", []))
+            site = (ref, tuple(site_path))
+            desired = expected[site]
+            current = value_at(head_closure.images[ref]["payload"], ref, site_path)
+        except Exception:  # noqa: BLE001 - malformed or stale enrichment must fall back safely
+            return None
+        if not equal(desired, current):
+            return None
+        named = clash._target(conflict, base_closure)
+        marker = " already has "
+        matched_fields.append(named.partition(marker)[0] if marker in named else named)
+
+    # The user-facing wording names the peer whose receipt is the verified
+    # source of the already-applied value. Leave ambiguous multi-writer cases
+    # on the ordinary re-derive path.
+    receipt_ids = {receipt["publication_id"] for receipt in matching_receipts}
+    actors = {receipt.get("publisher") for receipt in matching_receipts}
+    if len(receipt_ids) != 1 or len(actors) != 1 or not next(iter(actors)):
+        return None
+    publication_id = next(iter(receipt_ids))
+    entry = next((item for item in entries if item.get("publication_id") == publication_id), None)
+    if entry is None:
+        return None
+
+    closed = _close(path, record, timeline.session, entry, "already_applied")
+    if closed.get("state") != "landed":
+        return None
+    return {"status": "landed", "pending_id": record["id"], "record": closed,
+            "summary": (f"Nothing to do: {', '.join(matched_fields)} already has your value "
+                        f"(set by {next(iter(actors))}); {record['id']} is closed."),
+            "next": None}
+
+
 def retry(timeline, ref, fn=None):
     """Retry a saved record, returning a reviewable preview or terminal state."""
     if fn is None and callable(getattr(ref, "retry_fn", None)):
@@ -281,6 +354,13 @@ def retry(timeline, ref, fn=None):
                 result["data"]["summary"] = result["summary"]
         return result
 
+    failure_details = ((record.get("failure") or {}).get("details") or {})
+    if failure_details.get("status") == "conflict":
+        packet = record.get("clash") or clash.explain(timeline.session, record)
+        already_applied = _already_applied(timeline, path, record, packet)
+        if already_applied is not None:
+            return already_applied
+
     part = _part(record)
     request = _request(record, part)
     data = _probe(timeline.session, request)
@@ -308,6 +388,9 @@ def retry(timeline, ref, fn=None):
         return result
     if status == "conflict":
         packet = clash.explain(timeline.session, record)
+        already_applied = _already_applied(timeline, path, record, packet)
+        if already_applied is not None:
+            return already_applied
         return {"status": "re_derive", "pending_id": record["id"],
                 "data": {"conflicts": copy.deepcopy(details.get("conflicts", [])),
                          "receipts": copy.deepcopy(packet.get("receipts"))},
