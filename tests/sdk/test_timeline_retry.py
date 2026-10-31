@@ -197,17 +197,43 @@ def test_function_retry_returns_commit_result_and_reuses_label_key(monkeypatch, 
     assert result["data"]["summary"] == result["summary"]
 
 
-def test_function_origin_retry_requires_original_function(monkeypatch, tmp_path):
+def test_function_origin_retry_previews_saved_list_with_guards_for_approval(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
-    timeline.session.state["pending_changes"]["pc_saved"]["origin"] = "function"
+    record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["origin"] = "function"
+    dependency = {"kind": "scope", "ref": "timeline", "path": ["clips"]}
+    record["parts"][0]["commit_options"] = {
+        "label": "Recut", "merge": "fields", "reads": [dependency],
+    }
+    requests = []
+
+    def probe(session, request):
+        requests.append(copy.deepcopy(request))
+        return {"would_status": "merged", "evaluated_head": HEAD, "canonical_document": {}}
+
+    monkeypatch.setattr(retry_module, "_probe", probe)
+    monkeypatch.setattr(retry_module, "_preview_diff", lambda *args: {"changes": [{"ref": "parent/clip:a"}]})
     monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, []))
-    monkeypatch.setattr(retry_module, "_probe", lambda *args: pytest.fail(
-        "a saved function must not be retried from its captured commands"))
 
-    with pytest.raises(ValueError, match="original edit function"):
-        retry_module.retry(timeline, "pc_saved")
+    preview = retry_module.retry(timeline, "pc_saved")
 
+    assert preview["status"] == "preview"
+    assert preview["data"]["commands"] == record["parts"][0]["commands"]
+    assert preview["data"]["captured_list_requires_approval"] is True
+    assert "captured command list" in preview["summary"]
+    assert "explicitly commit" in preview["summary"]
+    assert requests[0]["base_revision_id"] == BASE["revision_id"]
+    assert requests[0]["base_publication_id"] == BASE["publication_id"]
+    assert requests[0]["merge"] == "fields"
+    assert requests[0]["reads"] == [dependency]
     assert timeline.session.submissions == []
+
+    result = retry_module.commit_preview(timeline, preview)
+
+    assert result["status"] == "accepted"
+    assert timeline.session.submissions[0][1]["base"] == BASE
+    assert timeline.session.submissions[0][1]["merge"] == "fields"
+    assert timeline.session.submissions[0][1]["reads"] == [dependency]
 
 
 def test_function_overwrite_by_pending_id_closes_saved_record(monkeypatch, tmp_path):
@@ -430,6 +456,7 @@ def test_probe_reads_conflict_preview_before_generated_dto_rejects_it(tmp_path):
 def test_saved_function_reads_turn_stale_retry_preview_into_rederive(monkeypatch, tmp_path):
     timeline = FakeTimeline(tmp_path / "outbox.json")
     record = timeline.session.state["pending_changes"]["pc_saved"]
+    record["origin"] = "function"
     part = record["parts"][0]
     dependency = {"kind": "scope", "ref": "timeline", "path": ["clips"]}
     part["evaluation"] = {"kind": "function", "count": 1}
@@ -450,6 +477,10 @@ def test_saved_function_reads_turn_stale_retry_preview_into_rederive(monkeypatch
 
     assert requests[0]["reads"] == [dependency]
     assert result["status"] == "re_derive"
+    assert result["data"]["captured_list_requires_approval"] is True
+    assert "not replayed" in result["summary"]
+    assert "original function" in result["next"]
+    assert timeline.session.submissions == []
 
 
 def test_atomic_probe_omits_unset_reads(monkeypatch, tmp_path):
