@@ -241,6 +241,7 @@ class Timeline(Checkout):
         self._identity_cache = copy.deepcopy(identity_cache or {})
         self._identity_ordinal = 0
         self._verified_media = []
+        self._retry_functions = {}
         self._adopt(bundle)
 
     def _register_asset(self, shot_id, asset, *, replace=False):
@@ -248,7 +249,7 @@ class Timeline(Checkout):
         from pathlib import Path
 
         local_path = Path(asset).expanduser() if isinstance(asset, (str, Path)) else None
-        if not self._evaluating or local_path is None or not local_path.is_file():
+        if local_path is None or not local_path.is_file():
             return super()._register_asset(shot_id, asset, replace=replace)
 
         from .media_add import _selection
@@ -659,7 +660,7 @@ class Timeline(Checkout):
             part_index = pending_record.get("part", 0) if pending_record else 0
             if isinstance(parts, list) and type(part_index) is int and 0 <= part_index < len(parts):
                 _original_base = parts[part_index].get("base")
-        original_base = _pin(_original_base or state["base"])
+        original_base = _pin(_original_base or (self._basis if function else state["base"]))
         evaluation = state.get("evaluation") or {}
         count = evaluation.get("count", 0)
         if function and state["flight"] is not None and evaluation.get("kind") == "function":
@@ -670,7 +671,7 @@ class Timeline(Checkout):
                     raise TimelineEditError("retry the original function idempotency key")
                 idempotency_key = logical_key
         if state["pending"] or state["flight"] is not None:
-            pending_id = clash = None
+            clash = None
             # A known conflict may be recomputed; every other outcome must first
             # reconcile the exact original request, without invoking user code.
             conflict = state.get("conflict")
@@ -751,6 +752,7 @@ class Timeline(Checkout):
                         merge=effective_merge, reads=reads, key=idempotency_key,
                         evaluation=evaluation, failure=overlap)
                     error.retry_fn = function
+                    self._retry_functions[error.pending_id] = function
                     raise error
             if not function and state["base"] != self._basis:
                 if dry_run or pending_id is not None:
@@ -785,6 +787,7 @@ class Timeline(Checkout):
                 if not function or not retryable or count >= 3:
                     if function and not retryable:
                         exc.retry_fn = function
+                        self._retry_functions[exc.pending_id] = function
                     if function and retryable and count >= 3:
                         exhausted = CommitConflict(exc.failure, attempts=count, label=commit_label,
                                                    timeline_id=self.session.timeline_id,
@@ -792,6 +795,7 @@ class Timeline(Checkout):
                                                    pending_id=getattr(exc, "pending_id", None),
                                                    clash=getattr(exc, "clash", None))
                         exhausted.retry_fn = function
+                        self._retry_functions[exhausted.pending_id] = function
                         raise exhausted from exc
                     raise
                 base = _pin(exc.failure["details"]["current"])
@@ -820,6 +824,8 @@ class Timeline(Checkout):
                     "summary": str(err_or_ref), "next": None}
         ref = getattr(err_or_ref, "pending_id", None) or err_or_ref
         retry_fn = fn if fn is not None else getattr(err_or_ref, "retry_fn", None)
+        if retry_fn is None and overwrite:
+            retry_fn = self._retry_functions.get(ref)
         from . import retry
 
         return retry.retry(self, ref, retry_fn, overwrite=overwrite)

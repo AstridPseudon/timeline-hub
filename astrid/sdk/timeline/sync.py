@@ -760,7 +760,29 @@ class TimelineSession:
             captured = {"base": copy.deepcopy(base), "pending": copy.deepcopy(commands)}
             record = snapshot(captured, flight, failure)
             state.setdefault("pending_changes", {})[record["id"]] = record
+            if (state.get("conflict", {}).get("details", {}).get("status") == "conflict"
+                    and (state.get("evaluation") or {}).get("kind") == "function"):
+                state["base"] = _pin(failure["details"]["current"])
+                state["pending"] = []
+                state["flight"] = None
+                for field in ("conflict", "commit_options", "evaluation", "rationale", "group_id",
+                              "media_input", "media_imports", "pending_close", "pending_close_path", "pending_how"):
+                    state.pop(field, None)
             self.outbox.write(state)
+        try:
+            diff = _pending_diff(self, record)
+        except Exception:  # noqa: BLE001 - the saved intent remains usable without enrichment
+            diff = None
+        if diff is not None:
+            with self.outbox.locked():
+                state = self._state()
+                saved = state.get("pending_changes", {}).get(record["id"])
+                if saved is not None and saved.get("state") == "pending":
+                    saved["diff"] = diff
+                    saved["rev"] = int(saved.get("rev", 0)) + 1
+                    saved["updated_at"] = datetime.now(timezone.utc).isoformat()
+                    self.outbox.write(state)
+                    record = copy.deepcopy(saved)
         record = _pending_clash(self, record)
         error = CommitConflict(failure, label=label, timeline_id=self.timeline_id,
                                project_id=self.project_id, pending_id=record["id"],

@@ -143,17 +143,6 @@ def _refresh_function_base(timeline, record):
 
 def _request(record, part):
     options = copy.deepcopy(part.get("commit_options") or {})
-    evaluation = part.get("evaluation") or {}
-    steps = options.get("steps") or []
-    scope = {"kind": "scope", "ref": "timeline", "path": []}
-    if (evaluation.get("kind") == "function" and evaluation.get("synthetic_function_scope") is True
-            and options.get("merge") == "atomic" and "reads" not in options
-            and all(step.get("reads") and step["reads"][-1] == scope for step in steps)):
-        for step in steps:
-            step["reads"].pop()
-            if not step["reads"]:
-                del step["reads"]
-        options["merge"] = "fields"
     base = _pin(part["base"])
     request = {"base_revision_id": base["revision_id"],
                "base_publication_id": base["publication_id"],
@@ -276,19 +265,29 @@ def _already_applied(timeline, path, record, packet):
     expected = {}
     for change in changes:
         if not isinstance(change, dict) or change.get("op") not in {"set", "remove"}:
-            continue
+            return None
         try:
             ref, site_path = canonical_site(base_closure, change["ref"], change.get("path", []))
             address = (ref, tuple(site_path))
             value = (present(change["value"]) if change["op"] == "set" else ABSENT)
         except Exception:  # noqa: BLE001 - malformed or stale enrichment must fall back safely
-            continue
+            return None
         expected[address] = value
 
     matching_receipts = [receipt for receipt in packet.get("receipts") or []
                          if receipt.get("touches_conflict") and receipt.get("publication_id")]
     if not matching_receipts:
         return None
+
+    # Closing discards the whole part, so non-conflicting authored fields must
+    # already be present too; checking conflicts alone could lose that work.
+    for (ref, site_path), desired in expected.items():
+        try:
+            current = value_at(head_closure.images[ref]["payload"], ref, list(site_path))
+        except Exception:  # noqa: BLE001 - unverifiable edits stay pending
+            return None
+        if not equal(desired, current):
+            return None
 
     matched_fields = []
     for conflict in conflicts:
@@ -360,6 +359,7 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
             summary = (f'Committed "{label}" as {receipt_id} after re-running it on the '
                        f'newest timeline; {record["id"]} is closed.')
             if overwrite:
+                result["status"] = "rebased"
                 conflicts = ((record.get("failure") or {}).get("details") or {}).get("conflicts", [])
                 sites = [f'{item.get("ref", "?")} (/{"/".join(map(str, item.get("path", [])))})'
                          for item in conflicts]
