@@ -195,6 +195,8 @@ Runtime merges changes that do not touch the same things (`status` is then
   a Runtime refusal or an idempotency mismatch, have no saved edit to retry.
   The CLI path is `astrid timelines retry <timeline> <id|key> --project
   <project>`; a preview prints the matching `--commit TOKEN` command.
+- A function rerun that overlaps intervening edits is saved as a clash; use
+  `tl.retry(id, overwrite=True)` only when you intend to rebase over those edits.
 - **Commit a preview:** `tl.commit(r)` is for a `preview` result. Do not pass a
   `re_derive` result to it. Re-derive by running the function that produced the
   list against a fresh `Timeline.open`, preview the new list, then commit its

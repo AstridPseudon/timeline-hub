@@ -14,6 +14,41 @@ from .checkout import Checkout
 from .sync import CommitConflict, TimelineSession, _OutboxChanged, _pending_clash, _pin
 
 
+def _function_rerun_conflict(session, original_base, current_base, before_bundle, after_bundle):
+    """Return the existing conflict shape when a rerun rewrites intervening work."""
+    from . import clash
+    from ._doc_patch import Closure
+    from .emitter import _diff, _payload_for_emit, _root_pairs
+
+    if current_base == original_base:
+        return None
+    head, entries = clash._history(session, original_base)
+    original = session._capture_bundle({"base": original_base, "pending": []})
+    original_closure = Closure(original)
+    before = Closure(before_bundle)
+    writes = []
+    for ref, left, right in _root_pairs(before_bundle, after_bundle):
+        changes = []
+        _diff(_payload_for_emit(ref, left), _payload_for_emit(ref, right), ref, (), changes)
+        for change in changes:
+            site = (change["ref"], copy.deepcopy(change.get("path", [])))
+            if site not in writes:
+                writes.append(site)
+    if not writes or not entries:
+        return None
+    _, receipt_sites = clash._receipt_sites(entries, original_closure)
+    conflicts = []
+    for ref, path in writes:
+        target = clash._addresses(ref, path, before)
+        if any(clash._touches(receipts, target) for receipts in receipt_sites):
+            conflicts.append({"ref": ref, "path": path})
+    if not conflicts:
+        return None
+    return {"code": "intervening_write", "message": "function rerun overlaps an intervening write",
+            "details": {"status": "conflict", "reason": "intervening_write",
+                        "current": head, "conflicts": conflicts}}
+
+
 def emit_document_commands(before, after):
     """G3 owns this lossless bundle-to-command emitter and its patch semantics."""
     try:
@@ -478,7 +513,8 @@ class Timeline(Checkout):
         return result
 
     def commit(self, label_or_fn="Timeline edit", *, label=None, merge="fields", dry_run=False,
-               reads=None, key=None, idempotency_key=None, pending=None):
+               reads=None, key=None, idempotency_key=None, pending=None,
+               _original_base=None, _overwrite=False):
         """Accept staged edits, a fixed command list, or evaluate ``fn`` up to three times.
 
         Only an explicit conflict permits reevaluation. Calling again after a
@@ -553,6 +589,15 @@ class Timeline(Checkout):
                 return replay
         with self.session.outbox.locked():
             state = self.session._state()
+        if _original_base is None and pending_id is not None:
+            actors = "self" if getattr(self.session, "_explicit_outbox", False) else "all"
+            pending_record = next((record for _, record in self._pending_records_with_paths(actors)
+                                   if record.get("id") == pending_id), None)
+            parts = pending_record.get("parts", []) if pending_record else []
+            part_index = pending_record.get("part", 0) if pending_record else 0
+            if isinstance(parts, list) and type(part_index) is int and 0 <= part_index < len(parts):
+                _original_base = parts[part_index].get("base")
+        original_base = _pin(_original_base or state["base"])
         evaluation = state.get("evaluation") or {}
         count = evaluation.get("count", 0)
         if function and state["flight"] is not None and evaluation.get("kind") == "function":
@@ -606,6 +651,7 @@ class Timeline(Checkout):
                 bundle = fetch_bundle(self.session.project_id, self.session.timeline_id,
                                       revision_id=base["revision_id"], publication_id=base["publication_id"],
                                       client=self.session.client)
+                before_bundle = copy.deepcopy(bundle)
                 saved_cache = evaluation.get("media_cache", {})
                 saved_identities = evaluation.get("identity_cache", {})
                 working = Timeline(self.session, bundle, base, evaluating=True,
@@ -631,6 +677,16 @@ class Timeline(Checkout):
                           "synthetic_function_scope": bool(function and reads is None and merge != "atomic"),
                           "media_cache": copy.deepcopy(working._media_cache),
                           "identity_cache": copy.deepcopy(working._identity_cache)}
+            if function and not _overwrite:
+                overlap = _function_rerun_conflict(
+                    self.session, original_base, base, before_bundle, working.bundle)
+                if overlap is not None:
+                    error = self.session.save_interrupted(
+                        working._commands, base=original_base, label=commit_label, steps=steps,
+                        merge=effective_merge, reads=reads, key=idempotency_key,
+                        evaluation=evaluation, failure=overlap)
+                    error.retry_fn = function
+                    raise error
             if not function and state["base"] != self._basis:
                 if dry_run or pending_id is not None:
                     raise TimelineEditError("session base changed; reopen before committing")
@@ -688,7 +744,7 @@ class Timeline(Checkout):
                 result["data"]["summary"] = result["summary"]
             return self._accepted(result)
 
-    def retry(self, err_or_ref, fn=None):
+    def retry(self, err_or_ref, fn=None, *, overwrite=False):
         """Retry a saved edit, retaining an exhausted function when available."""
         if isinstance(err_or_ref, CommitConflict) and not err_or_ref.pending_id:
             return {"status": "refused", "pending_id": None,
@@ -698,7 +754,7 @@ class Timeline(Checkout):
         retry_fn = fn if fn is not None else getattr(err_or_ref, "retry_fn", None)
         from . import retry
 
-        return retry.retry(self, ref, retry_fn)
+        return retry.retry(self, ref, retry_fn, overwrite=overwrite)
 
     def _pending_records_with_paths(self, actors):
         if actors not in {"self", "all"}:

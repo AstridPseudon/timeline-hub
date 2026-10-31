@@ -829,6 +829,93 @@ def test_e14_function_conflict_reruns_but_literal_list_conflict_stays_fixed(
     assert len(_history(client, project)) == len(before_list_conflict) + 1
 
 
+def test_function_rerun_saves_overlapping_user_edit_and_explicit_retry_rebases(
+    editing_case, tmp_path, monkeypatch,
+):
+    daemon, client, project, timeline = editing_case
+    from astrid.sdk.timeline import Timeline
+    from astrid.sdk.timeline.sync import CommitConflict
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    source = _media_file(tmp_path / "rerun-anchor.png")
+    timeline.commit(lambda t: [t.add(source, at=index * 5, hold=4, track="V1", id=f"clip-{index}")
+                               for index in range(1, 4)], label="Seed rerun clips")
+    _, credential = daemon.credentials.provision("rerun-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer = Timeline.open(project, "film", client=open_client(daemon, actor="rerun-peer", credential=credential),
+                         outbox_path=tmp_path / "rerun-peer.json")
+    for root in (peer.bundle["parent"], peer.bundle["parent"].get("config", {})):
+        for clip in root.get("clips", []):
+            if clip["id"] == "clip-3":
+                clip["hold"] = 3.0
+    peer_edit = peer.commit(label="User clip 3 duration", key="rerun-peer-duration")
+    assert peer_edit["receipt"]["receipt_id"]
+
+    def set_all_durations(t):
+        for index in range(1, 4):
+            t.clip(f"clip-{index}").set_duration(2.0)
+
+    with pytest.raises(CommitConflict) as caught:
+        timeline.commit(set_all_durations, label="Function duration rerun", key="rerun-duration")
+    assert caught.value.pending_id
+    saved = timeline.pending_list()[0]
+    assert saved["clash"]["schema"] == "astrid.clash/2"
+    assert any(row["publication_id"] == peer_edit["receipt"]["receipt_id"]
+               and row["touches_conflict"] for row in saved["clash"]["receipts"])
+    assert any(conflict["path"][-1] == "hold"
+               and any(part.endswith("clip-3") for part in conflict["path"])
+               for conflict in saved["clash"]["conflicts"]), saved["clash"]["conflicts"]
+    current = Timeline.open(project, "film", client=client, outbox_path=tmp_path / "rerun-current.json")
+    assert current.clip("clip-3").duration == pytest.approx(3.0)
+
+    rebased = timeline.retry(caught.value, overwrite=True)
+    assert rebased["status"] in {"accepted", "merged", "rebased"}
+    assert "Rebased" in rebased["summary"]
+    assert "clip-3" in rebased["summary"] and "hold" in rebased["summary"]
+    landed = Timeline.open(project, "film", client=client, outbox_path=tmp_path / "rerun-landed.json")
+    assert landed.clip("clip-3").duration == pytest.approx(2.0)
+
+
+def test_function_rerun_preserves_disjoint_user_title_edit(editing_case, tmp_path, monkeypatch):
+    daemon, client, project, timeline = editing_case
+    from astrid.sdk.timeline import Timeline
+    from tests.editing_conformance.test_commit_runtime_m1 import open_client
+
+    source = _media_file(tmp_path / "rerun-disjoint.png")
+    timeline.commit(lambda t: [t.add(source, at=index * 5, hold=4, track="V1", id=f"clip-{index}")
+                               for index in range(1, 4)], label="Seed disjoint rerun clips")
+    _, credential = daemon.credentials.provision("rerun-title-peer", [
+        "handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+        "tasks:read", "tasks:write",
+    ])
+    peer = Timeline.open(project, "film", client=open_client(daemon, actor="rerun-title-peer", credential=credential),
+                         outbox_path=tmp_path / "rerun-title-peer.json")
+
+    def edit_title_then_submit(project_id, timeline_id, body, **kwargs):
+        if timeline_id == "film" and body.get("label") == "Function duration disjoint rerun":
+            generated.commit_timeline = original
+            peer.commit(lambda t: t.bundle["parent"].update({"name": "User title"}),
+                        label="User title edit", key="rerun-peer-title")
+        return original(project_id, timeline_id, body, **kwargs)
+
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    monkeypatch.setattr(generated, "commit_timeline", edit_title_then_submit)
+
+    def set_all_durations(t):
+        for index in range(1, 4):
+            t.clip(f"clip-{index}").set_duration(2.0)
+
+    result = timeline.commit(set_all_durations, label="Function duration disjoint rerun",
+                             key="rerun-duration-disjoint")
+    assert result["receipt"]["receipt_id"]
+    landed = Timeline.open(project, "film", client=client, outbox_path=tmp_path / "rerun-disjoint-landed.json")
+    assert landed.bundle["parent"]["name"] == "User title"
+    assert [landed.clip(f"clip-{index}").duration for index in range(1, 4)] == [2.0, 2.0, 2.0]
+
+
 def test_e14_function_lost_fallback_previews_then_merges_disjoint_edit(
     editing_case, tmp_path, monkeypatch,
 ):
