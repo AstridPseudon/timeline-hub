@@ -857,13 +857,16 @@ class TimelineSession:
             details = getattr(exc, "details", {})
             if isinstance(details, dict) and details.get("status") in {"conflict", "refused", "invalid"}:
                 failure = {"code": getattr(exc, "code", "conflict"), "message": str(getattr(exc, "message", exc)), "details": details}
+                save_pending = release_conflict or (
+                    details.get("status") == "refused" and details.get("reason") == "invalid_records"
+                )
                 record = None
                 external_conflict = None
                 with self.outbox.locked():
                     state = self._state()
                     if state["flight"] == flight:
                         self._flight_body(state, flight, idempotency_key, dry_run)
-                        if details.get("status") in {"refused", "invalid"} and not release_conflict:
+                        if details.get("status") in {"refused", "invalid"} and not save_pending:
                             # Preserve the full queue for review, including any
                             # suffix captured against the flight's optimistic
                             # effects, and release it so it cannot run without them.
@@ -884,7 +887,7 @@ class TimelineSession:
                             state.pop("group_id", None)
                             state.pop("media_input", None)
                         else:
-                            if release_conflict:
+                            if save_pending:
                                 from ._pending import snapshot
                                 replacement = snapshot(state, flight, failure)
                                 pending_id = flight.get("pending_id")

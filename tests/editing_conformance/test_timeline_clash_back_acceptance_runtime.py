@@ -160,8 +160,7 @@ def test_function_swap_of_new_file_reruns_with_runtime_verified_media(editing_ca
             ))
         t.clip("b").swap_asset(str(replacement))
 
-    result = stale.commit(edit,
-                          label="Swap b", key="swap-new-file", merge="fields", reads=[])
+    result = stale.commit(edit, label="Swap b", key="swap-new-file")
 
     assert result["status"] in {"accepted", "merged"}
     assert result["attempts"] == 2
