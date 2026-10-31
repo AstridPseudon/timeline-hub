@@ -490,6 +490,8 @@ class Timeline(Checkout):
         """
         if self._evaluating:
             raise TimelineEditError("a commit function cannot commit its own evaluation")
+        if isinstance(label_or_fn, Mapping) and label_or_fn.get("status") == "re_derive":
+            raise TimelineEditError("a re-derive result is not a preview; follow r['next']")
         if isinstance(label_or_fn, Mapping) and isinstance(label_or_fn.get("data"), Mapping) \
                 and isinstance(label_or_fn["data"].get("retry"), Mapping):
             if (label is not None or merge != "fields" or dry_run or reads is not None

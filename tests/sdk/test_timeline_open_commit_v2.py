@@ -409,6 +409,14 @@ def test_commit_retry_preview_delegates_to_retry_module(connected, monkeypatch):
     assert calls == [(tl, preview)]
 
 
+def test_commit_rederive_result_explains_to_follow_next(connected):
+    tl = opened(connected)
+    result = {"status": "re_derive", "data": {"conflicts": []}, "next": "re-derive the edit"}
+
+    with pytest.raises(TimelineEditError, match=r"re-derive result is not a preview; follow r\['next'\]"):
+        tl.commit(result)
+
+
 @pytest.mark.parametrize("options", [
     {"label": "ignored"}, {"merge": "atomic"}, {"dry_run": True},
     {"reads": []}, {"key": "ignored"}, {"idempotency_key": "ignored"},
