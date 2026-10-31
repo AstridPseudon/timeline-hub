@@ -366,24 +366,22 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
     if fn is None and callable(getattr(ref, "retry_fn", None)):
         fn = ref.retry_fn
     path, record = _record(timeline, ref)
-    if overwrite and fn is None:
-        raise ValueError("overwrite requires the original edit function")
     if record.get("state") not in {"pending", "landed"}:
         return {"status": "refused", "pending_id": record.get("id"),
                 "summary": f'Cannot retry a pending change in state {record.get("state")!r}.',
                 "next": None}
+    landed = _landed(timeline, path, record)
+    if landed is not None:
+        return landed
+    if overwrite and fn is None:
+        raise ValueError("overwrite requires the original edit function")
     failure = record.get("failure") or {}
     if ((failure.get("details") or {}).get("status") in {"refused", "invalid"}
             and (record.get("origin") != "function" or fn is None)):
         return {"status": "refused", "pending_id": record["id"],
                 "data": copy.deepcopy(failure),
-                "summary": "The Runtime refused this edit; fix the edit, then retry or drop it.",
+                "summary": "The Runtime refused this edit; inspect the saved edit and fix it or drop it.",
                 "next": f'tl.pending_show("{record["id"]}")'}
-    landed = _landed(timeline, path, record)
-    if landed is not None:
-        return landed
-    if record.get("state") == "landed":
-        return _landed(timeline, path, record)
     captured_function_list = record.get("origin") == "function" and fn is None
     if fn is not None:
         refreshed = _refresh_function_base(timeline, record)
@@ -477,7 +475,8 @@ def retry(timeline, ref, fn=None, *, overwrite=False):
         return result
     message = data.get("message") or details.get("message") or details.get("reason") or "The Runtime refused this edit."
     return {"status": "refused", "pending_id": record["id"], "data": copy.deepcopy(data),
-            "summary": str(message), "next": f'tl.retry({record["id"]!r})'}
+            "summary": f'{message} Inspect the saved edit and fix it or drop it.',
+            "next": f'tl.pending_show({record["id"]!r})'}
 
 
 def commit_preview(timeline, result):
