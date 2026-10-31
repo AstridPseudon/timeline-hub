@@ -96,6 +96,183 @@ def _a5_clash_process(endpoint, credential, realm, project, result_queue):
         result_queue.put({"error": "A5 commit unexpectedly succeeded"})
 
 
+def _f1_default_open_process(endpoint, credential, realm, project, captured, release, result_queue):
+    from astrid.sdk.client import AstridClient
+    from astrid.sdk.timeline import Timeline
+
+    client = AstridClient.open(
+        endpoint=endpoint,
+        credential=credential,
+        realm_id=realm,
+        actor_id="f1-process",
+        client_name="f1-default-open",
+        client_version="1",
+        protocol_version="workspace.v1",
+    )
+    timeline = Timeline.open(project, "film", client=client)
+    generated = client._remote._transport._generated
+    original = generated.commit_timeline
+    paused = []
+
+    def wait_after_capture(project_id, timeline_id, body, **kwargs):
+        if body.get("label") == "F1 process edit" and not paused:
+            paused.append(True)
+            captured.set()
+            if not release.wait(30):
+                raise TimeoutError("F1 peer did not release the captured process edit")
+        return original(project_id, timeline_id, body, **kwargs)
+
+    generated.commit_timeline = wait_after_capture
+    evaluations = []
+
+    def edit(t):
+        evaluations.append(True)
+        _set_clip(t, "c1", opacity=0.6)
+
+    try:
+        result = timeline.commit(edit, label="F1 process edit", key="f1-process-edit")
+        result_queue.put({"status": result["status"], "evaluations": len(evaluations)})
+    except Exception as error:
+        result_queue.put({"error": f"{type(error).__name__}: {error}",
+                          "evaluations": len(evaluations)})
+
+
+def test_f1_default_open_process_recovers_after_peer_commit(editing_case, tmp_path, monkeypatch):
+    daemon, _client, project, setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "astrid-data"))
+
+    from astrid.sdk.timeline.commit import bundle_from_document
+    from tests.sdk.test_timeline_editing_acceptance_runtime import _media_file
+
+    source = _media_file(tmp_path / "f1-seed.png")
+    setup.commit(lambda t: t.add(source, at=0, hold=2, track="V1", id="c1"),
+                 label="F1 seed", key="f1-seed")
+    _, credential = daemon.credentials.provision(
+        "f1-process",
+        ["handshake", "projects:read", "projects:write", "objects:read", "objects:write",
+         "tasks:read", "tasks:write"],
+    )
+
+    import multiprocessing
+
+    context = multiprocessing.get_context("spawn")
+    captured, release, result_queue = context.Event(), context.Event(), context.Queue()
+    process = context.Process(
+        target=_f1_default_open_process,
+        args=(daemon.endpoint, credential, daemon.service.realm["id"], project,
+              captured, release, result_queue),
+    )
+    process.start()
+    try:
+        assert captured.wait(30), "F1 child did not capture its edit"
+        peer_client, peer = _actor(daemon, project, tmp_path, "f1-peer")
+        peer_result = peer.commit(
+            lambda t: _set_clip(t, "c1", volume=0.4), label="F1 peer edit", key="f1-peer-edit"
+        )
+        assert peer_result["receipt"]["receipt_id"]
+    finally:
+        release.set()
+    process.join(timeout=60)
+    if process.is_alive():
+        process.terminate()
+        process.join(timeout=10)
+        pytest.fail("F1 child process did not exit")
+    assert process.exitcode == 0
+    process_result = result_queue.get(timeout=5)
+    assert "error" not in process_result, process_result
+    assert process_result["evaluations"] == 2
+
+    from astrid.sdk.timeline import Timeline
+
+    observer = Timeline.open(project, "film", client=peer_client)
+    clips = _clips(bundle_from_document(observer._runtime_document))
+    assert clips["c1"]["volume"] == 0.4
+    assert clips["c1"]["opacity"] == 0.6
+    result_queue.close()
+
+
+@pytest.mark.parametrize("writer", ["function", "reviewed-list"])
+def test_f2_new_media_swap_racing_peer_commit_is_recoverable(
+    editing_case, tmp_path, monkeypatch, writer,
+):
+    daemon, _client, project, setup = editing_case
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "astrid-data"))
+
+    from PIL import Image
+
+    def source(name, color):
+        path = tmp_path / name
+        Image.new("RGB", (16, 16), color).save(path, format="PNG")
+        return path
+
+    old_source = source("f2-old.png", "red")
+    new_source = source("f2-new.png", "blue")
+    peer_source = source("f2-peer.png", "green")
+
+    def seed(t):
+        t.add(old_source, at=0, hold=2, track="V1", id="c1")
+        t.add(new_source, at=3, hold=2, track="V1", id="c2")
+        t.add(peer_source, at=6, hold=2, track="V1", id="c3")
+
+    setup.commit(seed,
+                 label="F2 seed", key="f2-seed")
+    _, actor = _actor(daemon, project, tmp_path, f"f2-{writer}")
+    peer_client, peer = _actor(daemon, project, tmp_path, f"f2-peer-{writer}")
+    rows_by_id = {row["id"]: row for row in actor.bundle["parent"]["clips"]}
+    new_asset = rows_by_id["c2"]["asset"]
+    peer_asset = rows_by_id["c3"]["asset"]
+    generated = actor.session.client._remote._transport._generated
+    original = generated.commit_timeline
+    nested = []
+
+    def peer_wins(project_id_arg, timeline_id_arg, body, **kwargs):
+        if body.get("label") == "F2 media swap" and not nested:
+            nested.append(peer.commit(
+                lambda t: _set_clip(t, "c1", asset=peer_asset),
+                label="F2 peer edit", key=f"f2-peer-{writer}-edit",
+            ))
+        return original(project_id_arg, timeline_id_arg, body, **kwargs)
+
+    evaluations = []
+
+    def swap(t):
+        evaluations.append(True)
+        next(clip for clip in t.clips() if clip.id == "c1").swap_asset(new_asset)
+
+    if writer == "function":
+        monkeypatch.setattr(generated, "commit_timeline", peer_wins)
+        try:
+            landed = actor.commit(swap, label="F2 media swap", key="f2-function-swap")
+        except Exception as error:
+            from astrid.sdk.timeline.sync import CommitConflict
+
+            assert isinstance(error, CommitConflict), error
+            assert error.pending_id
+            record = actor.pending_show(error.pending_id)
+            assert record["state"] == "pending"
+            return
+        assert landed["receipt"]["receipt_id"]
+        assert evaluations == [True, True]
+    else:
+        reviewed = actor.commit(swap, label="F2 media swap", dry_run=True)["data"]["commands"]
+        monkeypatch.setattr(generated, "commit_timeline", peer_wins)
+        try:
+            landed = actor.commit(reviewed, label="F2 media swap", key="f2-reviewed-swap")
+        except Exception as error:
+            from astrid.sdk.timeline.sync import CommitConflict
+
+            assert isinstance(error, CommitConflict), error
+            assert error.pending_id
+            assert actor.pending_show(error.pending_id)["state"] == "pending"
+            return
+        assert landed["receipt"]["receipt_id"]
+
+    monkeypatch.setattr(generated, "commit_timeline", original)
+    observer = type(actor).open(project, "film", client=peer_client)
+    clip = next(row for row in observer.bundle["parent"]["clips"] if row["id"] == "c1")
+    assert clip["asset"] == new_asset
+
+
 def test_five_agents_deterministic(editing_case, tmp_path, monkeypatch):
     daemon, _client, project, setup = editing_case
     monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "astrid-data"))
