@@ -274,6 +274,31 @@ def test_reviewed_list_runtime_refusal_is_saved_and_recovered(editing_case, tmp_
     assert recovered["parts"][0]["imports"] == saved_imports
     assert recovered["parts"][0]["imports"][0]["object_id"] == replacement_digest
 
+    retry = reopened.retry(caught.value.pending_id)
+    assert retry["status"] == "refused"
+    assert retry["data"]["message"] == recovered["failure"]["message"]
+    assert retry["data"]["details"]["reason"] == recovered["failure"]["details"]["reason"]
+
+    rederived = reopened.commit(
+        review,
+        label="Reviewed media swap",
+        dry_run=True,
+        merge="fields",
+        reads=[],
+    )
+    landed = reopened.commit(
+        rederived["data"]["commands"],
+        label="Reviewed media swap",
+        key="metadata-list-race-retry",
+        merge="fields",
+        reads=[],
+        pending=caught.value.pending_id,
+    )
+    assert landed["status"] in {"accepted", "merged"}
+    assert landed["receipt"]["receipt_id"]
+    assert replacement_digest in str(landed["data"]["canonical_document"])
+    assert _assert_closed(reopened, caught.value.pending_id)["closed_by"]["how"] == "retry"
+
 
 @pytest.mark.parametrize("same_process", [True, False])
 def test_j3_exhausted_function_retry_lands_and_closes_record(
