@@ -169,6 +169,100 @@ def test_commit_key_closes_unique_matching_pending_record_across_actors(connecte
     assert closed["closed_by"]["publication_id"] == result["receipt"]["receipt_id"]
 
 
+def test_retry_recovers_owner_close_after_local_ack_write_failure(connected, monkeypatch):
+    from astrid.sdk.timeline.outbox import Outbox
+
+    tl = opened(connected)
+    _, generated, _ = connected
+    tl.session._explicit_outbox = False
+    owner_path = tl.session.outbox.path.parent / "assembly-owner.json"
+    pending_id = "pc_assembly_owner"
+    group_id = "preexisting-assembly-group"
+    command = {"schema_version": 1, "op": "clip.move", "version": "1",
+               "select": "parent/clip:a", "args": {"on": 4}}
+    owner_record = {
+        "id": pending_id, "state": "pending", "key": "assembly-edit", "label": "Assembly edit",
+        "part": 0, "receipts": [], "closed_by": None,
+        "parts": [{"base": {"revision_id": "r0", "publication_id": "pub0"},
+                   "commands": [command], "group_id": group_id}],
+    }
+    Outbox(owner_path).write({
+        "scope": {**tl.session._state()["scope"], "actor_id": "assembly-owner"},
+        "pending_changes": {pending_id: owner_record},
+    })
+
+    original_write = Outbox.write
+    failures = []
+
+    def fail_owner_close_once(outbox, state):
+        if outbox.path.resolve() == owner_path.resolve() and not failures:
+            failures.append(True)
+            raise OSError("simulated owner outbox write failure")
+        return original_write(outbox, state)
+
+    monkeypatch.setattr(Outbox, "write", fail_owner_close_once)
+    result = tl.session.submit(
+        [command], label="Assembly edit", steps=[], expected_state=tl.session._state(),
+        pending_id=pending_id, pending_path=str(owner_path), pending_part=0,
+        pending_how="retry", group_id=group_id,
+    )
+
+    assert result["status"] == "accepted"
+    assert failures == [True]
+    acknowledged = tl.session._state()["acknowledged"]
+    saved_flight = next(flight for flight in acknowledged.values()
+                        if flight.get("pending_id") == pending_id)
+    receipt = saved_flight["pending_ack"]["receipt"]
+    assert receipt["receipt_id"] == result["receipt"]["receipt_id"]
+    assert Outbox(owner_path).read()["pending_changes"][pending_id]["state"] == "pending"
+    assert len(generated.calls) == 1
+
+    reopened = opened(connected)
+    reopened.session._explicit_outbox = False
+    recovered = reopened.retry(pending_id)
+
+    closed = Outbox(owner_path).read()["pending_changes"][pending_id]
+    assert recovered["status"] == "landed"
+    assert closed["state"] == "landed"
+    assert closed["closed_by"] == {
+        "actor_id": "actor", "publication_id": receipt["receipt_id"], "how": "retry",
+    }
+    assert closed["receipts"] == [receipt["receipt_id"]]
+    assert len(generated.calls) == 1
+
+
+@pytest.mark.parametrize("mismatch", ["owner_path", "part"])
+def test_retry_acknowledgement_requires_exact_owner_path_and_part(connected, mismatch, monkeypatch):
+    from astrid.sdk.timeline.outbox import Outbox
+
+    tl = opened(connected)
+    owner_path = tl.session.outbox.path.parent / "assembly-owner.json"
+    record = {"id": "pc_assembly_owner", "state": "pending", "part": 0,
+              "parts": [{"base": {"revision_id": "r0", "publication_id": "pub0"}}]}
+    Outbox(owner_path).write({
+        "scope": {**tl.session._state()["scope"], "actor_id": "assembly-owner"},
+        "pending_changes": {record["id"]: record},
+    })
+    flight = {
+        "pending_id": record["id"], "pending_path": str(owner_path), "pending_part": 0,
+        "pending_how": "retry",
+        "pending_ack": {"revision_id": "r1", "publication_id": "pub1", "publisher": "actor",
+                        "receipt": {"receipt_id": "pub1"}},
+    }
+    if mismatch == "owner_path":
+        flight["pending_path"] = str(owner_path.with_name("other-owner.json"))
+    else:
+        flight["pending_part"] = 1
+    with tl.session.outbox.locked():
+        state = tl.session._state()
+        state["acknowledged"] = {"assembly-retry": flight}
+        tl.session.outbox.write(state)
+    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (tl.head, []))
+
+    assert retry_module._landed(tl, owner_path, record) is None
+    assert Outbox(owner_path).read()["pending_changes"][record["id"]]["state"] == "pending"
+
+
 def test_commit_key_refuses_ambiguous_pending_match_across_actors(connected):
     from astrid.sdk.timeline.outbox import Outbox
 
