@@ -72,8 +72,8 @@ def duplicate(ctx, command):
         if (set(mapping) != identities or len(set(mapping.values())) != len(mapping)
                 or set(mapping.values()) & identities):
             raise CommandError('copy requires complete fresh injective identity maps', kind='identity_collision')
-    internals = {row['revision_id']: row['payload'] for row in document['internal_timeline_revisions']}
     parent = copy.deepcopy(document['parent_revision']['payload'])
+    internals = {row['revision_id']: row['payload'] for row in document['internal_timeline_revisions']}
     parent.pop('occurrences')
     # Config follows registry aliases so guarded aggregate inversion observes
     # the exact authored config rather than synthesizing a registry mirror.
@@ -89,8 +89,9 @@ def duplicate(ctx, command):
             occurrence_id=args['occurrences'][occurrence], authoring_shot_id=args['shots'][identity],
             source_shot_id=identity)
         payload.pop('internal_timeline_revision_id', None)
+        internal = adopt_parent_assets(internals[shot['internal_timeline_revision_id']], parent)
         ctx.create_entity('shot:' + args['shots'][identity], kind='shot', owner=None,
-                          value={'payload': payload, 'internal_timeline': internals[shot['internal_timeline_revision_id']]})
+                          value={'payload': payload, 'internal_timeline': internal})
     for row in rows:
         copied = copy.deepcopy(row)
         copied.pop('shot_revision_id', None)
@@ -124,6 +125,30 @@ def copy_command(source_ref, shots, occurrences):
             'args': {'source_ref': copy.deepcopy(source_ref), 'shots': dict(shots), 'occurrences': dict(occurrences)},
             'created': [*('shot:' + shots[key] for key in sorted(shots)),
                         *('occurrence:' + identity for identity in occurrences.values())]}
+
+
+def adopt_parent_assets(internal, parent):
+    """Materialize authenticated parent asset aliases used by a copied child timeline.
+
+    Some accepted closures keep a selected asset in the parent registry while
+    the child timeline's own registry omits it. That fallback is valid for the
+    source, but a new shot no longer has the source closure as its authority.
+    Copy only referenced aliases into the child registry so the duplicate is
+    self-contained while retaining the authenticated media identity.
+    """
+    from astrid.core.timeline.parent_registry import effective_parent_registry
+
+    result = copy.deepcopy(internal)
+    parent_assets = effective_parent_registry(parent).get('assets', {})
+    if not isinstance(parent_assets, dict):
+        return result
+    registry = result.setdefault('registry', {})
+    assets = registry.setdefault('assets', {})
+    for clip in result.get('clips') or []:
+        key = clip.get('asset', clip.get('asset_id'))
+        if isinstance(key, str) and key not in assets and key in parent_assets:
+            assets[key] = copy.deepcopy(parent_assets[key])
+    return result
 
 
 def physical_content(bundle):

@@ -52,7 +52,7 @@ class _CopyOutcomeUnknown(TimelineEditError):
         self.outcome = "unknown"
         self.cause = self.presentation["cause"]
         self.timeline = timeline
-        super().__init__(f"{self.headline}. {self.fix}")
+        super().__init__(f"{self.headline}. The commit outcome is unknown. {self.fix}")
 
 
 def _duplicate_key(project: str, source: str, slug: str) -> str:
@@ -241,7 +241,10 @@ def copy_content(source: Mapping[str, Any] | str | Path, target: Mapping[str, An
             payload.pop(key, None)
         payload["text_bindings"] = []
         shot["payload"] = payload
-        shot["internal_timeline"] = _remap_values(copy.deepcopy(dict(src_shot.get("internal_timeline") or {})), shot_map)
+        from astrid.sdk.timeline.native_timeline_duplicate import adopt_parent_assets
+
+        internal = _remap_values(copy.deepcopy(dict(src_shot.get("internal_timeline") or {})), shot_map)
+        shot["internal_timeline"] = adopt_parent_assets(internal, source.get("parent") or {})
         new_row = _remap_values(copy.deepcopy(row), ids)
         new_row["shot_id"] = new_shot
         new_row["occurrence_id"] = occ_map[str(row["occurrence_id"])]
