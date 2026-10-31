@@ -765,6 +765,21 @@ def test_function_rerun_guard_saves_flight_and_dependent_suffix_in_order(connect
     }]
     assert repeated_record["parts"][1] == saved_suffix
 
+    probed = []
+
+    def accepted_preview(_session, request):
+        probed.append(copy.deepcopy(request))
+        return {"would_status": "accepted", "evaluated_head": copy.deepcopy(generated.head)}
+
+    monkeypatch.setattr(retry_module, "_probe", accepted_preview)
+    monkeypatch.setattr(retry_module, "_preview_diff", lambda *_args: {"changes": []})
+    preview = tl.retry(error.value.pending_id)
+
+    assert preview["status"] == "preview"
+    assert preview["pending_id"] == error.value.pending_id
+    assert preview["data"]["commands"] == repeated_record["parts"][0]["commands"]
+    assert probed[0]["commands"] == repeated_record["parts"][0]["commands"]
+
 
 def test_failed_ack_persistence_reconciles_without_running_function(connected, monkeypatch):
     tl = opened(connected)
