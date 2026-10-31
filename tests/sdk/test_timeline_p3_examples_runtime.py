@@ -187,6 +187,32 @@ def test_every_extra_python_example_runs_and_lands_on_scratch_runtime(
 
     monkeypatch.setattr(store, "fetch_bundle", fetch_fixture_inputs)
 
+    from astrid.sdk import timeline_structure
+
+    label_chapters = timeline_structure.label_chapters
+
+    def label_fixture_sections(t, labels):
+        parent = t.bundle["parent"]
+        config = parent.setdefault("config", {})
+        collections = [parent.setdefault("clips", []), config.setdefault("clips", [])]
+        fixture = [
+            {"id": f"section-{index}", "clipType": "am-type", "track": "plate",
+             "at": at, "hold": 0.5, "params": {"text": name},
+             "app": {"astrid": {"cut": f"c{index}"}}}
+            for index, (name, at) in enumerate((("Opening", 0), ("Next section", 4)), 1)
+        ]
+        for clips in {id(rows): rows for rows in collections}.values():
+            clips.extend(fixture)
+        t._mcache = None
+        try:
+            return label_chapters(t, labels)
+        finally:
+            for clips in {id(rows): rows for rows in collections}.values():
+                clips[:] = [row for row in clips if row not in fixture]
+            t._mcache = None
+
+    monkeypatch.setattr(timeline_structure, "label_chapters", label_fixture_sections)
+
     original_open = Timeline.open.__func__
 
     def open_on_case_runtime(cls, *args, **kwargs):
@@ -199,9 +225,10 @@ def test_every_extra_python_example_runs_and_lands_on_scratch_runtime(
         PACK / "docs" / "series" / "SKILL.md",
         PACK / "docs" / "narrated" / "SKILL.md",
         PACK / "docs" / "review" / "SKILL.md",
+        PACK / "docs" / "shots" / "SKILL.md",
     ]
     examples = [example for path in skill_paths for example in _python_examples(path)]
-    assert len(examples) == 4
+    assert len(examples) == 5
 
     namespace = {"project": project, "timeline": "film", "episodes": ["film"]}
     for example in examples:
@@ -218,4 +245,14 @@ def test_every_extra_python_example_runs_and_lands_on_scratch_runtime(
 
     placements = {row["occurrence_id"]: row for row in landed.bundle["placements"]}
     assert placements["occ-earlier"]["placement"]["start_ms"] == 0
-    assert placements["occ-later"]["placement"]["start_ms"] == 2200
+    assert placements["occ-later"]["placement"]["start_ms"] == 2000
+    assert placements["occ-reuse"]["shot_id"] == placements["occ-earlier"]["shot_id"]
+    assert placements["occ-reuse"]["placement"]["start_ms"] == 6000
+    assert set(placements) == {"occ-earlier", "occ-later", "occ-reuse"}
+
+    from astrid.sdk.timeline_intent import chapters
+
+    assert chapters(landed.bundle) == [
+        {"name": "Opening", "from": "c1"},
+        {"name": "Next section", "from": "c2"},
+    ]
