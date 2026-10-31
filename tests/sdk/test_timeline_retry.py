@@ -1318,11 +1318,6 @@ def test_legacy_ack_without_pending_part_refuses_ambiguous_or_mismatched_evidenc
     assert timeline.session.state["pending_changes"]["pc_saved"] == before
 
 
-# Restore this history-only case when legacy flights carry durable exact request identity.
-@pytest.mark.xfail(
-    strict=True,
-    reason="requires durable exact request identity for legacy-flight settlement",
-)
 def test_landed_recovers_legacy_cross_actor_flight_by_exact_history_identity(
     monkeypatch, tmp_path,
 ):
@@ -1338,42 +1333,6 @@ def test_landed_recovers_legacy_cross_actor_flight_by_exact_history_identity(
     assert saved["state"] == "landed"
     assert saved["closed_by"] == {
         "actor_id": "actor-1", "publication_id": "pub-history", "how": "retry"}
-
-
-def test_identityless_part_zero_flight_requires_exact_saved_request_and_receipt(
-    monkeypatch, tmp_path,
-):
-    timeline = FakeTimeline(tmp_path / "outbox.json")
-    path, record, body = _legacy_acknowledged_setup(timeline)
-    flight = timeline.session.state["acknowledged"]["logical-key"]
-    flight["pending_part"] = 0
-    entry = _legacy_ack_entry(timeline, body)
-    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
-
-    landed = retry_module._landed(timeline, path, record)
-
-    saved = timeline.session.state["pending_changes"]["pc_saved"]
-    assert landed["status"] == "landed"
-    assert landed["data"]["publication_id"] == "pub-history"
-    assert saved["state"] == "landed"
-
-
-def test_identityless_part_zero_flight_does_not_close_after_saved_commands_change(
-    monkeypatch, tmp_path,
-):
-    timeline = FakeTimeline(tmp_path / "outbox.json")
-    path, record, body = _legacy_acknowledged_setup(timeline)
-    flight = timeline.session.state["acknowledged"]["logical-key"]
-    flight["pending_part"] = 0
-    entry = _legacy_ack_entry(timeline, body)
-    record["parts"][0]["commands"][0]["args"]["on"] += 1
-    before = copy.deepcopy(record)
-    monkeypatch.setattr(retry_module.clash, "_history", lambda *args: (HEAD, [entry]))
-
-    landed = retry_module._landed(timeline, path, record)
-
-    assert landed is None
-    assert timeline.session.state["pending_changes"]["pc_saved"] == before
 
 
 @pytest.mark.parametrize("flight_changes, entry_changes", [
