@@ -481,8 +481,9 @@ def test_lost_ack_reload_retains_dependent_trim_and_fresh_suffix_key(connected, 
             tl.flush()
         rejected = pending(connected)
         assert rejected['pending'] == [] and rejected['flight'] is None
-        assert rejected['rejected']['commands'] == [suffix]
-        assert rejected['rejected']['failure']['details']['status'] == 'conflict'
+        record = next(iter(rejected['pending_changes'].values()))
+        assert record['parts'][0]['commands'] == [suffix]
+        assert record['failure']['details']['status'] == 'conflict'
     else:
         result = tl.flush()
         assert result['data']['commands'] == [suffix]
