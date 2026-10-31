@@ -173,6 +173,7 @@ def test_runtime_refusal_keeps_full_structured_details_and_never_admits_render(t
     assert state['flight'] is None
     pending, = state['pending_changes'].values()
     assert pending['state'] == 'pending'
+    assert pending['flight'] is not None
     assert pending['failure']['details'] == details
 
 
