@@ -1,0 +1,83 @@
+#!/bin/bash
+# Refuse changes to unowned test behavior before merge mutates Git state.
+TESTGUARD_SCRIPT=$0 exec python3 - "$@" <<'PY'
+import os
+import re
+import subprocess
+import sys
+from pathlib import Path
+
+# The shell passes its script path through the environment below.
+root = Path(os.environ["TESTGUARD_SCRIPT"]).resolve().parent.parent
+
+def fail(message):
+    print("test-guard: " + message, file=sys.stderr)
+    sys.exit(1)
+
+if len(sys.argv) not in (3, 4):
+    fail("usage: test-guard <repo> <worker> [<incoming-sha>]")
+repo, worker = sys.argv[1:3]
+if not re.fullmatch(r"[A-Za-z0-9_.-]+", repo) or not re.fullmatch(r"[A-Za-z0-9_.-]+", worker):
+    fail("invalid repo or worker name")
+directory = root / "workers" / worker
+approval = directory / "TESTGUARD-APPROVED"
+if approval.is_file() and any(line.strip() for line in approval.read_text().splitlines()):
+    print("test-guard: approved override for " + worker)
+    sys.exit(0)
+try:
+    meta = dict(line.split("=", 1) for line in (directory / "meta").read_text().splitlines() if "=" in line)
+    if meta["repo"] != repo:
+        fail("worker repo does not match")
+    base = meta["base_sha"]
+    brief = (directory / "brief.md").read_text()
+except (OSError, KeyError) as exc:
+    fail("cannot read worker metadata or brief: " + str(exc))
+# Only exact, root-relative test paths under an explicit Owned files heading qualify.
+owned = set()
+in_owned = False
+for line in brief.splitlines():
+    if re.match(r"^#{1,6}\s+", line):
+        in_owned = bool(re.fullmatch(r"#{1,6}\s+Owned files\s*:?\s*", line, re.I))
+    elif in_owned:
+        match = re.fullmatch(r"\s*[-*]\s+`?([^`\s]+)`?\s*", line)
+        if match:
+            owned.add(match.group(1))
+parent_file = directory / "merge-parent"
+incoming = sys.argv[3] if len(sys.argv) == 4 else (parent_file.read_text().strip() if parent_file.exists() else "")
+refs = [base] + ([incoming] if incoming else [])
+result = "refs/heads/tl/" + worker
+repo_path = "/home/user/work/" + repo
+
+def git(*args):
+    try:
+        return subprocess.run(["git", "-C", repo_path, *args], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).stdout
+    except subprocess.CalledProcessError as exc:
+        fail("git failed: " + exc.stderr.decode(errors="replace").strip())
+
+def is_test(path):
+    name = path.rsplit("/", 1)[-1]
+    return path.startswith("tests/") or name.startswith("test_") and name.endswith(".py") or name.endswith("_test.py") or name.endswith((".test.ts", ".test.tsx"))
+
+protected = re.compile(r"assert|pytest\.raises|expect\s*\(|toThrow|match\s*=")
+test_definition = re.compile(r"^\s*(?:async\s+)?def\s+test\w*\s*\(|\b(?:it|test|describe)\s*\(")
+skip = re.compile(r"\b(?:skip|xfail)\b|\.skip\s*\(", re.I)
+for ref in refs:
+    # NUL-delimited paths avoid pathname quoting and rename ambiguity.
+    entries = git("diff", "--no-renames", "--name-status", "-z", ref, result, "--").split(b"\0")
+    for i in range(0, len(entries) - 1, 2):
+        status = entries[i].decode()
+        path = os.fsdecode(entries[i + 1])
+        if not is_test(path) or path in owned:
+            continue
+        if status == "D":
+            fail(f"{ref}: deleted or renamed test file {path}")
+        diff = git("diff", "--no-ext-diff", "--no-renames", "--unified=0", ref, result, "--", path).decode(errors="replace")
+        for line in diff.splitlines():
+            if line.startswith(("---", "+++")):
+                continue
+            if line.startswith("-") and (protected.search(line[1:]) or test_definition.search(line[1:])):
+                fail(f"{ref}: removed protected test line in {path}: {line}")
+            if line.startswith("+") and skip.search(line[1:]):
+                fail(f"{ref}: added skip/xfail in {path}: {line}")
+print("test-guard: passed for " + worker)
+PY

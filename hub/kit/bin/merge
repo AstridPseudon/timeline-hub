@@ -3,6 +3,7 @@
 O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
 N=$1; target=; . $O/workers/$N/meta || exit 2; I=/home/user/work/$repo; TGT=tl/integration
 exec 9>/home/user/work/.$repo.merge.lock; flock -w 600 9 || { echo "lock timeout"; exit 3; }
+"$O/bin/test-guard" "$repo" "$N" || exit 1
 # 26 Oct follow-ups: a worker dispatched with --merge-target BRANCH (meta target=) merges into BRANCH, inside its own integration worktree, created on first use under the same lock
 if [ -n "$target" ]; then TGT=$target; I=/home/user/work/wt-int/$repo-$(echo "$target" | tr '/' '-')
   # 27 Oct 18:45Z: if the target branch is already checked out in another worktree (e.g. a Sol worker's own branch, merging its Lunas), merge there, but only when that worktree is clean

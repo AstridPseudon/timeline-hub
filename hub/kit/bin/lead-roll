@@ -22,7 +22,7 @@ for spec in A:A-zoom:agent:tl/zoom-integration B:B-shotlayer:agent:tl/shotlayer-
   [ -f $L/$P/STATUS.md ] && [ $(stat -c %Y $L/$P/STATUS.md) -gt $((le + 60)) ] && go=1
   # 1 Nov 00:45Z (Astra deepcheck): a main note the lead has not seen starts a round, with no mtime blind spot
   # 1 Nov 03:50Z (deepcheck 0336): compare a hash of the main notes (catches edits too); acknowledge only after the round is queued
-  nc=$(grep -E "^- 20[0-9-]+T[0-9:]+Z main" $L/$P/STATUS.md 2>/dev/null | md5sum | cut -c1-16); [ "$nc" != "$(cat $L/$P/.notes-seen 2>/dev/null)" ] && go=1
+  if [ -f $L/$P/MAIN-NOTES.md ]; then nc=$(md5sum < $L/$P/MAIN-NOTES.md | cut -c1-16); else nc=$(grep -E "^- 20[0-9-]+T[0-9:]+Z main" $L/$P/STATUS.md 2>/dev/null | md5sum | cut -c1-16); fi; [ "$nc" != "$(cat $L/$P/.notes-seen 2>/dev/null)" ] && go=1
   [ $go = 1 ] || continue
   N=$((last+1)); LM=gpt-5.6-luna; case $X in H|D|P|U|R|T|M) LM=gpt-6-luna;; esac; out=$($O/bin/request lead-$X-r$N --repo $R --base $B --model $LM --effort high --timeout 120 $NETF --brief $L/$P/LEAD-BRIEF.md 2>&1)
   case $out in queued*) echo "$nc" > $L/$P/.notes-seen;; esac
