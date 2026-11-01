@@ -27,6 +27,7 @@ def _realm(root, *, old=False):
         )
         if old:
             connection.execute("DROP INDEX idx_generations_gen")
+            connection.execute("DROP TABLE user_app_state")
             connection.execute("UPDATE runtime_schema SET version=31 WHERE id=1")
         connection.execute(
             "INSERT INTO command_idempotency(command_kind, aggregate_id, idempotency_key, request_hash, result_json, created_at) "
@@ -55,7 +56,7 @@ def _generation(connection, identity, metadata, *, task_id=None, intent=None, ef
     )
 
 
-def test_v31_upgrade_adds_guarded_index_and_preserves_generation_metadata(tmp_path):
+def test_h31_upgrade_adds_guarded_index_and_preserves_generation_metadata(tmp_path):
     root = tmp_path / "old"
     database = _realm(root, old=True)
     with sqlite3.connect(database) as connection:
@@ -64,24 +65,28 @@ def test_v31_upgrade_adds_guarded_index_and_preserves_generation_metadata(tmp_pa
             _generation(connection, identity, metadata)
         before = connection.execute("SELECT * FROM generations ORDER BY id").fetchall()
     result = migrate_canonical_to_current(root, confirmation="MIGRATE CANONICAL realm-tags")
-    assert result["steps"] == [{"source_schema_version": 31, "target_schema_version": 32,
-                                "added_indexes": ["idx_generations_gen"]}]
+    assert result["steps"] == [
+        {"source_schema_version": 31, "target_schema_version": 32,
+         "baseline_required": False},
+        {"source_schema_version": 32, "target_schema_version": 33,
+         "source_family": "TL32"},
+    ]
     with sqlite3.connect(database) as connection:
         assert generation_tag_index_is_current(connection)
         assert connection.execute("SELECT sql FROM sqlite_master WHERE name='idx_generations_gen'").fetchone()[0] == GENERATION_TAG_INDEX_SQL
         assert connection.execute("SELECT * FROM generations ORDER BY id").fetchall() == before
-    assert inspect_canonical_schema(root)["version"] == 32
+    assert inspect_canonical_schema(root)["version"] == 33
 
 
 @pytest.mark.parametrize("replacement", [None, "CREATE INDEX idx_generations_gen ON generations(id)"])
-def test_v32_index_inspection_rejects_missing_or_alternate_index(tmp_path, replacement):
+def test_v33_index_inspection_rejects_missing_or_alternate_index(tmp_path, replacement):
     root = tmp_path / "realm"
     database = _realm(root)
     with sqlite3.connect(database) as connection:
         connection.execute("DROP INDEX idx_generations_gen")
         if replacement:
             connection.execute(replacement)
-    with pytest.raises(ValidationError, match="generation tag index"):
+    with pytest.raises(ValidationError, match="unsupported canonical v33 manifest"):
         inspect_canonical_schema(root)
 
 
