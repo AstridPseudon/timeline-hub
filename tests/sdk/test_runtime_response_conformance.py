@@ -326,3 +326,16 @@ def test_journey_loopback_runtime_answers_with_the_recorded_status_and_shape(met
     recorded = fixture(case)
     assert status == recorded["status"]
     assert shape_diff(body, recorded["body"]) == []
+
+
+# Parent coverage retained during the Release-1 + Timeline merge.
+def test_publish_conflict_409_maps_to_conflict_and_keeps_its_details() -> None:
+    client, calls = _client("publish_conflict_409")
+    recorded = fixture("publish_conflict_409")
+    with pytest.raises(WorkspaceClientError) as raised:
+        client.publish_parent_composition("project-1", "main", recorded["request"]["body"], idempotency_key="k")
+    error = raised.value
+    assert (error.status, error.code) == (409, "conflict")
+    assert error.details == recorded["body"]["details"] and error.request_id == "<request_id>"
+    assert _SERVICE_ERROR_CLASSES[error.code] is ServiceConflictError
+    _sent_the_recorded_request("publish_conflict_409", calls, project_id="project-1")

@@ -44,6 +44,9 @@ timeline effects. The orchestrators and `cut` executor here remain for their
 stated creation/assembly workflows; do not invent a second timeline editing
 path here.
 
+For renderer setup and backend details, see the
+[rendering skill](../../rendering/docs/SKILL.md).
+
 ## Existing timeline editing
 
 Use the [timeline skill](../../timeline/docs/SKILL.md) for all

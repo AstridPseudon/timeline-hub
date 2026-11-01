@@ -22,4 +22,3 @@ export function sceneTrace(enabled: boolean, owner: TraceOwner, stage: string, d
   }
   console.warn('[L1b scene trace] ' + JSON.stringify(record));
 }
-

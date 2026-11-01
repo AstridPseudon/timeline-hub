@@ -506,4 +506,3 @@ export class SceneFrameHost {
     this.report({ phase: 'disposed', revision: this.source.package.revision });
   }
 }
-

@@ -478,3 +478,13 @@ def test_normal_history_without_commit_keeps_local_numeric_steps(monkeypatch, ca
     assert parsed.handler(parsed) == 0
     output = json.loads(capsys.readouterr().out)
     assert counts == [2] and output["ok"] and output["data"] == {key: ["local edit"]}
+
+
+# Parent coverage retained during the Release-1 + Timeline merge.
+def test_publish_requires_a_message(capsys) -> None:
+    parser = timeline_cli.build_parser(_Client())
+    with pytest.raises(SystemExit) as exc:
+        parser.parse_args(["publish", "main", "--project", "p"])
+    assert exc.value.code == 2
+    assert "-m/--message" in capsys.readouterr().err
+    assert parser.parse_args(["publish", "main", "--project", "p", "-m", "tighten c3"]).message == "tighten c3"

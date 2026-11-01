@@ -46,4 +46,3 @@ export function sessionConfigModels(value: unknown): LocalAgentModels | null {
   const parsed = localAgentModelsSchema.safeParse(models && { ...models, thoughtLevel });
   return parsed.success ? parsed.data : null;
 }
-

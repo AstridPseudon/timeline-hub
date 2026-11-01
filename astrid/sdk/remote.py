@@ -569,11 +569,20 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
             )]
             initialized = execute(before, commands).bundle
             authored_config = copy.deepcopy(dict(config)) if config is not None else {}
-            # Runtime owns the canonical bootstrap tracks. Preserve them when
-            # the caller has no track preference; an explicit tracks array,
-            # including [], remains authoritative.
+            # Runtime owns the canonical bootstrap tracks. The public CLI's
+            # two-field canvas config carries [] as its default/no-preference
+            # projection, while an SDK caller's raw {"tracks": []} remains a
+            # genuinely empty request. Nonempty supplied tracks stay authoritative.
             bootstrap_config = initialized["parent"].get("config")
-            if "tracks" not in authored_config and isinstance(bootstrap_config, Mapping):
+            authored_tracks = authored_config.get("tracks")
+            cli_default_tracks = (
+                authored_tracks == []
+                and set(authored_config) == {"tracks", "theme_overrides"}
+            )
+            if (
+                ("tracks" not in authored_config or cli_default_tracks)
+                and isinstance(bootstrap_config, Mapping)
+            ):
                 if "tracks" in bootstrap_config:
                     authored_config["tracks"] = copy.deepcopy(bootstrap_config["tracks"])
             canvas = authored_config.get("theme_overrides")
@@ -607,7 +616,8 @@ class RemoteTimelines(_RemoteFamily, _RemoteTimelineRevisionMixin):
                 })
             initialization_command_end = len(commands)
             # Creation guards the pristine timeline atomically. Apply only the
-            # caller's config differences, preserving explicit empty choices.
+            # caller's config differences, preserving explicit SDK-empty and
+            # nonempty track choices.
             initial_config = initialized["parent"]["config"]
             if not equal(initial_config, authored_config):
                 # Field patches preserve Runtime's clip/registry mirror
@@ -1885,8 +1895,24 @@ class RemoteMedia(_RemoteFamily):
             if not result.ok: return result
             items.append(result.data)
         return DomainResult.success(items, idempotency_key=idempotency_key or "")
-    def list(self, project, *, cursor=None, limit=50):
-        return self._typed("list_project_objects", project, cursor=cursor, limit=limit)
+    def list(self, project, *, cursor=None, limit=50, kind=None, model=None, target=None, tag=None):
+        filters = {
+            name: value
+            for name, value in (
+                ("kind", kind),
+                ("model", model),
+                ("target", target),
+                ("tag", tag),
+            )
+            if value is not None
+        }
+        return self._typed(
+            "list_project_objects",
+            project,
+            cursor=cursor,
+            limit=limit,
+            **filters,
+        )
     def show(self, project, ref):
         rows = paged_rows(self._client.list_project_objects, str(project), limit=50)
         if rows is None:
@@ -2719,8 +2745,13 @@ class RemoteGenerations(_RemoteFamily):
             source_task_id=source_task_id,
             idempotency_key=key,
         )
-    def list(self, project, *, cursor=None, limit=50):
-        result = self._typed("list_generations", project, cursor=cursor, limit=limit)
+    def list(self, project, *, cursor=None, limit=50, kind=None, model=None, target=None, tag=None):
+        filters = {
+            name: value
+            for name, value in (("kind", kind), ("model", model), ("target", target), ("tag", tag))
+            if value is not None
+        }
+        result = self._typed("list_generations", project, cursor=cursor, limit=limit, **filters)
         if not result.ok:
             return result
         page = page_pair(result.data)

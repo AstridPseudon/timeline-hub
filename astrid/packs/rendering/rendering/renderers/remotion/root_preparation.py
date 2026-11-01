@@ -412,4 +412,3 @@ def _prepared_remotion_root_selected(
             # before it replies. Always remove invocation-scoped media after
             # the response; retaining it would leak one public root per task.
             shutil.rmtree(staged_public_root, ignore_errors=True)
-

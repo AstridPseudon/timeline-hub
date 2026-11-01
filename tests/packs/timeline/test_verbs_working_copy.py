@@ -751,3 +751,68 @@ def test_commit_conflict_names_the_writer_and_offers_discard_first(tmp_path, cap
     assert "force overwrite is refused" in message
     assert "to overwrite theirs" not in message
     assert "astrid.e\n" not in message and "astrid.e " not in message
+
+
+# Parent coverage retained during the Release-1 + Timeline merge.
+def test_show_as_sheet_prints_the_working_copy_sheet_with_a_banner(tmp_path, monkeypatch, capsys):
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2] / "fixtures" / "timeline_editing"
+    tiny = json.loads((root / "tiny.json").read_text(encoding="utf-8"))
+    monkeypatch.setenv("ASTRID_RUNTIME_DATA_ROOT", str(tmp_path / "data"))
+    monkeypatch.setattr(tc, "resolve_ids", lambda project, timeline, client=None: ("p", "t", "rev-0"))
+    monkeypatch.setattr(tc, "fetch_bundle", lambda project, timeline, revision_id=None, client=None: copy.deepcopy(tiny))
+    assert _run("checkout", "t", "--project", "P") == 0
+    capsys.readouterr()
+    assert _run_with_client(
+        "show", "t", "--project", "P", "--as", "sheet", "--draft", "main",
+    ) == 0
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].startswith("film P")
+    assert lines[1].startswith("WORKING COPY main · 0 clips changed · base revision")
+    assert any(line.startswith("lines") for line in lines)
+
+@pytest.mark.parametrize("head, who", [
+    (EDITOR_HEAD, "the editor published 5fb2249e after your checkout (rev-0)"),
+    ("authoring-parent-revision-38cecaa5" + "f" * 24, "someone published 38cecaa5 after your checkout (rev-0)"),
+])
+def test_publish_conflict_names_the_writer_and_offers_discard_first(
+    tmp_path, capsys, head, who,
+):
+    client, path, realm, calls, failures = _conflicting_commit(tmp_path, head)
+    before_file = path.read_bytes()
+    before = copy.deepcopy((realm.documents, realm.entries, realm.accepted, realm.prepared))
+    parsed = cli.build_parser(client).parse_args([
+        "commit", "film", "--project", "project-1", "--file", str(path),
+        "-m", "Local Film", "--idempotency-key", "conflict-key", "--json",
+    ])
+    assert parsed.handler(parsed) == 1
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    result = json.loads(captured.out)
+    assert result["ok"] is False and result["receipt"] is None
+    assert result["error"]["code"] == "conflict"
+    details = result["error"]["details"]
+    assert details["status"] == "conflict"
+    assert details["base"] == {"revision_id": "rev-0", "publication_id": "bootstrap"}
+    assert details["current"] == realm.head
+    assert details["conflicts"]
+    assert len(calls) == len(failures) == 1
+    assert (failures[0].status, failures[0].code) == (409, "conflict")
+    assert {key: details[key] for key in failures[0].details} == failures[0].details
+    pending_id = details["pending_id"]
+    assert details["clash"]["pending_id"] == pending_id
+    assert calls[0]["base_revision_id"] == "rev-0"
+    assert calls[0]["base_publication_id"] == "bootstrap"
+    assert calls[0]["label"] == "Local Film" and calls[0]["merge"] == "atomic"
+    assert path.read_bytes() == before_file
+    assert (realm.documents, realm.entries, realm.accepted, realm.prepared) == before
+    message = result["error"]["message"]
+
+    assert message.splitlines()[0].startswith(f"not published: {who}, and you both changed:")
+    assert "parent" in message
+    assert f"your edit is saved as {pending_id}" in message
+    assert f"astrid timelines retry film {pending_id} --project project-1" in message
+    assert "force overwrite is refused" in message
+    assert "to overwrite theirs" not in message
+    assert "astrid.e\n" not in message and "astrid.e " not in message

@@ -296,4 +296,3 @@ export async function localAgentLaunch(agentId: ExternalAgent, env: NodeJS.Proce
     cliPath: cli,
   };
 }
-

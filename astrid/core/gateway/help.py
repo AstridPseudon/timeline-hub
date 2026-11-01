@@ -36,10 +36,56 @@ Edit and look (Python: {sys.executable}):
   tl.commit(fn, label="…")           one commit = one undo
   astrid timelines visualize <timeline>        composed frames, no render
 
-Agent skill: astrid/SKILL.md; editing: packs/timeline/SKILL.md
-Families: projects timelines media tasks runs preferences documents
-          doctor backup   ·   `astrid <family> --help` for each
-If a command says the Runtime is unavailable: run the Astrid install line again.
+Product families:
+  python3 -m astrid projects ...
+  python3 -m astrid timelines ...
+  python3 -m astrid media ...
+  python3 -m astrid tasks ...
+  python3 -m astrid runs ...
+
+Generation:
+  python3 -m astrid generate image "a dog eating an ice cream" --project PROJECT
+      [--model ENTRY] [--target auto|managed|LOOPBACK_URL|runpod] [--dry-run]
+  python3 -m astrid generate video PROMPT --project PROJECT [--target TARGET]
+
+Timeline evidence:
+  python3 -m astrid timelines visualize --project PROJECT [--timeline-slug REF]
+      [--format FORMAT[,FORMAT...]] [--json]
+      (paired rendered filmstrip; use --range/--at/--shot to focus)
+
+Latest project render:
+  python3 -m astrid runs open [RUN_ID] [--project PROJECT] [--json]
+
+Operational families:
+  python3 -m astrid status [--json]
+  python3 -m astrid doctor [--json]
+  python3 -m astrid backup {{create,restore,export,tombstone,recover,purge}} [--json]
+  python3 -m astrid dev {{status,promote,reclaim}} [--ref REF] [--dry-run] [--json]
+  python3 -m astrid auth {{login,status,logout,revoke}}
+
+External tools:
+  python3 -m astrid h3 {{plan,run,compose,edit}} ...
+  python3 -m astrid hivemind search QUERY [--limit N] [--json]
+
+Nested mounts (manifest-owned):
+  python3 -m astrid timelines shots ...
+  python3 -m astrid media references ...
+
+Options:
+  --json      product commands print the five-key SDK envelope
+              (ok/data/error/receipt/idempotency_key); doctor emits its
+              diagnostic object; backup emits its runtime result object
+  -h, --help  show help
+
+Notes:
+  python3 -m astrid is the package entry point.
+  Use ``python3 -m astrid help`` for the full family census, kernel/pack
+  ownership, nested mounts, and stable exit codes.
+
+Ownership handoff:
+  Product commands connect to the selected runtime through the generated
+  client. Follow the typed next_action: it distinguishes a missing runtime
+  install from a runtime that only needs configuration or startup.
 """
     )
 
@@ -87,7 +133,11 @@ Operational families:
 Contributor authentication (reserved):
   auth        [hivemind] login/status/logout/revoke; contribution-only access
 
+Generation:
+  generate    [SDK facade] image/video through a selected Comfy target
+
 External tools:
+  h3          [pack: h3_av] plan/run/compose/edit audiovisual requests
   hivemind    [managed pack] search current messages and resources
   installed pack routes are discovered from pack manifests; packs without a
   declared CLI command remain available through ``astrid agent``

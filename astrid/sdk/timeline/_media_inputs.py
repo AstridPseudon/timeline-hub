@@ -17,5 +17,3 @@ def _verified(ctx, pin):
     if kind in ('video', 'audio'):
         number(value.get('duration_seconds'), 'intrinsic duration', positive=True)
     return value, kind
-
-

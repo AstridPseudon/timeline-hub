@@ -301,4 +301,3 @@ def test_fresh_word_transcript_frontends_exact_pin_roundtrip(fresh_realm, tmp_pa
                                     f" on={encoded} # ref \"parent/clip:target\"")
         accepted = sheet.apply(edited, session=session, dry_run=False)
     _assert_roundtrip(world, accepted, before, entry=entry)
-

@@ -30,6 +30,16 @@ DEFAULT_CONFIG = {
         "visual": {"canvas": {"width": 1920, "height": 1080, "fps": 30}}
     },
 }
+RUNTIME_BOOTSTRAP_TRACKS = [
+    {
+        "id": "V1", "kind": "visual", "label": "V1", "scale": 1,
+        "fit": "contain", "opacity": 1, "blendMode": "normal",
+    },
+    {
+        "id": "A1", "kind": "audio", "label": "A1", "scale": 1,
+        "fit": "contain", "opacity": 1, "blendMode": "normal",
+    },
+]
 
 
 @pytest.fixture
@@ -355,7 +365,10 @@ def test_remote_create_empty_generates_ulid_when_no_id_given(runtime_create_case
     assert runtime_create_case.calls[0][1] == ("render-smoke", timeline_key)
     assert runtime_create_case.calls[1][0] == "list_timeline_commits"
     assert runtime_create_case.calls[-1][0] == "commit_timeline"
-    assert result.data["canonical_document"]["parent_revision"]["payload"]["config"]["tracks"] == []
+    assert (
+        result.data["canonical_document"]["parent_revision"]["payload"]["config"]["tracks"]
+        == RUNTIME_BOOTSTRAP_TRACKS
+    )
 
 
 def test_remote_create_empty_emits_guarded_raw_config_and_replays_exact_receipt(runtime_create_case) -> None:
@@ -426,7 +439,7 @@ def test_d69_upstream_remote_create_empty_generates_ulid_when_no_id_given(runtim
     assert args[2]["timeline_id"] == timeline_id
     assert kwargs == {"idempotency_key": f"{result.idempotency_key}-head"}
     assert result.data["canonical_document"]["parent_revision"]["payload"]["config"] == {
-        "tracks": [],
+        "tracks": RUNTIME_BOOTSTRAP_TRACKS,
         "output": {
             "resolution": "1280x720", "fps": 30, "file": "output.mp4",
             "background": None, "background_scale": None,
@@ -498,6 +511,7 @@ def test_d66_upstream_remote_create_empty_creates_shell_then_empty_head(runtime_
     assert payload["name"] == "Main"
     assert payload["config"] == {
         **DEFAULT_CONFIG,
+        "tracks": RUNTIME_BOOTSTRAP_TRACKS,
         "output": {
             "resolution": "1920x1080", "fps": 30, "file": "output.mp4",
             "background": None, "background_scale": None,
@@ -566,6 +580,7 @@ def test_remote_create_empty_migration_preserves_shell_and_empty_head(runtime_cr
     assert payload["slug"] == "main"
     assert payload["config"] == {
         **DEFAULT_CONFIG,
+        "tracks": RUNTIME_BOOTSTRAP_TRACKS,
         "output": {
             "resolution": "1920x1080", "fps": 30, "file": "output.mp4",
             "background": None, "background_scale": None,
@@ -590,3 +605,34 @@ def test_remote_create_empty_migration_preserves_shell_and_empty_head(runtime_cr
     assert history.data["items"][1]["receipt"]["result"]["steps"][0]["reads"] == [
         {"kind": "scope", "ref": "timeline", "path": []},
     ]
+
+
+# Parent coverage retained during the Release-1 + Timeline merge, rebased on
+# the native Runtime bootstrap/commit door.
+def test_remote_create_empty_creates_shell_then_empty_head(runtime_create_case) -> None:
+    result = runtime_create_case.timelines.create_empty(
+        project="render-smoke",
+        timeline_id="01ARZ3NDEKTSV4RRFFQ69G5FAV",
+        config=DEFAULT_CONFIG,
+        idempotency_key="caller-1",
+    )
+    assert result.ok, result.error
+    payload = result.data["canonical_document"]["parent_revision"]["payload"]
+    assert [(track["id"], track["kind"]) for track in payload["config"]["tracks"]] == [
+        ("V1", "visual"), ("A1", "audio"),
+    ]
+    assert result.data["project_id"] == runtime_create_case.project
+    assert result.data["timeline_id"] == "01ARZ3NDEKTSV4RRFFQ69G5FAV"
+    assert result.data["head_revision_id"] == result.data["canonical_document"]["parent_revision"]["revision_id"]
+    assert result.data["created"] is True
+    assert result.idempotency_key == "caller-1"
+    shell, replay_read, head_read, commit = runtime_create_case.calls
+    assert shell == (
+        "create_timeline",
+        ("render-smoke", "01ARZ3NDEKTSV4RRFFQ69G5FAV"),
+        {"name": None, "idempotency_key": "caller-1-shell"},
+    )
+    assert replay_read[0] == head_read[0] == "list_timeline_commits"
+    assert commit[0] == "commit_timeline"
+    assert commit[1][2]["commands"][0]["op"] == "timeline.init"
+    assert commit[2] == {"idempotency_key": "caller-1-head"}

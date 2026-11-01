@@ -17,4 +17,3 @@ test('Windows OMP uses its embedded shell and other ACP routes retain terminals'
     }
   }
 });
-

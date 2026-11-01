@@ -86,3 +86,17 @@ def test_the_layer_projection_is_still_there_with_its_own_selectors(world, capsy
     captured = capsys.readouterr()
     assert "canonical timeline inspection is unavailable" in captured.err
     assert "WORKING COPY" not in captured.out
+
+
+# Parent coverage retained during the Release-1 + Timeline merge.
+def test_the_flag_form_reads_the_working_copy(world, capsys):
+    out = _run(world, "--clip", "c1-rocket", capsys=capsys)
+    assert out.startswith("WORKING COPY"), out
+    edited = _x_line(out)
+    head = _x_line(_run(world, "--clip", "c1-rocket", "--published", capsys=capsys))
+    assert edited != head  # the working copy's x is not the head's
+
+def test_the_positional_form_reads_the_working_copy_the_same_way(world, capsys):
+    out = _run(world, "c1-rocket", capsys=capsys)
+    assert out.startswith("WORKING COPY"), out
+    assert _x_line(out) == _x_line(_run(world, "--clip", "c1-rocket", capsys=capsys))

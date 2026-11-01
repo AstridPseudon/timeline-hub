@@ -32,4 +32,3 @@ __import__(sys.argv[1])
         env=dict(os.environ), capture_output=True, text=True, timeout=30,
     )
     assert result.returncode == 0, result.stderr
-

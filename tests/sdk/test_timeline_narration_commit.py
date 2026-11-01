@@ -149,4 +149,3 @@ def test_publish_narration_retries_existing_flight_without_recapture(monkeypatch
 
     assert result["new_head"] == "r2"
     assert session.key == "original-narration"
-

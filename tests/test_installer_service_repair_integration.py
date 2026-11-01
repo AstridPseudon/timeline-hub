@@ -129,4 +129,3 @@ def test_repair_restarts_real_runtime_for_failed_service_and_preserves_healthy_p
     finally:
         if started:
             backend.stop(current(root), data)
-

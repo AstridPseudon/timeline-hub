@@ -65,4 +65,3 @@ def test_backend_reveals_only_a_newly_written_bundle(tmp_path, monkeypatch):
     with pytest.raises(subprocess.CalledProcessError):
         backend.doctor(version, tmp_path / "workspace", bundle)
     reveal.assert_not_called()
-

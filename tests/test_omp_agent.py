@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import json
 import os
+import re
 import signal
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -14,9 +17,37 @@ from astrid import agent_context
 from astrid.core.util import process as _process
 
 
+# Launcher env that omp_agent reads or writes straight into os.environ. Clearing
+# them per test keeps a foreign shell or an earlier test from steering routing.
+_LAUNCHER_ENV = (
+    "ASTRID_AGENT_IDENTITY",
+    "ASTRID_AGENT_LAUNCHER",
+    "ASTRID_HOST_EXECUTION_PROFILE",
+    "ASTRID_OMP_PYTHON",
+    "ASTRID_STOCK_OMP",
+    "ASTRID_SYSTEM_PROMPT",
+    "ASTRID_SYSTEM_PROMPT_FILE",
+    "OMP_AGENT_IDENTITY",
+    "OMP_AGENT_IDENTITY_FILE",
+    "OMP_AGENT_LAUNCHER",
+    "OMP_BIN",
+    "OMP_DISPLAY_VERSION",
+)
+
+
 @pytest.fixture(autouse=True)
 def stub_preferences_context(monkeypatch):
     monkeypatch.setattr(agent_context, "current_context", lambda: "")
+
+
+@pytest.fixture(autouse=True)
+def isolate_launcher_environment(monkeypatch):
+    # monkeypatch only records a name it already sees, so setenv-then-delenv
+    # records the true prior state of every name. Teardown then restores it
+    # even for names that were absent and that main() writes directly.
+    for name in _LAUNCHER_ENV:
+        monkeypatch.setenv(name, "")
+        monkeypatch.delenv(name)
 
 
 def test_installed_mode_uses_shipped_profile_despite_user_profile(monkeypatch) -> None:
@@ -173,7 +204,7 @@ def test_gateway_console_script_is_astrid_tools_and_module_entry_is_unchanged() 
     metadata = Path(__file__).parents[1] / "pyproject.toml"
     text = metadata.read_text(encoding="utf-8")
     assert 'astrid-tools = "astrid.core.gateway:main"' in text
-    assert 'astrid = "astrid.omp_agent:main"' in text
+    assert 'astrid = "astrid.console:main"' in text
     module_main = (metadata.parent / "astrid" / "__main__.py").read_text(encoding="utf-8")
     assert "from .core.gateway import main" in module_main
 
@@ -209,6 +240,129 @@ def test_astrid_command_overrides_inherited_identity(monkeypatch) -> None:
     assert os.environ["OMP_AGENT_IDENTITY"] == "astrid"
     assert os.environ["ASTRID_AGENT_IDENTITY"] == "astrid"
     assert captured["argv"][:3] == ["/fake/agent", "run", "astrid"]
+
+
+def test_packaged_identity_asset_contract_and_package_data() -> None:
+    """The OMP mark reproduces Astrid's favicon with colored block pixels.
+
+    Provenance: ../app-main/public/astrid-favicon.svg in the sibling app
+    checkout, introduced as "Set favicon" (c388c3c1c); related favicon
+    history includes 4bb1280a3, 78d1f0773, and bc57b0ed3. The expected grid
+    records source pixels as O=orange, C=cream, #=ink, space=clear; each
+    non-space pixel becomes a solid block with a matching cell color override.
+    """
+    identity_path = omp_agent._AGENT_IDENTITY_FILE
+    identity = json.loads(identity_path.read_text(encoding="utf-8"))
+
+    assert identity["id"] == "astrid"
+    assert identity["displayName"] == "Astrid"
+    favicon_pixels = [
+        "                ",
+        "        ####    ",
+        "      ##OOOO#   ",
+        "     #OOOOOOO###",
+        "   ##OOOO##OOO##",
+        "  #OOOOOO##OOOC#",
+        "  #O#OOOOOOCCC# ",
+        "  #OOOOOOCCCC#  ",
+        "   #OOOOCCCC#   ",
+        "   #OOOCCC##    ",
+        "  #OOOOCCC#     ",
+        "  #OOOCCCC#     ",
+        " ##OOOCCCC#     ",
+        "##OOOOCCCC#     ",
+        "OOOOOCCCC#      ",
+        "OOOOOCCCC#      ",
+    ]
+    colors = {"O": "#FF7A2E", "C": "#F7E6CF", "#": "#151311"}
+    assert identity["logo"] == [
+        "".join("█" if pixel != " " else " " for pixel in row) for row in favicon_pixels
+    ]
+    assert identity["cellOverrides"] == [
+        {"row": row, "col": col, "color": colors[pixel], "char": "█"}
+        for row, pixels in enumerate(favicon_pixels)
+        for col, pixel in enumerate(pixels)
+        if pixel != " "
+    ]
+    assert len({len(line) for line in identity["logo"]}) == 1
+    assert identity["themeColors"] == {
+        "accent": "#FF7A2E",
+        "borderAccent": "#F7E6CF",
+        "background": "#151311",
+    }
+    gradient = identity["gradient"]
+    assert len(gradient["stops"]) >= 2
+    assert all(
+        isinstance(color, list)
+        and len(color) == 3
+        and all(isinstance(channel, int) and 0 <= channel <= 255 for channel in color)
+        for color in gradient["stops"]
+    )
+    assert gradient["ramp256"] and all(
+        isinstance(color, int) and 0 <= color <= 255 for color in gradient["ramp256"]
+    )
+    assert all(
+        isinstance(color, str) and re.fullmatch(r"#[0-9A-Fa-f]{6}", color)
+        for color in identity["themeColors"].values()
+    )
+
+    package_data = (identity_path.parents[2] / "pyproject.toml").read_text(encoding="utf-8")
+    assert '"agent_profiles/*.identity.json"' in package_data
+
+
+def test_default_agent_passes_packaged_identity_file_to_child(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setenv("OMP_AGENT_IDENTITY_FILE", "/stale/inherited/identity.json")
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(
+        omp_agent,
+        "replace_process",
+        lambda argv: captured.update(argv=argv, env=os.environ.copy()),
+    )
+
+    assert omp_agent.main([]) == 1
+    child_env = captured["env"]
+    assert child_env["OMP_AGENT_IDENTITY"] == "astrid"
+    assert child_env["ASTRID_AGENT_IDENTITY"] == "astrid"
+    assert child_env["OMP_AGENT_IDENTITY_FILE"] == str(omp_agent._AGENT_IDENTITY_FILE.resolve())
+
+
+def test_alternate_agent_clears_inherited_astrid_identity_file(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setenv("OMP_AGENT_IDENTITY_FILE", "/stale/astrid.identity.json")
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(
+        omp_agent,
+        "replace_process",
+        lambda argv: captured.update(argv=argv, env=os.environ.copy()),
+    )
+
+    assert omp_agent.main(["--agent", "scout"]) == 1
+    child_env = captured["env"]
+    assert child_env["OMP_AGENT_IDENTITY"] == "scout"
+    assert child_env["ASTRID_AGENT_IDENTITY"] == "scout"
+    assert "OMP_AGENT_IDENTITY_FILE" not in child_env
+
+
+def test_default_agent_unsets_identity_file_if_packaged_resource_is_unavailable(monkeypatch) -> None:
+    captured: dict[str, object] = {}
+    monkeypatch.setenv("OMP_AGENT_IDENTITY_FILE", "/stale/inherited/identity.json")
+    monkeypatch.setattr(omp_agent, "_AGENT_IDENTITY_FILE", Path("/missing/astrid.identity.json"))
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_args, **_kwargs: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(
+        omp_agent,
+        "replace_process",
+        lambda argv: captured.update(argv=argv, env=os.environ.copy()),
+    )
+
+    assert omp_agent.main([]) == 1
+    assert "OMP_AGENT_IDENTITY_FILE" not in captured["env"]
 
 
 def test_bare_agent_subcommand_is_an_explicit_interactive_agent_route(monkeypatch) -> None:
@@ -271,6 +425,116 @@ def test_toolkit_families_and_help_delegate_to_gateway(monkeypatch) -> None:
     assert omp_agent.main(["install", "--help"]) == 7
     assert omp_agent.main(["skills", "sync"]) == 7
     assert calls == [["projects", "list", "--json"], ["help"], ["install", "--help"], ["skills", "sync"]]
+
+
+def test_registered_gateway_commands_delegate_without_a_launcher_allowlist(monkeypatch) -> None:
+    from astrid.core.gateway import dispatch
+
+    calls = []
+    monkeypatch.setattr(omp_agent, "_dispatch_toolkit", lambda argv: calls.append(argv) or 7)
+    for command in dispatch._top_level_commands():
+        args = [command, "some-argument", "--json"]
+        assert omp_agent.main(args) == 7
+        assert calls[-1] == args
+
+    # A newly registered command must not require editing this launcher.
+    monkeypatch.setattr(dispatch, "_top_level_commands", lambda: frozenset({"future-command"}))
+    assert omp_agent.main(["future-command", "--json"]) == 7
+    assert calls[-1] == ["future-command", "--json"]
+
+
+def test_generate_managed_dry_run_without_comfyui_returns_target_not_ready(
+    monkeypatch, capsys,
+) -> None:
+    from astrid.core.generation import entries, preflight
+
+    # Exercise the shipped catalog entry without discovering unrelated entries.
+    monkeypatch.setattr(entries, "action_entries", lambda: [])
+    monkeypatch.setattr(entries, "ready_entries", lambda: [])
+    # VibeComfy is available, but neither managed ComfyUI discovery route is.
+    monkeypatch.setattr(preflight, "_module_available", lambda name: name == "vibecomfy")
+    monkeypatch.setattr(preflight.shutil, "which", lambda _name: None)
+
+    assert omp_agent.main([
+        "generate", "image", "--entry", "qwen-image-2.1-turbo", "--mode", "t2i",
+        "--target", "managed", "--dry-run", "a blue lighthouse", "--json",
+    ]) == 2
+
+    output = capsys.readouterr()
+    assert output.out == ""
+    assert "ComfyUI runtime" in output.err
+    assert "code: COMFY_TARGET_NOT_READY" in output.err.splitlines()
+    assert "field: target" in output.err.splitlines()
+
+
+@pytest.mark.parametrize("args,expected", [
+    (["draw a dog"], ["--print", "draw a dog"]),
+    (["-c", "follow-up"], ["--print", "follow-up"]),
+    (["unregistered-word", "more"], ["--print", "unregistered-word", "more"]),
+])
+def test_conversation_still_reaches_omp(monkeypatch, args, expected) -> None:
+    captured = []
+    monkeypatch.setattr(omp_agent, "_dispatch_toolkit", lambda _args: pytest.fail("gateway route"))
+    monkeypatch.setattr(omp_agent, "_installed_pack_families", lambda: frozenset())
+    monkeypatch.setattr(omp_agent, "_has_named_agent_profile", lambda *_a, **_kw: True)
+    monkeypatch.setattr(omp_agent, "_find_launcher", lambda: Path("/fake/agent"))
+    monkeypatch.setattr(omp_agent, "_select_omp_bin", lambda: None)
+    monkeypatch.setattr(omp_agent, "replace_process", lambda argv: captured.append(argv))
+    assert omp_agent.main(args) == 1
+    assert captured[0][:3] == ["/fake/agent", "run", "astrid"]
+    assert captured[0][-len(expected):] == expected
+    if args[0] == "-c":
+        assert "-c" in captured[0]
+
+
+def test_login_keeps_auth_route(monkeypatch) -> None:
+    calls = []
+    monkeypatch.setattr(omp_agent, "run_auth", lambda argv: calls.append(argv) or 13)
+    monkeypatch.setattr(omp_agent, "_dispatch_toolkit", lambda _args: pytest.fail("gateway route"))
+    assert omp_agent.main(["login"]) == 13
+    assert calls == [["login"]]
+
+
+@pytest.mark.skipif(os.name == "nt", reason="the POSIX fake interpreter uses a shebang")
+def test_installed_launcher_dispatches_generate_json(tmp_path) -> None:
+    from astrid.installer.launcher import install
+
+    root = tmp_path / "Astrid Program Folder"
+    version_root = root / "versions" / "v1"
+    python = version_root / "py" / "bin" / "python"
+    python.parent.mkdir(parents=True)
+    (root / "current").write_text("v1\n", encoding="utf-8")
+    (version_root / "version.json").write_text(json.dumps({
+        "root": str(version_root), "python": str(python),
+        "env": {"ASTRID_INSTALL_RELEASE": "0", "ASTRID_INSTALL_MANAGED_BY": ""},
+    }), encoding="utf-8")
+    launcher, _ = install(root)
+    source_root = str(Path(__file__).resolve().parents[1])
+    python.write_text(
+        f"#!{sys.executable}\n"
+        "import runpy, sys\n"
+        f"sys.path.insert(0, {source_root!r})\n"
+        "if sys.argv[4].endswith('run_astrid.py'):\n"
+        "    script = sys.argv[4]; sys.argv = [script, *sys.argv[5:]]\n"
+        "    runpy.run_path(script, run_name='__main__')\n"
+        "else:\n"
+        "    assert sys.argv[1:5] == ['-X', 'utf8', '-I', '-m']\n"
+        "    assert sys.argv[5] == 'astrid.omp_agent'\n"
+        "    from astrid.core.generation import listing\n"
+        "    listing.generation_rows = lambda kind: [{'id': 'fake-generation'}]\n"
+        "    sys.argv = [sys.argv[5], *sys.argv[6:]]\n"
+        "    runpy.run_module('astrid.omp_agent', run_name='__main__')\n",
+        encoding="utf-8",
+    )
+    python.chmod(0o755)
+    result = subprocess.run(
+        [str(launcher), "generate", "list", "--json"], cwd=tmp_path,
+        env={"HOME": str(tmp_path), "PATH": os.environ.get("PATH", ""), "PYTHONDONTWRITEBYTECODE": "1"},
+        capture_output=True, text=True, check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == [{"id": "fake-generation"}]
+    assert "flags must precede the message" not in result.stderr
 
 
 def test_setup_is_a_conversational_message(monkeypatch) -> None:
@@ -380,3 +644,33 @@ def test_onboard_forwards_help_without_an_interactive_terminal(monkeypatch, help
     monkeypatch.setattr(omp_agent, "replace_process", lambda argv: calls.append(argv))
     assert omp_agent.main(["--onboard", help_flag]) == 1
     assert calls == [["/selected/omp", "onboard", help_flag]]
+
+
+@pytest.mark.parametrize("args", [[], ["--help"], ["--version"], ["help"],
+                                  ["projects", "list", "--json"], ["agent", "--mode=acp"]])
+def test_console_delegates_other_arguments_unchanged(monkeypatch, args):
+    from astrid import console
+    seen = []
+    monkeypatch.setattr(omp_agent, "main", lambda argv: seen.append(argv) or 37)
+    assert console.main(args) == 37
+    assert seen == [args]
+
+
+def test_console_normalizes_implicit_argv(monkeypatch):
+    from astrid import console
+    import sys
+    seen = []
+    monkeypatch.setattr(sys, "argv", ["astrid", "help", "--topic"])
+    monkeypatch.setattr(omp_agent, "main", lambda argv: seen.append(argv) or 23)
+    assert console.main() == 23
+    assert seen == [["help", "--topic"]]
+
+
+def test_console_engine_dispatch(monkeypatch):
+    from astrid import console
+    from astrid.core import engine_cli
+    seen = []
+    monkeypatch.setattr(engine_cli, "main", lambda argv: seen.append(argv) or 19)
+    monkeypatch.setattr(omp_agent, "main", lambda argv: pytest.fail("OMP route"))
+    assert console.main(["engines", "status", "--help"]) == 19
+    assert seen == [["status", "--help"]]
