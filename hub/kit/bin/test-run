@@ -12,6 +12,7 @@ release_worker_lease() {
   exec 8>"$WORKER_LOCK"; flock -x 8
   unlink "$WORKER_LEASE" 2>/dev/null || :
   WORKER_LEASE=
+  exec 8>&-   # 1 Nov deepcheck 0336: release the lock, or it stays held for the whole run
 }
 bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "$*"; release_worker_lease; exit 1; }
 alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }

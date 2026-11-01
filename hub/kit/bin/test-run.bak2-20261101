@@ -1,0 +1,651 @@
+#!/bin/bash
+# test-run ID — called by dispatcher-daemon (outside the sandbox) for queue/pending/test-ID. Exit 0 = started in background or served
+# from cache, 3 = wait (slot busy / identical run in flight / low disk), 1 = bad request. "test-run --run ID" is the background job.
+# Caps: one heavy ("full*") suite at a time, plus up to 2 other runs. Cache key: repo + tree of the worktree (incl. uncommitted
+# changes) + suite + files + command. Result: tests/ID/{status,exit,summary,log.txt}; status = queued|running|pass|fail|timeout|error.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+SELF_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+LEASED=; [ "$1" = --lease-body ] && { LEASED=1; RUN=1; shift; }; [ "$1" = --run ] && { RUN=1; shift; }; ID=$1; D=$O/tests/$ID; C=$O/tests/cache
+WORKER_LEASE=; WORKER_LOCK=
+release_worker_lease() {
+  [ -n "$WORKER_LEASE" ] || return
+  exec 8>"$WORKER_LOCK"; flock -x 8
+  unlink "$WORKER_LEASE" 2>/dev/null || :
+  WORKER_LEASE=
+}
+bad() { echo "$*" > $D/summary; echo 1 > $D/exit; echo error > $D/status; echo "$*"; release_worker_lease; exit 1; }
+alive() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 $(cat $r) 2>/dev/null && [ "$1" = $( [ -f ${r%running}heavy ] && echo heavy || echo light) ] && echo x; done | wc -l; }
+alive_render() { for r in $O/tests/*/running; do [ -f "$r" ] && kill -0 "$(cat "$r")" 2>/dev/null && grep -Eq '^suite=(render-proof|pinned-element-render)$' "${r%running}request" 2>/dev/null && echo x; done | wc -l; }
+finalize_stale_run() {
+  local stale_dir=$1 stale_id=${1##*/} pid rc=125 st=interrupted target repo suite tree key last_line tail_log recorded_rc complete
+  [ "$(cat "$stale_dir/status" 2>/dev/null)" = running ] || return
+  pid=$(cat "$stale_dir/running" 2>/dev/null) || return
+  kill -0 "$pid" 2>/dev/null && return
+  ps -eo comm=,pid=,args= | awk -v id="$stale_id" -v self="$$" -v parent="$PPID" '$2 != self && $2 != parent && $1 ~ /^(pytest|node|npm|timeout|python([0-9]+(\.[0-9]+)?)?)$/ && index($0, id) {found=1} END {exit found}' && : || return
+  target=$(sed -n 's/^target=//p' "$stale_dir/request")
+  repo=$(sed -n 's/^repo=//p' "$stale_dir/request")
+  suite=$(sed -n 's/^suite=//p' "$stale_dir/request")
+  tree=$(sed -n 's/^tree=//p' "$stale_dir/snap")
+  key=$(sed -n 's/^key=//p' "$stale_dir/snap")
+  SNAP=/home/user/work/wt/.test-$stale_id
+  git -C /home/user/work/$repo worktree remove --force "$SNAP" 2>/dev/null || :
+  if [ -f "$stale_dir/exit" ]; then
+    recorded_rc=$(cat "$stale_dir/exit" 2>/dev/null)
+    [[ "$recorded_rc" =~ ^[0-9]+$ ]] && rc=$recorded_rc
+  fi
+  last_line=$(awk 'NF { line=$0 } END { print line }' "$stale_dir/log.txt" 2>/dev/null)
+  tail_log=$(tail -20 "$stale_dir/log.txt" 2>/dev/null)
+  complete=0
+  if [[ "$last_line" =~ ^[[:space:]]*[0-9]+[[:space:]]+(passed|failed|error|errors|skipped|xfailed)(,.*)?[[:space:]]+in[[:space:]]+[0-9.]+s[[:space:]]*$ ]]; then
+    complete=1
+  elif [[ "$last_line" =~ ^[[:space:]]*Duration[[:space:]] ]] &&
+       grep -aqE '^ *Test Files +.*[1-9][0-9]* passed.*\([0-9]+\)' <<< "$tail_log" &&
+       grep -aqE '^ *Tests +.*[1-9][0-9]* passed.*\([0-9]+\)' <<< "$tail_log" &&
+       ! grep -aqE '(^|[[:space:]])[1-9][0-9]* failed|^ *Errors +[1-9][0-9]*' <<< "$tail_log"; then
+    complete=1
+  elif grep -aqE '^# tests [1-9][0-9]*$' <<< "$tail_log" &&
+       grep -aqE '^# pass [1-9][0-9]*$' <<< "$tail_log" &&
+       grep -aqE '^# fail 0$' <<< "$tail_log" &&
+       grep -aqE '^# duration_ms [0-9.]+$' <<< "$last_line"; then
+    complete=1
+  fi
+  if [ "$complete" = 1 ] && [ -f "$stale_dir/exit" ] && [[ "$recorded_rc" =~ ^[0-9]+$ ]]; then
+    if [ "$rc" -eq 0 ] && ! grep -aqE '(^|[^0-9])[1-9][0-9]* (failed|errors)\b' "$stale_dir/log.txt"; then
+      st=pass
+    else
+      st=fail; [ "$rc" -eq 0 ] && rc=1
+    fi
+  else
+    st=interrupted; rc=125
+  fi
+  {
+    echo "test $stale_id: $st exit=$rc — $suite on $target ($repo tree $tree; recovered after runner death)"
+    [ "$st" != interrupted ] || echo "runner exit: missing or final summary incomplete; not a test result"
+    echo "cmd: stale runner finalized from recorded exit and complete log summary"
+    echo "counts: $(grep -aE '[0-9]+ (passed|failed|errors)|Tests +[0-9]|^# (pass|fail) ' "$stale_dir/log.txt" 2>/dev/null | tail -3 | tr '\n' ' ')"
+    echo "--- last 60 lines of $stale_dir/log.txt ---"
+    tail -60 "$stale_dir/log.txt" 2>/dev/null
+  } > "$stale_dir/summary"
+  echo "$rc" > "$stale_dir/exit"
+  echo "$st" > "$stale_dir/status"
+  if [ "$st" = interrupted ]; then
+    [ "$(cat "$C/$key" 2>/dev/null)" = "$stale_id" ] && unlink "$C/$key" 2>/dev/null || :
+  else
+    [ "$rc" = 0 -o "$rc" = 1 ] && [ ! -f "$stale_dir/EXIT-MISMATCH" ] && [ -n "$key" ] && echo "$stale_id" > "$C/$key"
+  fi
+  unlink "$stale_dir/running" 2>/dev/null || :
+  [ -n "$key" ] && unlink "$C/$key.running" 2>/dev/null || :
+}
+reconcile_stale_runs() {
+  local stale_dir
+  for stale_dir in "$O"/tests/*; do
+    [ -d "$stale_dir" ] && [ -f "$stale_dir/status" ] && [ -f "$stale_dir/running" ] || continue
+    finalize_stale_run "$stale_dir"
+  done
+}
+reconcile_stale_runs
+. $D/request 2>/dev/null && { [ -z "$RUN" ] || . $D/snap; } || { echo "no request for $ID"; exit 1; }
+if [[ "$target" != integration:* ]]; then
+  WORKER_LEASE=$O/tests/.worker-leases/$target/$ID
+  WORKER_LOCK=$O/tests/.worker-leases/.locks/$target.lock
+fi
+[ -n "${private_tmp:-}" ] && { [ -d "$private_tmp" ] && [ "$(stat -c '%a %U' "$private_tmp")" = "700 root" ] || bad "private tmp $private_tmp missing or not 0700 root"; export TMPDIR=$private_tmp TMP=$private_tmp TEMP=$private_tmp; }
+case $target in integration:*) W=/home/user/work/$repo;; *) W=$(sed -n 's/^worktree=//p' $O/workers/$target/meta);; esac
+RECREATED=0; DEFER_RECREATED=0; RECREATED_MARKER=$D/recreated-worktree
+[ -f "$RECREATED_MARKER" ] && RECREATED=1
+if [ ! -d "$W" ] && [ "${target#integration:}" = "$target" ]; then   # recycled worker: recreate a detached worktree from its branch
+  if git -C /home/user/work/$repo worktree add -q --detach "$W" "tl/$target" 2>/dev/null || git -C /home/user/work/$repo worktree add -q --detach "$W" "hub/tl/$target" 2>/dev/null; then
+    RECREATED=1; touch "$RECREATED_MARKER"
+  fi
+fi
+[ -d "$W" ] || bad "worktree $W not found (and no tl/$target branch to recreate it from)"
+recycle_recreated_worktree() {
+  [ "$RECREATED" = 1 ] && [ "$DEFER_RECREATED" = 0 ] && [ -z "$LEASED" ] || return
+  [ "$W" = "/home/user/work/wt/$target" ] || return
+  WD=$O/workers/$target; [ -d "$WD" ] || return
+  [ ! -f "$WD/running" ] && [ ! -f "$WD/KEEP" ] || return
+  grep -lqsw -- "$target" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null && return
+  STATUS=$(git -C "$W" status --porcelain 2>/dev/null) || return
+  [ -z "$STATUS" ] || return
+  git -C /home/user/work/$repo worktree remove "$W" 2>/dev/null && { touch "$WD/recycled"; rm "$RECREATED_MARKER" 2>/dev/null || :; }
+}
+trap recycle_recreated_worktree EXIT
+CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"
+BASE_CMD=$CMD
+AGENT_ROUTE=pinned
+if [[ "$CMD" == "agent=match-target "* ]]; then
+  AGENT_ROUTE=match-target
+  CMD=${CMD#agent=match-target }
+fi
+matching_agent_sha() {
+  local base ref
+  base=$(matching_target_base)
+  case "$base" in
+    tl/one-head) ref=refs/heads/tl/one-head ;;
+    origin/*) ref="refs/remotes/$base" ;;
+    tl/*) ref="refs/heads/$base" ;;
+    *) ref= ;;
+  esac
+  if [ -z "$ref" ] || ! git -C /home/user/work/agent rev-parse --verify "$ref^{commit}" >/dev/null 2>&1; then
+    ref=refs/remotes/origin/staging/timeline-v2.1
+  fi
+  git -C /home/user/work/agent rev-parse --verify "$ref^{commit}"
+}
+matching_target_base() {
+  local base
+  if [ "${target#integration:}" != "$target" ]; then
+    base=$(git -C "/home/user/work/$repo" symbolic-ref --short -q HEAD 2>/dev/null || true)
+  else
+    base=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
+  fi
+  printf '%s' "$base"
+}
+runtime_lock_sha() {
+  local lock="$1/runtime.lock.json"
+  [ -f "$lock" ] || return 1
+  sed -n 's/.*"source_commit": *"\([0-9a-f]*\)".*/\1/p' "$lock"
+}
+matching_runtime_sha() {
+  local base ref
+  base=$(matching_target_base)
+  case "$base" in
+    tl/one-head) ref=refs/heads/tl/one-head ;;
+    origin/*) ref="refs/remotes/$base" ;;
+    tl/*) ref="refs/heads/$base" ;;
+    *) ref= ;;
+  esac
+  if [ -n "$ref" ] && git -C /home/user/work/runtime rev-parse --verify "$ref^{commit}" >/dev/null 2>&1; then
+    git -C /home/user/work/runtime rev-parse --verify "$ref^{commit}"
+    return
+  fi
+  runtime_lock_sha "$W"
+}
+runtime_target_reason() {
+  local base ref
+  base=$(matching_target_base)
+  case "$base" in
+    tl/one-head) ref=refs/heads/tl/one-head ;;
+    origin/*) ref="refs/remotes/$base" ;;
+    tl/*) ref="refs/heads/$base" ;;
+    *) ref= ;;
+  esac
+  if [ -n "$ref" ] && git -C /home/user/work/runtime rev-parse --verify "$ref^{commit}" >/dev/null 2>&1; then
+    printf 'target-branch:%s' "$base"
+  else
+    printf 'app-runtime-lock:target-branch-%s-unavailable' "${base:-unset}"
+  fi
+}
+OK='^[A-Za-z0-9_.][]A-Za-z0-9_./@+=:,*?[-]*$' DOTS='(^|/)\.\.(/|$)'; FILTERED=; SELECTORS=; set -f; for f in $files; do
+  [[ $f =~ $OK && ! $f =~ $DOTS ]] || bad "bad file arg $f (relative path/glob/node-id, no ..)"
+  # Python lanes receive changed source and fixture paths; pytest gets test selectors only.
+  case $repo in
+    agent|runtime) case $f in tests/*.py|tests/*.py::*) CMD+=" $f"; SELECTORS+=" $f";; *) FILTERED+=" $f";; esac;;
+    composition) if [ "$suite" = targeted ]; then
+      case $f in
+        typescript/tests/*.test.ts) test_file=${f#typescript/tests/}; CMD+=" typescript/test-dist/tests/${test_file%.ts}.js";;
+        *) CMD+=" $f";;
+      esac
+    else CMD+=" $f"; fi;;
+    *) CMD+=" $f";;
+  esac
+done; set +f
+[ "$suite" = targeted ] && [[ "$repo" = runtime || "$repo" = agent ]] && [ -n "$files" ] && [ -z "$SELECTORS" ] && bad "targeted $repo run has no pytest selectors after filtering; no source-to-test mapping convention is registered; filtered changed paths:$FILTERED"
+HV=light; case $suite in full*|browser-toolchain|browser-journey|c2-e2e-three-products|c2-e2e-three-products-env|render-proof|pinned-element-render|preview-vs-export|real-pack-host-integration|registered014-render-integration|agent-core-full|d141-p5-cut|d141g-p2-automatic-child-placement-520d7e4f-submit) HV=heavy;; esac
+MEASURED_FLOOR=
+RECEIPT=$D/recorded-measured-floor.json
+refuse() { echo "$*" | tee "$D/why"; exit 3; }
+case "$ID" in
+  rt-pin-fa9cd546-full-d141-pristine-1026005231-8912) refuse "held old pristine full job remains queued and unstarted" ;;
+  agent-p4-current-becfe-http-3legs-1026012948-19479) refuse "cancelled P4 job cannot be activated" ;;
+esac
+if [ "$suite" = d141g-p2-automatic-child-placement-520d7e4f-submit ]; then
+  refuse "D141g App admission refused: paired kit pending"
+fi
+if [ -z "$RUN" ]; then
+  IDX=$(mktemp); cp "$(git -C $W rev-parse --path-format=absolute --git-path index)" $IDX && GIT_INDEX_FILE=$IDX git -C $W add -A 2>/dev/null
+  TREE=$(GIT_INDEX_FILE=$IDX git -C $W write-tree); rm -f $IDX; [ -n "$TREE" ] || bad "could not compute tree of $W"
+  if [ -e "$RECEIPT" ] || [ -L "$RECEIPT" ]; then
+    [ "$HV" = heavy ] || refuse "measured-floor receipt is only valid for heavy suites"
+    HEAD=$(git -C "$W" rev-parse HEAD 2>/dev/null) || refuse "source head unavailable; refusing measured-floor receipt"
+    VALIDATOR=$SELF_DIR/d141-validate-receipt.py
+    [ -f "$VALIDATOR" ] && [ ! -L "$VALIDATOR" ] || refuse "measured-floor validator missing or symlinked"
+    MEASURED_FLOOR=$(python3 -I "$VALIDATOR" "$RECEIPT" "$O" "$ID" "$repo" "$suite" "$W" "$HEAD" "$TREE" "$BASE_CMD") || refuse "invalid measured-floor receipt; refusing admission"
+  fi
+  # cross-product suites (e2e, journeys, commit-integration, or a command naming another repo) also depend on the
+  # other repos' integration code: add their tl/integration heads to the key so a stale pass is never reused
+  EXT=""; case "$suite $CMD" in *e2e*|*integration*|*three-products*|*journey*) EXT=x;; esac
+  for o in agent runtime app composition; do [ $o != $repo ] && echo "$CMD" | grep -q "/home/user/work/$o" && EXT=x; done
+  MATCH_AGENT_SHA=
+  if [ "$AGENT_ROUTE" = match-target ]; then
+    MATCH_AGENT_SHA=$(matching_agent_sha) || bad "matching Agent source unavailable for target $target"
+  fi
+  MATCH_RUNTIME_SHA=
+  MATCH_RUNTIME_REASON=
+  case "$repo:$suite" in
+    app:browser-toolchain|app:browser-journey|app:c2-e2e-three-products|app:c2-e2e-three-products-env)
+      MATCH_RUNTIME_SHA=$(matching_runtime_sha)
+      [[ "$MATCH_RUNTIME_SHA" =~ ^[0-9a-f]{40}$ ]] || bad "matching Runtime source unavailable for target $target and App lock"
+      MATCH_RUNTIME_REASON=$(runtime_target_reason)
+      ;;
+  esac
+  if [ -n "$EXT" ]; then
+    EXT=$(for o in agent runtime app composition; do
+      [ "$o" = "$repo" ] && continue
+      case "$o:$AGENT_ROUTE:$MATCH_RUNTIME_SHA" in
+        agent:match-target:*) dep_sha=$MATCH_AGENT_SHA ;;
+        runtime:*:????????????????????????????????????????) dep_sha=$MATCH_RUNTIME_SHA ;;
+        *) dep_sha=$(git -C /home/user/work/$o rev-parse tl/integration 2>/dev/null) ;;
+      esac
+      echo "$o=$dep_sha"
+    done | tr '\n' ' ')
+  fi
+  [ -n "$MATCH_AGENT_SHA" ] && EXT+=" agent-match-target=$MATCH_AGENT_SHA"
+  [ -n "$MATCH_RUNTIME_SHA" ] && EXT+=" runtime-match-target=$MATCH_RUNTIME_SHA runtime-match-reason=$MATCH_RUNTIME_REASON"
+  KIT_KEY=
+  case "$suite" in browser-toolchain|browser-journey|c2-e2e-three-products|c2-e2e-three-products-env|render-proof|pinned-element-render|preview-vs-export|real-pack-host-integration)
+    KIT_KEY=$(sha256sum "$SELF_DIR/test-run" "$SELF_DIR/renderlane.py" "$SELF_DIR/renderlane-capture.mjs" "$SELF_DIR/renderlane-agent.mjs" | sha256sum)
+    KIT_KEY+=$(for dependency in agent runtime; do git -C /home/user/work/$dependency rev-parse HEAD; done)
+    ;;
+  esac
+  KEY=$(echo "$repo $TREE $suite $files $CMD $EXT${KIT_KEY:+ $KIT_KEY}" | sha256sum | cut -c1-32); [ -n "$EXT" ] && echo "external=$EXT" >> $D/ext; printf 'tree=%s\nkey=%s\nworktree=%s\n' $TREE $KEY $W > $D/snap
+  # Serialize admission through runner registration so concurrent dispatchers
+  # cannot both pass the heavy-slot check before either writes its running PID.
+  exec 9>"$O/tests/.admission.lock"; flock -x 9
+  if [ $nocache = 0 ] && [ -f $C/$KEY ] && SRC=$O/tests/$(cat $C/$KEY) && [ -f $SRC/summary ]; then
+    cp $SRC/exit $SRC/log.txt $D/; { echo "CACHE HIT: same tree $TREE already tested by $(basename $SRC); not re-run."; cat $SRC/summary; } > $D/summary
+    basename $SRC > $D/cached_from; cp $SRC/status $D/status; release_worker_lease; echo "cache hit for $ID from $(basename $SRC)"; exit 0; fi
+  [ -f $C/$KEY.running ] && kill -0 $(cat $O/tests/$(cat $C/$KEY.running)/running 2>/dev/null) 2>/dev/null && { echo "identical run $(cat $C/$KEY.running) in flight" | tee $D/why; exit 3; }
+  if [ "$HV" = heavy ]; then
+    if [ "$suite" = render-proof ] || [ "$suite" = pinned-element-render ]; then
+      [ "$(alive heavy)" -eq 0 ] || { echo "render lanes wait for other heavy runs (process custody needs an isolated heavy slot)" | tee "$D/why"; exit 3; }
+    else
+      [ "$(alive_render)" -eq 0 ] || { echo "render lane already owns the isolated heavy slot" | tee "$D/why"; exit 3; }
+      [ "$(alive heavy)" -lt 2 ] || { echo "2 heavy runs already running (owner 27 Oct 12:10Z: parallel heavy runs; 2 fit the disk)" | tee "$D/why"; exit 3; }
+    fi
+  fi
+  [ $HV = light ] && [ $(alive light) -ge 3 ] && { echo "3 targeted/named runs already running" | tee $D/why; exit 3; }
+  FLOOR_BYTES=4000000000
+  [ -n "$MEASURED_FLOOR" ] && [ "$MEASURED_FLOOR" -gt "$FLOOR_BYTES" ] && FLOOR_BYTES=$MEASURED_FLOOR
+  DF_OUTPUT=$(df -B1 --output=avail /home/user 2>/dev/null) || { echo "disk availability unreadable; refusing admission" | tee "$D/why"; exit 3; }
+  AVAILABLE_BYTES=$(printf '%s\n' "$DF_OUTPUT" | awk '$1 ~ /^[0-9]+$/ { if (++n == 1) value=$1 } END { if (n != 1) exit 1; print value }') || { echo "disk availability invalid; refusing admission" | tee "$D/why"; exit 3; }
+  [ "$AVAILABLE_BYTES" -le 800000000 ] && { echo "low disk (available=${AVAILABLE_BYTES} bytes; no new runs below or at 800000000 bytes)" | tee "$D/why"; exit 3; }
+  [ "$AVAILABLE_BYTES" -lt "$FLOOR_BYTES" ] && { echo "low disk (available=${AVAILABLE_BYTES} bytes; floor=${FLOOR_BYTES})" | tee "$D/why"; exit 3; }
+  [ $HV = heavy ] && touch $D/heavy; echo $ID > $C/$KEY.running; echo running > $D/status; rm -f $D/why
+  DEFER_RECREATED=1; setsid nohup "$0" --run "$ID" 9>&- > "$D/runner.log" 2>&1 < /dev/null & echo $! > "$D/running"; echo "started test $ID ($suite on $target, tree ${TREE:0:10})"; exit 0
+fi
+# Every heavy body owns a durable trace.  The sampler is the child of this
+# exact body and carries both the queued ID and this body's /proc start tick.
+TRACE_PID=; TRACE_FILE=; TRACE_BINDING=; TRACE_READY_OK=0; TRACE_RC=0; TRACE_FINALIZED=0; TRACE_CANCELLED=0
+stop_trace() {
+  SAMPLER_RC=0
+  if [ -n "$TRACE_PID" ]; then
+    kill -TERM "$TRACE_PID" 2>/dev/null
+    for ((TRACE_WAIT=0; TRACE_WAIT<80; TRACE_WAIT++)); do
+      kill -0 "$TRACE_PID" 2>/dev/null || break
+      sleep 0.1
+    done
+    kill -0 "$TRACE_PID" 2>/dev/null && kill -KILL "$TRACE_PID" 2>/dev/null
+    wait "$TRACE_PID" 2>/dev/null; SAMPLER_RC=$?
+    TRACE_PID=
+  fi
+  TRACE_RC=$SAMPLER_RC
+  if [ "$TRACE_READY_OK" -eq 1 ] && ! python3 -I "$SELF_DIR/d141-append-final.py" "$TRACE_FILE" "$ID" "$$" "/home/user" "$TRACE_BINDING" > "$D/trace-validation" 2>&1; then
+    TRACE_RC=125
+  fi
+  if [ "$TRACE_RC" -ne 0 ]; then
+    echo "disk trace sampler failed for $ID (exit=$TRACE_RC)" > "$D/trace-error"
+  fi
+  TRACE_FINALIZED=1
+  return "$TRACE_RC"
+}
+finish_trace() {
+  rc=$?
+  trap - EXIT HUP TERM INT
+  if [ "$TRACE_FINALIZED" -eq 0 ]; then
+    stop_trace
+    [ "$?" -ne 0 ] && [ "$rc" -eq 0 ] && rc=125
+  fi
+  recycle_recreated_worktree
+  exit "$rc"
+}
+if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then
+  TRACE_FILE=$D/disk-trace.tsv
+  # A visible trace can precede the shell's readiness read. Defer cancellation
+  # until its immutable binding and child PID are retained for finalization.
+  trap finish_trace EXIT
+  trap 'TRACE_CANCELLED=1' HUP TERM INT
+  BODY_START_TICKS=$(awk '{print $22}' "/proc/$$/stat") || exit 125
+  coproc TRACE_SAMPLER { exec setsid python3 -I "$SELF_DIR/d141-disk-trace.py" "$TRACE_FILE" "$ID" "$$" "/home/user" "$BODY_START_TICKS" 2> "$D/trace-runner.log"; }
+  TRACE_PID=$TRACE_SAMPLER_PID
+  TRACE_READ_FD=${TRACE_SAMPLER[0]}; TRACE_WRITE_FD=${TRACE_SAMPLER[1]}
+  echo "$TRACE_PID" > "$D/trace.pid"
+  TRACE_READY=; TRACE_READ_RC=1; TRACE_DEADLINE=$((SECONDS + 10))
+  while [ "$SECONDS" -lt "$TRACE_DEADLINE" ]; do
+    IFS= read -r -t "$((TRACE_DEADLINE - SECONDS))" TRACE_PART <&"$TRACE_READ_FD"
+    TRACE_READ_RC=$?; TRACE_READY+=$TRACE_PART
+    [ "$TRACE_READ_RC" -eq 0 ] && break
+    [ "$TRACE_CANCELLED" -eq 1 ] && [ "$TRACE_READ_RC" -gt 128 ] || break
+  done
+  exec {TRACE_READ_FD}<&-; exec {TRACE_WRITE_FD}>&-
+  if [ "$TRACE_READ_RC" -ne 0 ]; then
+    echo "disk trace sampler did not publish its immutable identity" > "$D/trace-error"
+    exit 125
+  fi
+  TRACE_BINDING=$TRACE_READY
+  TRACE_READY_OK=1
+  trap 'exit 130' HUP TERM INT
+  [ "$TRACE_CANCELLED" -eq 1 ] && exit 130
+fi
+# BENCH-LEASE-BEGIN: acquire before snapshot setup; cache hits return above.
+if [ -z "$LEASED" ] && { [ -e /home/user/work/bench-store ] || [ -L /home/user/work/bench-store ]; }; then
+  echo $$ > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
+  BENCH_RUNNER_PID=$$ python3 -I - "$O" /home/user/work/bench-store "$repo" "$suite" "$BASE_CMD" "$$" "$D/CANCELLED" bash "$0" --lease-body "$ID" <<'BENCH_LEASE_PY'
+import ctypes
+from contextlib import contextmanager
+import importlib.util
+import os
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import time
+
+
+@contextmanager
+def suite_lease(store, repo, suite, command, tests_dir):
+    def current_command():
+        for row in (Path(tests_dir) / 'suites.conf').read_text().splitlines():
+            fields = row.split(None, 2)
+            if fields[:2] == [repo, suite]:
+                return fields[2] if len(fields) == 3 else ''
+        return None
+
+    # The existing shell awk rebuilds fields; core binds the original row bytes.
+    raw = current_command()
+    if raw is None or ' '.join(raw.split()) != command:
+        raise ValueError('suite registration disappeared or changed before lease')
+    names = store.names_for_suite(repo, suite, raw)
+    if not names and current_command() != raw:
+        # An evicted managed row must not fall through as an unmanaged suite.
+        raise ValueError('suite registration disappeared before lease')
+    with store.acquire(names) as entries:
+        if current_command() != raw:
+            raise ValueError('suite registration disappeared or changed during lease acquisition')
+        yield entries, [entry['lease_fd'] for entry in entries]
+
+
+def supervise(store, repo, suite, command, argv, cancelled, parent, tests_dir):
+    # Subreaping keeps the lease until orphaned grandchildren finish as well.
+    libc = ctypes.CDLL(None, use_errno=True)
+    if libc.prctl(36, 1, 0, 0, 0) != 0:  # PR_SET_CHILD_SUBREAPER
+        raise OSError(ctypes.get_errno(), "cannot enable child subreaper")
+    stopping = False
+
+    def stop(signum, frame):
+        nonlocal stopping
+        stopping = True
+
+    signal.signal(signal.SIGTERM, stop)
+    signal.signal(signal.SIGINT, stop)
+    if libc.prctl(1, signal.SIGTERM, 0, 0, 0) != 0:  # PR_SET_PDEATHSIG
+        raise OSError(ctypes.get_errno(), "cannot watch runner death")
+    if os.getppid() != parent:
+        return 130
+
+    with suite_lease(store, repo, suite, command, tests_dir) as (entries, fds):
+        if stopping or cancelled.exists() or os.getppid() != parent:
+            return 130
+        if not entries:
+            # Existing unregistered suites retain their direct-child semantics.
+            result = subprocess.call(argv)
+            return result if result >= 0 else 128 - result
+        read_fd, write_fd = os.pipe2(os.O_CLOEXEC | os.O_NONBLOCK)
+        env = dict(os.environ, BENCH_CONTROL_FD=str(write_fd))
+        child = subprocess.Popen(argv, env=env, pass_fds=tuple(fds) + (write_fd,), process_group=0)
+        os.close(write_fd)
+        groups = {child.pid}
+        pending = b""
+        result = None
+        sent = None
+        killed = False
+        deadline = None
+        timed_out = False
+        try:
+            while True:
+                try:
+                    pending += os.read(read_fd, 4096)
+                except BlockingIOError:
+                    pass
+                while b"\n" in pending:
+                    item, pending = pending.split(b"\n", 1)
+                    pid = int(item)
+                    if pid <= 1:
+                        raise ValueError("bad suite process group")
+                    groups.add(pid)
+                    deadline = time.monotonic() + 90 * 60
+                no_children = False
+                while True:
+                    try:
+                        pid, status = os.waitpid(-1, os.WNOHANG)
+                    except ChildProcessError:
+                        no_children = True
+                        break
+                    if not pid:
+                        break
+                    if pid == child.pid:
+                        result = os.waitstatus_to_exitcode(status)
+                        child.returncode = result
+                if no_children:
+                    break
+                now = time.monotonic()
+                stopping = stopping or cancelled.exists() or os.getppid() != parent
+                if deadline is not None and now >= deadline:
+                    timed_out = True
+                if (stopping or timed_out) and sent is None:
+                    sent = now
+                    for pgid in groups:
+                        try:
+                            os.killpg(pgid, signal.SIGTERM)
+                        except ProcessLookupError:
+                            pass
+                if sent is not None and now - sent >= (5 if stopping else 60) and not killed:
+                    killed = True
+                    for pgid in groups:
+                        try:
+                            os.killpg(pgid, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                time.sleep(0.02)
+        finally:
+            os.close(read_fd)
+        if stopping:
+            return 130
+        if timed_out:
+            return 124
+        return result if result >= 0 else 128 - result
+
+
+def main():
+    orch, root, repo, suite, command, parent, cancelled, *argv = sys.argv[1:]
+    spec = importlib.util.spec_from_file_location("bench_store", Path(orch) / "bin/bench_store.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    store = module.Store(root, Path(orch) / "tests")
+    return supervise(store, repo, suite, command, argv, Path(cancelled), int(parent), Path(orch) / 'tests')
+
+
+if __name__ == "__main__":
+    try:
+        result = main()
+        Path(sys.argv[7]).with_name('BENCH-LEASE-RESULT').write_text('complete\n')
+        sys.exit(result)
+    except Exception as exc:
+        print(f"BENCH-LEASE REFUSED: {exc}", file=sys.stderr)
+        Path(sys.argv[7]).with_name('BENCH-LEASE-RESULT').write_text('error\n')
+        sys.exit(125)
+BENCH_LEASE_PY
+  RC=$?
+  if [ "$(cat "$D/BENCH-LEASE-RESULT" 2>/dev/null)" != complete ]; then
+    unlink "$D/running" 2>/dev/null; unlink "$C/$key.running" 2>/dev/null
+    bad "managed bench lease refused or interrupted; snapshot retained if present; see runner.log"
+  fi
+  [ "$(cat "$D/status")" = error ] && exit "$RC"
+else
+echo ${BENCH_RUNNER_PID:-$$} > $D/running; SNAP=/home/user/work/wt/.test-$ID; T0=$(date +%s)
+COMMIT=$(git -C $W commit-tree $tree -p HEAD -m "test snapshot $ID") && git -C $W worktree add -q --detach $SNAP $COMMIT || { echo 1 > $D/exit; echo error > $D/status; echo "snapshot failed" > $D/summary; rm -f $D/running $C/$key.running; release_worker_lease; exit 1; }
+release_worker_lease
+NM=$W/node_modules; [ -e $NM ] || NM=/home/user/work/app/node_modules
+case $repo in
+  app)
+    # App staging pins Composition in a repository-local archive. Keep the shared
+    # install read-only while giving the snapshot that pinned package precedence.
+    SHARED_NM=$(readlink -f "$NM")
+    mkdir -p "$SNAP/node_modules"
+    for module in "$SHARED_NM"/.[!.]* "$SHARED_NM"/*; do
+      [ -e "$module" ] || continue
+      name=$(basename "$module")
+      case "$name" in .vite|.vite-temp|.cache) continue;; esac
+      if [[ $name = @* && -d $module ]]; then
+        mkdir -p "$SNAP/node_modules/$name"
+        for scoped in "$module"/.[!.]* "$module"/*; do
+          [ -e "$scoped" ] || continue
+          [ "$name/$(basename "$scoped")" = @banodoco/timeline-composition ] && continue
+          ln -s "$(readlink -f "$scoped")" "$SNAP/node_modules/$name/$(basename "$scoped")"
+        done
+      else
+        ln -s "$(readlink -f "$module")" "$SNAP/node_modules/$name"
+      fi
+    done
+    COMPOSITION_ARCHIVE=$(sed -n 's/.*"@banodoco\/timeline-composition": "file:\([^"]*\)".*/\1/p' "$SNAP/package.json")
+    [ -n "$COMPOSITION_ARCHIVE" ] && [ -f "$SNAP/$COMPOSITION_ARCHIVE" ] || bad "staging Composition archive missing"
+    mkdir -p "$SNAP/node_modules/@banodoco/timeline-composition"
+    [ "$(realpath "$SNAP/node_modules/@banodoco/timeline-composition")" = "$SNAP/node_modules/@banodoco/timeline-composition" ] || bad "Composition overlay resolves outside snapshot"
+    tar -xzf "$SNAP/$COMPOSITION_ARCHIVE" --strip-components=1 -C "$SNAP/node_modules/@banodoco/timeline-composition"
+    ;;
+  agent)
+    # Agent's staging Remotion install is read-only; make a snapshot-local peer
+    # overlay and extract this snapshot's pinned Composition archive into it.
+    REMOTION_NM=/home/user/work/runtimes/agent-remotion-0013/node_modules
+    [ -d "$REMOTION_NM" ] || bad "staging Remotion peer install missing: $REMOTION_NM"
+    mkdir -p "$SNAP/remotion/node_modules"
+    for module in "$REMOTION_NM"/.[!.]* "$REMOTION_NM"/*; do
+      [ -e "$module" ] || continue
+      name=$(basename "$module")
+      case "$name" in .vite|.vite-temp|.cache) continue;; esac
+      if [[ $name = @* && -d $module ]]; then
+        mkdir -p "$SNAP/remotion/node_modules/$name"
+        for scoped in "$module"/.[!.]* "$module"/*; do
+          [ -e "$scoped" ] || continue
+          [ "$name/$(basename "$scoped")" = @banodoco/timeline-composition ] && continue
+          [ "$name/$(basename "$scoped")" = @remotion/cli ] && continue
+          ln -s "$(readlink -f "$scoped")" "$SNAP/remotion/node_modules/$name/$(basename "$scoped")"
+        done
+      else
+        ln -s "$(readlink -f "$module")" "$SNAP/remotion/node_modules/$name"
+      fi
+    done
+    # Render admission requires the CLI's real path to stay inside its project.
+    # Only this small package is copied; all other peers remain read-only links.
+    cp -a "$(realpath "$REMOTION_NM/@remotion/cli")" "$SNAP/remotion/node_modules/@remotion/cli"
+    COMPOSITION_ARCHIVE=$(sed -n 's/.*"@banodoco\/timeline-composition": "file:\([^"]*\)".*/\1/p' "$SNAP/remotion/package.json")
+    [ -n "$COMPOSITION_ARCHIVE" ] && [ -f "$SNAP/remotion/$COMPOSITION_ARCHIVE" ] || bad "staging Remotion Composition archive missing"
+    mkdir -p "$SNAP/remotion/node_modules/@banodoco/timeline-composition"
+    [ "$(realpath "$SNAP/remotion/node_modules/@banodoco/timeline-composition")" = "$SNAP/remotion/node_modules/@banodoco/timeline-composition" ] || bad "Remotion Composition overlay resolves outside snapshot"
+    tar -xzf "$SNAP/remotion/$COMPOSITION_ARCHIVE" --strip-components=1 -C "$SNAP/remotion/node_modules/@banodoco/timeline-composition"
+    ;;
+  composition) [ -e "$SNAP/node_modules" ] || ln -s "$(readlink -f "$NM")" "$SNAP/node_modules";;
+esac
+# agent: link the worktree's installed Remotion runtime (remotion/node_modules), else the integration checkout's, read-only by convention
+if [ $repo = agent ]; then RNM=$W/remotion/node_modules; [ -e $RNM ] || RNM=/home/user/work/agent/remotion/node_modules
+  [ -e $RNM ] && [ ! -e $SNAP/remotion/node_modules ] && mkdir -p $SNAP/remotion && ln -s "$(readlink -f $RNM)" $SNAP/remotion/node_modules; fi
+TEST_PYTHONPATH=$SNAP
+ASTRID_RUNTIME_SOURCE=
+ASTRID_TEST_BASE=
+if [ "${target#integration:}" != "$target" ]; then
+  ASTRID_TEST_BASE=$(git -C "/home/user/work/$repo" symbolic-ref --short -q HEAD 2>/dev/null || true)
+elif [ -f "$O/workers/$target/meta" ]; then
+  ASTRID_TEST_BASE=$(sed -n 's/^base=//p' "$O/workers/$target/meta")
+fi
+export ASTRID_TEST_BASE
+if [ "$repo" = runtime ]; then
+  AGENT_PIN=$SNAP/tests/astrid-agent.pin
+  if [ "$AGENT_ROUTE" = match-target ]; then
+    AGENT_SHA=$(matching_agent_sha) || { echo "matching Agent source unavailable for Runtime target $target" >&2; exit 1; }
+  elif [ -f "$AGENT_PIN" ]; then
+    AGENT_SHA=$(tr -d '[:space:]' < "$AGENT_PIN")
+    [[ "$AGENT_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "invalid Agent commit pin in $AGENT_PIN" >&2; exit 1; }
+    git -C /home/user/work/agent rev-parse --verify "$AGENT_SHA^{commit}" >/dev/null 2>&1 || { echo "pinned Agent commit unavailable for runtime target $target: $AGENT_SHA" >&2; exit 1; }
+  else
+    AGENT_SHA=$(matching_agent_sha) || { echo "matching Agent source unavailable for Runtime target $target" >&2; exit 1; }
+  fi
+  ASTRID_AGENT_SOURCE=/home/user/work/wt-int/agent-${AGENT_SHA:0:12}
+  if [ -d "$ASTRID_AGENT_SOURCE" ]; then
+    [ "$(git -C "$ASTRID_AGENT_SOURCE" rev-parse HEAD 2>/dev/null)" = "$AGENT_SHA" ] || { echo "Agent source path has the wrong commit: $ASTRID_AGENT_SOURCE" >&2; exit 1; }
+  else
+    git -C /home/user/work/agent worktree add --detach "$ASTRID_AGENT_SOURCE" "$AGENT_SHA" >/dev/null || exit 1
+  fi
+  CMD=${CMD//\/home\/user\/work\/agent/$ASTRID_AGENT_SOURCE}
+fi
+if [ $repo = agent ]; then
+  RUNTIME_SHA=$(runtime_lock_sha "$SNAP")
+  # 28 Oct: skip registered worktrees whose folder is gone (a worker tmpdir once left a prunable entry that broke collection)
+  RUNTIME_SOURCE=$(git -C /home/user/work/runtime worktree list --porcelain | awk -v sha="$RUNTIME_SHA" '/^worktree / {path=$2} /^HEAD / && $2 == sha {print path}' | while read -r p; do [ -d "$p" ] && { echo "$p"; break; }; done)
+  if [ -z "$RUNTIME_SOURCE" ]; then
+    RUNTIME_SOURCE=/home/user/work/wt-int/runtime-${RUNTIME_SHA:0:12}
+    if [ -d "$RUNTIME_SOURCE" ]; then
+      [ "$(git -C "$RUNTIME_SOURCE" rev-parse HEAD 2>/dev/null)" = "$RUNTIME_SHA" ] || { echo "Runtime source path has the wrong commit: $RUNTIME_SOURCE" >&2; exit 1; }
+    else
+      git -C /home/user/work/runtime worktree add --detach "$RUNTIME_SOURCE" "$RUNTIME_SHA" >/dev/null || exit 1
+    fi
+  fi
+  TEST_PYTHONPATH=$SNAP:$RUNTIME_SOURCE
+  export ASTRID_RUNTIME_SOURCE=$RUNTIME_SOURCE ASTRID_RUNTIME_CHECKOUT=$RUNTIME_SOURCE
+  NODE_BIN=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin
+  export ASTRID_NODE_EXECUTABLE=$NODE_BIN/node
+  PATH=$NODE_BIN:$PATH
+  export PATH
+  # Some lane commands set a clean environment or retain older integration
+  # checkout pins. Keep the snapshot's locked Runtime and Node in every Agent
+  # lane, and expose runtime_protocol alongside its Agent source.
+  CMD=$(printf '%s' "$CMD" | sed -E "s#ASTRID_RUNTIME_CHECKOUT=[^[:space:]]+#ASTRID_RUNTIME_CHECKOUT=$RUNTIME_SOURCE#g")
+  CMD=${CMD//PYTHONPATH=\"\$PWD\"/PYTHONPATH=\"\$PWD:\$ASTRID_RUNTIME_SOURCE\"}
+  CMD=${CMD//PYTHONPATH=\$PWD /PYTHONPATH=\$PWD:\$ASTRID_RUNTIME_SOURCE }
+  CMD=${CMD//PYTHONPATH=\"\$PWD:\/home\/user\/work\/runtime\"/PYTHONPATH=\"\$PWD:\$ASTRID_RUNTIME_SOURCE\"}
+  CMD=${CMD//env -i /env -i ASTRID_RUNTIME_CHECKOUT=$RUNTIME_SOURCE ASTRID_RUNTIME_SOURCE=$RUNTIME_SOURCE ASTRID_NODE_EXECUTABLE=$NODE_BIN\/node PATH=$NODE_BIN:\/usr\/local\/bin:\/usr\/bin:\/bin PYTHONPATH=\$PWD:\$ASTRID_RUNTIME_SOURCE }
+  CMD=$(printf '%s' "$CMD" | sed -E 's#(^|[[:space:]])PATH=#\1PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:#g')
+fi
+if [ "$repo" = composition ]; then
+  PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:$PATH
+  export PATH
+fi
+if [ -n "$BENCH_CONTROL_FD" ]; then
+  SUITE_TIMEOUT=90m; [ "$repo" = agent ] && [ "$suite" = full ] && SUITE_TIMEOUT=240m
+  ( exec {BENCH_CONTROL_FD}>&-; cd $SNAP && PYTHONPATH=$TEST_PYTHONPATH D66_OUTPUT_DIR="$D/d66" exec timeout -k 60 "$SUITE_TIMEOUT" nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null &
+  SUITE_PID=$!; printf '%s\n' "$SUITE_PID" >&"$BENCH_CONTROL_FD"; exec {BENCH_CONTROL_FD}>&-
+  wait "$SUITE_PID"; RC=$?
+else
+SUITE_TIMEOUT=90m; [ "$repo" = agent ] && [ "$suite" = full ] && SUITE_TIMEOUT=240m
+( cd $SNAP && PYTHONPATH=$TEST_PYTHONPATH D66_OUTPUT_DIR="$D/d66" timeout -k 60 "$SUITE_TIMEOUT" nice -n 5 bash -c "$CMD" ) > $D/log.txt 2>&1 < /dev/null; RC=$?
+fi
+[ -n "$LEASED" ] && exit "$RC"
+fi
+# Finalize before writing the terminal result so a late parent/session signal
+# cannot leave a passing body without its final sample and custody verdict.
+if [ "$HV" = heavy ] && [ -z "$LEASED" ]; then
+  stop_trace
+  [ "$?" -ne 0 ] && [ "$RC" -eq 0 ] && RC=125
+fi
+# BENCH-LEASE-END
+git -C $W worktree remove --force $SNAP 2>/dev/null || { rm -rf $SNAP; git -C $W worktree prune; }
+ST=fail; [ $RC = 0 ] && ST=pass; [ $RC = 124 -o $RC = 137 ] && ST=timeout
+{ echo "test $ID: $ST exit=$RC in $(( $(date +%s) - T0 ))s — $suite on $target ($repo tree $tree)"; echo "cmd: $CMD"
+  echo "counts: $(grep -aE '[0-9]+ (passed|failed)|Tests +[0-9]|^# (pass|fail) ' $D/log.txt | tail -3 | tr '\n' ' ')"; echo "--- last 60 lines of $D/log.txt ---"; tail -60 $D/log.txt; } > $D/summary
+# zero executed tests is never a pass (2026-10-21 audit: "No tests found" runs)
+[ $RC = 0 ] && grep -aqiE 'No tests found|No test files found|collected 0 items|^# tests 0$|Tests +0 passed \(0\)' $D/log.txt && { ST=fail; RC=1; sed -i "1i ZERO-TESTS: the runner executed no tests; recorded as fail." $D/summary; }
+# exit/log mismatch (2026-10-21, false-green 4657): exit 0 but the runner's own summary reports failures. Flag it at the top of the
+# summary and never cache it; the owner confirms it (an authorized expected-failure wrapper) or withdraws it (request-stop-test --withdraw).
+MM=$([ $RC = 0 ] && grep -aoE '(^|[^0-9])[1-9][0-9]* failed\b|# fail [1-9][0-9]*' $D/log.txt | tail -1)
+[ -n "$MM" ] && { echo "$(date -u +%FT%TZ) exit 0 but log reports: $MM" > $D/EXIT-MISMATCH; sed -i "1i EXIT-MISMATCH: exit 0 but the log reports '$MM'. Not cached. Confirm it is an authorized expected-failure run, or withdraw it." $D/summary; }
+[ -f $D/CANCELLED ] && { ST=cancelled; RC=130; }   # stopped by request-stop-test: never a result, never cached
+echo $RC > $D/exit; echo $ST > $D/status; [ $RC = 0 -o $RC = 1 ] && [ ! -f $D/EXIT-MISMATCH ] && echo $ID > $C/$key; rm -f $D/running $C/$key.running
