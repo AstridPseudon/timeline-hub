@@ -148,6 +148,34 @@ def render_python_client(manifest_path: Path = MANIFEST) -> str:
 def render_typescript_client() -> str:
     """Render contract response guards and resource operations into the TS client."""
     source = _regular(TYPESCRIPT_CLIENT_OUTPUT, "TypeScript client").decode("utf-8")
+    generation_query_method = '  async listGenerations(projectId: string, cursor?: string, limit = 50, filters: { kind?: string; model?: string; target?: string; tag?: string } = {}): Promise<Page<Generation>> { const query = new URLSearchParams({ limit: String(limit) }); if (cursor) query.set("cursor", cursor); for (const name of ["kind", "model", "target", "tag"] as const) { const value = filters[name]; if (value !== undefined) query.set(name, value); } return this.page((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/generations?${query}`)).body) }'
+    source = '\n'.join(generation_query_method if line.startswith('  async listGenerations(') else line for line in source.split('\n'))
+    task_query_method = '  async listProjectTasks(projectId: string, cursor?: string, limit = 50, kind?: "root_generation", order?: "admitted_desc"): Promise<Page<Task>> { return this.page((await this.request("GET", `/v1/projects/${encodeURIComponent(projectId)}/tasks?limit=${limit}${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}${kind !== undefined ? `&kind=${encodeURIComponent(kind)}` : ""}${order !== undefined ? `&order=${encodeURIComponent(order)}` : ""}`)).body) }'
+    source = '\n'.join(task_query_method if line.startswith('  async listProjectTasks(') else line for line in source.split('\n'))
+    abandon_types = ('export interface TaskAbandonRequest { expected_task_version: number; attempt_id: string; lease_id: string; fence: number; runtime_epoch: number; execution_binding: NonNullable<Task["execution_binding"]>; reason: string }\n'
+        'export interface TaskAbandonResult { task_id: string; run_id: string; attempt_id: string; disposition: "lost"; reason: string; remote_stop_confirmed: false; billing_stop_confirmed: false; task: Task }')
+    if 'export interface TaskAbandonRequest ' not in source:
+        source = source.replace('export interface ObjectLocation', abandon_types + '\nexport interface ObjectLocation', 1)
+    abandon_method = '  async abandonTask(taskId: string, body: TaskAbandonRequest, idempotencyKey: string): Promise<MutationResult<TaskAbandonResult>> { return this.mutation<TaskAbandonResult>((await this.request("POST", `/v1/control/tasks/${encodeURIComponent(taskId)}/abandon`, new TextEncoder().encode(JSON.stringify(body)), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey })).body) }'
+    if '  async abandonTask(' in source:
+        source = '\n'.join(abandon_method if line.startswith('  async abandonTask(') else line for line in source.split('\n'))
+    else:
+        source = source.replace('  async getLocalWorkerGeneration(', abandon_method + '\n  async getLocalWorkerGeneration(', 1)
+    settlement_method = '  async getTaskSettlement(taskId: string): Promise<{ task_id: string; state: string; settled: boolean; blockers: Record<string, unknown>[]; task: Task; lost_disposition?: { event_id: string; attempt_id: string; reason: string } }> { return this.json((await this.request("GET", `/v1/control/tasks/${encodeURIComponent(taskId)}/settlement`)).body) }'
+    if "  async getTaskSettlement(" in source:
+        source = "\n".join(settlement_method if line.startswith("  async getTaskSettlement(") else line for line in source.split("\n"))
+    else:
+        source = source.replace("  async getLocalWorkerGeneration(", settlement_method + "\n  async getLocalWorkerGeneration(", 1)
+    source = source.replace(
+        'async relinquishLocalWorker(executorIncarnation: string, evidenceDigest: string):',
+        'async relinquishLocalWorker(executorIncarnation: string, evidenceDigest: string, expectedTaskIds?: string[]):',
+    ).replace(
+        'JSON.stringify({ executor_incarnation: executorIncarnation, evidence_digest: evidenceDigest })',
+        'JSON.stringify({ executor_incarnation: executorIncarnation, evidence_digest: evidenceDigest, ...(expectedTaskIds === undefined ? {} : { expected_task_ids: expectedTaskIds }) })',
+    )
+    exact_claim_method = '  async claimDelegatedChild(taskId: string, body: { executor_id: string; capability_ids: string[]; runtime_epoch: number; target: ExecutionTarget; authority: string }, idempotencyKey: string): Promise<AttemptFence> { return this.json<AttemptFence>((await this.request("POST", `/v1/tasks/${encodeURIComponent(taskId)}/claim-delegated-child`, new TextEncoder().encode(JSON.stringify(body)), { "Content-Type": "application/json", "Idempotency-Key": idempotencyKey }, [200])).body) }'
+    if "  async claimDelegatedChild(" not in source:
+        source = source.replace("  async claimTask(", exact_claim_method + "\n  async claimTask(", 1)
     commit_response = '''  private commitResponse(body: Uint8Array, preview: boolean): CommitAcceptedMutation | CommitPreviewResponse {
     const value = this.json<Record<string, unknown>>(body);
     if (!value || typeof value !== "object" || Array.isArray(value) || !value.data || typeof value.data !== "object" || Array.isArray(value.data) || !("receipt" in value)) throw new Error("invalid commit response");

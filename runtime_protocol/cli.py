@@ -23,6 +23,7 @@ from .upgrade import (
     GENERIC_MEDIA_TYPE_REPAIR_CONFIRMATION,
     compact_idempotency_ledger,
     migrate_historical_managed_outputs,
+    migrate_generation_tags,
     migrate_canonical_v24_to_v25,
     migrate_canonical_to_current,
     repair_generic_media_types,
@@ -52,6 +53,8 @@ def _parser():
     start.add_argument("--display-name", default="Workspace")
     start.add_argument("--realm-id")
     start.add_argument("--owner-lock")
+    start.add_argument("--runtime-checkout")
+    start.add_argument("--agent-checkout")
     start.add_argument("--bootstrap-token-file")
     start.add_argument("--admission-timeout", type=float, help="bounded startup integrity budget in seconds")
     start.add_argument("--worker-profile", help="absolute installed local Worker composition profile")
@@ -98,6 +101,18 @@ def _parser():
     reconcile.add_argument("--task-id")
     reconcile.add_argument("--timeout", type=float, default=DEFAULT_UPGRADE_TIMEOUT_SECONDS)
     reconcile.add_argument("--confirm", required=True)
+    generation_tags = sub.add_parser("migrate-generation-tags", help="offline backfill explicit Runtime generation metadata")
+    generation_tags.add_argument("--root", required=True)
+    generation_tags.add_argument("--project-id")
+    tag_action = generation_tags.add_mutually_exclusive_group()
+    tag_action.add_argument("--dry-run", dest="dry_run", action="store_true", default=True, help="report candidates without changes (default)")
+    tag_action.add_argument("--apply", dest="dry_run", action="store_false", help="apply after stopped-owner confirmation")
+    generation_tags.add_argument("--skip-ledger", action="store_true", help="ledger data is always skipped")
+    generation_tags.add_argument("--manifest-root", action="append", default=[], help="explicit absolute JSON file/directory; repeatable")
+    generation_tags.add_argument("--receipt-root", action="append", default=[], help="explicit absolute JSON receipt file/directory; repeatable")
+    generation_tags.add_argument("--template-model-map", help="absolute JSON file mapping template ids to model names")
+    generation_tags.add_argument("--timeout", type=float, default=DEFAULT_UPGRADE_TIMEOUT_SECONDS)
+    generation_tags.add_argument("--confirm")
     repair = sub.add_parser("repair-media-types", help="repair generic published MIME values from managed filenames")
     repair.add_argument("--root", required=True)
     repair.add_argument("--project-id")
@@ -123,6 +138,14 @@ def _parser():
     replace.add_argument("--display-name", default="Workspace")
     replace.add_argument("--realm-id")
     replace.add_argument("--retain-superseded", action="store_true", help="retain the replaced realm after activation")
+    recovery_set = sub.add_parser("inspect-recovery-set", help="verify/export retained original DB/sidecars/CAS and archival-only rows")
+    recovery_set.add_argument("--archive", required=True)
+    recovery_set.add_argument("--destination")
+    recovery = sub.add_parser("timeline-recovery", help="inspect/export original timeline records without rendering or changing the realm")
+    recovery.add_argument("--root", required=True)
+    recovery.add_argument("--project-id", required=True)
+    recovery.add_argument("--timeline-id", required=True)
+    recovery.add_argument("--destination", help="new external support-export directory")
     export = sub.add_parser("export", help="export structured realm state")
     export.add_argument("--root", default=os.environ.get("ASTRID_RUNTIME_ROOT", ".runtime"))
     export.add_argument("--destination")
@@ -181,6 +204,15 @@ def _main(args):
         except release_identity.ReleaseIdentityError as exc:
             print(json.dumps({"ok": False, "error": str(exc)}, sort_keys=True))
             return 1
+    if args.command == "inspect-recovery-set":
+        from .v33_lifecycle import inspect_recovery_set
+        print(json.dumps(inspect_recovery_set(args.archive, destination=args.destination), sort_keys=True))
+        return 0
+    if args.command == "timeline-recovery":
+        from .timeline_recovery import offline_export
+        result = offline_export(args.root, args.project_id, args.timeline_id, destination=args.destination)
+        print(json.dumps(result, sort_keys=True))
+        return 0 if result["complete"] else 1
     if args.command == "doctor":
         root = Path(args.root)
         result = RealmStore.inspect_realm(
@@ -256,6 +288,19 @@ def _main(args):
                 task_id=args.task_id,
                 timeout_seconds=args.timeout,
                 confirmation=args.confirm,
+            )
+        except RuntimeErrorBase as exc:
+            print(json.dumps({"ok": False, "error": exc.as_dict()}, sort_keys=True))
+            return 1
+        print(json.dumps(result, sort_keys=True))
+        return 0
+    if args.command == "migrate-generation-tags":
+        try:
+            result = migrate_generation_tags(
+                args.root, project_id=args.project_id, dry_run=args.dry_run,
+                manifest_roots=args.manifest_root, receipt_roots=args.receipt_root,
+                template_model_map=args.template_model_map,
+                timeout_seconds=args.timeout, confirmation=args.confirm,
             )
         except RuntimeErrorBase as exc:
             print(json.dumps({"ok": False, "error": exc.as_dict()}, sort_keys=True))
@@ -350,6 +395,12 @@ def _main(args):
         print(json.dumps({"state": "purged", "realm_id": realm_id, "root": str(root)}, sort_keys=True))
         return 0
     try:
+        runtime_checkout = args.runtime_checkout
+        agent_checkout = args.agent_checkout
+        if agent_checkout is None and args.service_source_checkout:
+            agent_checkout = args.service_source_checkout
+        if runtime_checkout is None and agent_checkout is not None:
+            runtime_checkout = str(Path(__file__).resolve().parents[1])
         door = None
         if args.door_origin:
             if not args.door_credential_file:
@@ -387,9 +438,13 @@ def _main(args):
             local_worker_profiles=composition.profiles if composition else None,
             local_worker_preparer=composition.preparer if composition else None,
             local_worker_inspector=composition.inspector if composition else None,
+            _local_worker_composition=composition,
+            _local_worker_composition_required=bool(getattr(args, "worker_profile", None)),
             door=door,
             services=services,
             log_directory=Path(args.log_file).parent if args.log_file else None,
+            runtime_checkout=runtime_checkout,
+            agent_checkout=agent_checkout,
             authoring_profile=args.authoring_profile,
         ).start()
     except KeyboardInterrupt:

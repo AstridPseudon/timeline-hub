@@ -63,11 +63,13 @@ class Health:
     runtime_epoch: int
     runtime_session_id: str
     runtime_instance_id: str
+    identity: Mapping[str, Any] | None
     services: tuple[ServiceStatus, ...] = ()
 
     @classmethod
     def from_json(cls, value: Mapping[str, Any]) -> "Health":
-        return cls(status=value["status"], protocol=value["protocol"], schema_digest=value["schema_digest"], runtime_epoch=int(value.get("runtime_epoch", 0)), runtime_session_id=value["runtime_session_id"], runtime_instance_id=value["runtime_instance_id"], services=tuple(ServiceStatus.from_json(item) for item in value.get("services", ())))
+        identity = value["identity"]
+        return cls(status=value["status"], protocol=value["protocol"], schema_digest=value["schema_digest"], runtime_epoch=int(value.get("runtime_epoch", 0)), runtime_session_id=value["runtime_session_id"], runtime_instance_id=value["runtime_instance_id"], identity=dict(identity) if isinstance(identity, Mapping) else None, services=tuple(ServiceStatus.from_json(item) for item in value.get("services", ())))
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -449,10 +451,11 @@ class AttemptFence:
     execution_binding: Mapping[str, Any] | None = None
     storage_estimate: Mapping[str, int] | None = None
     required_facts: Mapping[str, Any] | None = None
+    deadline_at: str | None = None
 
     @classmethod
     def from_json(cls, value: Mapping[str, Any]) -> "AttemptFence":
-        return cls(attempt_id=value["attempt_id"], task_id=value["task_id"], run_id=value["run_id"], lease_id=value["lease_id"], fence=int(value["fence"]), lease_expires_at=value["lease_expires_at"], runtime_epoch=int(value["runtime_epoch"]), input_object_ids=list(value.get("input_object_ids") or []), spec=dict(value.get("spec") or {}), generation_intent=dict(value["generation_intent"]) if value.get("generation_intent") is not None else None, project_id=value.get("project_id"), expected_effect=dict(value["expected_effect"]) if value.get("expected_effect") is not None else None, execution_request=dict(value["execution_request"]) if value.get("execution_request") is not None else None, execution_binding=dict(value["execution_binding"]) if value.get("execution_binding") is not None else None, storage_estimate=dict(value["storage_estimate"]) if value.get("storage_estimate") is not None else None, required_facts=dict(value["required_facts"]) if value.get("required_facts") is not None else None)
+        return cls(attempt_id=value["attempt_id"], task_id=value["task_id"], run_id=value["run_id"], lease_id=value["lease_id"], fence=int(value["fence"]), lease_expires_at=value["lease_expires_at"], deadline_at=value.get("deadline_at"), runtime_epoch=int(value["runtime_epoch"]), input_object_ids=list(value.get("input_object_ids") or []), spec=dict(value.get("spec") or {}), generation_intent=dict(value["generation_intent"]) if value.get("generation_intent") is not None else None, project_id=value.get("project_id"), expected_effect=dict(value["expected_effect"]) if value.get("expected_effect") is not None else None, execution_request=dict(value["execution_request"]) if value.get("execution_request") is not None else None, execution_binding=dict(value["execution_binding"]) if value.get("execution_binding") is not None else None, storage_estimate=dict(value["storage_estimate"]) if value.get("storage_estimate") is not None else None, required_facts=dict(value["required_facts"]) if value.get("required_facts") is not None else None)
 
     def __getitem__(self, key: str) -> Any:
         return getattr(self, key)
@@ -1211,8 +1214,11 @@ class WorkspaceClient:
     def get_project_media_import(self, project_id: str, import_operation_id: str) -> Mapping[str, Any]:
         return self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/media-imports/{_path_part(import_operation_id)}")[2])
 
-    def list_project_objects(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> tuple[list[ManagedObject], str | None]:
+    def list_project_objects(self, project_id: str, *, cursor: str | None = None, limit: int = 50, kind: str | None = None, model: str | None = None, target: str | None = None, tag: str | None = None) -> tuple[list[ManagedObject], str | None]:
         query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "")
+        for name, value in (("kind", kind), ("model", model), ("target", target), ("tag", tag)):
+            if value is not None:
+                query += f"&{name}={_path_part(value)}"
         value = self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/objects" + query)[2])
         items, next_cursor = self._page(value)
         return [ManagedObject.from_json(item) for item in items], next_cursor
@@ -1278,8 +1284,10 @@ class WorkspaceClient:
         _, _, body = self._request("GET", f"/v1/tasks/{_path_part(task_id)}")
         return Task.from_json(self._json(body))
 
-    def list_project_tasks(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> tuple[list[Task], str | None]:
+    def list_project_tasks(self, project_id: str, *, cursor: str | None = None, limit: int = 50, kind: Literal["root_generation"] | None = None, order: Literal["admitted_desc"] | None = None) -> tuple[list[Task], str | None]:
         query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "")
+        if kind is not None: query += f"&kind={_path_part(kind)}"
+        if order is not None: query += f"&order={_path_part(order)}"
         value = self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/tasks" + query)[2])
         items, next_cursor = self._page(value)
         return [Task.from_json(item) for item in items], next_cursor
@@ -1326,6 +1334,11 @@ class WorkspaceClient:
             return None
         value = self._json(body)
         return ClaimWaiting.from_json(value) if isinstance(value, Mapping) and "waiting_reason" in value else AttemptFence.from_json(value)
+
+    def claim_delegated_child(self, task_id: str, *, executor_id: str, capability_ids: list[str], idempotency_key: str, runtime_epoch: int, target: Mapping[str, Any], authority: str) -> AttemptFence:
+        payload = {"executor_id": executor_id, "capability_ids": capability_ids, "runtime_epoch": runtime_epoch, "target": dict(target), "authority": authority}
+        _, _, body = self._request("POST", f"/v1/tasks/{_path_part(task_id)}/claim-delegated-child", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key}, expected=(200,))
+        return AttemptFence.from_json(self._json(body))
 
     def heartbeat_attempt(self, attempt_id: str, *, lease_id: str, fence: int, idempotency_key: str, runtime_epoch: int, progress: Mapping[str, Any] | None = None) -> MutationResult:
         payload: dict[str, Any] = {"lease_id": lease_id, "fence": fence, "runtime_epoch": runtime_epoch}
@@ -1448,8 +1461,11 @@ class WorkspaceClient:
         items, next_cursor = self._page(value)
         return [Event.from_json(item) for item in items], next_cursor
 
-    def list_generations(self, project_id: str, *, cursor: str | None = None, limit: int = 50) -> tuple[list[Generation], str | None]:
+    def list_generations(self, project_id: str, *, cursor: str | None = None, limit: int = 50, kind: str | None = None, model: str | None = None, target: str | None = None, tag: str | None = None) -> tuple[list[Generation], str | None]:
         query = f"?limit={int(limit)}" + (f"&cursor={_path_part(cursor)}" if cursor else "")
+        for name, value in (("kind", kind), ("model", model), ("target", target), ("tag", tag)):
+            if value is not None:
+                query += f"&{name}={_path_part(value)}"
         value = self._json(self._request("GET", f"/v1/projects/{_path_part(project_id)}/generations" + query)[2])
         items, next_cursor = self._page(value)
         return [Generation.from_json(item) for item in items], next_cursor
@@ -1494,6 +1510,15 @@ class WorkspaceClient:
         _, _, body = self._request("GET", f"/v1/executors/{_path_part(executor_id)}")
         return Executor.from_json(self._json(body))
 
+    def get_task_settlement(self, task_id: str) -> Mapping[str, Any]:
+        _, _, body = self._request("GET", f"/v1/control/tasks/{_path_part(task_id)}/settlement")
+        return self._json(body)
+
+    def abandon_task(self, task_id: str, body: Mapping[str, Any], *, idempotency_key: str) -> MutationResult:
+        return self._mutation_json(self._request("POST", f"/v1/control/tasks/{_path_part(task_id)}/abandon",
+            body=json.dumps(dict(body), separators=(",", ":")).encode(),
+            headers={"Content-Type": "application/json", "Idempotency-Key": idempotency_key})[2])
+
     def get_local_worker_generation(self) -> Mapping[str, Any]:
         _, _, body = self._request("GET", "/v1/control/local-worker/generation")
         return self._json(body)
@@ -1503,8 +1528,10 @@ class WorkspaceClient:
         _, _, body = self._request("POST", "/v1/control/local-worker/start", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json"})
         return self._json(body)
 
-    def relinquish_local_worker(self, executor_incarnation: str, evidence_digest: str) -> Mapping[str, Any]:
+    def relinquish_local_worker(self, executor_incarnation: str, evidence_digest: str, *, expected_task_ids: list[str] | None = None) -> Mapping[str, Any]:
         payload = {"executor_incarnation": executor_incarnation, "evidence_digest": evidence_digest}
+        if expected_task_ids is not None:
+            payload["expected_task_ids"] = list(expected_task_ids)
         _, _, body = self._request("POST", "/v1/control/local-worker/relinquish", body=json.dumps(payload, separators=(",", ":")).encode(), headers={"Content-Type": "application/json"})
         return self._json(body)
 

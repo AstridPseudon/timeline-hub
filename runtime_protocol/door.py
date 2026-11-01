@@ -33,9 +33,9 @@ from __future__ import annotations
 import errno
 import http.client
 import json
-import os as process_os
 from .dirfd import filesystem as os
 import re
+import selectors
 import socket
 import stat
 
@@ -53,7 +53,8 @@ from .server import RuntimeHTTPServer, RuntimeHandler
 DEFAULT_DOOR_PORT = 17340
 DEFAULT_HOSTED_ORIGIN = "https://astrid.haus"
 
-PRODUCT_SCOPES = ("handshake", "objects:read", "objects:write", "projects:read", "projects:write", "tasks:read", "tasks:write")
+LEGACY_PRODUCT_SCOPES = ("handshake", "objects:read", "objects:write", "projects:read", "projects:write", "tasks:read", "tasks:write")
+PRODUCT_SCOPES = tuple(sorted((*LEGACY_PRODUCT_SCOPES, "installer:update")))
 # The daemon owner and the shared Worker are never the product, whatever their scopes.
 NON_PRODUCT_ACTORS = frozenset({"owner", "astrid-pack-host"})
 
@@ -91,6 +92,43 @@ class _Refusal(Exception):
     def __init__(self, status: int, code: str):
         super().__init__(code)
         self.status, self.code = status, code
+
+
+def _is_acp_prompt(method: str, path: str, body: bytes | None) -> bool:
+    """Only prompt completion waits may outlive the ordinary chat timeout."""
+    if method != "POST":
+        return False
+    path = urlsplit(path).path
+    if re.fullmatch(r"/acp/projects/[^/]+/chat/prompt", path):
+        return True
+    if not re.fullmatch(r"/acp/[^/]+/rpc", path):
+        return False
+    try:
+        request = json.loads(body or b"")
+    except (ValueError, UnicodeDecodeError):
+        return False
+    return isinstance(request, dict) and request.get("method") == "session/prompt"
+
+
+def _wait_for_prompt_response(upstream: socket.socket, browser: socket.socket) -> bool:
+    """Wait for completion or disconnect, without imposing an execution deadline.
+
+    Closing the door shuts down the tracked upstream socket and wakes this wait.
+    A vanished browser releases only its HTTP connection; it never cancels work.
+    """
+    with selectors.DefaultSelector() as selector:
+        selector.register(upstream, selectors.EVENT_READ)
+        selector.register(browser, selectors.EVENT_READ)
+        while True:
+            readable = {key.fileobj for key, _ in selector.select()}
+            if browser in readable:
+                if not browser.recv(1, socket.MSG_PEEK):
+                    return False
+                # Extra/pipelined request bytes aren't part of this response.
+                # Avoid spinning; this handler closes the connection as usual.
+                selector.unregister(browser)
+            if upstream in readable:
+                return True
 
 
 def exact_https_origin(value: str) -> str:
@@ -151,6 +189,9 @@ def _entry(methods: str, template: str) -> tuple[frozenset[str], tuple[str, ...]
 
 WORKSPACE_ROUTES = (
     _entry("GET", "/v1/health"),
+    _entry("GET", "/v1/diagnostics"),
+    _entry("POST", "/v1/update"),
+    _entry("GET", "/v1/update/status"),
     _entry("POST", "/v1/handshake"),
     _entry("GET", "/v1/realm"),
     _entry("GET,PUT", "/v1/app-state/user/:"),
@@ -295,6 +336,8 @@ def classify(path: str, method: str) -> DoorRoute | None:
         return None
     service, upstream = segments[1], segments[2:]
     upstream_path = "/" + "/".join(upstream)
+    if upstream[:2] == ["v1", "update"] and ("?" in path or path != f"/api/{service}{upstream_path}"):
+        return None
     with_query = upstream_path + (f"?{query}" if query else "")
     # Compose (/api/astrid/generation/compose) is the local app's own route and is never served here.
     if service == "astrid" and upstream[0] == "acp":
@@ -568,6 +611,17 @@ class DoorHandler(RuntimeHandler):
                 del self.headers[name]
         self._dispatch()
 
+    def _require_update_context(self):
+        # These values are set by admission before browser headers are removed.
+        # An ordinary RuntimeHandler has no way to manufacture this context.
+        if (self._door_route is None or self._door_token is None
+                or self._door_origin != self.server.door.origin):
+            raise AuthorizationError("trusted door context required")
+        identity = self._identity("installer:update")
+        if "installer:update" not in identity.get("scopes", []):
+            raise AuthorizationError("installer:update scope required; reconnect with astrid-runtime up")
+        return identity
+
     def _preflight(self):
         # The requested route, method and headers are all judged before the 204. An ACP route
         # passes with no chat registered, so the request itself reads `acp_unavailable`.
@@ -617,7 +671,7 @@ class DoorHandler(RuntimeHandler):
         except AuthorizationError:
             unavailable("auth_rejected")
         if (identity.get("actor") != actor or actor in NON_PRODUCT_ACTORS
-                or tuple(sorted(identity.get("scopes", []))) != PRODUCT_SCOPES):
+                or tuple(sorted(identity.get("scopes", []))) not in (PRODUCT_SCOPES, LEGACY_PRODUCT_SCOPES)):
             raise _Refusal(503, "runtime_identity_mismatch")
         return token
 
@@ -633,13 +687,14 @@ class DoorHandler(RuntimeHandler):
     def _send(self, status, payload=None, *, headers=None, body=None, error=None, receipt=None, idempotency_key=None):
         # The hosted App uses this door health response to show install-manager
         # guidance. Keep this browser-facing marker out of Runtime's canonical
-        # health contract so the Runtime schema digest remains stable.
+        # health contract; derive it from the published owner snapshot.
         if (
             status == 200
             and self.command == "GET"
             and self.path.split("?", 1)[0] == "/v1/health"
             and isinstance(payload, dict)
-            and process_os.environ.get("ASTRID_INSTALL_MANAGED_BY") == "pinokio"
+            and isinstance(payload.get("identity"), dict)
+            and payload["identity"].get("managed_by") == "pinokio"
         ):
             payload = {**payload, "install": {"managed_by": "pinokio"}}
         return super()._send(
@@ -755,8 +810,8 @@ class DoorHandler(RuntimeHandler):
             # Calls through the door always select the hosted, local-media-only policy.
             ACP_LOCAL_MEDIA_ONLY_HEADER: "1",
         })
-        # A browser that goes away while the chat service is silent is noticed on the next write, or by this idle
-        # timeout (acp_idle_timeout, 300 s by default): nothing reads the browser's socket while waiting upstream.
+        # Connection establishment, writes, and response transfer stay bounded.
+        # A prompt has no completion deadline: progress travels on another request.
         self.connection.settimeout(door.acp_idle_timeout)
         upstream = http.client.HTTPConnection("127.0.0.1", port, timeout=door.acp_idle_timeout)
         tracked = None
@@ -767,6 +822,10 @@ class DoorHandler(RuntimeHandler):
                 if not self.server.track_upstream(tracked):
                     raise _Refusal(503, "acp_unavailable")
                 upstream.request(self.command, route.path[len("/acp"):] or "/", body=body, headers=headers)
+                if _is_acp_prompt(self.command, route.path, body):
+                    if not _wait_for_prompt_response(tracked, self.connection):
+                        self.close_connection = True
+                        return
                 response = upstream.getresponse()
             except (socket.timeout, TimeoutError):
                 raise _Refusal(504, "upstream_timeout") from None
