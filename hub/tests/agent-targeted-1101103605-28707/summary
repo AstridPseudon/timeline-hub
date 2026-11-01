@@ -1,0 +1,64 @@
+test agent-targeted-1101103605-28707: fail exit=1 in 22s — targeted on integration:agent (agent tree 3cb231a7a68e60221c7c668cc3eabf3e5f0b81b5)
+cmd: env -i ASTRID_RUNTIME_CHECKOUT=/home/user/work/wt-int/runtime-1a0ce6a39dec ASTRID_RUNTIME_SOURCE=/home/user/work/wt-int/runtime-1a0ce6a39dec ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/usr/local/bin:/usr/bin:/bin PYTHONPATH=$PWD:$ASTRID_RUNTIME_SOURCE HOME=/root LANG=C.UTF-8 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="$PWD:$ASTRID_RUNTIME_SOURCE" PATH=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/toolchain/node-v20.19.4-linux-x64/bin:/home/user/work/venv-agent/bin:/usr/local/bin:/usr/bin:/bin ASTRID_NODE_EXECUTABLE=/home/user/work/toolchain/node-v20.19.4-linux-x64/bin/node ASTRID_REMOTION_PROJECT_DIR=$PWD/remotion ASTRID_TEST_NODE_MODULES=$PWD/remotion/node_modules /home/user/work/venv-agent/bin/python -m pytest -q tests/packs/rendering/test_timeline_route_integration.py tests/v10/test_domain_cli_projects_timelines.py
+counts: 3 failed, 131 passed, 1 deselected in 16.84s 
+--- last 60 lines of /tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch/tests/agent-targeted-1101103605-28707/log.txt ---
+            "rename",
+            "restructure",
+            "lines",
+            "words",
+            "create",
+            "list",
+            "show",
+            "script",
+            "elements",
+            "update-element",
+            "replace-parent-media",
+            "archive",
+            "recover",
+            "history",
+            "log",
+            "diff",
+            "visualize",
+            "lint",
+            "inspect",
+            "render",
+        )
+E       AssertionError: assert ('import', 'e...'assets', ...) == ('import', 'e...'assets', ...)
+E         
+E         At index 24 diff: 'place-element' != 'replace-parent-media'
+E         Left contains one more item: 'render'
+E         Use -v to get more diff
+
+tests/v10/test_domain_cli_projects_timelines.py:637: AssertionError
+_________ test_timelines_visualize_help_describes_filmstrip_navigation _________
+
+capsys = <_pytest.capture.CaptureFixture object at 0x7fde9bdba1d0>
+
+    def test_timelines_visualize_help_describes_filmstrip_navigation(
+        capsys,
+    ) -> None:
+        from astrid.packs.timeline.cli import build_parser
+    
+        parser = build_parser(_FakeClient())
+        with pytest.raises(SystemExit) as exc_info:
+            parser.parse_args(["visualize", "--help"])
+        assert exc_info.value.code == 0
+        normalized = " ".join(capsys.readouterr().out.split())
+        assert "Timeline slug, UUID, or ULID" in normalized
+        assert "Rendered paired filmstrip" in normalized
+        assert "structure" not in normalized
+        assert "raw frames (frames/, frame-index.json) to DIR" in normalized
+        assert "--include-media" in normalized
+        assert "timeline_editing" in normalized
+>       assert "checkout" in normalized
+E       AssertionError: assert 'checkout' in 'usage: astrid timelines visualize [-h] [--project PROJECT] [--timeline-slug TIMELINE_SLUG] [--shot SHOT] [--range RAN... numeric moves/trims use `timelines edit`. Use this help page for component, sampling, frame, and resolution controls.'
+
+tests/v10/test_domain_cli_projects_timelines.py:916: AssertionError
+------------------- left out of this run by lane (1 entries) -------------------
+[integration] run by CI job lanes-integration
+  DESELECTED tests/v10/test_domain_cli_projects_timelines.py::test_timelines_show_reads_runtime_motion_and_scoped_friendly_media
+=========================== short test summary info ============================
+FAILED tests/packs/rendering/test_timeline_route_integration.py::test_create_uses_empty_head_route_and_preserves_v3_config
+FAILED tests/v10/test_domain_cli_projects_timelines.py::test_timelines_parser_has_visualize_and_no_aliases
+FAILED tests/v10/test_domain_cli_projects_timelines.py::test_timelines_visualize_help_describes_filmstrip_navigation
+3 failed, 131 passed, 1 deselected in 16.84s
