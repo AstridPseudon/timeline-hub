@@ -26,6 +26,22 @@ TASK_OUTPUT_TAIL_BYTES = 65536
 TASK_OUTPUT_METADATA_BYTES = 2048
 
 
+def _powershell_quote(value):
+    return "'" + str(value).replace("'", "''") + "'"
+
+
+def powershell5_command(executable, args=()):
+    """Build the existing Windows PowerShell 5.1 admission command.
+
+    Backend action probes must enter Windows through this route; they may not
+    silently switch to ``pwsh`` or a foreground Runtime process.
+    """
+    command = "& " + " ".join([_powershell_quote(executable), *(_powershell_quote(arg) for arg in args)])
+    script = "$ErrorActionPreference='Stop'; " + command + "; " \
+        "if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }"
+    return ["powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script]
+
+
 def save(name, value):
     EVIDENCE.mkdir(parents=True, exist_ok=True)
     (EVIDENCE / name).write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
@@ -63,10 +79,11 @@ def source(repo):
     return {"sha": sha, "repo": str(repo.resolve())}
 
 
-def install_manifest(agent, runtime, app):
+def install_manifest(agent, runtime, app, *, source_override=False):
     manifest = json.loads((app / "public" / "install-manifest.json").read_text(encoding="utf-8"))
-    # Replace the entire source records, including any released schema digest.
-    manifest.update(agent=source(agent), runtime=source(runtime))
+    if source_override:
+        # Explicit test mode replaces entire source records, including any released schema digest.
+        manifest.update(agent=source(agent), runtime=source(runtime))
     return manifest
 
 
@@ -86,9 +103,9 @@ class ManifestHandler(BaseHTTPRequestHandler):
         self.wfile.write(self.document)
 
 
-def install(shell):
+def install(shell, *, source_override=False):
     runtime, app = ROOT / "journey-runtime", ROOT / "journey-app"
-    manifest = install_manifest(ROOT, runtime, app)
+    manifest = install_manifest(ROOT, runtime, app, source_override=source_override)
     save("install-manifest.json", manifest)
     save("sources.json", {"agent": manifest["agent"], "runtime": manifest["runtime"], "app": source(app)})
     server = ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(
@@ -114,10 +131,14 @@ def install(shell):
 
 
 def program_root():
+    if os.environ.get("ASTRID_CI_PROGRAM_ROOT"):
+        return Path(os.environ["ASTRID_CI_PROGRAM_ROOT"])
     return Path(os.environ["LOCALAPPDATA"]) / "Astrid"
 
 
 def data_root():
+    if os.environ.get("ASTRID_CI_DATA_ROOT"):
+        return Path(os.environ["ASTRID_CI_DATA_ROOT"])
     return Path(os.environ["LOCALAPPDATA"]) / "Astrid Runtime"
 
 
@@ -125,6 +146,42 @@ def version():
     root = program_root()
     current = (root / "current").read_text(encoding="utf-8").strip()
     return json.loads((root / "versions" / current / "version.json").read_text(encoding="utf-8"))
+
+
+def assert_installed_profile_binding():
+    """Check the installed profile and service both select this Python's product tree."""
+    installed = version()
+    profile = json.loads(Path(installed["profile"]).read_text(encoding="utf-8"))
+    source_root = str(profile.get("source_checkout") or "")
+    declaration = json.loads(Path(profile["service_declaration"]).read_text(encoding="utf-8"))
+    host = next((row for row in declaration.get("services", [])
+                 if isinstance(row, dict) and row.get("name") == "pack-host"), {})
+    argv = host.get("argv", [])
+    try:
+        source_index = argv.index("--source-checkout")
+        service_root = str(argv[source_index + 1])
+    except (ValueError, IndexError):
+        service_root = ""
+    env = {key: value for key, value in os.environ.items() if key not in {"PYTHONPATH", "PYTHONHOME"}}
+    env.update(installed["env"])
+    probe = (
+        "import json,sys,sysconfig; from pathlib import Path; "
+        "root=Path(sys.argv[1]).resolve(); purelib=Path(sysconfig.get_path('purelib')).resolve(); "
+        "print(json.dumps({'source_root_matches_selected_purelib':root==purelib, "
+        "'host_module_present':(root/'astrid/core/execution/generic_host.py').is_file(), "
+        "'purelib_host_module_present':(purelib/'astrid/core/execution/generic_host.py').is_file()}))"
+    )
+    result = json.loads(run([installed["python"], "-I", "-c", probe, source_root],
+                            "installed-profile-binding.json", env=env))
+    service_root_matches = (ntpath.normcase(ntpath.normpath(service_root)) ==
+                            ntpath.normcase(ntpath.normpath(source_root)))
+    binding = {
+        **result,
+        "service_root_matches_profile": service_root_matches,
+    }
+    save("installed-profile-binding-summary.json", binding)
+    if not all(binding.values()):
+        raise RuntimeError("Installed profile does not bind the selected Python product root")
 
 
 def cli(module, argv, name, *, timeout=300):
@@ -187,19 +244,29 @@ def host_ready():
             ready.get("runtime_instance_id") == value["runtime_instance_id"])
 
 
-def task():
-    project = "windows-journey"
-    created = json.loads(cli("astrid", ["projects", "create", project, "--name", "Windows journey", "--json"],
-                             "project.json"))
-    if created.get("ok") is not True:
-        raise RuntimeError("Project creation failed")
-    spec = {"capability_id": "chiptune.sfx", "kind": "executor", "inputs": {
-        "kind": "blip", "variant": 1, "pitch": 0, "duration_s": 0.1}, "outputs": {}, "extra_pack_roots": []}
-    admitted = json.loads(cli("astrid", ["tasks", "create", "--project", project, "--capability", "chiptune.sfx",
-                              "--spec", json.dumps(spec), "--json"], "task-created.json"))
-    if admitted.get("ok") is not True:
-        raise RuntimeError("Task admission failed")
-    task_id = admitted["data"]["task_id"]
+def task(project="windows-journey", *, create_project=True):
+    # Exercise the installed SDK boundary against the profile written by the
+    # real installer. This local SFX action has no external model/GPU needs.
+    os.environ["ASTRID_HOST_EXECUTION_PROFILE"] = "installed"
+    assert_installed_profile_binding()
+    if create_project:
+        created = json.loads(cli("astrid", ["projects", "create", project, "--name", "Windows journey", "--json"],
+                                 "project.json"))
+        if created.get("ok") is not True:
+            raise RuntimeError("Project creation failed")
+    request = {
+        "capability_id": "chiptune.sfx",
+        "kind": "executor",
+        "project": project,
+        "inputs": {"kind": "blip", "variant": 1, "pitch": 0, "duration_s": 0.1},
+    }
+    invocation = json.loads(cli("astrid.omp_invoke", [json.dumps(request)], "sdk-invocation.json"))
+    task_refs = invocation.get("details", {}).get("astridTaskRefs", [])
+    if invocation.get("content", [{}])[0].get("type") != "text" or len(task_refs) != 1:
+        raise RuntimeError("Installed-profile SDK invocation did not return one admitted task")
+    task_id = task_refs[0].get("task_id")
+    if not isinstance(task_id, str) or not task_id:
+        raise RuntimeError("Installed-profile SDK invocation returned no task identity")
     try:
         cli("astrid", ["tasks", "follow", task_id, "--project", project, "--poll-seconds", "2",
                        "--timeout-seconds", "900", "--json"], "task-follow.jsonl", timeout=960)
@@ -254,6 +321,7 @@ def task():
                 not re.fullmatch(r"sha256:[0-9a-f]{64}", outputs[name].get("digest", "")) or
                 outputs[name].get("size", 0) <= 0 for name in ("sfx", "sfx_meta"))):
         raise RuntimeError("Task did not settle successfully with outputs")
+    return task_id
 
 
 def process_key(row):
@@ -545,16 +613,27 @@ def collect():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("step", choices=("install", "start", "health", "host", "task", "down", "stopped", "collect"))
+    parser.add_argument("step", choices=("journey", "install", "start", "health", "host", "task", "down", "stopped", "collect"))
     parser.add_argument("--installer-shell", choices=("powershell.exe", "pwsh.exe"))
-    args = parser.parse_args()
+    parser.add_argument("--source-override", action="store_true", help="TEST MODE: use local Agent and Runtime Git checkouts")
+    args, remaining = parser.parse_known_args()
     if sys.platform != "win32":
         parser.error("This journey must run on Windows")
+    if args.step == "journey":
+        import ci_journey
+
+        if args.installer_shell:
+            remaining.extend(["--shell", args.installer_shell])
+        if args.source_override:
+            remaining.append("--source-override")
+        return ci_journey.main(remaining)
+    if remaining:
+        parser.error(f"unrecognized arguments: {' '.join(remaining)}")
     EVIDENCE.mkdir(parents=True, exist_ok=True)
     if args.step == "install":
         if not args.installer_shell:
             parser.error("install requires --installer-shell")
-        install(args.installer_shell)
+        install(args.installer_shell, source_override=args.source_override)
     elif args.step == "start":
         powershell("Start-ScheduledTask -TaskName 'Astrid Runtime' -TaskPath '\\'", "start.log")
     elif args.step == "health":
@@ -573,4 +652,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
