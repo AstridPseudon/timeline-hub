@@ -12,6 +12,8 @@ def test_shipped_ledger_reconciles_historical_capability_sets():
 
     assert sources["counts"]["pack_labels"] == 108
     assert sources["counts"]["historical_pack_labels"] == 109
+    assert sources["counts"]["pack_labels"] == 110
+    assert sources["counts"]["historical_pack_labels"] == 111
     # The executor inventory is the committed output-result snapshot plus historical
     # rows; it grows whenever a bundled executor is registered, so pin it to the
     # approved census lock rather than a literal.
@@ -57,6 +59,7 @@ def test_host_consumes_the_reconciled_ledger_before_readiness_matrix():
 
     host = GenericPackHost(pack_roots=[Path("astrid/packs")])
     assert host.ledger["sources"]["counts"]["pack_labels"] == 108
+    assert host.ledger["sources"]["counts"]["pack_labels"] == 110
     # The host matrix is the shipped readiness matrix, row for row; deriving the
     # count keeps it from drifting each time a capability is admitted.
     shipped = json.loads(Path("config/astrid-beta-capabilities.json").read_text(encoding="utf-8"))
