@@ -66,7 +66,7 @@ def is_test(path):
 
 protected = re.compile(r"assert|pytest\.raises|expect\s*\(|toThrow|match\s*=")
 test_definition = re.compile(r"^\s*(?:async\s+)?def\s+test\w*\s*\(|\b(?:it|test|describe)\s*\(")
-skip = re.compile(r"\b(?:skip|xfail)\b|\.skip\s*\(", re.I)
+skip = re.compile(r"@pytest\.mark\.(?:skip|skipif|xfail)\b|\bpytest\.(?:skip|xfail|importorskip)\s*\(|\b(?:it|test|describe)\.(?:skip|todo)\s*\(|\bx(?:it|describe|test)\s*\(|@unittest\.skip")
 for ref in refs:
     # NUL-delimited paths avoid pathname quoting and rename ambiguity.
     entries = git("diff", "--no-renames", "--name-status", "-z", ref, result, "--").split(b"\0")
