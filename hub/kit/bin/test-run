@@ -108,7 +108,7 @@ recycle_recreated_worktree() {
   grep -lqsw -- "$target" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null && return
   STATUS=$(git -C "$W" status --porcelain 2>/dev/null) || return
   [ -z "$STATUS" ] || return
-  git -C /home/user/work/$repo worktree remove "$W" 2>/dev/null && { touch "$WD/recycled"; rm "$RECREATED_MARKER" 2>/dev/null || :; }
+  "$O/bin/lease-check" "$target" git -C /home/user/work/$repo worktree remove "$W" 2>/dev/null && { touch "$WD/recycled"; rm "$RECREATED_MARKER" 2>/dev/null || :; }
 }
 trap recycle_recreated_worktree EXIT
 CMD=$(awk -v r=$repo -v s=$suite '$1==r && $2==s {$1=$2=""; sub(/^ +/,""); print; exit}' $O/tests/suites.conf); [ -n "$CMD" ] || bad "suite $suite not in suites.conf for $repo"

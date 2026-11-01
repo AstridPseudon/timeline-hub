@@ -1,0 +1,19 @@
+#!/bin/bash
+# lease-check WORKER [COMMAND ARG...] — 0 means leased in check mode.
+# With a command, run it under the lock only if unleased; 75 means leased.
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+N=$1; shift
+L=$O/tests/.worker-leases
+mkdir -p "$L/.locks" "$L/$N" || exit 74
+exec 8>"$L/.locks/$N.lock" || exit 74
+flock -x 8 || exit 74
+for lease in "$L/$N"/*; do
+  [ -f "$lease" ] || continue
+  status=$(cat "$O/tests/${lease##*/}/status" 2>/dev/null)
+  case $status in queued|running)
+    [ "$#" -eq 0 ] && exit 0
+    exit 75;;
+  esac
+done
+[ "$#" -gt 0 ] || exit 1
+"$@"

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # recycle-ended — 27 Oct: remove worktrees of ENDED, clean workers (no running, no KEEP, no queued/running test on them) with non-force
 # `git worktree remove`; branches stay. Run by the keepalive when disk is low. Logs each removal to design/deletion-ledger.md.
-import os, subprocess, datetime, fcntl
+import os, subprocess, datetime
 O='/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch'
 busy=set()
 for t in os.listdir(O+'/tests'):
@@ -14,15 +14,9 @@ done=[]
 for n in sorted(os.listdir('/home/user/work/wt')):
     wd=f'{O}/workers/{n}'; wt=f'/home/user/work/wt/{n}'
     if n.startswith('.') or not os.path.exists(wd+'/meta') or not os.path.exists(wd+'/ended') or any(os.path.exists(wd+'/'+f) for f in ('running','KEEP')) or n in busy: continue
-    leases=O+'/tests/.worker-leases'; lockdir=leases+'/.locks'
-    os.makedirs(lockdir,exist_ok=True); os.makedirs(leases+'/'+n,exist_ok=True)
-    with open(lockdir+'/'+n+'.lock','a') as lock:
-        fcntl.flock(lock,fcntl.LOCK_EX)
-        if any(open(O+'/tests/'+entry+'/status').read().strip() in ('queued','running') for entry in os.listdir(leases+'/'+n) if os.path.isfile(leases+'/'+n+'/'+entry) and os.path.exists(O+'/tests/'+entry+'/status')): continue
-        if any(os.path.exists(wd+'/'+f) for f in ('running','KEEP')): continue
-        repo=[l.split('=',1)[1].strip() for l in open(wd+'/meta') if l.startswith('repo=')][0]
-        if subprocess.run(['git','-C',f'/home/user/work/{repo}','worktree','remove',wt],capture_output=True).returncode==0:
-            open(wd+'/recycled','a').close(); done.append(wt)
+    repo=[l.split('=',1)[1].strip() for l in open(wd+'/meta') if l.startswith('repo=')][0]
+    if subprocess.run([O+'/bin/lease-check',n,'git','-C',f'/home/user/work/{repo}','worktree','remove',wt],capture_output=True).returncode==0:
+        open(wd+'/recycled','a').close(); done.append(wt)
 # 27 Oct 20:20Z: also drop idle detached lane checkouts in /home/user/work/wt-int (agent-<sha>, runtime-<sha>); test-run recreates them on demand
 import re
 inuse=set()

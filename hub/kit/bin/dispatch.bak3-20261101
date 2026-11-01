@@ -1,0 +1,69 @@
+#!/bin/bash
+# dispatch NAME --repo agent|runtime|app|composition --base BRANCH --model M --effort E [--net] [--heavy] [--timeout MIN] [--merge-parent SHA] [--merge-target BRANCH] --brief FILE
+# Starts a Codex worker in its own worktree /home/user/work/wt/NAME on branch tl/NAME (from --base, default tl/integration).
+# Refuses if free disk < 5 GB, or if --heavy and >=2 heavy jobs (heavy workers + running full test suites) are already running.
+set -e
+O=/tmp/claude-0/-home-user-repo/7dc61be1-7066-52e0-a5d0-94f90e61430a/scratchpad/orch
+N=$1; shift; REPO=; BASE=tl/integration; M=gpt-5.6-luna; E=high; NET=0; HEAVY=0; TMO=180; BRIEF=; MPARENT=; MTARGET=
+while [ $# -gt 0 ]; do case $1 in
+ --repo) REPO=$2; shift 2;; --base) BASE=$2; shift 2;; --model) M=$2; shift 2;; --effort) E=$2; shift 2;;
+ --merge-parent) MPARENT=$2; shift 2;;
+ --merge-target) MTARGET=$2; shift 2;;   # 26 Oct follow-ups: bin/merge merges into this branch (in /home/user/work/wt-int/<repo>-<branch>) instead of tl/integration
+ --net) NET=1; shift;; --heavy) HEAVY=1; shift;; --timeout) TMO=$2; shift 2;; --brief) BRIEF=$2; shift 2;;
+ *) echo "unknown arg $1"; exit 2;; esac; done
+# Owner rule 2026-10-20 (rev 2): effort is capped at high (no xhigh). Owner 27 Oct ~02:00Z: Sol and Luna always high; only the Astra end-of-stage reviewers keep xhigh. Sol only for hard tasks, flagged by a line starting "HARD:" in the brief; otherwise Luna.
+[ "$E" = xhigh ] && [[ $M != gpt-6-astra* ]] && { echo "$(date -u +%FT%TZ) $N: effort xhigh -> high" >> $O/model-downgrades.log; E=high; }
+# 09:55Z LOOPS #60: a "-sol-" worker name is the manager's explicit HARD intent, so it is never downgraded. A Sol model without a HARD: line or -sol- name is still downgraded, but loudly: the note goes into the owning manager's INBOX, not only a log nobody reads.
+case $M in *sol*) { grep -qE '^(SUPER-)?HARD:' "$BRIEF" 2>/dev/null || [[ $N == *-sol-* ]]; } || { echo "$(date -u +%FT%TZ) $N: $M -> gpt-5.6-luna (no HARD: line in brief)" >> $O/model-downgrades.log
+    for a in runtime app agent viewing app2 farm; do case $N in rt-*) [ $a = runtime ];; app-*) [ $a = app ];; agt-*) [ $a = agent ];; vw-*) [ $a = viewing ];; ap2-*) [ $a = app2 ];; tf-*) [ $a = farm ];; *) false;; esac && [ -d $O/managers/$a ] && printf '\n## %s dispatch: %s DOWNGRADED Sol -> Luna (brief has no HARD: line). If it needs Sol, stop it and re-dispatch with a HARD: line.\n' "$(date -u +%FT%TZ)" "$N" >> $O/managers/$a/INBOX.md; done
+    M=gpt-5.6-luna; case $N in D-*|H-*|P-*|U-*|R-*|T-*|M-*) M=gpt-6-luna;; esac; };; esac
+# 27 Oct 21:00Z (owner): three tiers for follow-up workers (names D-*, H-*, P-*): brief first line "SUPER-HARD:" -> Sol (gpt-6.1-sol); "HARD:" -> Terra (gpt-6.1-terra); neither -> Luna (gpt-6-luna). A Sol request with only HARD: becomes Terra; a Terra request without HARD:/SUPER-HARD: becomes Luna.
+case $N in D-*|H-*|P-*|U-*|R-*|T-*|M-*)   # 28 Oct: project U uses the same tiers; 30 Oct: project R too; 31 Oct: T
+  FL=$(head -1 "$BRIEF" 2>/dev/null)
+  case $M in *sol*) case $FL in SUPER-HARD:*) ;; HARD:*) echo "$(date -u +%FT%TZ) $N: $M -> gpt-6.1-terra (HARD: line, not SUPER-HARD:)" >> $O/model-downgrades.log; M=gpt-6.1-terra;; *) M=gpt-6-luna;; esac;;
+    *terra*) case $FL in SUPER-HARD:*|HARD:*) ;; *) echo "$(date -u +%FT%TZ) $N: $M -> gpt-6-luna (no HARD:/SUPER-HARD: line)" >> $O/model-downgrades.log; M=gpt-6-luna;; esac;; esac;;
+esac
+. $O/bin/claude-perms.sh; M=$(codex_fallback $M)   # CODEX_UNAVAILABLE -> Claude fallback
+[ -n "$REPO" ] && [ -f "$BRIEF" ] || { echo "need --repo and --brief FILE"; exit 2; }
+D=$O/workers/$N; [ -e $D ] && { echo "worker $N already exists"; exit 2; }
+FREE=$(df -BG --output=avail /home/user | tail -1 | tr -dc 0-9); [ "$FREE" -lt 1 ] && { echo "REFUSED: only ${FREE}G free"; exit 3; }   # 27 Oct (owner): run to the wire; was 5
+if [ $HEAVY = 1 ]; then H=$(grep -l '^heavy=1' $O/workers/*/meta 2>/dev/null | while read f; do d=$(dirname $f); [ -f $d/running ] && echo x; done | wc -l); T=$(for r in $O/tests/*/running; do [ -f "$r" ] && [ -f "${r%running}heavy" ] && kill -0 "$(cat "$r")" 2>/dev/null && echo x; done | wc -l); H=$((H+T)); [ "$H" -ge 2 ] && { echo "REFUSED: $H heavy jobs running ($T full test suites)"; exit 3; }; fi
+WT=/home/user/work/wt/$N; git -C /home/user/work/$REPO worktree add -q -b tl/$N $WT $BASE
+mkdir -p $D; cp $BRIEF $D/brief.md; case $N in U-*|R-*|T-*|M-*) cat $O/followups/leads/U-uxtrial/OWNERSHIP.md >> $D/brief.md;; esac; case $N in R-*|T-*|M-*) head -1 "$BRIEF" | grep -qE "^(SUPER-)?HARD:" && cat $O/followups/leads/R-clashback/COORDINATOR.md >> $D/brief.md;; esac;   # 30 Oct (owner): Terra/Sol coordinate Lunas   # 28 Oct: ownership paragraph on every project U worker
+ [ -n "$MPARENT" ] && echo "$MPARENT" > $D/merge-parent
+printf 'name=%s\nrepo=%s\nbase=%s\nbase_sha=%s\nmodel=%s\neffort=%s\nheavy=%s\nworktree=%s\nstarted=%s\n' $N $REPO $BASE $(git -C $WT rev-parse --short HEAD) $M $E $HEAVY $WT $(date -u +%FT%TZ) > $D/meta
+# 27 Oct 13:25Z: a worker based on anything but tl/integration merges back into its base unless --merge-target says otherwise (a missing target once sent an H fix to tl/integration)
+[ -z "$MTARGET" ] && [ "$BASE" != tl/integration ] && git -C /home/user/work/$REPO show-ref -q --verify "refs/heads/$BASE" && MTARGET=$BASE
+[ -n "$MTARGET" ] && printf 'target=%s\n' "$MTARGET" >> $D/meta
+[ -d /home/user/work/app/node_modules ] && [ $REPO = app ] && [ ! -e $WT/node_modules ] && ln -s /home/user/work/app/node_modules $WT/node_modules
+NETCFG=(); [ $NET = 1 ] && NETCFG=(-c sandbox_workspace_write.network_access=true)
+touch $D/running
+# per-worker temp dir (2026-10-20): short path (browser sockets have a ~100-char limit), removed when the worker finishes
+TD=/tmp/w-$(echo -n $N | md5sum | cut -c1-10); mkdir -p $TD; echo $TD > $D/tmpdir; export TMPDIR=$TD TMP=$TD TEMP=$TD
+( trap 'rc=$?; echo "$(date -u +%FT%TZ) wrapper $BASHPID got signal/exit rc=$rc stage=${STAGE:-codex}" >> $D/wrapper.log' EXIT TERM HUP INT PIPE QUIT; echo "$(date -u +%FT%TZ) wrapper $BASHPID start pgid=$(ps -o pgid= -p $BASHPID | tr -d " ")" >> $D/wrapper.log; { cat $O/COMMON.md; echo; echo "YOUR WORKTREE: $WT (branch tl/$N, repo $REPO). Do NOT run git commit/merge/checkout (.git is read-only to you). When done, write a conventional commit message (subject line + body) to $D/commit-msg; the harness commits all your worktree changes when you exit. Put scratch files in $D/tmpdir (outside your worktree), so there is nothing to clean up. Never use rm -f, rm -rf, or deletion by glob; the automatic command review rejects them. To delete a file that is part of your task, use apply_patch Delete File, or a plain rm <path> for one named file inside your worktree. Do not delete caches or build output. When the WHOLE task is complete, create the empty file $D/DONE; if genuinely blocked, write the reason to $D/BLOCKED."; echo; echo "YOUR TASK ($N):"; cat $D/brief.md; } | \
+  if [[ $M == claude-* ]]; then   # MODELS.md fallback: Claude instead of Codex
+    # claude -p ends after one turn: resume the same session until DONE/BLOCKED, the time budget, or 15 resumes.
+    SID=$(cat /proc/sys/kernel/random/uuid); echo $SID > $D/session; END=$(( $(date +%s) + TMO*60 ))
+    CL=(claude -p --model "$M" --permission-mode acceptEdits "${CLAUDE_PERMS[@]}" --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir $O --output-format text)
+    (cd $WT && timeout $((TMO*60)) "${CL[@]}" --session-id $SID) 2>>$D/log.txt | tee $D/report.md >> $D/log.txt; RC=${PIPESTATUS[0]}; K=0
+    while [ ! -f $D/DONE ] && [ ! -f $D/BLOCKED ] && [ $K -lt 15 ] && [ $(date +%s) -lt $END ]; do K=$((K+1)); echo "=== resume $K $(date -u +%FT%TZ)" >> $D/log.txt
+      echo "Continue YOUR TASK from where you stopped. Do not stop at a plan or a list of next steps: do them. That includes targeted tests through the central test service (bin/request-test, then bin/wait-test; if a wait is long, end the turn and check again on resume). When the WHOLE task is complete, give your final report as your answer, write $D/commit-msg and create $D/DONE. If genuinely blocked, write the reason to $D/BLOCKED." | \
+        (cd $WT && timeout $(( END - $(date +%s) )) "${CL[@]}" --resume $SID) 2>>$D/log.txt | tee $D/report.md >> $D/log.txt; RC=${PIPESTATUS[0]}; done
+    echo $RC > $D/exit
+  else
+  timeout $((TMO*60)) codex exec --ephemeral -m "$M" -c model_reasoning_effort="$E" -s workspace-write "${NETCFG[@]}" -C $WT --skip-git-repo-check \
+   --add-dir /home/user/work --add-dir /home/user/peteromallet --add-dir /home/user/banodoco --add-dir $O -o $D/report.md - > $D/log.txt 2>&1 && echo 0 > $D/exit || echo $? > $D/exit   # 09:40Z LOOPS #58: under set -e a non-zero codex exit (timeout 124, error, usage limit) used to abort this subshell, so there was no exit marker, no WIP commit, no fallback and no cleanup
+  if [ "$(cat $D/exit 2>/dev/null)" = 124 ]; then echo "$(date -u +%FT%TZ) timed out after ${TMO} min (--timeout)" > $D/TIMEOUT; fi; true   # 11:10Z LOOPS #66: must end with status 0, since this block is the right side of a pipeline under set -e
+  fi
+  STAGE=finalize; echo "$(date -u +%FT%TZ) wrapper reached finalize" >> $D/wrapper.log; set +e; exec 2>>$D/finalize.log; set -x   # 10:35Z LOOPS #62: finalization must always reach ended; every step is traced here
+  # merge ancestry (2026-10-20): if the manager/worker wrote workers/<N>/merge-parent (a commit sha, e.g. origin/main's tip), the final
+  # commit becomes a true two-parent merge (HEAD + that sha) with the worker's resolved tree. Sandboxed workers cannot write .git themselves.
+  MP=; [ -s $D/merge-parent ] && MP=$(tr -d ' \n' < $D/merge-parent); if [ -n "$MP" ] && git -C $WT rev-parse -q --verify "$MP^{commit}" >/dev/null; then git -C $WT rev-parse "$MP^{commit}" > "$(git -C $WT rev-parse --path-format=absolute --git-path MERGE_HEAD)"; echo "merge-parent $MP recorded" >> $D/commit.log; fi
+  if [ -n "$(git -C $WT status --porcelain)" ] || [ -n "$MP" ]; then git -C $WT add -A && { [ -s $D/commit-msg ] && git -C $WT commit -q -F $D/commit-msg || git -C $WT commit -q -m "tl/$N: $(head -1 $D/brief.md | cut -c1-70)"; } >> $D/commit.log 2>&1; fi
+  # Codex usage limit -> machine-wide Claude fallback (Luna->Haiku, Sol->Sonnet, Astra->Opus), lifted automatically by the dispatcher's probe
+  if [[ $M != claude-* ]] && [ "$(cat $D/exit 2>/dev/null)" != 0 ] && tail -60 $D/log.txt 2>/dev/null | grep -qiE "usage limit|hit your usage|usage_limit|quota exceeded|insufficient_quota"; then
+    [ -f $O/CODEX_UNAVAILABLE ] || echo "$(date -u +%FT%TZ) Codex usage limit seen in worker $N; automatic Claude fallback (MODELS.md). The dispatcher probes Codex every 20 min and lifts this when it works." > $O/CODEX_UNAVAILABLE; fi
+  rm -f $D/running; date -u +%FT%TZ > $D/ended; [ -f $D/KEEP ] || { rm -rf "$TD"; for x in /tmp/"$N".* /tmp/"$N"-*; do [ -d "$x" ] && [ -O "$x" ] && rm -rf -- "$x"; done; }   # 02:08Z: also the worker's own /tmp/<worker>.* scratch made outside TMPDIR (LOOPS #40)
+  # recycle-on-finish (owner disk rule 2026-10-20): drop a finished, clean worktree; the branch tl/$N and the reports stay, managers review by branch, test-run recreates it if needed. Skip KEEP/leased.
+  [ -f $D/KEEP ] || grep -lqsw -- "$N" $O/managers/*/notes/*.lease $O/managers/*/notes/*ACTIVE* 2>/dev/null || { [ -z "$(git -C $WT status --porcelain 2>/dev/null | head -1)" ] && git -C /home/user/work/$REPO worktree remove $WT 2>/dev/null && touch $D/recycled; } ) >/dev/null 2>&1 &
+echo "dispatched $N in $WT (base $BASE)"
