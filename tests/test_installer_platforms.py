@@ -3,10 +3,10 @@ import io
 import json
 import plistlib
 import subprocess
+import sys
 import tarfile
 import xml.etree.ElementTree as ET
 import zipfile
-from datetime import datetime, timedelta
 from pathlib import Path, PureWindowsPath
 from unittest.mock import Mock
 from urllib.error import HTTPError
@@ -61,6 +61,40 @@ def test_bun_build_environment_scrubs_ambient_policy_but_keeps_explicit_cache_an
     assert all(captured[1][key] == value for key, value in ambient.items())
 
 
+def _runtime_argv(script):
+    # The service command is an inline `-c` launch script; its Runtime argv is the literal list it passes to main().
+    import ast
+    for node in ast.walk(ast.parse(script)):
+        if isinstance(node, ast.Call) and getattr(node.func, 'id', None) == 'main' and node.args:
+            return ast.literal_eval(node.args[0])
+    raise AssertionError('the launch script does not call main() with a Runtime argv')
+
+
+def _service_envelope(rendered, system):
+    """Freeze the platform service shape without coupling it to the live prelude.
+
+    ``service.render`` deliberately embeds the current installer admission
+    prelude.  That prelude has its own custody and recovery coverage; keeping
+    it in these release-0 envelope snapshots would make an unrelated custody
+    change look like a platform-definition regression.
+    """
+    if system == 'darwin':
+        value = plistlib.loads(rendered.encode())
+        arguments = value['ProgramArguments']
+        assert len(arguments) == 6 and arguments[4] == '-c'
+        arguments[5] = '<installer-launch-prelude>'
+        return plistlib.dumps(value).decode()
+    if system == 'linux':
+        prefix, separator, remaining = rendered.partition('"-c" "')
+        prelude, boundary, suffix = remaining.partition('"\nEnvironment=')
+        assert separator and prelude and boundary
+        return prefix + '"-c" "<installer-launch-prelude>"\nEnvironment=' + suffix
+    prefix, separator, remaining = rendered.partition(' -c "')
+    prelude, boundary, suffix = remaining.partition('"</Arguments>')
+    assert separator and prelude and boundary
+    return prefix + ' -c "<installer-launch-prelude>"</Arguments>' + suffix
+
+
 @pytest.mark.parametrize('system,fixture', [('darwin','launchd.plist'), ('linux','systemd.service'), ('win32','task.xml')])
 def test_service_definitions_match_reviewed_snapshots(system, fixture):
     version, data, log = sample(system)
@@ -69,8 +103,10 @@ def test_service_definitions_match_reviewed_snapshots(system, fixture):
         root = ET.fromstring(rendered)
         ns = {'t': 'http://schemas.microsoft.com/windows/2004/02/mit/task'}
         boundary = root.find('t:Triggers/t:TimeTrigger/t:StartBoundary', ns)
-        rendered = rendered.replace(boundary.text, '2000-01-01T00:00:00+00:00')
-    assert rendered == (FIXTURES / fixture).read_text(encoding='utf-8')
+        if boundary is not None:
+            rendered = rendered.replace(boundary.text, '2000-01-01T00:00:00+00:00')
+    assert _service_envelope(rendered, system) == _service_envelope(
+        (FIXTURES / fixture).read_text(encoding='utf-8'), system)
     assert 'npm' not in rendered and 'pack_host' not in rendered and 'chat' not in rendered
     assert 'runtime-service.log' in rendered and 'install.log' not in rendered
 
@@ -78,8 +114,10 @@ def test_service_definitions_match_reviewed_snapshots(system, fixture):
 def test_launchd_is_foreground_keepalive_with_explicit_environment():
     version, data, log = sample('darwin')
     value = plistlib.loads(service.render('darwin', version, data, log).encode())
-    assert value['KeepAlive'] is True and value['RunAtLoad'] is True
-    assert value['ProgramArguments'] == [str(version.python), '-X', 'utf8', '-I', '-m', 'astrid_runtime', 'run', '--profile', 'astrid', '--data-root', str(data), '--source-manifest', str(version.profile)]
+    assert value['KeepAlive'] == {'SuccessfulExit': False} and value['RunAtLoad'] is True
+    arguments = value['ProgramArguments']
+    assert arguments[:5] == [str(version.python), '-X', 'utf8', '-I', '-c']
+    assert _runtime_argv(arguments[5]) == ['run', '--profile', 'astrid', '--data-root', str(data), '--source-manifest', str(version.profile)]
     assert value['EnvironmentVariables']['PATH'] == version.env['PATH']
 
 
@@ -92,22 +130,19 @@ def test_launchd_operations_use_runtime_posix_user_identity(tmp_path, monkeypatc
     version, data, _ = sample('darwin')
     manager.register(version, data)
     assert manager.start()
-    manager.disable()
+    with pytest.raises(RuntimeError, match='C1 stop callback'):
+        manager.disable()
     target = f'gui/501/{service.LABEL}'
     assert [call.args[0] for call in runner.call_args_list] == [
         ['launchctl', 'bootstrap', 'gui/501', manager.path],
         ['launchctl', 'kickstart', target],
-        ['launchctl', 'print', target],
-        ['launchctl', 'bootout', target],
     ]
-    assert current_user.call_count == 3
+    assert current_user.call_count == 2
 
 
 def test_windows_task_settings_and_no_console_executable():
-    before = datetime.now().astimezone() - timedelta(seconds=1)
     version, data, log = sample('win32')
     root = ET.fromstring(service.render('win32', version, data, log, user='S-1-5-21-1234'))
-    after = datetime.now().astimezone() + timedelta(seconds=1)
     ns = {'t': 'http://schemas.microsoft.com/windows/2004/02/mit/task'}
     def field(path):
         return root.find(path, ns).text
@@ -118,18 +153,12 @@ def test_windows_task_settings_and_no_console_executable():
     assert field('t:Principals/t:Principal/t:LogonType') == 'InteractiveToken'
     assert field('t:Principals/t:Principal/t:RunLevel') == 'LeastPrivilege'
     assert field('t:Triggers/t:LogonTrigger/t:UserId') == 'S-1-5-21-1234'
-    assert field('t:Triggers/t:LogonTrigger/t:Repetition/t:Interval') == 'PT1M'
-    assert field('t:Triggers/t:LogonTrigger/t:Repetition/t:StopAtDurationEnd') == 'false'
     logon = root.find('t:Triggers/t:LogonTrigger', ns)
-    assert [child.tag.rsplit('}', 1)[-1] for child in logon] == ['Enabled', 'Repetition', 'UserId']
-    assert root.find('t:Triggers/t:LogonTrigger/t:Repetition/t:Duration', ns) is None
-    time_trigger = root.find('t:Triggers/t:TimeTrigger', ns)
-    assert time_trigger is not None
-    assert [child.tag.rsplit('}', 1)[-1] for child in time_trigger] == ['Enabled', 'StartBoundary', 'Repetition']
-    boundary = datetime.fromisoformat(time_trigger.find('t:StartBoundary', ns).text)
-    assert boundary.tzinfo is not None and before <= boundary <= after
-    assert time_trigger.find('t:Repetition/t:Interval', ns).text == 'PT1M'
-    assert time_trigger.find('t:Enabled', ns).text == 'true'
+    assert [child.tag.rsplit('}', 1)[-1] for child in logon] == ['Enabled', 'UserId']
+    assert root.find('t:Triggers/t:LogonTrigger/t:Repetition', ns) is None
+    assert root.find('t:Triggers/t:TimeTrigger', ns) is None
+    assert root.find('t:Settings/t:RestartOnFailure/t:Interval', ns).text == 'PT1M'
+    assert root.find('t:Settings/t:RestartOnFailure/t:Count', ns).text == '999'
     assert field('t:Actions/t:Exec/t:Command').endswith('pythonw.exe')
     arguments = field('t:Actions/t:Exec/t:Arguments')
     assert '-X utf8 -I -c' in arguments
@@ -147,9 +176,9 @@ def test_systemd_quotes_spaces_percent_dollar_and_supply_tool_path():
     version = Version(version.root, Path('/astrid %v $x/py/bin/python'), version.profile, version.env)
     unit = service.render('linux', version, data, log)
     assert 'ExecStart="/astrid %%v $$x/py/bin/python"' in unit
-    assert '"/astrid data"' in unit
+    assert "'--data-root', '/astrid data'" in unit
     assert 'Environment="PATH=/astrid/tools:/usr/bin:/bin"' in unit
-    assert 'Restart=always' in unit
+    assert 'Restart=on-failure' in unit
     assert 'WantedBy=default.target' in unit
 
 
@@ -160,7 +189,9 @@ def test_non_systemd_fallback_is_explicit_and_requests_runtime_start(tmp_path):
     version = Version(tmp_path / 'program/versions/v1', tmp_path / 'python', tmp_path / 'profile', {'PATH': '/tools:/bin'})
     manager.register(version, tmp_path / 'data')
     assert manager.start() is False
-    assert lines == ['There is no systemd user service; run the install line to restart Astrid.']
+    assert lines == [service.UNSUPERVISED_WARNING]
+    assert "does not restart after a crash" in lines[0]
+    assert "reboot" in lines[0] and "external supervisor" in lines[0]
     assert read_json(manager.selection)['data_root'] == str(tmp_path / 'data')
     assert 'version' not in read_json(manager.selection)
     assert not (service.default_program_root(tmp_path, 'linux') / 'service.json').exists()
@@ -246,6 +277,9 @@ def test_backend_native_failures_reach_transaction_and_log_details(tmp_path, mon
 
 def test_stage_service_declaration_uses_candidate_and_preserves_chat_settings(tmp_path, monkeypatch):
     backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
+    old_command = tmp_path / 'old astrid command.exe'
+    old_command.write_text('external executable')
+    old_command.chmod(0o755)
     old_profile = tmp_path / 'old' / 'profile.json'
     old_services = tmp_path / 'old' / 'services.json'
     old_profile.parent.mkdir()
@@ -255,7 +289,7 @@ def test_stage_service_declaration_uses_candidate_and_preserves_chat_settings(tm
             'ASTRID_ACP_CWD': str(tmp_path / 'previous chat cwd'),
             'ASTRID_ACP_SESSION_DIR': str(tmp_path / 'chat sessions'),
             'ASTRID_ACP_PROFILE': 'film-profile',
-            'ASTRID_ACP_COMMAND': str(tmp_path / 'old astrid command'),
+            'ASTRID_ACP_COMMAND': str(old_command),
         },
     }]}))
     old = Version(tmp_path / 'old', tmp_path / 'old' / 'py' / 'bin' / 'python', old_profile, {})
@@ -286,7 +320,7 @@ def test_stage_service_declaration_uses_candidate_and_preserves_chat_settings(tm
     assert pinned_bun in recorded['argv']
     assert recorded['env']['ASTRID_ACP_SESSION_DIR'] == str(tmp_path / 'chat sessions')
     assert recorded['env']['ASTRID_ACP_PROFILE'] == 'film-profile'
-    assert recorded['env']['ASTRID_ACP_COMMAND'] == str(tmp_path / 'old astrid command')
+    assert recorded['env']['ASTRID_ACP_COMMAND'] == str(old_command)
     assert Path(recorded['argv'][-2]) == tmp_path / 'previous chat cwd'
     assert services_path == tmp_path / 'candidate' / 'services.json'
     assert json.loads(services_path.read_text(encoding='utf-8')) == {'version': 1, 'services': []}
@@ -295,8 +329,11 @@ def test_stage_service_declaration_uses_candidate_and_preserves_chat_settings(tm
 @pytest.mark.parametrize('prior_port,requested_port,expected_port', [
     (None, None, '17340'), ('17391', None, '17391'), ('17391', '17393', '17393'),
 ])
-def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeypatch, prior_port, requested_port, expected_port):
-    backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
+@pytest.mark.parametrize('managed_by', [None, 'pinokio'])
+def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeypatch, prior_port, requested_port, expected_port, managed_by):
+    backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv', managed_by=managed_by)
+    write_json(backend.root / 'install.json', {'owner': service.LABEL, 'managed_by': managed_by})
+    backend.uv.touch()
     prior = Version(tmp_path / 'prior', tmp_path / 'python', tmp_path / 'profile',
                     {'ASTRID_RUNTIME_DOOR_PORT': prior_port}) if prior_port else None
     monkeypatch.setattr(backend, 'existing', lambda _data: prior)
@@ -317,6 +354,10 @@ def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeyp
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes((root / relative).read_bytes())
             (destination / 'remotion/node_modules').mkdir(parents=True)
+            (destination / 'remotion/package-lock.json').write_text('{}\n')
+            (destination / 'remotion/package.json').write_text('{}\n')
+            (destination / 'config').mkdir()
+            (destination / 'config/astrid-beta-capabilities.json').write_text('{"capabilities":[]}\n')
         return destination
     monkeypatch.setattr('astrid.installer.backend.source', source)
     monkeypatch.setattr('astrid.installer.backend.install_tools', lambda *_args: {
@@ -326,6 +367,15 @@ def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeyp
     })
     monkeypatch.setattr('astrid.installer.backend.binary', lambda *_args: tmp_path / 'npm-cli.js')
     calls = []
+    product_root = tmp_path / 'program' / 'versions'
+
+    def installed_root(python, _env):
+        root = next(product_root.iterdir()) / 'py' / 'Lib' / 'site-packages'
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+
+    monkeypatch.setattr(backend, '_installed_product_root', installed_root)
+    digest_roots = []
 
     def run(argv, **_kwargs):
         calls.append(argv)
@@ -334,11 +384,13 @@ def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeyp
         if len(argv) > 5 and argv[3:5] == ['-I', '-c'] and 'service_declaration' in argv[5]:
             Path(argv[-1]).write_text('{"version":1,"services":[]}', encoding='utf-8')
         if len(argv) > 5 and argv[3:5] == ['-I', '-c'] and 'source_checkout_digest' in argv[5]:
+            digest_roots.append(Path(argv[-1]))
             return 'digest-value'
         return ''
 
     monkeypatch.setattr(backend, 'run', run)
     manifest = {
+        'release': 23,
         'agent': {'sha': 'a' * 40}, 'runtime': {'sha': 'b' * 40},
         'tools': {'uv': {'version': '1.0.0'}, 'python': {'version': '3.11.9'}},
     }
@@ -346,12 +398,73 @@ def test_stage_profile_points_to_candidate_service_declaration(tmp_path, monkeyp
     version = backend.stage(manifest, tmp_path / 'program', tmp_path / 'workspace')
 
     assert version.env['ASTRID_RUNTIME_DOOR_PORT'] == expected_port
+    assert version.release == 23 and version.managed_by == managed_by
+    assert version.env['ASTRID_INSTALL_RELEASE'] == '23'
+    assert version.env['ASTRID_INSTALL_MANAGED_BY'] == (managed_by or '')
+    assert Version.load(read_json(version.root / 'version.json')) == version
     profile = json.loads(version.profile.read_text(encoding='utf-8'))
+    assert Path(profile['source_checkout']) == installed_root(version.python, version.env)
+    assert digest_roots == [Path(profile['source_checkout'])]
+    assert version.env['ASTRID_HOST_EXECUTION_PROFILE'] == 'installed'
+    assert version.env['ASTRID_SOURCE_PROVENANCE_ROOT'] == str(version.root / 'a')
+    assert version.env['ASTRID_REMOTION_PROJECT_DIR'] == str((version.root / 'a/remotion').resolve())
+    assert version.env['ASTRID_CAPABILITY_MATRIX_PATH'] == str((version.root / 'a/config/astrid-beta-capabilities.json').resolve())
     declaration = Path(profile['service_declaration'])
     assert declaration == version.root / 'services.json'
     assert json.loads(declaration.read_text(encoding='utf-8')) == {'version': 1, 'services': []}
+    service_call = next(argv for argv in calls if len(argv) > 5 and argv[3:5] == ['-I', '-c'] and 'service_declaration' in argv[5])
+    assert Path(service_call[6]) == Path(profile['source_checkout'])
     assert any('service_declaration' in argv[5] for argv in calls if len(argv) > 5 and argv[3:5] == ['-I', '-c'])
     assert any('source_checkout_digest' in argv[5] for argv in calls if len(argv) > 5 and argv[3:5] == ['-I', '-c'])
+
+
+def test_installed_product_root_uses_selected_interpreter_origins_and_rejects_checkout_imports(tmp_path):
+    import json
+
+    backend = Backend(tmp_path / 'program', tmp_path / 'install.log', tmp_path / 'uv')
+    prefix = tmp_path / 'candidate' / 'py'
+    product = prefix / 'Lib' / 'site-packages'
+    checkout = tmp_path / 'candidate' / 'a'
+    product.mkdir(parents=True)
+    checkout.mkdir()
+    module_names = ('host', 'child', 'action', 'client', 'sdk')
+    origins = {}
+    for name in module_names:
+        path = product / 'astrid' / f'{name}.py'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('# selected install\n')
+        origins[name] = str(path)
+    result = json.dumps({'prefix': str(prefix), 'purelib': str(product), 'origins': origins})
+    calls = []
+    backend.run = lambda argv, **kwargs: (calls.append((argv, kwargs)) or result)
+
+    assert backend._installed_product_root(prefix / 'Scripts' / 'python.exe', {}) == product.resolve()
+    argv, _kwargs = calls[0]
+    assert argv[0] == prefix / 'Scripts' / 'python.exe'
+    assert argv[1:5] == ['-X', 'utf8', '-I', '-B']
+    assert 'sysconfig.get_path' in argv[6]
+
+    origins['action'] = str(checkout / 'astrid/packs/rendering/actions/render/run.py')
+    (checkout / 'astrid/packs/rendering/actions/render').mkdir(parents=True)
+    (checkout / 'astrid/packs/rendering/actions/render/run.py').write_text('# source checkout\n')
+    backend.run = lambda *_args, **_kwargs: json.dumps(
+        {'prefix': str(prefix), 'purelib': str(product), 'origins': origins})
+    with pytest.raises(RuntimeError, match='outside its installed product tree'):
+        backend._installed_product_root(prefix / 'Scripts' / 'python.exe', {})
+
+    global_prefix = tmp_path / 'global-python'
+    global_product = global_prefix / 'site-packages'
+    global_product.mkdir(parents=True)
+    global_origins = {}
+    for name in module_names:
+        path = global_product / 'astrid' / f'{name}.py'
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text('# global install\n')
+        global_origins[name] = str(path)
+    backend.run = lambda *_args, **_kwargs: json.dumps(
+        {'prefix': str(global_prefix), 'purelib': str(global_product), 'origins': global_origins})
+    with pytest.raises(RuntimeError, match='outside its selected virtual environment'):
+        backend._installed_product_root(prefix / 'Scripts' / 'python.exe', {})
 
 
 def test_linux_backup_temporarily_starts_only_neutral_daemon_and_snapshots_stopped_support(tmp_path, monkeypatch):
@@ -411,13 +524,18 @@ def test_clone_rollback_restores_workspace_and_support_without_deleting_other_re
     other.mkdir()
     (realm / 'realm.sqlite3').write_text('original')
     (other / 'unselected').write_text('keep')
-    write_json(data / 'runtime/catalog.json', {'selected': 'one'})
+    write_json(data / 'runtime/catalog.json', {
+        'version': 1, 'selected_realm_id': 'one',
+        'realms': [
+            {'realm_id': 'one', 'display_name': 'One', 'data_root': str(realm)},
+        ], 'source_profiles': {},
+    })
     write_json(data / 'runtime/source-profiles/astrid.json', {'version': 'old'})
     monkeypatch.setattr('runtime_protocol.fsclone.clone_or_copy_file', lambda src, dst: shutil.copy2(src, dst))
     backend = Backend(program, tmp_path / 'log', tmp_path / 'uv')
     backend.service.system = 'darwin'
     version = Version(program / 'versions/old', tmp_path / 'python', tmp_path / 'profile', {})
-    identity = {'realm_root': str(realm)}
+    identity = {'realm_id': 'one', 'realm_root': str(realm)}
     backup = backend.backup(version, data, identity)
     (realm / 'realm.sqlite3').write_text('migrated')
     write_json(data / 'runtime/source-profiles/astrid.json', {'version': 'new'})
@@ -437,14 +555,16 @@ def test_door_verification_requires_selected_realm_recorded_instance_and_live_ow
     program, data = tmp_path / 'program', tmp_path / 'data'
     version = Version(program / 'versions/old', tmp_path / 'python', tmp_path / 'profile',
                       {'ASTRID_RUNTIME_DOOR_PORT': str(door_port)})
+    # Runtime publishes its startup identity on discovery and on door health.
+    identity = {'release': 0, 'managed_by': None}
     discovery = {'active_realm': 'selected', 'runtime_instance_id': 'owned-instance',
-                 'door_endpoint': f'http://127.0.0.1:{door_port}'}
+                 'door_endpoint': f'http://127.0.0.1:{door_port}', 'identity': identity}
     if mismatch == 'port':
         discovery['door_endpoint'] = 'http://127.0.0.1:9999'
     write_json(data / 'runtime/discovery.json', discovery)
     (data / 'runtime/generic-host.ready.json').write_text('{}')
     health = {'status': 'ok', 'runtime_instance_id': 'foreign' if mismatch == 'instance' else 'owned-instance',
-              'services': [{'name': 'pack-host', 'state': 'running'}]}
+              'identity': identity, 'services': [{'name': 'pack-host', 'state': 'running'}]}
     realm = {'realm_id': 'other' if mismatch == 'realm' else 'selected'}
     def opening(request, timeout):
         if mismatch == 'restart-required':
@@ -472,11 +592,12 @@ def test_door_verification_retries_status_observed_before_discovery_was_publishe
 
     program, data = tmp_path / "program", tmp_path / "data"
     version = Version(program / "versions/old", tmp_path / "python", tmp_path / "profile", {})
+    identity = {"release": 0, "managed_by": None}
     discovery = {"active_realm": "selected", "runtime_instance_id": "owned-instance",
-                 "door_endpoint": "http://127.0.0.1:17340"}
+                 "door_endpoint": "http://127.0.0.1:17340", "identity": identity}
     write_json(data / "runtime/discovery.json", discovery)
     (data / "runtime/generic-host.ready.json").write_text("{}")
-    health = {"status": "ok", "runtime_instance_id": "owned-instance",
+    health = {"status": "ok", "runtime_instance_id": "owned-instance", "identity": identity,
               "services": [{"name": "pack-host", "state": "running"}]}
     realm = {"realm_id": "selected"}
     opener = Mock()
@@ -507,8 +628,9 @@ def test_pack_host_verification_uses_declared_readiness_timeout(tmp_path, monkey
     version_root = program / "versions" / "v1"
     version = Version(version_root, tmp_path / "python", version_root / "profile.json", {})
     endpoint = "http://127.0.0.1:17340"
+    identity = {"release": 0, "managed_by": None}
     discovery = {"active_realm": "selected", "runtime_instance_id": "owned-instance",
-                 "door_endpoint": endpoint}
+                 "door_endpoint": endpoint, "identity": identity}
     write_json(data / "runtime" / "discovery.json", discovery)
     timeout = 2 if scenario == "hang" else 300
     declaration = tmp_path / "services.json"
@@ -550,7 +672,7 @@ def test_pack_host_verification_uses_declared_readiness_timeout(tmp_path, monkey
             else:
                 services = host_states
             return Response({"status": "ok", "runtime_instance_id": "owned-instance",
-                             "services": services})
+                             "identity": identity, "services": services})
 
     monkeypatch.setattr(module.urllib.request, "build_opener", lambda *_: Opener())
     monkeypatch.setattr(module.time, "monotonic", lambda: clock.now)
@@ -596,6 +718,7 @@ def test_source_archives_are_flattened_to_shallow_managed_paths(tmp_path, monkey
 
 def test_source_retries_windows_sharing_violation_on_publish(tmp_path, monkeypatch):
     import os
+
     from astrid.installer import tools
 
     calls = []
@@ -648,7 +771,7 @@ def test_delete_data_includes_identity_checked_external_attached_workspace(tmp_p
     assert not program.exists() and not data.exists() and not external.exists()
 
 
-def test_no_systemd_starts_foreground_runtime_supervisor_with_recorded_birth_identity(tmp_path, monkeypatch):
+def test_no_systemd_starts_one_detached_runtime_with_recorded_birth_identity(tmp_path, monkeypatch):
     from runtime_protocol import platform
     run = Mock(side_effect=FileNotFoundError('no systemd'))
     manager = service.Service(tmp_path / 'program', tmp_path / 'log', run, home=tmp_path, system='linux')
@@ -725,3 +848,147 @@ def test_chat_declaration_failure_can_retry_without_claiming_fresh_workspace(tmp
     backend.register(version, data)
     assert read_json(backend.service.selection)['chat_settings']['ASTRID_ACP_CWD'] == str(data / 'chat')
 
+@pytest.mark.parametrize('kind', ['missing', 'bare', 'stale', 'version', 'external', 'directory'])
+@pytest.mark.parametrize('mode', ['install', 'update'])
+def test_chat_command_carryover_uses_selected_default_or_external(tmp_path, monkeypatch, kind, mode):
+    from astrid.services import service_declaration
+
+    root, data = tmp_path / 'program', tmp_path / 'data'
+    folder = root / 'versions' / 'candidate'
+    folder.mkdir(parents=True)
+    python = folder / 'py' / 'bin' / 'python'
+    bun = folder / 'bun'
+    external = tmp_path / 'external command.exe'
+    external.write_text('executable')
+    external.chmod(0o755)
+    internal = root / 'versions' / 'old' / 'astrid'
+    internal.parent.mkdir(parents=True)
+    internal.write_text('old executable')
+    internal.chmod(0o755)
+    non_executable = tmp_path / 'non-executable'
+    non_executable.write_text('not executable')
+    non_executable.chmod(0o644)
+    values = {'missing': None, 'bare': 'astrid', 'stale': str(tmp_path / 'pruned'),
+              'version': str(internal), 'external': str(external),
+              'directory': str(tmp_path), 'non_executable': str(non_executable)}
+    settings = {} if kind == 'missing' else {'ASTRID_ACP_COMMAND': values[kind]}
+    backend = Backend(root, tmp_path / 'log', tmp_path / 'uv', say=lambda _: None)
+    old = None
+    if mode == 'install':
+        monkeypatch.setattr(backend.service, 'recorded', lambda: {'data_root': str(data), 'chat_settings': settings})
+    else:
+        old_profile, old_services = internal.parent / 'profile.json', internal.parent / 'services.json'
+        write_json(old_services, {'services': [{'name': 'chat', 'env': settings}]})
+        write_json(old_profile, {'service_declaration': str(old_services)})
+        old = Version(internal.parent, python, old_profile, {})
+        monkeypatch.setattr(backend.service, 'recorded', lambda: {})
+    monkeypatch.setenv('ASTRID_ACP_COMMAND', 'ambient-stale-command')
+
+    def declare(argv, *, extra_env, **kwargs):
+        with monkeypatch.context() as context:
+            for key, value in extra_env.items():
+                context.setenv(key, value)
+            result = service_declaration(source_checkout=folder, data_root=data, python=str(python), bun=str(bun))
+        write_json(Path(argv[-1]), result)
+        return ''
+
+    monkeypatch.setattr(backend, 'run', declare)
+    result = read_json(backend._declare_services(folder=folder, agent=folder, data=data,
+                                                  python=python, bun=str(bun), env={}, old=old))
+    command = next(row for row in result['services'] if row['name'] == 'chat')['env']['ASTRID_ACP_COMMAND']
+    default = str(python.with_name('astrid.exe')) if sys.platform == 'win32' else 'astrid'
+    assert command == (str(external) if kind == 'external' else default)
+
+
+@pytest.mark.parametrize('kind', ['missing', 'bare', 'stale', 'version', 'external'])
+def test_repair_chat_command_uses_selected_default_or_external(tmp_path, kind):
+    root = tmp_path / 'program'
+    folder = root / 'versions' / 'selected'
+    folder.mkdir(parents=True)
+    python = folder / 'py' / 'bin' / 'python'
+    internal = root / 'versions' / 'old' / 'astrid'
+    internal.parent.mkdir(parents=True)
+    internal.write_text('old')
+    internal.chmod(0o755)
+    external = tmp_path / 'external.exe'
+    external.write_text('external')
+    external.chmod(0o755)
+    values = {'missing': None, 'bare': 'astrid-other', 'stale': str(tmp_path / 'missing'),
+              'version': str(internal), 'external': str(external)}
+    env = {} if kind == 'missing' else {'ASTRID_ACP_COMMAND': values[kind]}
+    services, profile = folder / 'services.json', folder / 'profile.json'
+    write_json(services, {'services': [{'name': 'chat', 'env': env}]})
+    write_json(profile, {'service_declaration': str(services)})
+    version = Version(folder, python, profile, {})
+    backend = Backend(root, tmp_path / 'log', tmp_path / 'uv', say=lambda _: None)
+    changed = backend.repair_chat_command(version)
+    command = read_json(services)['services'][0]['env']['ASTRID_ACP_COMMAND']
+    default = str(python.with_name('astrid.exe')) if sys.platform == 'win32' else 'astrid'
+    assert command == (str(external) if kind == 'external' else default)
+    assert changed == (kind != 'external')
+
+
+@pytest.mark.windows_installer
+def test_chat_command_windows_rejects_text_and_accepts_external_cmd(tmp_path):
+    backend = Backend(tmp_path / 'program', tmp_path / 'log', tmp_path / 'uv')
+    text_file = tmp_path / 'command.txt'
+    text_file.write_text('not a command')
+    command = tmp_path / 'command.CMD'
+    command.write_text('@echo off\r\n')
+    assert not backend._external_chat_command(str(text_file))
+    assert backend._external_chat_command(str(command))
+
+
+def test_chat_command_windows_extensions_without_native_runner(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    import astrid.installer.backend as backend_module
+
+    backend = Backend(tmp_path / 'program', tmp_path / 'log', tmp_path / 'uv')
+    monkeypatch.setattr(backend_module, 'sys', SimpleNamespace(platform='win32'))
+    for suffix, expected in [('.txt', False), ('.exe', True), ('.com', True), ('.CMD', True), ('.bat', True)]:
+        command = tmp_path / ('command' + suffix)
+        command.write_text('fixture')
+        assert backend._external_chat_command(str(command)) is expected
+    unsafe = tmp_path / 'unsafe%command.cmd'
+    unsafe.write_text('fixture')
+    assert not backend._external_chat_command(str(unsafe))
+
+
+@pytest.mark.posix_native
+def test_chat_command_rejects_non_executable_file(tmp_path):
+    backend = Backend(tmp_path / 'program', tmp_path / 'log', tmp_path / 'uv')
+    command = tmp_path / 'command'
+    command.write_text('fixture')
+    command.chmod(0o644)
+    assert not backend._external_chat_command(str(command))
+
+
+@pytest.mark.parametrize("observation", ["missing", "inactive", "other-owner", "timeout", "active"])
+def test_supervision_warning_checks_systemd_owner_read_only(tmp_path, monkeypatch, observation):
+    monkeypatch.setattr(service.sys, "platform", "linux")
+    monkeypatch.setattr(service, "install_selection", lambda *_args: tmp_path / "selection.json")
+    write_json(tmp_path / "runtime/discovery.json", {"pid": 123})
+    if observation == "missing":
+        runner = Mock(side_effect=FileNotFoundError())
+    elif observation == "timeout":
+        runner = Mock(side_effect=subprocess.TimeoutExpired("systemctl", 3))
+    else:
+        runner = Mock(return_value=subprocess.CompletedProcess([], 0, stdout={
+            "inactive": "0\n", "other-owner": "456\n", "active": "123\n"}[observation]))
+    monkeypatch.setattr(service.subprocess, "run", runner)
+    assert service.supervision_warning(tmp_path) == (None if observation == "active" else service.UNSUPERVISED_WARNING)
+    assert runner.call_args.args[0] == [
+        "systemctl", "--user", "show", "astrid.service", "--property=MainPID", "--value"]
+    assert runner.call_args.kwargs["timeout"] == 3
+
+
+def test_supervision_warning_respects_pinokio_and_other_platforms(tmp_path, monkeypatch):
+    monkeypatch.setattr(service.sys, "platform", "linux")
+    monkeypatch.setattr(service, "install_selection", lambda *_args: tmp_path / "selection.json")
+    write_json(tmp_path / "selection.json", {"owner": service.LABEL, "managed_by": "pinokio"})
+    runner = Mock(side_effect=AssertionError("must not query systemd"))
+    monkeypatch.setattr(service.subprocess, "run", runner)
+    assert service.supervision_warning(tmp_path) is None
+    monkeypatch.setattr(service.sys, "platform", "darwin")
+    assert service.supervision_warning(tmp_path) is None
+    runner.assert_not_called()

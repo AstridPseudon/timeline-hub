@@ -38,7 +38,9 @@ optional theme, then produces `hype.timeline.json`, `hype.assets.json`,
 and `hype.metadata.json` — the three-file input to rendering.render.
 
 For edits to an existing runtime-owned timeline, route through the
-[timeline skill](../../timeline/docs/SKILL.md). That skill owns the
+[timeline skill](../../timeline/docs/SKILL.md). Renderer-specific guidance is
+also available in the [rendering skill](../../rendering/docs/SKILL.md). The
+timeline skill owns the
 canonical inspect → edit → validate → save loop, Remotion rendering, and
 timeline effects. The orchestrators and `cut` executor here remain for their
 stated creation/assembly workflows; do not invent a second timeline editing

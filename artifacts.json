@@ -1,6 +1,7 @@
 {
   "artifacts": {
-    "LICENSE": "sha256:d4b2605d17cc8f84c757f3698b2660ab1382adeee76e9a31b13d7b0d8b37e3a7",
+    "LICENSE": "sha256:cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30",
+    "NOTICE": "sha256:31de35a094bb895649d6a691bf4895aa6be98a5e35fd3c537eac5ea0c64b2979",
     "astrid/packs/astrid_motion/rendering/elements/_shared/am.tsx": "sha256:b62a5bee94258f8ab260e272b7f4b2abf2c976bf3ee22e06f2a1bd0846f34618",
     "astrid/packs/astrid_motion/rendering/elements/_shared/mosaic.tsx": "sha256:78e0c73d02daa1ef2c64f228a41458fce28f442bf19082af3007de3270a42646",
     "astrid/packs/astrid_motion/rendering/elements/effects/am-burst/component.tsx": "sha256:be6f2f61c8428255186357a937aff388327b5b50b72bebae45de01fda1b8ea84",
@@ -168,5 +169,5 @@
     "schemas/public-boundary/fixtures/redaction.json": "sha256:d827821a8b1c1bd9b50fa695550deeb770175e283b9949635d1c85ee03bece46"
   },
   "producer": "astrid-agent",
-  "version": "sha256:84064599ce3358931a5fd7a25adea6f6ad352530aa552efbe8e0617bcb8f19b0"
+  "version": "sha256:795af7cde1b18298319b7c9e2d4aabec76ec1a2f438e43acd67f7d40fd5f149c"
 }

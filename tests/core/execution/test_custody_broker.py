@@ -2269,7 +2269,8 @@ def test_reference_verification_uses_real_independent_authority_without_writes(g
 
 
 @pytest.mark.parametrize("mismatch", ["reference", "actor", "epoch", "actor_birth", "target_birth",
-                                     "actor_token", "target_token", "actor_missing", "target_missing"])
+                                     "actor_token", "target_token", "actor_token_digest", "target_token_digest",
+                                     "actor_missing", "target_missing"])
 def test_reference_verification_rejects_changed_binding_and_kernel_identity(graph, monkeypatch, mismatch):
     authority, actors, identities, tokens = graph
     reference = authority.reference()
@@ -2284,14 +2285,36 @@ def test_reference_verification_rejects_changed_binding_and_kernel_identity(grap
         observed[101 if mismatch.startswith("actor") else 103]["birth_id"] = "changed-birth"
     elif mismatch.endswith("_token"):
         captured[101 if mismatch.startswith("actor") else 103]["pidversion"] += 1
+    elif mismatch.endswith("_token_digest"):
+        captured[101 if mismatch.startswith("actor") else 103]["sha256"] = "sha256:changed-token"
     else: observed.pop(101 if mismatch.startswith("actor") else 103)
     before = authority.path.read_bytes()
     consumer = custody.RoleCustodyAuthority(authority.root, authority.role)
     monkeypatch.setattr(custody, "_atomic_owner_json", lambda *_: pytest.fail("failed verification wrote"))
     monkeypatch.setattr(custody, "signal_audit_token", lambda *_: pytest.fail("failed verification signalled"))
-    with pytest.raises(custody.CustodyError):
+    token_reads = []
+    def read_token(pid):
+        token_reads.append(pid)
+        return captured.get(pid)
+    with pytest.raises(custody.CustodyError) as failure:
         consumer.verify_reference(reference, expected_actor=actor, owner_epoch=epoch,
-                                  identity_provider=observed.get, token_provider=captured.get)
+                                  identity_provider=observed.get, token_provider=read_token)
+    if mismatch not in {"reference", "actor", "epoch"}:
+        subject = "actor" if mismatch.startswith("actor") else "target"
+        pid = 101 if subject == "actor" else 103
+        expected = actor if subject == "actor" else reference["target"]
+        actual = (None if pid not in observed else
+                  {"pid": pid, "uid": observed[pid]["uid"], "birth_id": observed[pid]["birth_id"],
+                   "audit_token_sha256": captured[pid]["sha256"],
+                   "audit_token_pidversion": captured[pid]["pidversion"]})
+        prefix = "custody designation has unavailable or changed kernel identity: "
+        assert str(failure.value).startswith(prefix)
+        assert json.loads(str(failure.value)[len(prefix):]) == {
+            "role": "engine", "subject": subject, "expected": expected, "observed": actual}
+        assert "words" not in str(failure.value)
+        assert token_reads == ([101] if subject == "target" else []) + ([] if actual is None else [pid])
+    else:
+        assert token_reads == []
     assert authority.path.read_bytes() == before
     assert consumer._retained_record is None and consumer._live_start_anchor is None
 
@@ -3167,7 +3190,7 @@ else:
             send('reap'); process.stdin.close(); process.wait(timeout=5.0)
         (tmp_path/'native-capture-trace.json').write_text(json.dumps(trace,indent=2,default=str))
 
-@pytest.mark.parametrize('capture_mode', ['invalid-destination', 'name-no-port'])
+@pytest.mark.parametrize('capture_mode', ['invalid-destination', 'invalid-argument', 'name-no-port'])
 @pytest.mark.parametrize('outcome', ['success','second-live-failure','second-absent','second-zombie','post-token-microsecond','recursive-pre-replacement','after-admission-census-failure'])
 def test_one_same_transaction_live_capture_retry_never_defers_history(observed_descendant,monkeypatch,outcome,capture_mode):
     owner,census,native,birth=_capture_absence_fixture(observed_descendant,monkeypatch)
@@ -3190,8 +3213,8 @@ def test_one_same_transaction_live_capture_retry_never_defers_history(observed_d
     def capture(pid):
         assert pid==103;captures.append(pid)
         if len(captures)==1 or outcome=='second-live-failure':
-            error=custody.NativeTokenCaptureError('controlled acquisition failure',substage='task_info_first' if capture_mode=='invalid-destination' else 'task_name_for_pid',kern_return=0x10000003 if capture_mode=='invalid-destination' else 5,port_acquired=capture_mode=='invalid-destination')
-            if capture_mode=='invalid-destination':error.capture_failure['port_release_succeeded']=True
+            error=custody.NativeTokenCaptureError('controlled acquisition failure',substage='task_info_first' if capture_mode!='name-no-port' else 'task_name_for_pid',kern_return={'invalid-destination':0x10000003,'invalid-argument':4,'name-no-port':5}[capture_mode],port_acquired=capture_mode!='name-no-port',count=8)
+            if capture_mode!='name-no-port':error.capture_failure['port_release_succeeded']=True
             raise error
         return {**tokens[103],'words':list(tokens[103]['words'])}
     monkeypatch.setattr(custody,'ordinary_candidate_observation',observation)
@@ -3224,12 +3247,12 @@ def test_one_same_transaction_live_capture_retry_never_defers_history(observed_d
             owner.observe_census({},census={},fresh_census=lambda:{})
     assert len(owner._capture_failure_observations)>=1
     first=owner._capture_failure_observations[0]
-    assert first['capture_failure']['kern_return']==(0x10000003 if capture_mode=='invalid-destination' else 5)
+    assert first['capture_failure']['kern_return']=={'invalid-destination':0x10000003,'invalid-argument':4,'name-no-port':5}[capture_mode]
     assert first['observations']['pre']['outcome']==first['observations']['post']['outcome']=='LIVE'
 
 
 @pytest.mark.darwin_native
-@pytest.mark.parametrize("capture_mode", ["invalid-destination", "name-no-port"])
+@pytest.mark.parametrize("capture_mode", ["invalid-destination", "invalid-argument", "name-no-port"])
 def test_real_owned_live_capture_retry_uses_actual_native_token(tmp_path, monkeypatch, capture_mode):
     import ctypes, select, subprocess, sys, time
     import astrid.core.execution.process_group as groups
@@ -3312,7 +3335,7 @@ else:
         def info_call(original, port, flavor, output, count):
             if int(port) == target['port'] and not target['injected']:
                 target['injected'] = True
-                return 0x10000003
+                return 4 if capture_mode == 'invalid-argument' else 0x10000003
             return original(port, flavor, output, count)
         def release_call(original, task, port):
             result = int(original(task, port))
@@ -3348,10 +3371,10 @@ else:
             assert target['injected'] is True
             assert 2 in trace['census_after_acquisitions']
             assert len(trace['acquisitions']) == 2
-            assert len(trace['deallocations']) == (2 if capture_mode == 'invalid-destination' else 1)
-            assert [row['kern_return'] for row in trace['acquisitions']] == ([0, 0] if capture_mode == 'invalid-destination' else [5, 0])
+            assert len(trace['deallocations']) == (2 if capture_mode != 'name-no-port' else 1)
+            assert [row['kern_return'] for row in trace['acquisitions']] == ([0, 0] if capture_mode != 'name-no-port' else [5, 0])
             assert all(row['kern_return'] == 0 for row in trace['deallocations'])
-            if capture_mode == 'invalid-destination':
+            if capture_mode != 'name-no-port':
                 assert trace['capture_failure']['port_release_succeeded'] is True
             else:
                 assert trace['capture_failure']['port_acquired'] is False
@@ -3411,9 +3434,9 @@ def test_live_capture_retry_rejects_every_unqualified_boundary(observed_descenda
         assert pid==103;captures.append(pid)
         if len(captures)==1:
             error=custody.NativeTokenCaptureError('controlled retry qualification failure',
-                substage='task_info_second' if defect=='wrong-stage' else ('task_info_first' if capture_mode=='invalid-destination' else 'task_name_for_pid'),
-                kern_return=(5 if capture_mode=='invalid-destination' else 4) if defect=='wrong-code' else (0x10000003 if capture_mode=='invalid-destination' else 5),port_acquired=capture_mode=='invalid-destination')
-            if capture_mode=='invalid-destination' and defect!='release-missing':error.capture_failure['port_release_succeeded']=defect!='release-false'
+                substage='task_info_second' if defect=='wrong-stage' else ('task_info_first' if capture_mode!='name-no-port' else 'task_name_for_pid'),
+                kern_return=(5 if capture_mode!='name-no-port' else 4) if defect=='wrong-code' else {'invalid-destination':0x10000003,'invalid-argument':4,'name-no-port':5}[capture_mode],port_acquired=capture_mode!='name-no-port',count=(7 if defect=='wrong-count' else None if defect=='missing-count' else 8))
+            if capture_mode!='name-no-port' and defect!='release-missing':error.capture_failure['port_release_succeeded']=defect!='release-false'
             if defect=='release-error':error.port_release_error=custody.NativeTokenCaptureError('controlled release failure',substage='mach_port_deallocate',kern_return=4,port_acquired=True)
             raise error
         return {**tokens[103],'words':list(tokens[103]['words'])}
@@ -3501,6 +3524,15 @@ def test_prospective_original_capture_rejects_same_wall_birth_different_monotoni
     assert events.count('capture')==1
     assert 103 not in owner._handles and owner._uncertain is not None
     assert not list(owner.root.glob('designation-descendant_103_*.json'))
+
+
+@pytest.mark.parametrize('defect', ['wrong-stage', 'wrong-code', 'wrong-count', 'missing-count',
+    'release-false', 'release-missing', 'release-error', 'pre-precision', 'post-precision',
+    'original-child', 'fresh-child', 'unadmitted-parent', 'parent-birth-drift',
+    'actor-drift', 'root-handle-drift', 'recursive-pre-replacement'])
+def test_invalid_argument_capture_retry_keeps_all_ownership_fences(observed_descendant, monkeypatch, defect):
+    test_live_capture_retry_rejects_every_unqualified_boundary(
+        observed_descendant, monkeypatch, defect, 'invalid-argument')
 
 
 @pytest.mark.parametrize('read_number',[1,2,3])

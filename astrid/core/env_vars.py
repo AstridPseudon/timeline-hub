@@ -37,6 +37,12 @@ never resolves Node through the ambient ``PATH``."""
 ASTRID_TIMELINE_SCHEMA_PYTHONPATH = "ASTRID_TIMELINE_SCHEMA_PYTHONPATH"
 """Absolute server-owned Runtime-pinned timeline-config schema file."""
 
+ASTRID_CAPABILITY_MATRIX_PATH = "ASTRID_CAPABILITY_MATRIX_PATH"
+"""Absolute server-owned capability matrix path for the installed host."""
+
+ASTRID_SOURCE_PROVENANCE_ROOT = "ASTRID_SOURCE_PROVENANCE_ROOT"
+"""Absolute pinned source checkout retained for non-wheel build assets and provenance."""
+
 
 ASTRID_REMOTION_VALIDATION_PATH = "ASTRID_REMOTION_VALIDATION_PATH"
 ASTRID_REMOTION_VALIDATION_SHA256 = "ASTRID_REMOTION_VALIDATION_SHA256"
@@ -171,6 +177,8 @@ __all__ = [
 
 
     "ASTRID_REMOTION_PROJECT_DIR",
+    "ASTRID_CAPABILITY_MATRIX_PATH",
+    "ASTRID_SOURCE_PROVENANCE_ROOT",
     "ASTRID_TIMELINE_SCHEMA_PYTHONPATH",
     "ASTRID_VIBECOMFY_CHECKOUT",
     "ASTRID_WARM_IDLE_SECONDS",

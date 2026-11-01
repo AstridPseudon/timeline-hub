@@ -122,6 +122,9 @@ def _run_child_command(fd: str, encoded: str, *, renderer: bool = False, capture
     try:
         if captured is not None:
             return _run_captured_command(encoded, *captured)
+        from ._child_import_receipt import observe_action_entry
+
+        observe_action_entry("worker_entry")
         if args[0] == "-c":
             sys.argv = ["-c", *args[2:]]
             sys.path[0] = ""

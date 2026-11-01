@@ -4,6 +4,9 @@
   "last_registry_snapshot": "2026-10-24T00:00:00Z",
   "total_executors": 112,
   "m1_adopters": 76,
+  "last_registry_snapshot": "2026-10-16T00:00:00Z",
+  "total_executors": 114,
+  "m1_adopters": 78,
   "exempted": 36,
   "non_exempt": [
     "editorial.arrange",
@@ -81,7 +84,10 @@
     "video_editing.hype",
     "video_editing.iteration_video",
     "video_editing.logo_ideas",
-    "video_editing.vary_grid"
+    "video_editing.vary_grid",
+    "music.duck",
+    "rendering.timeline_export_plan",
+    "rendering.timeline_prepare_import"
   ],
   "exemptions": {
     "blender.render": {
