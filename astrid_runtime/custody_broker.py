@@ -55,6 +55,10 @@ class CustodyError(RuntimeError):
     """The exact registered Runtime incarnation cannot be proved or signalled."""
 
 
+class _TaskNameUnavailable(CustodyError):
+    """The Darwin task-name lookup was denied before a task port was acquired."""
+
+
 def _create_compact_socket_root() -> Path:
     """Create an owner-only socket directory below the native short temp parent."""
 
@@ -196,7 +200,7 @@ def current_process_audit_token(pid: int) -> dict[str, object]:
     task_self = ctypes.c_uint32.in_dll(library, "mach_task_self_").value
     task_name = ctypes.c_uint32(0)
     if int(library.task_name_for_pid(task_self, int(pid), ctypes.byref(task_name))) != 0:
-        raise CustodyError("final-ready Runtime task-name port is unavailable")
+        raise _TaskNameUnavailable("final-ready Runtime task-name port is unavailable")
 
     def read_token() -> list[int]:
         token = _AuditToken()
@@ -515,18 +519,50 @@ class AuthenticatedCleanupActor:
                 if before is None or any(before.get(key) != launched.get(key) for key in ("pid", "uid", "birth_id")):
                     raise CustodyError("retained child creation identity differs from launch")
             if before is None or before.get("parent_pid") != os.getpid():
-                raise CustodyError("retained child launch lineage is unavailable")
+                availability = "absent" if before is None else "available"
+                fields = "none" if before is None else "parent_pid"
+                raise CustodyError("retained child launch lineage is unavailable "
+                                   f"[stage=retained_child.before; identity={availability}; mismatched_fields={fields}]")
             actor = cls(lambda: token_provider(child.pid), identity_provider)
             after = identity_provider(child.pid)
             if after != before or actor._pinned["pid"] != child.pid:
-                raise CustodyError("retained child changed during kernel identity binding")
+                # Report names from the existing identity DTO, never its values
+                # (or arbitrary keys supplied by an observation provider).
+                fields = [key for key in ("pid", "uid", "birth_id", "parent_pid", "process_group", "session_id")
+                          if after is not None and after.get(key) != before.get(key)]
+                if actor._pinned["pid"] != child.pid and "pid" not in fields:
+                    fields.append("pid")
+                availability = "absent" if after is None else "available"
+                raise CustodyError("retained child changed during kernel identity binding "
+                                   f"[stage=retained_child.after; identity={availability}; mismatched_fields={','.join(fields) or 'none'}]")
         return actor
 
     def verify(self) -> dict[str, object]:
-        token = dict(self._token_reader())
-        identity = self._identity_provider(int(self._pinned["pid"]))
-        if identity is None or _incarnation(identity, token) != self._pinned:
-            raise CustodyError("designated cleanup actor incarnation changed or is unknown")
+        # These diagnostics travel through existing exception reporting. Do not
+        # include provider exceptions: they may contain token/credential values.
+        try:
+            token = dict(self._token_reader())
+        except (CustodyError, OSError):
+            raise CustodyError("cleanup actor token observation is unavailable "
+                               "[stage=verify.token; identity=unobserved; mismatched_fields=none]") from None
+        try:
+            identity = self._identity_provider(int(self._pinned["pid"]))
+        except (CustodyError, OSError):
+            raise CustodyError("cleanup actor identity observation is unavailable "
+                               "[stage=verify.identity; identity=unavailable; mismatched_fields=none]") from None
+        if identity is None:
+            raise CustodyError("designated cleanup actor incarnation changed or is unknown "
+                               "[stage=verify.identity; identity=absent; mismatched_fields=none]")
+        try:
+            observed = _incarnation(identity, token)
+        except CustodyError:
+            raise CustodyError("custody incarnation lacks authenticated identity "
+                               "[stage=verify.incarnation; identity=available; mismatched_fields=none]") from None
+        if observed != self._pinned:
+            # _incarnation supplies the bounded field names for both mappings.
+            fields = ",".join(key for key in self._pinned if observed[key] != self._pinned[key])
+            raise CustodyError("designated cleanup actor incarnation changed or is unknown "
+                               f"[stage=verify.compare; identity=available; mismatched_fields={fields}]")
         return dict(self._pinned)
 
 
@@ -689,10 +725,32 @@ class RoleCustodyAuthority:
             record = self._read()
             if record["state"] != "active" or self._reference(record) != dict(reference) or record["actor"] != dict(expected_actor) or record["owner_epoch"] != owner_epoch:
                 raise CustodyError("custody designation differs from selected owner/reference")
-            for identity in (record["actor"], reference["target"]):
-                observed = identity_provider(int(identity["pid"]))
-                if observed is None or _incarnation(observed, token_provider(int(identity["pid"]))) != dict(identity):
-                    raise CustodyError("custody designation has unavailable or changed kernel identity")
+            for role, identity in (("actor", record["actor"]), ("target", reference["target"])):
+                try:
+                    observed = identity_provider(int(identity["pid"]))
+                except (CustodyError, OSError):
+                    raise CustodyError("custody designation identity observation is unavailable "
+                                       f"[role={role}; stage=verify_reference.identity; identity=unavailable; mismatched_fields=none]") from None
+                if observed is None:
+                    raise CustodyError("custody designation has unavailable or changed kernel identity "
+                                       f"[role={role}; stage=verify_reference.identity; identity=absent; mismatched_fields=none]")
+                try:
+                    token = token_provider(int(identity["pid"]))
+                except (CustodyError, OSError):
+                    raise CustodyError("custody designation token observation is unavailable "
+                                       f"[role={role}; stage=verify_reference.token; identity=available; mismatched_fields=none]") from None
+                try:
+                    incarnation = _incarnation(observed, token)
+                except CustodyError:
+                    raise CustodyError("custody incarnation lacks authenticated identity "
+                                       f"[role={role}; stage=verify_reference.incarnation; identity=available; mismatched_fields=none]") from None
+                if incarnation != dict(identity):
+                    # Only these fixed incarnation fields may enter diagnostics;
+                    # full mapping equality above also rejects unknown keys.
+                    fields = ",".join(key for key in ("pid", "uid", "birth_id", "audit_token_sha256", "audit_token_pidversion")
+                                      if incarnation[key] != identity.get(key))
+                    raise CustodyError("custody designation has unavailable or changed kernel identity "
+                                       f"[role={role}; stage=verify_reference.compare; identity=available; mismatched_fields={fields or 'none'}]")
             return self._reference(record)
 
     def signal(self, *, actor: AuthenticatedCleanupActor, generation: int,
@@ -902,6 +960,7 @@ class RoleBoundCustodyBroker:
         authority_scope_root: Path | None = None,
         owner_epoch: str | None = None,
         launch_parent: AuthenticatedCleanupActor | None = None,
+        retain_post_exec_connection: bool = False,
     ) -> None:
         if not role or any(c not in "abcdefghijklmnopqrstuvwxyz0123456789_-" for c in role):
             raise CustodyError("custody role is invalid")
@@ -986,6 +1045,8 @@ class RoleBoundCustodyBroker:
         self.ack: dict[str, object] | None = None
         self.error: BaseException | None = None
         self._post_exec_authority_validated = False
+        self._retain_post_exec_connection = bool(retain_post_exec_connection and sys.platform == "darwin")
+        self._post_exec_connection: socket.socket | None = None
         self._cleanup_deadline: float | None = None
         self._ready = threading.Event()
         self._thread = threading.Thread(target=self._serve, daemon=True)
@@ -1134,6 +1195,14 @@ class RoleBoundCustodyBroker:
                                    identity_provider=self._observe_registered_identity,
                                    request_authorizer=authenticate_request)
 
+    def close_post_exec_channel(self) -> None:
+        """Close the retained authenticated child channel after its last use."""
+
+        connection = self._post_exec_connection
+        self._post_exec_connection = None
+        if connection is not None:
+            connection.close()
+
     def bind_ready_token(
         self,
         *,
@@ -1144,6 +1213,7 @@ class RoleBoundCustodyBroker:
         """Replace the provisional post-exec token with the final ready owner."""
 
         if self.state != "sealed" or self.registration is None:
+            self.close_post_exec_channel()
             raise CustodyError("custody admission is not provisionally sealed")
         pinned = self.registration.get("identity")
         expected = {key: expected_identity.get(key) for key in ("pid", "birth_id", "uid")}
@@ -1152,39 +1222,48 @@ class RoleBoundCustodyBroker:
             or expected_pid != expected.get("pid")
             or {key: pinned.get(key) for key in expected} != expected
         ):
+            self.close_post_exec_channel()
             raise CustodyError("final-ready Runtime identity differs from provisional custody")
-        before = self.identity_provider(expected_pid)
-        if before is None or {key: before.get(key) for key in expected} != expected:
-            raise CustodyError("final-ready Runtime incarnation is unavailable")
-        token = dict(token_provider(expected_pid))
-        after = self.identity_provider(expected_pid)
-        if after is None or {key: after.get(key) for key in expected} != expected:
-            raise CustodyError("final-ready Runtime incarnation changed while binding")
-        words = token.get("words")
-        if (
-            token.get("pid") != expected_pid
-            or token.get("uid") != expected.get("uid")
-            or not isinstance(token.get("pidversion"), int)
-            or not isinstance(token.get("sha256"), str)
-            or not isinstance(words, list)
-            or audit_token_details(words) != {
-                key: token[key] for key in ("pid", "pidversion", "uid", "sha256")
-            }
-        ):
-            raise CustodyError("final-ready Runtime audit token is invalid")
-        self.registration.update({
-            "post_exec_audit_token_sha256": self.registration.get("audit_token_sha256"),
-            "post_exec_pidversion": self.registration.get("audit_token_pidversion"),
-            "identity": dict(after),
-            "audit_token_words": list(words),
-            "audit_token_sha256": token["sha256"],
-            "audit_token_pidversion": token["pidversion"],
-        })
-        self.role_authority.bind_target(actor=self.cleanup_actor, generation=self.custody_generation,
-                                        identity=after, token=token)
-        self.sequence = 3
-        self.state = "ready-bound"
-        self._persist("readiness_token_bound")
+        try:
+            before = self.identity_provider(expected_pid)
+            if before is None or {key: before.get(key) for key in expected} != expected:
+                raise CustodyError("final-ready Runtime incarnation is unavailable")
+            try:
+                token = dict(token_provider(expected_pid))
+            except _TaskNameUnavailable:
+                if self._post_exec_connection is None:
+                    raise
+                token = dict(_peer_token(self._post_exec_connection))
+            after = self.identity_provider(expected_pid)
+            if after is None or {key: after.get(key) for key in expected} != expected:
+                raise CustodyError("final-ready Runtime incarnation changed while binding")
+            words = token.get("words")
+            if (
+                token.get("pid") != expected_pid
+                or token.get("uid") != expected.get("uid")
+                or not isinstance(token.get("pidversion"), int)
+                or not isinstance(token.get("sha256"), str)
+                or not isinstance(words, list)
+                or audit_token_details(words) != {
+                    key: token[key] for key in ("pid", "pidversion", "uid", "sha256")
+                }
+            ):
+                raise CustodyError("final-ready Runtime audit token is invalid")
+            self.registration.update({
+                "post_exec_audit_token_sha256": self.registration.get("audit_token_sha256"),
+                "post_exec_pidversion": self.registration.get("audit_token_pidversion"),
+                "identity": dict(after),
+                "audit_token_words": list(words),
+                "audit_token_sha256": token["sha256"],
+                "audit_token_pidversion": token["pidversion"],
+            })
+            self.role_authority.bind_target(actor=self.cleanup_actor, generation=self.custody_generation,
+                                            identity=after, token=token)
+            self.sequence = 3
+            self.state = "ready-bound"
+            self._persist("readiness_token_bound")
+        finally:
+            self.close_post_exec_channel()
 
     def _persist(self, event_name: str) -> None:
         snapshot = {
@@ -1343,11 +1422,13 @@ class RoleBoundCustodyBroker:
             self._persist("registration_post_exec")
             self.state = "sealed"
             self._persist("admission_sealed")
+            if self._retain_post_exec_connection:
+                self._post_exec_connection = connection
         except BaseException as exc:
             self.error = exc
         finally:
             self._ready.set()
-            if connection is not None:
+            if connection is not None and connection is not self._post_exec_connection:
                 connection.close()
             self.listener.close()
             self.socket_path.unlink(missing_ok=True)

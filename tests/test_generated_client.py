@@ -27,6 +27,90 @@ def _patch_opener(monkeypatch, open_response):
     )
 
 
+@pytest.mark.parametrize("filters", [{}, {"kind": "video", "model": "X /&?", "target": "runpod", "tag": "hero +"}, {"tag": ""}])
+def test_generation_list_filters_encode_through_generated_transport(filters):
+    from urllib.parse import parse_qs, urlsplit
+
+    calls = []
+
+    def transport(method, path, headers, body):
+        calls.append((method, path))
+        return 200, {}, b'{"items":[],"next_cursor":"page-two"}'
+
+    client = WorkspaceClient("http://runtime", transport=transport)
+    assert client.list_generations("project /&?", cursor="page +", limit=7, **filters) == ([], "page-two")
+    method, path = calls.pop()
+    assert method == "GET"
+    assert urlsplit(path).path == "/v1/projects/project%20%2F%26%3F/generations"
+    assert parse_qs(urlsplit(path).query, keep_blank_values=True) == {
+        "cursor": ["page +"], "limit": ["7"], **{name: [value] for name, value in filters.items()},
+    }
+
+
+def test_generated_abandon_client_roundtrips_exact_identity_receipt_and_wire_schema(tmp_path):
+    from jsonschema import Draft202012Validator
+    from referencing import Registry, Resource
+    import yaml
+    from tests.test_tasks_clear import _external_cli_task
+
+    root = tmp_path / "realm"
+    RealmStore.initialize(root).close()
+    daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
+    try:
+        task_id, attempt = _external_cli_task(daemon)
+        client = WorkspaceClient(daemon.endpoint, daemon.token)
+        client.cancel_task(task_id, idempotency_key="client-abandon-cancel")
+        observed = client.get_task_settlement(task_id)["task"]
+        body = {"expected_task_version": observed["version"], "attempt_id": attempt["attempt_id"],
+            **{key: attempt[key] for key in ("lease_id", "fence", "runtime_epoch")},
+            "execution_binding": observed["execution_binding"], "reason": "owner clears provider uncertainty"}
+        result = client.abandon_task(task_id, body, idempotency_key="client-abandon")
+        assert result["disposition"] == "lost" and result["task"]["state"] == "failed"
+        assert result.receipt["command_kind"] == "task.abandon"
+        assert client.abandon_task(task_id, body, idempotency_key="client-abandon") == result
+        base = Path(__file__).parents[1]
+        schemas = [json.loads((base / "contract/schemas" / name).read_text()) for name in ("task.json", "task-abandon.json", "worker.json")]
+        document = yaml.safe_load((base / "contract/openapi/workspace-v1.yaml").read_text())
+        document.update({"$id": "https://astrid.haus/workspace/v1/workspace-v1.yaml", "$schema": schemas[0]["$schema"]})
+        registry = Registry().with_resources((item["$id"], Resource.from_contents(item)) for item in [*schemas, document])
+        Draft202012Validator(schemas[1], registry=registry).validate(body)
+        response_schema = {"$id": document["$id"], "components": document["components"],
+                           **document["components"]["schemas"]["TaskAbandonMutation"]}
+        Draft202012Validator(response_schema, registry=registry).validate({
+            "data": {key: value for key, value in result.items() if key != "receipt"}, "receipt": result.receipt})
+        settlement = client.get_task_settlement(task_id)
+        lost = settlement["lost_disposition"]
+        assert lost["attempt_id"] == attempt["attempt_id"] and lost["reason"] == body["reason"]
+        event = daemon.service.store.conn.execute("SELECT kind FROM events WHERE id=?", (lost["event_id"],)).fetchone()
+        assert event["kind"] == "task.abandoned"
+        worker = schemas[2]
+        settlement_schema = {"$id": worker["$id"], "definitions": worker["definitions"],
+                             **worker["definitions"]["TaskSettlement"]}
+        validator = Draft202012Validator(settlement_schema, registry=registry)
+        validator.validate(settlement)
+        assert list(validator.iter_errors({**settlement, "lost_disposition": {"reason": "untrusted"}}))
+        for field in ("event_id", "attempt_id", "reason"):
+            incomplete = {key: value for key, value in lost.items() if key != field}
+            assert list(validator.iter_errors({**settlement, "lost_disposition": incomplete})), field
+            for malformed in (None, "", 123, True, [], {}):
+                invalid = {**lost, field: malformed}
+                assert list(validator.iter_errors({**settlement, "lost_disposition": invalid})), (field, malformed)
+        for malformed in (None, [], "lost", {**lost, "reason": "x" * 4097}):
+            assert list(validator.iter_errors({**settlement, "lost_disposition": malformed})), malformed
+        for field, value in (("extra", None), ("", None),
+                             ("remote_stop_confirmed", True), ("billing_stop_confirmed", True),
+                             ("remote_stop_confirmed", False), ("billing_stop_confirmed", False)):
+            invalid = {**lost, field: value}
+            errors = list(validator.iter_errors({**settlement, "lost_disposition": invalid}))
+            assert any(error.validator == "additionalProperties" for error in errors), (field, value)
+        daemon.service.retry_task(task_id, idempotency_key="client-abandon-retry")
+        retried = client.get_task_settlement(task_id)
+        assert "lost_disposition" not in retried
+        validator.validate(retried)
+    finally:
+        daemon.stop()
+
+
 class _AcquisitionStream(io.BytesIO):
     def __init__(self, body, chunk=None):
         super().__init__(body)
@@ -133,7 +217,7 @@ def test_generated_client_smoke_and_scoped_handshake() -> None:
     def transport(method, path, headers, body):
         calls.append((method, path, headers, body))
         if path == "/v1/health":
-            return 200, {}, json.dumps({"status": "ok", "protocol": "workspace.v1", "schema_digest": "sha256:" + "a" * 64, "runtime_epoch": 1, "runtime_session_id": "runtime-session-1", "runtime_instance_id": "runtime-instance-1"}).encode()
+            return 200, {}, json.dumps({"status": "ok", "protocol": "workspace.v1", "schema_digest": "sha256:" + "a" * 64, "runtime_epoch": 1, "runtime_session_id": "runtime-session-1", "runtime_instance_id": "runtime-instance-1", "identity": {"release": 0, "managed_by": None}}).encode()
         if path == "/v1/handshake":
             return 200, {}, json.dumps({"protocol": "workspace.v1", "schema_digest": "sha256:" + "a" * 64, "session_id": "session-1", "actor_id": "actor-1", "realm_id": "realm-1", "scopes": ["realm:read", "project:write"]}).encode()
         if path == "/v1/projects" and method == "POST":
@@ -265,6 +349,22 @@ def test_generated_owner_local_worker_restart():
 
     client = WorkspaceClient("http://runtime", "owner-token", transport=transport)
     assert client.start_local_worker("astrid", "realm-1") == expected
+
+
+def test_generated_owner_task_settlement_and_named_relinquish():
+    expected = {"task_id": "task/with space", "state": "cancelled", "settled": True, "blockers": []}
+    def transport(method, path, headers, body):
+        if method == "GET":
+            assert path == "/v1/control/tasks/task%2Fwith%20space/settlement"
+            return 200, {}, json.dumps(expected).encode()
+        assert (method, path) == ("POST", "/v1/control/local-worker/relinquish")
+        assert json.loads(body) == {"executor_incarnation": "inc-1", "evidence_digest": "sha256:" + "a" * 64,
+                                    "expected_task_ids": ["task/with space", "other"]}
+        return 200, {}, b'{"state":"relinquished","executor_incarnation":"inc-1"}'
+    client = WorkspaceClient("http://runtime", "owner-token", transport=transport)
+    assert client.get_task_settlement("task/with space") == expected
+    assert client.relinquish_local_worker("inc-1", "sha256:" + "a" * 64,
+                                         expected_task_ids=["task/with space", "other"])["state"] == "relinquished"
 
 
 def test_generation_intent_round_trips_through_admission_claim_and_terminal_readback(tmp_path: Path) -> None:
@@ -512,7 +612,7 @@ def test_client_applies_bounded_timeout_to_stdlib_transport(monkeypatch) -> None
             return False
 
         def read(self):
-            return json.dumps({"status": "ok", "protocol": "workspace.v1", "schema_digest": "sha256:" + "a" * 64, "runtime_epoch": 1, "runtime_session_id": "runtime-session-1", "runtime_instance_id": "runtime-instance-1"}).encode()
+            return json.dumps({"status": "ok", "protocol": "workspace.v1", "schema_digest": "sha256:" + "a" * 64, "runtime_epoch": 1, "runtime_session_id": "runtime-session-1", "runtime_instance_id": "runtime-instance-1", "identity": {"release": 0, "managed_by": None}}).encode()
 
     def urlopen(request, *, timeout):
         observed["timeout"] = timeout
@@ -602,7 +702,7 @@ def test_generated_task_lease_fields_decode_from_get_and_project_list() -> None:
     ]
 
 
-def test_distinct_tasks_reader_reads_expired_task_as_requeued_with_fence(tmp_path: Path) -> None:
+def test_distinct_tasks_reader_retains_expired_task_custody_with_fence(tmp_path: Path) -> None:
     realm = tmp_path / "realm"
     RealmStore.initialize(realm).close()
     daemon = RuntimeDaemon(
@@ -664,11 +764,19 @@ def test_distinct_tasks_reader_reads_expired_task_as_requeued_with_fence(tmp_pat
         assert reader_identity["actor"] != "executor-a"
 
         readback = WorkspaceClient(daemon.endpoint, reader_token).get_task(admitted["task_id"])
-        # A read applies the claim path's lease expiry: the dead
-        # attempt's task is requeued, keeping its fence, with no live deadline.
-        assert readback.state == "queued"
+        # Expiry ends publication authority but does not prove executor stop.
+        # A distinct reader preserves the exact running attempt and deadline.
+        assert readback.state == "running"
         assert readback.lease_fence == claimed.fence
-        assert readback.lease_expires_at is None
+        assert readback.lease_expires_at == expired
+        task = daemon.service.store.conn.execute(
+            "SELECT status, attempt_id, executor_id, lease_fence, lease_expires_at FROM tasks WHERE id=?",
+            (admitted["task_id"],),
+        ).fetchone()
+        assert tuple(task) == ("running", claimed.attempt_id, "executor-a", claimed.fence, expired)
+        assert daemon.service.store.conn.execute(
+            "SELECT settled FROM attempts WHERE id=?", (claimed.attempt_id,),
+        ).fetchone()[0] == 0
     finally:
         daemon.stop()
 
@@ -899,6 +1007,45 @@ def test_list_documents_generated_client_kind_filter_is_encoded() -> None:
         assert path == "/v1/projects/p%20%2F/documents?limit=5&cursor=next%2Fpage&kind=astrid.note%20%2F%3F"
         return 200, {}, b'{"items": [], "next_cursor": null}'
     assert WorkspaceClient("http://runtime", transport=transport).list_documents("p /", cursor="next/page", limit=5, kind="astrid.note /?") == ([], None)
+
+
+@pytest.mark.parametrize("name", ["kind", "model", "target", "tag"])
+def test_list_project_objects_generated_client_forwards_each_filter(name):
+    def transport(method, path, headers, body):
+        assert method == "GET"
+        assert path == f"/v1/projects/p/objects?limit=50&{name}=value"
+        return 200, {}, b'{"items": [], "next_cursor": "next"}'
+
+    assert getattr(WorkspaceClient("http://runtime", transport=transport), "list_project_objects")("p", **{name: "value"}) == ([], "next")
+
+
+def test_list_project_objects_generated_client_forwards_combined_filters_and_encodes_values():
+    from urllib.parse import parse_qs, urlsplit
+
+    filters = {
+        "kind": "astrid.video /?",
+        "model": "vendor/model&variant=fast",
+        "target": "runpod+gpu=1",
+        "tag": "scene #1",
+    }
+
+    def transport(method, path, headers, body):
+        parsed = urlsplit(path)
+        assert method == "GET"
+        assert parsed.path == "/v1/projects/p%20%2F/objects"
+        assert parse_qs(parsed.query, keep_blank_values=True) == {"limit": ["50"], **{key: [value] for key, value in filters.items()}}
+        return 200, {}, b'{"items": [], "next_cursor": null}'
+
+    assert WorkspaceClient("http://runtime", transport=transport).list_project_objects("p /", **filters) == ([], None)
+
+
+def test_list_project_objects_generated_client_without_filters_preserves_request_and_response():
+    def transport(method, path, headers, body):
+        assert method == "GET"
+        assert path == "/v1/projects/p%20%2F/objects?limit=50"
+        return 200, {}, b'{"items": [], "next_cursor": "existing-cursor"}'
+
+    assert WorkspaceClient("http://runtime", transport=transport).list_project_objects("p /") == ([], "existing-cursor")
 
 
 def test_stream_project_object_upload_sets_length_digest_and_does_not_buffer_or_close(monkeypatch) -> None:

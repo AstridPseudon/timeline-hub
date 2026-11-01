@@ -19,6 +19,7 @@ import ctypes
 import errno
 import hashlib
 import os
+import re
 from pathlib import Path
 import signal
 import stat
@@ -566,22 +567,29 @@ def process_identity(pid: int, *, timeout: float = 1.0):
             return identity
         finally:
             kernel.CloseHandle(handle)
-    # Match the boot-bound Linux birth marker used by parked host activation.
-    # A missing boot source is observation failure, never proof of PID absence.
-    try:
-        boot_id = Path("/proc/sys/kernel/random/boot_id").read_text().strip()
-        if str(uuid.UUID(boot_id)) != boot_id:
-            raise ValueError("noncanonical boot ID")
-    except ValueError as exc:
-        raise OSError("process boot identity observation was malformed") from exc
     root = Path("/proc") / str(pid)
     try:
+        # Start ticks alone can collide after reboot or in another PID namespace.
+        # Scope interfaces are optional in restricted proc mounts. An older
+        # scoped record cannot be reclaimed if its scope becomes unreadable.
+        scope = ""
+        try:
+            boot = (Path("/proc") / "sys/kernel/random/boot_id").read_text().strip()
+            if boot:
+                scope += f";boot:{boot}"
+        except (FileNotFoundError, PermissionError):
+            pass
+        try:
+            namespace = (root / "ns/pid").stat().st_ino
+            scope += f";pidns:{namespace}"
+        except (FileNotFoundError, PermissionError):
+            pass
         raw = (root / "stat").read_text()
         fields = raw.rsplit(")", 1)[1].split()
         if not fields[19].isascii() or not fields[19].isdigit():
             raise ValueError("invalid process start tick")
         value = {"pid": pid, "uid": root.stat().st_uid, "parent_pid": int(fields[1]),
-                 "birth_id": f"{boot_id}:{fields[19]}", "process_group": int(fields[2]), "session_id": int(fields[3])}
+                 "birth_id": f"proc-start-ticks:{fields[19]}{scope}", "process_group": int(fields[2]), "session_id": int(fields[3])}
         second = (root / "stat").read_text().rsplit(")", 1)[1].split()
         if fields[19] != second[19]:
             raise OSError("process identity changed during observation")
@@ -592,6 +600,52 @@ def process_identity(pid: int, *, timeout: float = 1.0):
         return None
     except (ValueError, IndexError) as exc:
         raise OSError("process identity observation was malformed") from exc
+
+
+def process_birth_matches(expected: str, actual: str) -> bool | None:
+    """Compare Linux birth encodings; missing scope is not proof of death."""
+    def linux_birth(value):
+        if value.startswith("proc-start-ticks:"):
+            tick, *parts = value[len("proc-start-ticks:"):].split(";")
+            if not tick.isascii() or not tick.isdigit():
+                return None
+            scope = {}
+            for part in parts:
+                key, sep, val = part.partition(":")
+                if not sep or key not in {"boot", "pidns"} or not val or key in scope:
+                    return None
+                scope[key] = val
+            return tick, scope
+        boot, sep, tick = value.partition(":")
+        if sep and tick.isascii() and tick.isdigit():
+            try:
+                if str(uuid.UUID(boot)) == boot:
+                    return tick, {"boot": boot}
+            except ValueError:
+                pass
+        return None
+
+    if not expected or not actual:
+        return None
+    left, right = linux_birth(expected), linux_birth(actual)
+    linux_like = lambda value: value.startswith("proc-start-ticks:") or bool(re.match(r"^[0-9a-fA-F-]{36}:", value))
+    if left is None or right is None:
+        return None if linux_like(expected) or linux_like(actual) else expected == actual
+    old_tick, old_scope = left
+    new_tick, new_scope = right
+    # Birth strings alone cannot establish missing PID-coordinate scope.
+    # In particular, Timeline's boot:tick encoding carries no namespace.
+    if not all(scope.get("boot") and scope.get("pidns") for scope in (old_scope, new_scope)):
+        return None
+    if old_scope.get("pidns") and new_scope.get("pidns") and old_scope["pidns"] != new_scope["pidns"]:
+        return None
+    if old_scope.get("boot") and new_scope.get("boot") and old_scope["boot"] != new_scope["boot"]:
+        return False
+    if not old_scope.get("boot") or not new_scope.get("boot"):
+        return None
+    if old_tick != new_tick:
+        return False
+    return True
 
 
 def process_executable(pid: int) -> str:
@@ -938,6 +992,50 @@ def stop_tree(process, grace=5.0, *, stop_channel=False):
                 pass
         process.wait(timeout=max(2.0, grace))
         return
+    if sys.platform == "win32":
+        if getattr(process, "_runtime_tree_drained", False):
+            process.wait(timeout=max(2.0, grace))
+            return
+        job = getattr(process, "_runtime_job", None)
+        if job is None or not job.handle:
+            raise ProcessLookupError("process has no retained Windows Job Object")
+        deadline = time.monotonic() + max(0.0, grace)
+        if not stop_channel and process.poll() is None:
+            try:
+                signal_tree(process, TERM)
+            except (OSError, ValueError):
+                # Forced cleanup below is authorized only by the retained Job.
+                pass
+            try:
+                process.wait(timeout=max(0.0, deadline - time.monotonic()))
+            except subprocess.TimeoutExpired:
+                pass
+        elif stop_channel:
+            # Hidden services have no console. EOF is their cooperative stop
+            # request; allow handlers to finish before forced Job cleanup.
+            time.sleep(max(0.0, deadline - time.monotonic()))
+            try:
+                process.wait(timeout=0)
+            except subprocess.TimeoutExpired:
+                pass
+
+        # The leader may already have exited while descendants remain in the
+        # Job. Always terminate the retained Job and wait for its accounting
+        # count to reach zero before releasing our only cleanup authority.
+        signal_tree(process, KILL)
+        drain_deadline = time.monotonic() + max(10.0, grace)
+        while True:
+            if job.active_processes() == 0:
+                tree_drained(process)
+                process._runtime_tree_drained = True
+                break
+            remaining = drain_deadline - time.monotonic()
+            if remaining <= 0:
+                raise subprocess.TimeoutExpired(process.args, max(10.0, grace),
+                    "Windows Job Object did not drain")
+            time.sleep(min(0.05, remaining))
+        process.wait(timeout=max(2.0, grace))
+        return
     try:
         deadline = time.monotonic() + grace
         if process.poll() is None:
@@ -955,16 +1053,15 @@ def stop_tree(process, grace=5.0, *, stop_channel=False):
             # Hidden services have no console. EOF is their cooperative stop
             # request; Job termination is the forced escalation.
             time.sleep(max(0.0, deadline - time.monotonic()))
-        if process.poll() is None or sys.platform != "win32":
-            try:
-                signal_tree(process, KILL)
-            except ProcessLookupError:
-                pass
+        try:
+            signal_tree(process, KILL)
+        except ProcessLookupError:
+            pass
         if process.poll() is None:
             process.wait(timeout=max(2.0, grace))
     finally:
         job = getattr(process, "_runtime_job", None)
-        if job:
+        if job and sys.platform != "win32":
             job.close()
 
 
@@ -1146,6 +1243,39 @@ def _note_fallback(kind: str, detail: str) -> None:
     print(f"Runtime sandbox process control: {detail}", file=sys.stderr, flush=True)
 
 
+def _probe_process_group() -> str:
+    """Check a live group created in our PID namespace, never an inherited PGID.
+
+    An inherited group leader may be outside the visible PID namespace, so
+    getpgrp() followed by killpg(..., 0) can return ESRCH even though signalling
+    Runtime's own child groups works. Keep the probe child alive via stdin
+    until the observation completes, then close/reap it on every path.
+    """
+    try:
+        child = subprocess.Popen(
+            [sys.executable, "-I", "-S", "-c", "import sys; sys.stdin.buffer.read()"],
+            start_new_session=True, stdin=subprocess.PIPE,
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+        )
+    except OSError as exc:
+        return f"probe-error:{errno.errorcode.get(exc.errno, exc.errno)}"
+    try:
+        try:
+            os.killpg(child.pid, 0)
+            return "allowed"
+        except PermissionError:
+            return "denied"
+        except OSError as exc:
+            return f"error:{errno.errorcode.get(exc.errno, exc.errno)}"
+    finally:
+        child.stdin.close()
+        try:
+            child.wait(timeout=3)
+        except subprocess.TimeoutExpired:
+            child.kill()
+            child.wait(timeout=3)
+
+
 def process_control_probe(mode: str | None = None) -> dict:
     """What signalling actually works in this process, checked live.
 
@@ -1154,8 +1284,9 @@ def process_control_probe(mode: str | None = None) -> dict:
 
     ``ok`` is False when Runtime cannot stop what it starts: then tasks that
     spawn processes must be refused (in strict mode, the reason points at
-    sandbox mode). The probe sends no signal to anything but signal 0 to
-    this process's own group.
+    sandbox mode). The capability check sends signal 0 to a temporary child
+    group held alive until it completes. Cleanup closes stdin and reaps the
+    child, killing only that retained child if it fails to exit promptly.
     """
     mode = mode or process_control()
     if mode not in PROCESS_CONTROL_MODES:
@@ -1173,13 +1304,7 @@ def process_control_probe(mode: str | None = None) -> dict:
         pidfd = "enosys" if exc.errno == errno.ENOSYS else f"error:{errno.errorcode.get(exc.errno, exc.errno)}"
     except NotImplementedError:
         pidfd = "unsupported"
-    try:
-        os.killpg(os.getpgrp(), 0)
-        group = "allowed"
-    except PermissionError:
-        group = "denied"
-    except OSError as exc:
-        group = f"error:{errno.errorcode.get(exc.errno, exc.errno)}"
+    group = _probe_process_group()
     if pidfd == "available":
         signalling = "pidfd"
     elif pidfd == "enosys" and mode == "sandbox":
@@ -1199,7 +1324,9 @@ def process_control_probe(mode: str | None = None) -> dict:
         report["reason"] = (
             "Runtime cannot stop processes safely here (pidfd: %s, process-group kill: %s)%s"
             % (pidfd, group, "; if this is a seccomp sandbox such as OpenShell, install with --sandbox"
-               if mode == "strict" else ""))
+               if mode == "strict" and (pidfd == "enosys" or group == "denied") else
+               "; verify that the service can create and signal its own child process groups "
+               "and that /proc and PID namespaces are configured consistently"))
     return report
 
 
@@ -1612,3 +1739,26 @@ def handoff_child_identity(process):
     if not _windows_process_active(handle):
         raise ProcessLookupError("prepared Worker exited during authentication")
     return observed
+
+
+def reserve_loopback_listener(port: int, *, backlog: int = 128):
+    """Reserve a Linux listener for one retained, socket-activated child.
+
+    This is a local native resource, not a service registry or a recoverable
+    process reference. See ``linux_listener.RetainedListener`` for the caller's
+    adoption, sole-waiter, trust and cleanup obligations.
+    """
+    from .linux_listener import RetainedListener
+    return RetainedListener(port, backlog=backlog)
+
+
+def linux_abstract_listener(name: bytes, *, backlog: int = 8):
+    """Create a non-inheritable local AF_UNIX listener; caller owns authentication."""
+    from .linux_listener import abstract_listener
+    return abstract_listener(name, backlog=backlog)
+
+
+def linux_abstract_connect(name: bytes, *, deadline: float):
+    """Connect local AF_UNIX IPC; no identity or authority comes from its name."""
+    from .linux_listener import abstract_connect
+    return abstract_connect(name, deadline=deadline)

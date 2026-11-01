@@ -12,9 +12,20 @@ from astrid_runtime.bootstrap import BootstrapConfig, BootstrapError, SourceProf
 from astrid_runtime.operator_upgrade import OperatorUpgradeError, upgrade_workspace
 from astrid_runtime.paths import RuntimePaths
 from astrid_runtime.runtime_boundary import LocalRuntimeBoundary
+from astrid_runtime.refusal import refusal_from
 from runtime_protocol.store import SCHEMA_VERSION, RealmStore
-from runtime_protocol.upgrade import inspect_canonical_schema
-from tests.schema_fixtures import walk_back_to_v30
+from runtime_protocol.upgrade import inspect_canonical_schema, migrate_canonical_to_current
+
+
+def test_refusal_from_prefers_structured_message_and_preserves_details():
+    details = {"headline": "Operator action required", "safe": False}
+    exc = RuntimeError("fallback")
+    exc.details = details
+    assert refusal_from(exc) == ("Operator action required", details)
+
+
+def test_refusal_from_uses_exception_message_without_details():
+    assert refusal_from(RuntimeError("fallback")) == ("fallback", None)
 
 
 class _Boundary:
@@ -46,7 +57,8 @@ class _Boundary:
     def health(self, **_kwargs):
         return True
 
-    def connect(self, **_kwargs):
+    def connect(self, **kwargs):
+        self.connection_options = kwargs
         return SimpleNamespace(doctor=lambda: {"ok": True, "state": "healthy"})
 
 
@@ -56,17 +68,22 @@ def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
     paths.ensure_support_dirs()
     realm_root = paths.realms_dir / "realm-1"
     RealmStore.initialize(realm_root, realm_id="realm-1").close()
-    if version < 31:
-        # Upstream app-state v31 adds this table; v30 and earlier must omit it.
+    if version < 32:
+        from test_runtime_upgrade import _remove_timeline_commit_schema
         with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
+            _remove_timeline_commit_schema(connection)
+        with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
+            connection.execute("DROP INDEX idx_generations_gen")
+    if version < 30:
+        # A fresh realm is the current schema; v30 -> v29 drops timelines.name (the only v30 change).
+        with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
+            connection.execute("ALTER TABLE timelines DROP COLUMN name")
             connection.execute("DROP TABLE user_app_state")
     if version < 28:
         # v28 -> v27 restores inline specs and drops task_specs.
         connection = sqlite3.connect(realm_root / "realm.sqlite3")
         try:
             connection.execute("PRAGMA foreign_keys=OFF")
-            walk_back_to_v30(connection)
-            connection.execute("ALTER TABLE timelines DROP COLUMN name")
             connection.execute("DROP INDEX IF EXISTS idx_tasks_retention")
             for table in ("runs", "tasks"):
                 connection.execute(f"ALTER TABLE {table} ADD COLUMN spec_json TEXT")
@@ -76,12 +93,6 @@ def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
             connection.commit()
         finally:
             connection.close()
-    elif version < 31:
-        with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
-            walk_back_to_v30(connection)
-            if version < 30:
-                connection.execute("ALTER TABLE timelines DROP COLUMN name")
-            connection.execute("UPDATE runtime_schema SET version=? WHERE id=1", (version,))
     if version < 27:
         with sqlite3.connect(realm_root / "realm.sqlite3") as connection:
             connection.execute("DROP TABLE user_preferences")
@@ -95,8 +106,11 @@ def _fixture(tmp_path, *, live=True, runtime_checkout=None, version=25):
             connection.commit()
         finally:
             connection.close()
-    assert inspect_canonical_schema(realm_root, expected_realm_id="realm-1")["kind"] == f"v{version}"
-    checkout = runtime_checkout or tmp_path
+    assert inspect_canonical_schema(realm_root, expected_realm_id="realm-1")["kind"] == ("U33" if version == 33 else f"C{version}" + ("-nullable" if version < 28 else ""))
+    checkout = runtime_checkout or tmp_path / "prior-executable"
+    if runtime_checkout is None:
+        (checkout / "runtime_protocol").mkdir(parents=True)
+        (checkout / "runtime_protocol" / "__init__.py").write_text("# Test service boundary executable\n")
     profile = SourceProfile(profile="astrid", runtime_checkout=str(checkout), source_checkout=str(checkout))
     catalog = {
         "version": 1,
@@ -126,6 +140,11 @@ def test_operator_upgrade_current_realm_is_single_idempotent_workflow(tmp_path, 
 
     def fake_start(target_paths, _boundary, _config):
         started.append(target_paths.app_support)
+        from runtime_protocol.service import RuntimeService
+        from test_timeline_commit_provider import Provider
+        service = RuntimeService(realm_root)
+        service.register_timeline_commit_provider(Provider())
+        service.close()
         discovery = {
             "pid": 1235, "active_realm": "realm-1", "endpoint": "http://127.0.0.1:1235",
             "runtime_instance_id": "instance-2", "process_birth_id": "birth-2", "realm_root": str(realm_root.resolve()),
@@ -139,7 +158,7 @@ def test_operator_upgrade_current_realm_is_single_idempotent_workflow(tmp_path, 
         "astrid_runtime.operator_upgrade.migrate_canonical_to_current",
         lambda *args, **kwargs: (
             migration_calls.append((args, kwargs))
-            or {"ok": True, "source_schema_version": 25, "target_schema_version": SCHEMA_VERSION}
+            or migrate_canonical_to_current(*args, **kwargs)
         ),
     )
     monkeypatch.setattr(
@@ -149,6 +168,7 @@ def test_operator_upgrade_current_realm_is_single_idempotent_workflow(tmp_path, 
     )
     result = upgrade_workspace(paths, boundary, BootstrapConfig(source_profile=profile))
     assert result["ok"] is True
+    assert boundary.connection_options["timeout_seconds"] == 120.0
     assert result["schema_before"] == "v25"
     assert migration_calls == [
         ((realm_root,), {"timeout_seconds": 120.0, "confirmation": "MIGRATE CANONICAL realm-1", "expected_realm_id": "realm-1"})
@@ -158,7 +178,49 @@ def test_operator_upgrade_current_realm_is_single_idempotent_workflow(tmp_path, 
     assert started == [paths.app_support]
     journal = json.loads((paths.runtime_support / "upgrade-journal.json").read_text())
     assert journal["state"] == "complete"
-    assert [event["state"] for event in journal["history"]] == ["planned", "stopping", "stopped", "activated", "restarted", "complete"]
+    assert [event["state"] for event in journal["history"]] == ["planned", "stopping", "stopped", "backup_verified", "activated", "restarted", "complete"]
+
+
+@pytest.mark.parametrize("healthy", [True, False])
+def test_upgrade_integrity_uses_its_budget_without_skipping_failed_checks(tmp_path, monkeypatch, healthy):
+    from astrid_runtime.operator_upgrade import _verify_running
+
+    paths, _profile, _realm_root = _fixture(tmp_path)
+    boundary = LocalRuntimeBoundary()
+    monkeypatch.setattr(boundary, "health", lambda **_kwargs: True)
+    observed = []
+
+    class Response:
+        status = 200
+        headers = {}
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return False
+
+        def read(self):
+            return json.dumps({"ok": healthy, "state": "ready" if healthy else "unhealthy"}).encode()
+
+    def slow_integrity(request, *, timeout):
+        assert request.full_url.endswith("/v1/doctor")
+        observed.append(timeout)
+        # Model an intact large realm whose integrity pass outlasts the
+        # ordinary 30-second HTTP budget, without adding a wall-clock sleep.
+        if timeout < 75:
+            raise TimeoutError("large realm integrity pass exceeded request budget")
+        return Response()
+
+    monkeypatch.setattr("astrid_runtime_client.generated._urlopen_loopback", slow_integrity)
+    if healthy:
+        assert _verify_running(paths, boundary, None, timeout_seconds=90)["integrity"]["ok"] is True
+    else:
+        with pytest.raises(OperatorUpgradeError, match="integrity verification failed"):
+            _verify_running(paths, boundary, None, timeout_seconds=90)
+    assert observed == [90]
+    # The upgrade-specific budget must not lengthen ordinary client requests.
+    assert boundary.connect(endpoint="http://127.0.0.1:1234", credential="token")._client.timeout == 30
 
 
 def test_operator_upgrade_refuses_running_task_before_signaling_owner(tmp_path):
@@ -182,8 +244,10 @@ def test_operator_upgrade_refuses_running_task_before_signaling_owner(tmp_path):
     finally:
         connection.close()
     boundary = _Boundary(paths)
-    with pytest.raises(OperatorUpgradeError, match="work is active"):
+    with pytest.raises(OperatorUpgradeError, match=r"Astrid is busy \(1 tasks running\)\. Try again when they finish\.") as caught:
         upgrade_workspace(paths, boundary, BootstrapConfig(source_profile=profile))
+    assert caught.value.details["safe"] is False
+    assert caught.value.details["blockers"][0]["task_id"] == "task"
     assert not any(call[0] == "stop" for call in boundary.calls)
 
 
@@ -194,7 +258,7 @@ def test_operator_upgrade_failure_before_activation_restarts_original_and_journa
 
     def fake_start(target_paths, _boundary, _config):
         started.append(True)
-        return SimpleNamespace(endpoint="http://127.0.0.1:1235", runtime_instance_id="instance-2")
+        return SimpleNamespace(endpoint="http://127.0.0.1:1235", pid=1235, runtime_instance_id="instance-2")
 
     def fail_migration(*_args, **_kwargs):
         raise RuntimeError("validation failed")
@@ -206,8 +270,9 @@ def test_operator_upgrade_failure_before_activation_restarts_original_and_journa
     assert started == [True]
     assert (realm_root / "realm.sqlite3").is_file()
     journal = json.loads((paths.runtime_support / "upgrade-journal.json").read_text())
-    assert journal["state"] == "failed"
-    assert journal["activated"] is False
+    assert journal["state"] == "rolled_back"
+    assert inspect_canonical_schema(realm_root)["version"] == 25
+    assert Path(journal["recovery_set"]).is_dir()
 
 
 @pytest.mark.darwin_native
@@ -230,6 +295,11 @@ def test_operator_upgrade_current_schema_uses_read_only_schema_noop(tmp_path, mo
     boundary = _Boundary(paths)
 
     def fake_start(target_paths, _boundary, _config):
+        from runtime_protocol.service import RuntimeService
+        from test_timeline_commit_provider import Provider
+        service = RuntimeService(_realm_root)
+        service.register_timeline_commit_provider(Provider())
+        service.close()
         discovery = {
             "pid": 1235, "active_realm": "realm-1", "endpoint": "http://127.0.0.1:1235",
             "runtime_instance_id": "instance-2", "process_birth_id": "birth-2", "realm_root": str(_realm_root.resolve()),
@@ -240,7 +310,7 @@ def test_operator_upgrade_current_schema_uses_read_only_schema_noop(tmp_path, mo
 
     monkeypatch.setattr("astrid_runtime.operator_upgrade._bootstrap_locked", fake_start)
     result = upgrade_workspace(paths, boundary, BootstrapConfig(source_profile=profile))
-    assert result["schema_before"] == f"v{SCHEMA_VERSION}"
+    assert result["schema_before"] == "U33"
     assert result["migration"]["changed"] is False
     assert result["migration"]["steps"] == []
 
@@ -254,7 +324,7 @@ def test_operator_upgrade_rejects_newer_schema_before_journal_or_signal(tmp_path
     tracked = [realm_root / "realm.sqlite3", paths.catalog_path, paths.discovery_path, paths.instance_lock_path]
     before = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in tracked}
     boundary = _Boundary(paths)
-    with pytest.raises(OperatorUpgradeError, match="newer than supported"):
+    with pytest.raises(OperatorUpgradeError, match="unsupported canonical v34"):
         upgrade_workspace(paths, boundary, BootstrapConfig(source_profile=profile))
     after = {str(path): hashlib.sha256(path.read_bytes()).hexdigest() for path in tracked}
     assert after == before
