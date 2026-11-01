@@ -1,0 +1,9 @@
+M-T-07 Agent — historical provisional receipt staged
+
+Receipt: handoff-out/T-07-agent-provisional-report.md
+Source SHA: 2beaa36a3bc9e2c689fea9b3b4dd86742ec6b16b
+Source-worker tree: 615bf127ccb9f4db87c36b97779cca5209f7af84
+Central snapshot tree: 14ee10228fe1bdf5adfbe5bd605dd2f80007637a
+Central request: M-T-07-agent-partial-targeted-1101052301-23468 — fail (1,401 passed, 23 failed, 42 deselected, 39 errors, 2 subtests passed)
+
+No merge was requested. Changed-base requalification is pending. This is not a green full T-07 phase. See the receipt for failure classifications, confidence, and the external tuple details and limitations.
