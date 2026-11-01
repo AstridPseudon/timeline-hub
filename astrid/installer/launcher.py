@@ -142,6 +142,10 @@ python = str(Path(record["python"]))
 env = dict(os.environ)
 env.update({str(key): str(value) for key, value in record["env"].items()})
 env["ASTRID_INSTALL_PROGRAM_ROOT"] = str(root)
+if (not isinstance(record["env"].get("ASTRID_INSTALL_RELEASE"), str)
+        or not re.fullmatch(r"0|[1-9][0-9]*", record["env"]["ASTRID_INSTALL_RELEASE"])
+        or record["env"].get("ASTRID_INSTALL_MANAGED_BY") not in ("", "pinokio")):
+    raise SystemExit("Astrid's selected install identity needs repair; run the install line again.")
 if sys.argv[1:2] == ["credential"]:
     os.environ.update(env)
     from astrid.core.util.credential_store import main
@@ -150,16 +154,124 @@ replace_process([python, "-X", "utf8", "-I", "-m", "astrid.omp_agent", *sys.argv
 '''
 
 
-def install(root: Path) -> tuple[Path, ...]:
-    """Write stable launchers that follow root/current without changing PATH."""
+def publish_runtime_runner(root: Path) -> Path:
+    """Durably publish current admission before an update can stop or migrate."""
+    from runtime_protocol import platform
+
+    from . import custody, foreground, service
+
     root = Path(root).absolute()
     runtime_runner = root / "run_runtime.py"
-    runtime_runner.write_text(
-        'import sys\nfrom pathlib import Path\n'
-        'from astrid.installer.foreground import launch\n'
-        'launch(Path(__file__).resolve().parent, sys.argv[1:])\n',
-        encoding="utf-8", newline="\n",
+    # The retained version supplies only the interpreter and Runtime. Carry the
+    # complete current launcher so an older installed Agent is never imported.
+    import inspect
+
+    prelude_source = service._launch_prelude_source()
+    service_source = (
+        prelude_source + '\n'
+        'from runtime_protocol import platform\n'
+        f'LABEL={service.LABEL!r}\nSERVICE_SETTINGS=frozenset({sorted(service.SERVICE_SETTINGS)!r})\n'
+        f'_EMBEDDED_LAUNCH_PRELUDE={prelude_source!r}\n'
+        + "\n".join(inspect.getsource(function) for function in (
+            service.default_program_root, service.installer_lock_path,
+            service.command,
+        ))
     )
+    # Keep the generated foreground self-contained: retained release-0 Agents
+    # do not provide the current installer modules.  The ticket client uses the
+    # already-embedded admission helpers, so it never imports the retained Agent.
+    custody_attach_source = '''import hashlib,hmac,secrets,socket
+def _custody_send(stream, value):
+    stream.write(json.dumps(value).encode() + b"\\n")
+    stream.flush()
+
+def _custody_receive(stream):
+    line = stream.readline(65537)
+    if not line or len(line) > 65536:
+        raise ValueError("The stopped-update lock owner disconnected.")
+    return json.loads(line)
+
+def _custody_identity_matches(expected, observed):
+    return (isinstance(expected, dict) and isinstance(observed, dict)
+            and all(expected.get(field) == observed.get(field)
+                    for field in ("pid", "uid", "birth_id")))
+
+def _CUSTODY_ATTACH(ticket, root, version, data):
+    try:
+        root, data = absolute(root), absolute(data)
+        marker = read_json(root / "install.json")
+        if (marker.get("owner") != "haus.astrid.runtime" or marker.get("managed_by") != "pinokio"
+                or absolute(marker["data_root"]) != data or current(root) != version
+                or not launch_admission(version, data, custody=True)):
+            raise ValueError("The stopped update does not authorize this foreground activation.")
+        journal = read_json(root / "update-transaction.json")
+        try:
+            with (root / ".app-update.lock").open("r+b") as operation_lock:
+                try:
+                    platform.lock_file(operation_lock.fileno(), blocking=False)
+                except BlockingIOError:
+                    pass
+                else:
+                    platform.unlock_file(operation_lock.fileno())
+                    raise ValueError("The stopped update no longer owns activation admission.")
+        except FileNotFoundError:
+            raise ValueError("The stopped update no longer owns activation admission.") from None
+        binding = {"root": str(root), "data": str(data), "version": version.document(),
+                   "operation_id": journal["operation_id"], "step": journal["step"]}
+        if binding != ticket["binding"]:
+            raise ValueError("The stopped-update activation identity changed.")
+        receipt = json.loads((root / ".app-update-custody.json").read_text(encoding="utf-8"))
+        observed = platform.process_identity(receipt["identity"]["pid"])
+        if (receipt["port"] != ticket["port"] or receipt["root"] != str(root.resolve())
+                or receipt["lock"] != ticket["lock"]
+                or not _custody_identity_matches(receipt["identity"], observed)):
+            raise ValueError("The stopped-update lock owner identity changed.")
+        challenge = secrets.token_hex(32)
+        connection = socket.create_connection(("127.0.0.1", ticket["port"]), timeout=10)
+        try:
+            with connection.makefile("rwb", buffering=0) as stream:
+                _custody_send(stream, {"token": ticket["token"], "binding": binding,
+                                       "challenge": challenge})
+                reply = _custody_receive(stream)
+                proof = hmac.new(bytes.fromhex(receipt["key"]), challenge.encode(), hashlib.sha256).hexdigest()
+                if reply.get("accepted") is not True or not hmac.compare_digest(reply.get("proof", ""), proof):
+                    raise ValueError("The stopped-update activation ticket was refused.")
+            connection.settimeout(None)
+            return connection
+        except BaseException:
+            connection.close()
+            raise
+    except (OSError, KeyError, TypeError) as exc:
+        raise ValueError("The stopped-update activation ticket was refused.") from exc
+'''
+    foreground_source = "\n".join(inspect.getsource(function) for function in (
+        foreground._probe_operation_lock, foreground.launch, foreground._run,
+    ))
+    source = (
+        service_source + '\n'
+        + custody_attach_source + '\n'
+        + f'_CUSTODY_KEEPER_SOURCE = {inspect.getsource(custody.keeper)!r}\n'
+        + '# <Astrid foreground launcher>\n'
+        + foreground_source + '\n'
+        + 'launch(Path(__file__).resolve().parent, sys.argv[1:])\n'
+    )
+    fd, temporary = platform.private_temporary(root, ".run_runtime.py.")
+    temporary = Path(temporary)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as stream:
+            stream.write(source)
+            stream.flush()
+            os.fsync(stream.fileno())
+        platform.durable_replace(temporary, runtime_runner)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return runtime_runner
+
+
+def install_runtime(root: Path) -> None:
+    """Refresh Runtime admission without replacing the retained terminal command."""
+    root = Path(root).absolute()
+    publish_runtime_runner(root)
     # Both renderings are useful for packaging/review; only the native one
     # is invoked. They follow current just like the agent launcher below.
     (root / "run.cmd").write_text(
@@ -180,10 +292,15 @@ def install(root: Path) -> tuple[Path, ...]:
         encoding="utf-8", newline="\n",
     )
     runtime_launcher.chmod(0o755)
+
+
+def install(root: Path) -> tuple[Path, ...]:
+    """Write stable launchers after the selected version has identity stamps."""
+    root = Path(root).absolute()
+    install_runtime(root)
     runner = root / "run_astrid.py"
-    # This launcher is rewritten before repair/update, while the selected
-    # version may predate the helper. Embed its authoritative implementation
-    # so the runner also works after a failed update or rollback.
+    # The selected package may predate the process helper. Embed it so the
+    # runner also works after a failed update or rollback.
     process_source = Path(_process.__file__).read_text(encoding="utf-8")
     runner.write_text(process_source + "\n" + _RUNNER, encoding="utf-8", newline="\n")
     if os.name == "nt":
@@ -208,4 +325,3 @@ def install(root: Path) -> tuple[Path, ...]:
     )
     launcher.chmod(0o755)
     return launcher, runner
-

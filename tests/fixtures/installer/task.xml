@@ -1,6 +1,6 @@
 <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
   <RegistrationInfo><Description>Astrid Runtime</Description></RegistrationInfo>
-  <Triggers><LogonTrigger><Enabled>true</Enabled><Repetition><Interval>PT1M</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition><UserId>S-1-5-21-1234</UserId></LogonTrigger><TimeTrigger><Enabled>true</Enabled><StartBoundary>2000-01-01T00:00:00+00:00</StartBoundary><Repetition><Interval>PT1M</Interval><StopAtDurationEnd>false</StopAtDurationEnd></Repetition></TimeTrigger></Triggers>
+  <Triggers><LogonTrigger><Enabled>true</Enabled><UserId>S-1-5-21-1234</UserId></LogonTrigger></Triggers>
   <Principals><Principal id="Owner"><UserId>S-1-5-21-1234</UserId><LogonType>InteractiveToken</LogonType><RunLevel>LeastPrivilege</RunLevel></Principal></Principals>
   <Settings>
     <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
@@ -12,9 +12,208 @@
     <RunOnlyIfIdle>false</RunOnlyIfIdle><WakeToRun>false</WakeToRun><ExecutionTimeLimit>PT0S</ExecutionTimeLimit>
     <RestartOnFailure><Interval>PT1M</Interval><Count>999</Count></RestartOnFailure>
   </Settings>
-  <Actions Context="Owner"><Exec><Command>C:\Astrid\versions\v1\py\Scripts\pythonw.exe</Command><Arguments>-X utf8 -I -c "import json,os,sys
+  <Actions Context="Owner"><Exec><Command>C:\Astrid\versions\v1\py\Scripts\pythonw.exe</Command><Arguments>-X utf8 -I -c "import json,os,re,stat,sys
+from dataclasses import dataclass
 from pathlib import Path
-os.environ.update({'PATH': 'C:\\Astrid\\tools;C:\\Windows\\System32', 'PYTHONUTF8': '1'})
+def linked(path: Path) -&gt; bool:
+    if path.is_symlink():
+        return True
+    try:
+        # Path.is_junction is unavailable on the pinned Python 3.11. This
+        # also rejects other Windows reparse points before recursive copies.
+        attributes = getattr(path.lstat(), \"st_file_attributes\", 0)
+        return bool(attributes &amp; getattr(stat, \"FILE_ATTRIBUTE_REPARSE_POINT\"))
+    except FileNotFoundError:
+        return False
+
+def absolute(value: str | Path) -&gt; Path:
+    path = Path(value).expanduser()
+    if not path.is_absolute():
+        raise ValueError(f\"An absolute path is required: {path}\")
+    path = Path(os.path.abspath(path))
+    for entry in (path, *path.parents):
+        if linked(entry):
+            raise ValueError(f\"Managed paths cannot contain links: {entry}\")
+    return path
+
+def read_json(path: Path) -&gt; dict:
+    if not path.exists():
+        return {}
+    value = json.loads(path.read_text(encoding=\"utf-8\"))
+    if not isinstance(value, dict):
+        raise ValueError(f\"Expected an object in {path}\")
+    return value
+
+def version_id(value: str) -&gt; str:
+    if not re.fullmatch(r\"[A-Za-z0-9][A-Za-z0-9._-]{0,63}\", value):
+        raise ValueError(\"Invalid installation version identifier.\")
+    return value
+
+def install_release(manifest: dict) -&gt; int:
+    \"\"\"Return the validated decimal release from a staged version manifest.\"\"\"
+    release = manifest.get(\"release\", 0)
+    if type(release) is not int or release &lt; 0:
+        raise ValueError(\"The install manifest release must be a nonnegative integer.\")
+    return release
+
+def install_identity(version_root: Path) -&gt; dict:
+    \"\"\"Derive a managed install's identity from its immutable manifest and marker.\"\"\"
+    managed_by = read_json(version_root.parent.parent / \"install.json\").get(\"managed_by\")
+    if managed_by not in {None, \"pinokio\"}:
+        raise ValueError(\"Invalid installation manager in install record.\")
+    return {\"release\": install_release(read_json(version_root / \"manifest.json\")),
+            \"managed_by\": managed_by}
+
+@dataclass(frozen=True)
+class Version:
+    root: Path
+    python: Path
+    profile: Path
+    env: dict[str, str]
+    release: int = 0
+    managed_by: str | None = None
+
+    def __post_init__(self) -&gt; None:
+        if type(self.release) is not int or self.release &lt; 0:
+            raise ValueError(\"The install manifest release must be a nonnegative integer.\")
+        if self.managed_by not in {None, \"pinokio\"}:
+            raise ValueError(\"Invalid installation manager.\")
+        env = dict(self.env)
+        object.__setattr__(self, \"env\", env)
+        env[\"ASTRID_INSTALL_RELEASE\"] = str(self.release)
+        env[\"ASTRID_INSTALL_MANAGED_BY\"] = self.managed_by or \"\"
+
+    def document(self) -&gt; dict:
+        return {\"root\": str(self.root), \"python\": str(self.python),
+                \"profile\": str(self.profile), \"env\": dict(self.env),
+                \"identity\": {\"release\": self.release, \"managed_by\": self.managed_by}}
+
+    @classmethod
+    def load(cls, value: dict) -&gt; \"Version\":
+        python = Path(value[\"python\"])
+        absolute(python.parent)  # POSIX venv interpreters themselves are links.
+        root = absolute(value[\"root\"])
+        # Legacy reconstruction is read-only. Persist only after recovery and
+        # successful stop admission (or a healthy repair requiring no stop).
+        identity = value[\"identity\"] if \"identity\" in value else install_identity(root)
+        if not isinstance(identity, dict):
+            raise ValueError(\"Invalid installation identity in version record.\")
+        release, managed_by = identity.get(\"release\"), identity.get(\"managed_by\")
+        if type(release) is not int or release &lt; 0 or managed_by not in {None, \"pinokio\"}:
+            raise ValueError(\"Invalid installation identity in version record.\")
+        return cls(root, python, absolute(value[\"profile\"]), value[\"env\"], release, managed_by)
+
+def current(root: Path) -&gt; Version | None:
+    pointer = root / \"current\"
+    if not pointer.exists():
+        return None
+    name = version_id(pointer.read_text(encoding=\"utf-8\").strip())
+    record = absolute(root / \"versions\" / name / \"version.json\")
+    # Removal can delete version metadata before a locked pointer is released.
+    # The service's retained selection can still finish uninstalling this root.
+    if not record.exists() and not linked(record):
+        return None
+    version = Version.load(read_json(record))
+    if version.root != root / \"versions\" / name:
+        raise ValueError(\"The current version points outside the managed directory.\")
+    return version
+
+def default_program_root(home: Path, system: str) -&gt; Path:
+    if system == \"win32\":
+        return Path(os.environ.get(\"LOCALAPPDATA\") or home / \"AppData\" / \"Local\") / \"Astrid\"
+    if system == \"linux\":
+        return Path(os.environ.get(\"XDG_DATA_HOME\") or home / \".local\" / \"share\") / \"astrid\"
+    return home / \".local\" / \"share\" / \"astrid\"
+
+def installer_lock_path(home: Path, system: str) -&gt; Path:
+    parent = default_program_root(home, system).parent
+    # The lock must survive removal of program files and workspace data.
+    if system == \"win32\":
+        parent = parent / \"Astrid Installer\"
+    return parent / \"astrid-install.lock\"
+
+def activation_lock_held(root: Path, version: Version) -&gt; bool:
+    \"\"\"Return whether this unfinished update's activation lock is held.\"\"\"
+    from runtime_protocol import platform
+
+    path = (root / \".app-update.lock\" if version.managed_by == \"pinokio\"
+            else installer_lock_path(Path.home(), sys.platform))
+    platform.private_directory(path.parent)
+    with path.open(\"a+b\") as lock:
+        try:
+            platform.lock_file(lock.fileno(), blocking=False)
+        except BlockingIOError:
+            return True
+        platform.unlock_file(lock.fileno())
+    return False
+
+def launch_admission(version: Version, data: Path) -&gt; bool:
+    \"\"\"Validate the selected managed launch; return whether it is activating.
+
+    The pending journal selects a version, never a process or stop authority.
+    This function is also embedded verbatim in the generated command prelude.
+    \"\"\"
+    if version.root.parent.name != \"versions\":
+        return False  # Source checkouts are outside the managed launch contract.
+    root = absolute(version.root.parent.parent)
+    path = absolute(root / \"update-transaction.json\")
+    try:
+        selected = current(root)
+        if selected is None or selected.document() != version.document():
+            raise ValueError(\"The managed launch is not the selected version.\")
+        if not path.exists():
+            return False
+        transaction = read_json(path)
+        if (transaction.get(\"format\") != \"astrid-install-update/v1\"
+                or not isinstance(transaction.get(\"operation_id\"), str)
+                or re.fullmatch(r\"[0-9a-f]{32}\", transaction[\"operation_id\"]) is None
+                or transaction.get(\"transaction_kind\") not in {None, \"app\", \"migration\"}
+                or absolute(transaction[\"data_root\"]) != absolute(data)):
+            raise ValueError(\"Invalid update journal identity.\")
+
+        realm = transaction.get(\"realm\")
+        if (not isinstance(realm, dict) or not isinstance(realm.get(\"realm_id\"), str)
+                or not realm[\"realm_id\"] or absolute(realm[\"realm_root\"]) != Path(realm[\"realm_root\"])):
+            raise ValueError(\"Invalid update workspace identity.\")
+        terminal = transaction.get(\"step\") in {\"complete\", \"rolled_back\"}
+
+        def retained(value):
+            candidate = Version.load(value)
+            folder = absolute(root / \"versions\" / version_id(candidate.root.name))
+            if (candidate.root != folder or not candidate.python.is_absolute()
+                    or not candidate.python.is_relative_to(folder)
+                    or not candidate.profile.is_relative_to(folder)
+                    or (\"identity\" in value and value[\"identity\"] != candidate.document()[\"identity\"])
+                    or any(not isinstance(k, str) or not isinstance(v, str) for k, v in value[\"env\"].items())
+                    or any(str(candidate.document()[key]) != value[key] for key in (\"root\", \"python\", \"profile\"))
+                    or ((not terminal or (folder / \"version.json\").exists())
+                        and Version.load(read_json(absolute(folder / \"version.json\"))).document() != candidate.document())):
+                raise ValueError(\"Invalid managed update version.\")
+            return candidate
+
+        old = retained(transaction[\"old\"])
+        candidate = retained(transaction[\"candidate\"]) if transaction.get(\"candidate\") else None
+        step = transaction.get(\"step\")
+        if step in {\"complete\", \"rolled_back\"}:
+            return False
+        allowed = candidate if step == \"switched\" else old if step == \"rollback_selected\" else None
+        if allowed is None or allowed.document() != version.document():
+            raise ValueError(\"The pending update does not permit this launch.\")
+        if not activation_lock_held(root, version):
+            raise ValueError(\"Choose Update to finish\")
+        return True
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        if str(exc) == \"Choose Update to finish\":
+            raise
+        action = (\"Choose Pinokio's Update button to finish it.\"
+                  if version.managed_by == \"pinokio\" else
+                  \"Run the install line to finish it: curl -fsSL https://astrid.haus/install | sh\"
+                  if os.name != \"nt\" else
+                  \"Run the install line to finish it: irm https://astrid.haus/install.ps1 | iex\")
+        raise ValueError(\"An Astrid update was interrupted; \" + action) from exc
+
+launch_admission(Version.load({'root': 'C:\\Astrid\\versions\\v1', 'python': 'C:\\Astrid\\versions\\v1\\py\\Scripts\\python.exe', 'profile': 'C:\\Astrid\\versions\\v1\\profile.json', 'env': {'ASTRID_INSTALL_MANAGED_BY': '', 'ASTRID_INSTALL_RELEASE': '0', 'PATH': 'C:\\Astrid\\tools;C:\\Windows\\System32', 'PYTHONUTF8': '1'}, 'identity': {'release': 0, 'managed_by': None}}),Path('C:\\Astrid Data'))
+os.environ.update({'ASTRID_INSTALL_MANAGED_BY': '', 'ASTRID_INSTALL_RELEASE': '0', 'PATH': 'C:\\Astrid\\tools;C:\\Windows\\System32', 'PYTHONUTF8': '1'})
 sys.stdout=sys.stderr=open('C:\\Astrid\\logs\\runtime-service.log','a',encoding='utf-8',buffering=1)
 from astrid_runtime.cli import main
 sys.exit(main(['run', '--profile', 'astrid', '--data-root', 'C:\\Astrid Data', '--source-manifest', 'C:\\Astrid\\versions\\v1\\profile.json']))"</Arguments><WorkingDirectory>C:\Astrid\versions\v1</WorkingDirectory></Exec></Actions>

@@ -1920,7 +1920,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:ee8dbd8f18280eb6d990eeae00df4dbde286a69bc7ff4986765cdfbf6c0088c8",
+    "revision": "sha256:0aa49ae7a59548c2ccaa4146007104911915f3ecdad81fa282f08f53b1ae0cde",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -3533,6 +3533,14 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         "type": "boolean"
       },
       {
+        "description": "Internal source frame offset used by a cut sprite piece.",
+        "label": "Frame Offset",
+        "max": 10000000,
+        "min": 0,
+        "name": "frameOffset",
+        "type": "number"
+      },
+      {
         "default": 6,
         "description": "Screen px per art (logical) px.",
         "label": "Scale",
@@ -3601,7 +3609,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:da9e894e6ad65f4503f60a9adf80596ad88ec1436302dcf57783d880496e1966",
+    "revision": "sha256:8177dade80c737bc617f94597cc94b57d936ed6e498245b081c1d55dcde0dafb",
     "runtime": {},
     "schema": {
       "additionalProperties": true,
@@ -3637,6 +3645,12 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
         },
         "flipX": {
           "type": "boolean"
+        },
+        "frameOffset": {
+          "description": "Internal source frame offset used by a cut sprite piece.",
+          "maximum": 10000000,
+          "minimum": 0,
+          "type": "integer"
         },
         "frames": {
           "description": "Horizontal sprite strip. Frames advance at fps, quantised to clip frames.",
@@ -3685,9 +3699,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
               }
             },
             "required": [
-              "frame",
-              "x",
-              "y"
+              "frame"
             ],
             "type": "object"
           },
@@ -3719,6 +3731,24 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
             "bottom"
           ],
           "type": "string"
+        },
+        "sourceClock": {
+          "description": "Internal source frame clock for a sprite cut at a chapter boundary.",
+          "properties": {
+            "offsetFrames": {
+              "minimum": 0,
+              "type": "number"
+            },
+            "speed": {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            }
+          },
+          "required": [
+            "offsetFrames",
+            "speed"
+          ],
+          "type": "object"
         },
         "src": {
           "description": "Static URL or public path. Leave empty and use clip.asset for managed media.",
@@ -4135,7 +4165,7 @@ export const ASTRID_ELEMENT_CATALOG: readonly AstridRenderingElementDescriptor[]
       "preview": "unknown",
       "workerExport": "unknown"
     },
-    "revision": "sha256:75ef63dfb4bbbebaaf36b2e68f9c5b0da0b54d49537820bcaadb11591ffa42fe",
+    "revision": "sha256:91d56d202a6476db4f13aa96448b6250a092925a5e67740b5890c2dc23ef8f91",
     "runtime": {},
     "schema": {
       "additionalProperties": true,

@@ -607,4 +607,3 @@ def test_provider_refuses_stale_same_field_membership_and_order(
     assert error.value.failure["details"]["reason"] == expected_reason
     assert realm.head == head_after_intervening
     assert len(realm.entries) == entries_after_intervening
-

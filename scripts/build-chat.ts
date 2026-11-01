@@ -16,4 +16,3 @@ if (process.argv.includes('--check')) {
 } else {
   writeFileSync(output, bytes);
 }
-

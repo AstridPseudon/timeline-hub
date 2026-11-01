@@ -1209,4 +1209,3 @@ def test_e14_unknown_commit_reopens_and_retries_the_exact_request(editing_case, 
     undone = reopened.undo(publications=[retried["receipt"]["receipt_id"]])
     assert undone["data"]["canonical_document"] == before
     assert len(_history(client, project)) == len(history_before) + 2
-

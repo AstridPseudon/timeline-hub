@@ -11,4 +11,3 @@ export function isPathWithin(root: string, candidate: string, paths: PathApi = p
   const child = paths.relative(root, candidate);
   return child === '' || (!paths.isAbsolute(child) && child !== '..' && !/^\.\.[/\\]/.test(child));
 }
-

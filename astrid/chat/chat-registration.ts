@@ -36,4 +36,3 @@ export function removeChatRegistration(path: string, owned: (value: ReturnType<t
   try { current = JSON.parse(readFileSync(path, 'utf8')); } catch { return; }
   if (owned(current)) rmSync(path, { force: true });
 }
-

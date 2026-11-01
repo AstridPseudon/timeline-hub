@@ -66,4 +66,3 @@ export class AgentModelState {
     } finally { rmSync(temporary, { force: true }); }
   }
 }
-

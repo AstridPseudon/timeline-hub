@@ -2,6 +2,7 @@
 
 import hashlib
 import json
+import shutil
 from pathlib import Path
 
 import jsonschema
@@ -20,6 +21,7 @@ def test_staged_canonical_schema_reaches_strict_consumer(tmp_path, monkeypatch):
     # Acquisition, installation and native tools are outside this finite test.
     # Keep stage, source-host provisioning and the schema readers real.
     backend = Backend(tmp_path / "program", tmp_path / "log", tmp_path / "uv")
+    backend.uv.touch()
 
     def source(name, _sha, destination, **_kwargs):
         destination.mkdir(parents=True)
@@ -45,6 +47,16 @@ def test_staged_canonical_schema_reaches_strict_consumer(tmp_path, monkeypatch):
             (cwd / "node_modules").mkdir()
         return "uv 1.0.0"
 
+    def installed_root(python, _env):
+        product = python.parent.parent / "lib/site-packages"
+        source = python.parent.parent.parent / "a"
+        for relative in (SCHEMA, *_local_schema.READER_INPUTS):
+            target = product / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source / relative, target)
+        return product
+
+    monkeypatch.setattr(backend, "_installed_product_root", installed_root)
     monkeypatch.setattr(backend, "run", run)
     version = backend.stage({
         "agent": {"sha": "a" * 40}, "runtime": {"sha": "b" * 40},
@@ -52,20 +64,16 @@ def test_staged_canonical_schema_reaches_strict_consumer(tmp_path, monkeypatch):
     }, backend.root, tmp_path / "data")
     agent = version.root / "a"
     assert hashlib.sha256((agent / SCHEMA).read_bytes()).hexdigest() == (
-        "4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+        "f870150ffd0e42365c048965e2f7c08efc959c36db76ed4cba59de2e58ab4e08"
     )
 
-    # Use the existing local reader on the staged contract, including role.
+    # Use the exact producer contract, including source-role admission.
     monkeypatch.setattr(banodoco_schema, "_VENDORED_SCHEMA", agent / SCHEMA)
-    banodoco_schema.load_vendored_timeline_schema.cache_clear()
-    try:
-        contract = banodoco_schema.load_vendored_timeline_schema()
-        jsonschema.validate({"tracks": [{"id": "source", "kind": "visual",
-                                        "label": "Source", "role": "source"}], "clips": []}, contract)
-        with pytest.raises(jsonschema.ValidationError):
-            jsonschema.validate({"tracks": [], "clips": "invalid"}, contract)
-    finally:
-        banodoco_schema.load_vendored_timeline_schema.cache_clear()
+    contract = banodoco_schema.load_vendored_timeline_schema()
+    jsonschema.validate({"tracks": [{"id": "source", "kind": "visual",
+                                    "label": "Source", "role": "source"}], "clips": []}, contract)
+    with pytest.raises(jsonschema.ValidationError):
+        jsonschema.validate({"tracks": [], "clips": "invalid"}, contract)
 
     # This source-profile caller reaches the actual provisioner. It does not
     # stand in for D67's isolated installed-origin probe or qualify a host.
@@ -85,7 +93,7 @@ def test_staged_canonical_schema_reaches_strict_consumer(tmp_path, monkeypatch):
     # A verified schema alone must never report runtime readiness.
     monkeypatch.setattr(remotion_runtime, "REPO_ROOT", agent)
     monkeypatch.setattr(remotion_runtime, "remotion_install_problem", lambda _project: None)
-    monkeypatch.setattr(remotion_runtime, "resolve_remotion_runtime_tools", lambda *_args:
+    monkeypatch.setattr(remotion_runtime, "resolve_remotion_runtime_tools", lambda *_args, **_kwargs:
                         (None, "explicit owned validation still required"))
     monkeypatch.setenv("ASTRID_REMOTION_PROJECT_DIR", environment["ASTRID_REMOTION_PROJECT_DIR"])
     status = remotion_runtime.remotion_runtime_status(require_explicit_project=True)
@@ -98,5 +106,6 @@ def test_staged_canonical_schema_reaches_strict_consumer(tmp_path, monkeypatch):
     assert status.reason == "explicit owned validation still required"
 
     profile = json.loads(version.profile.read_text())
-    assert profile["source_checkout"] == str(agent)
+    assert profile["source_checkout"] == str(installed_root(version.python, version.env))
+    assert version.env["ASTRID_TIMELINE_SCHEMA_PYTHONPATH"] == str(Path(profile["source_checkout"]) / SCHEMA)
     assert profile["runtime_checkout"] == str(version.root / "r")

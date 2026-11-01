@@ -22,7 +22,16 @@ def test_optional_remotion_failure_does_not_block_staging(tmp_path, monkeypatch,
     messages = []
     calls = []
     backend = Backend(tmp_path / "program", tmp_path / "install.log", tmp_path / "uv", say=messages.append)
+    backend.uv.touch()
     monkeypatch.setattr(backend, "existing", lambda _data: None)
+    def installed_root(python, _env):
+        root = python.parent / "Lib/site-packages"
+        schema = root / "astrid/core/timeline/schema/timeline-config.schema.json"
+        schema.parent.mkdir(parents=True, exist_ok=True)
+        schema.write_bytes((ROOT / "astrid/core/timeline/schema/timeline-config.schema.json").read_bytes())
+        return root
+
+    monkeypatch.setattr(backend, "_installed_product_root", installed_root)
 
     def source(_name, _sha, destination, **_kwargs):
         destination.mkdir(parents=True)
@@ -120,7 +129,16 @@ def test_staging_verifies_the_local_schema_before_declaring_services(tmp_path, m
 
     calls = []
     backend = Backend(tmp_path / "program", tmp_path / "install.log", tmp_path / "uv")
+    backend.uv.touch()
     monkeypatch.setattr(backend, "existing", lambda _data: None)
+    def installed_root(python, _env):
+        root = python.parent / "Lib/site-packages"
+        schema = root / "astrid/core/timeline/schema/timeline-config.schema.json"
+        schema.parent.mkdir(parents=True, exist_ok=True)
+        schema.write_bytes((ROOT / "astrid/core/timeline/schema/timeline-config.schema.json").read_bytes())
+        return root
+
+    monkeypatch.setattr(backend, "_installed_product_root", installed_root)
 
     def source(_name, _sha, destination, **_kwargs):
         destination.mkdir(parents=True)
@@ -163,6 +181,7 @@ def test_staging_verifies_the_local_schema_before_declaring_services(tmp_path, m
     declarations = []
 
     def declare(*, folder, agent, **_kwargs):
+        assert agent == folder / "py" / "bin" / "Lib" / "site-packages"
         schema = agent / "astrid/core/timeline/schema/timeline-config.schema.json"
         assert schema.is_file()
         calls.append(["declare-services"])
@@ -196,7 +215,8 @@ def test_staging_verifies_the_local_schema_before_declaring_services(tmp_path, m
     ]
     assert len(python_installs) == 2
     assert npm_index < calls.index(["declare-services"])
-    assert schema_path.endswith("/a/astrid/core/timeline/schema/timeline-config.schema.json")
+    assert schema_path == version.env["ASTRID_TIMELINE_SCHEMA_PYTHONPATH"]
+    assert schema_path.endswith("/site-packages/astrid/core/timeline/schema/timeline-config.schema.json")
     assert version.profile.is_file()
 
 
@@ -216,6 +236,7 @@ def test_staging_rejects_missing_local_schema_before_environment_setup(tmp_path,
 
     calls = []
     backend = Backend(tmp_path / "program", tmp_path / "install.log", tmp_path / "uv")
+    backend.uv.touch()
 
     def source(_name, _sha, destination, **_kwargs):
         destination.mkdir(parents=True)
@@ -295,7 +316,7 @@ def test_d72_runtime_and_composition_pins_have_no_obsolete_externals():
     assert schema_pin["from"] == "contract/schemas/timeline-config.schema.json"
     assert schema_pin["sha256"] == "sha256:" + hashlib.sha256(canonical_schema.read_bytes()).hexdigest()
     assert schema_pin["sha256"] == (
-        "sha256:4d74a4ae34fcfa89ce66e4ccad90a3871a3ef9d3adb26c9219ae7dec72deb3bd"
+        "sha256:f870150ffd0e42365c048965e2f7c08efc959c36db76ed4cba59de2e58ab4e08"
     )
 
     assert not _contains_obsolete_external(package)

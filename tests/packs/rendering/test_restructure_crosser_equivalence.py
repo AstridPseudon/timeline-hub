@@ -219,4 +219,3 @@ def test_differences_rejects_a_broken_old_piece_group(monkeypatch):
     # Removing one marker prevents the comparator from rejoining a malformed group.
     del pieces[1]["app"]["astrid"]["timeline_restructure_piece"]
     assert differences(flat, old_split)
-

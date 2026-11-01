@@ -1298,3 +1298,71 @@ def test_friendly_duplicate_retry_after_lost_ack_reuses_destination_and_copy(sav
         item['publication_id'] for item in history if item['intent'] != 'bootstrap'
     )
     assert document('t') == original
+
+
+# Parent coverage retained during the Release-1 + Timeline merge.
+def test_split_stores_chapters_as_shots_and_music_and_crossers_on_the_film():
+    stored = split(flat_film())
+    assert [(r["placement"]["start_ms"], r["duration_ms"]) for r in stored["placements"]] == [(0, 4000), (4000, 4000), (8000, 4000)]
+    shots = [stored["shots"][r["shot_id"]] for r in stored["placements"]]
+    assert [s["payload"]["name"] for s in shots] == ["01 ONE", "02 TWO", "03 THREE"]
+    assert clip_ids(shots[0]) == {"p1", _stable_id("chapter-piece", "t", "cross", "01 ONE", 0, 0)}
+    assert clip_ids(shots[1]) == {
+        "p2", "inside", "vo2", _stable_id("chapter-piece", "t", "cross", "02 TWO", 4000, 1),
+    }
+    assert clip_ids(shots[2]) == {"p3", "late"}
+    assert {c["id"] for c in stored["parent"]["clips"]} == {"bed"}
+    assert "clips" not in stored["parent"]["config"]  # one list only (Runtime 409s on two differing lists)
+    assert stored["parent"]["config"]["tracks"][0]["id"] == "picture"
+    assert [t["id"] for t in stored["parent"]["config"]["tracks"]] == ["picture", "type", "sprite", "plate", "vo", "music"]
+    inside = next(c for c in shots[1]["internal_timeline"]["clips"] if c["id"] == "inside")
+    assert inside["at"] == pytest.approx(1.0)  # chapter-relative
+    assert set(stored["parent"]["registry"]["assets"]) == {"Q"}
+    assert set(shots[1]["internal_timeline"]["registry"]["assets"]) == {"P", "R", "U"}
+    assert STRUCTURE_KEY not in stored
+
+def test_restructure_refuses_what_would_change_the_render():
+    flat = flat_film()
+    good = split(flat)
+    assert_equivalent(flat, good)
+    bad = copy.deepcopy(good)
+    next(c for c in bad["parent"]["clips"] if c["id"] == "bed")["volume"] = 0.25
+    with pytest.raises(TimelineEditError, match="refused"):
+        assert_equivalent(flat, bad)
+    short = copy.deepcopy(good)
+    short["parent"]["config"]["tracks"] = [t for t in short["parent"]["config"]["tracks"] if t["id"] != "picture"]
+    assert any("track order" in line for line in differences(flat, short))
+    moved = copy.deepcopy(good)
+    cross_piece = next(
+        c
+        for shot in moved["shots"].values()
+        for c in shot["internal_timeline"]["clips"]
+        if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id")
+        == "cross"
+    )
+    cross_piece["at"] += 0.1
+    assert differences(flat, moved)
+
+def test_split_routes_a_new_clip_by_placement_and_a_wall_crosser_to_the_film():
+    stored = published(split(flat_film()))
+    tl = Checkout(stored)
+    doc = tl.bundle
+    clips = doc["shots"][doc["placements"][0]["shot_id"]]["internal_timeline"]["clips"]
+    clips.append({"id": "added", "clipType": "am-type", "track": "type", "at": 5.2, "hold": 1.0, "params": {"text": "x"}})
+    clips.append({"id": "wide", "clipType": "am-sprite", "track": "sprite", "asset": "R", "at": 7.5, "hold": 1.0, "params": {}})
+    out = split(doc)
+    held = {out["shots"][r["shot_id"]]["payload"]["name"]: {c["id"] for c in out["shots"][r["shot_id"]]["internal_timeline"]["clips"]}
+            for r in out["placements"]}
+    assert "added" in held["02 TWO"]
+    wide_pieces = [
+        c
+        for shot in out["shots"].values()
+        for c in shot["internal_timeline"]["clips"]
+        if c.get("app", {}).get("astrid", {}).get("timeline_restructure_piece", {}).get("id")
+        == "wide"
+    ]
+    assert len(wide_pieces) == 2
+    assert [c["app"]["astrid"]["timeline_restructure_piece"]["index"] for c in wide_pieces] == [0, 1]
+    assert wide_pieces[0]["id"] == _stable_id("chapter-piece", "t", "wide", "02 TWO", 4000, 0)
+    assert "wide" not in {c["id"] for c in out["parent"]["clips"]}
+    assert intent.film_chapter_labels(out) == []

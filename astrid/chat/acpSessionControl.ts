@@ -7,4 +7,3 @@ export type AcpSessionControl = {
 
 export const ACP_SESSION_CONTROL_UPDATE = 'astrid_session_control';
 export const ACP_SESSION_CONTROL_FIELD = '_astridSession';
-

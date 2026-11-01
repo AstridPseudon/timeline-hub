@@ -70,4 +70,3 @@ EditCommand schema is byte-unchanged from `df2739f9`: `astrid/core/timeline/sche
 Ten compact fixtures, current → after: **917,833 → 740,101 bytes** (-177,732) and **32,338 → 25,775 lines** (-6,563).
 
 All twelve changed fixtures, current → after: **1,018,059 → 857,785 bytes** (-160,274) and **36,275 → 30,546 lines** (-5,729).
-

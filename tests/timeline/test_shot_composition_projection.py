@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+
+
 import copy
 import json
 from pathlib import Path
@@ -296,3 +298,15 @@ def test_projection_caps_visible_time_without_applying_speed_twice_or_mutating_s
     assert clip_timeline_duration(clip) == pytest.approx(occurrence_duration)
     assert timeline["clips"][0]["hold"] == source_hold
     assert timeline["clips"][0]["speed"] == speed
+
+
+# Parent coverage retained during the Release-1 + Timeline merge.
+def test_shot_only_layer_merge_matches_chapter_render_order_and_keeps_properties():
+    from astrid.core.timeline.shot_composition_projection import _track_merge
+
+    fixture = json.loads(ORDER_FIXTURE.read_text(encoding="utf-8"))
+    config = {"tracks": copy.deepcopy(fixture["film_tracks"])}
+    shot_tracks = fixture["shot_tracks"]
+    _track_merge(config, {"tracks": shot_tracks})
+    assert [track["id"] for track in config["tracks"]] == fixture["expected_order"]
+    assert config["tracks"][3] == shot_tracks[2]

@@ -227,4 +227,3 @@ def test_sprite_lengths_and_frame_zero_keys_round_trip_at_speed(length):
     restored = next(clip for shot in back["shots"].values()
                     for clip in shot["internal_timeline"]["clips"] if clip["id"] == "length-shape")
     assert restored == original
-

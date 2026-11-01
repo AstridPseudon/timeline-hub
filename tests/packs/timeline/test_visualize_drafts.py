@@ -343,3 +343,22 @@ def test_compare_published_without_a_working_copy_still_says_so(no_draft, capsys
     client = FakeClient()
     _visualize(["--compare", "published"], client)
     assert "no working copy: nothing to compare" in capsys.readouterr().out
+
+
+# Parent coverage retained during the Release-1 + Timeline merge.
+def test_visualize_reads_the_working_copy_with_banner_and_changed_cuts(draft, capsys, monkeypatch):
+    import astrid.core.timeline.authoring_bundle as ab
+
+    monkeypatch.setattr(ab, "preview_authoring_candidate", lambda doc: {"kind": "authoring-candidate-preview", "candidate": doc})
+    client = FakeClient()
+    code = _visualize([], client)
+    out = capsys.readouterr().out
+    assert code == 0
+    assert out.splitlines()[0] == (
+        "WORKING COPY · 3 clips changed vs published rev-publ · --published for the live version"
+    )
+    assert out.splitlines()[1].startswith("showing the 3 cuts you changed (12, 13, 22) · --every-cut for all cuts")
+    assert "[✎ c12, c13, c22]" in out.splitlines()[1]
+    options = client.timelines.visualize_calls[0]["options"]
+    assert options["authoring_preview"]["kind"] == "authoring-candidate-preview"  # frames come from the working copy
+    assert options["cuts"] == "12,13,22" and options["view"] == "contact"

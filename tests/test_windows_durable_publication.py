@@ -192,4 +192,3 @@ def test_acquired_model_uses_windows_durable_publication(tmp_path, windows_files
     assert len(windows_filesystem.calls) == 3  # staging retry, final artifact publication
     assert not windows_filesystem.directories
     assert list((tmp_path / "executor" / "tmp").iterdir()) == []
-

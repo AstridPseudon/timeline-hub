@@ -68,4 +68,3 @@ export async function runChatService(env = process.env, createServer = createAst
 }
 
 if (import.meta.main) await runChatService();
-

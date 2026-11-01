@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+
+
 import copy
 import hashlib
 import json
@@ -1883,3 +1885,31 @@ def test_d66_upstream_frozen_render_restart_then_approval_promotion_is_single_ge
         assert len(writer.calls) == 1
     finally:
         service.close()
+
+
+# Parent coverage retained during the Release-1 + Timeline merge.
+def test_approval_is_bound_to_candidate_and_base_revision():
+    from astrid.core.timeline.authoring_bundle import promote_approved_authoring_candidate
+
+    parent, shots, timelines = _closure(shared=True)
+    candidate = open_authoring_bundle(
+        parent, shot_revisions=shots, internal_timeline_revisions=timelines
+    )
+    approval = approve_authoring_candidate(
+        candidate, approver="editor-1", approval_id="approval-1"
+    )
+    writer = _Writer()
+
+    changed = copy.deepcopy(candidate)
+    changed["parent"]["config"]["approved-edit"] = True
+    with pytest.raises(AuthoringBundleError, match="stale or does not match"):
+        promote_approved_authoring_candidate(
+            changed, approval, writer, idempotency_key="promote-1"
+        )
+    assert writer.calls == []
+
+    promoted = promote_approved_authoring_candidate(
+        candidate, approval, writer, idempotency_key="promote-1"
+    )
+    assert promoted["approval"]["approval_id"] == "approval-1"
+    assert len(writer.calls) == 1

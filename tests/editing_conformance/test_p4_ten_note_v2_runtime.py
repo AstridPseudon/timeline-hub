@@ -453,4 +453,3 @@ def test_http_ten_note_commit_per_step_inverse_and_redo(runtime, tmp_path, capsy
         redone = bundle_from_document(redo["data"]["canonical_document"])
         assert _note_values(redone) == {item["id"]: item["text"] for item in _notes()}
         assert _without_notes(redone) == _without_notes(original)
-

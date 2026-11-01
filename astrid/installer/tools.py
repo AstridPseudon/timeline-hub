@@ -58,6 +58,9 @@ def omp_source_url(repo: str, sha: str) -> str | None:
 def validate_manifest(value: dict) -> dict:
     if value.get("schema_version") != 1:
         raise ValueError("Unsupported install manifest.")
+    release = value.get("release", 0)
+    if type(release) is not int or release < 0:
+        raise ValueError("The install manifest release must be a nonnegative integer.")
     sources = ("agent", "runtime") + (("vibecomfy",) if "vibecomfy" in value else ())
     for name in sources:
         pin = value[name]
@@ -517,4 +520,3 @@ def install_tools(manifest: dict, root: Path, target: str, run) -> dict[str, str
     if any(not launcher.resolve().is_relative_to(omp.resolve()) for launcher in launchers):
         raise ValueError("The OMP launcher escapes its owned installation prefix.")
     return env
-
