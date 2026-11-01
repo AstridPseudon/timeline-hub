@@ -14,7 +14,8 @@ for spec in A:A-zoom:agent:tl/zoom-integration B:B-shotlayer:agent:tl/shotlayer-
   ls $O/queue/pending/lead-$X-r* >/dev/null 2>&1 && continue
   le=$(date -d "$(cat $D/ended)" +%s); go=0
   # 27 Oct 12:10Z (owner: as efficient as possible): H, D and P managers run continuously: a new round starts as soon as the last one ends, until the stage writes PHASE/PROJECT ... DONE
-  case $X in H|D|P|U|R|T|M) grep -qE "^(- )?(PHASE|PROJECT) [HDPURTM] DONE" $L/$P/STATUS.md 2>/dev/null || go=1;; esac
+  # 1 Nov 00:10Z: a WAITING file (only external inputs remain) turns off the continuous restart; a new worker end, a main note or 55 min still start a round
+  case $X in H|D|P|U|R|T|M) [ -f $L/$P/WAITING ] || grep -qE "^(- )?(PHASE|PROJECT) [HDPURTM] DONE" $L/$P/STATUS.md 2>/dev/null || go=1;; esac
   for e in $O/workers/$X-*/ended; do [ -f "$e" ] && [ $(date -d "$(cat $e)" +%s) -gt $le ] && { go=1; break; }; done
   [ $(( $(date +%s) - le )) -gt 3300 ] && go=1
   # 27 Oct 05:15Z: a new main note (STATUS.md changed over a minute after the round ended) also starts the next round
