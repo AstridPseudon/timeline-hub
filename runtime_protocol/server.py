@@ -13,7 +13,7 @@ from socketserver import TCPServer
 from urllib.parse import parse_qs, quote, unquote, urlsplit
 
 from .errors import RuntimeErrorBase, AuthorizationError, BodyTooLargeError, ConflictError, ForbiddenError, NotFoundError, ProtocolError, InvalidRequestError, RetiredRouteError
-from .service import validate_idempotency_key
+from .service import reject_retired_timeline_writer, validate_idempotency_key
 from .cas import IO_CHUNK_BYTES
 
 
@@ -728,7 +728,9 @@ class RuntimeHandler(BaseHTTPRequestHandler):
             self.runtime._require_timeline_command()
         if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "composition-revisions" and method == "POST":
             self._identity("projects:write")
-            self.runtime._require_timeline_command()
+            # Retire at the HTTP boundary so no compatibility dispatch can
+            # reach a Runtime publication implementation.
+            reject_retired_timeline_writer()
         if len(path) == 6 and path[:2] == ["v1", "projects"] and path[3] == "timelines" and path[5] == "composition-revisions" and method == "GET":
             self._identity("projects:read")
             query = parse_qs(urlsplit(self.path).query)
@@ -1169,12 +1171,16 @@ class RuntimeHandler(BaseHTTPRequestHandler):
                     task_id, self._body(), idempotency_key=key, identity=identity
                 )
                 return self._send(200, value)
-            self._identity("tasks:write")
             if method == "POST" and action == "cancel":
+                body = self._body()
+                fenced = isinstance(body, dict) and bool(set(body) & {
+                    "attempt_id", "lease_id", "fence", "runtime_epoch", "outputs", "result", "stop_observed"})
+                identity = self._identity("worker:execute" if fenced else "tasks:write")
                 key = self._idempotency_key()
-                value = self.runtime.cancel_task_canonical(task_id, self._body(), idempotency_key=key)
+                value = self.runtime.cancel_task_canonical(task_id, body, idempotency_key=key, identity=identity)
                 task = self.runtime.store.get_task(task_id)
                 return self._send(200, value)
+            self._identity("tasks:write")
             if method == "POST" and action == "retry":
                 key = self._idempotency_key()
                 value = self.runtime.retry_task(task_id, self._body(), idempotency_key=key)
