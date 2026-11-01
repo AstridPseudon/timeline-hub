@@ -260,6 +260,8 @@ def test_linux_proc_identity_parser_uses_stat_and_brackets_start_tick(monkeypatc
         def __truediv__(self, part):
             return FakePath(self.value.rstrip("/") + "/" + str(part))
         def read_text(self):
+            if self.value.endswith("boot_id"):
+                return "test-boot"
             reads.append(self.value)
             if self.value == "/proc/sys/kernel/random/boot_id":
                 return "b38142f7-84c5-487d-95a4-8180cbff3972\n"
@@ -267,7 +269,7 @@ def test_linux_proc_identity_parser_uses_stat_and_brackets_start_tick(monkeypatc
             fields = ["S", "23", "24", "25"] + ["0"] * 15 + [tick, "0"]
             return "77 (worker ) with parens) " + " ".join(fields)
         def stat(self):
-            return SimpleNamespace(st_uid=501)
+            return SimpleNamespace(st_uid=501, st_ino=1234)
 
     monkeypatch.setattr(platform, "Path", FakePath)
     value = platform.process_identity(77)
@@ -276,8 +278,8 @@ def test_linux_proc_identity_parser_uses_stat_and_brackets_start_tick(monkeypatc
     assert value["parent_pid"] == 23
     assert value["process_group"] == 24
     assert value["session_id"] == 25
-    assert value["birth_id"] == "b38142f7-84c5-487d-95a4-8180cbff3972:4242"
-    assert reads == ["/proc/sys/kernel/random/boot_id", "/proc/77/stat", "/proc/77/stat"]
+    assert value["birth_id"] == "proc-start-ticks:4242;boot:test-boot;pidns:1234"
+    assert len(reads) == 2
 
 
 def test_linux_proc_identity_rejects_pid_reuse_during_observation(monkeypatch):
@@ -288,11 +290,11 @@ def test_linux_proc_identity_rejects_pid_reuse_during_observation(monkeypatch):
         def __init__(self, value): self.value = str(value)
         def __truediv__(self, part): return FakePath(self.value.rstrip("/") + "/" + str(part))
         def read_text(self):
-            if self.value == "/proc/sys/kernel/random/boot_id":
-                return "b38142f7-84c5-487d-95a4-8180cbff3972\n"
+            if self.value.endswith("boot_id"):
+                return "test-boot"
             fields = ["S", "23", "24", "25"] + ["0"] * 15 + [next(ticks), "0"]
             return "77 (worker) " + " ".join(fields)
-        def stat(self): return SimpleNamespace(st_uid=501)
+        def stat(self): return SimpleNamespace(st_uid=501, st_ino=1234)
 
     monkeypatch.setattr(platform, "Path", FakePath)
     with pytest.raises(OSError, match="changed"):
@@ -313,8 +315,12 @@ def test_linux_proc_identity_refuses_unknown_boot_or_start_tick(tmp_path, monkey
     if boot_id is not None:
         boot.write_text(boot_id)
     monkeypatch.setattr(platform, "Path", lambda path: boot if str(path).endswith("boot_id") else proc)
-    with pytest.raises(OSError):
-        platform.process_identity(77)
+    if tick == "corrupt":
+        with pytest.raises(OSError):
+            platform.process_identity(77)
+    else:
+        identity = platform.process_identity(77)
+        assert platform.process_birth_matches(identity["birth_id"], identity["birth_id"]) is None
 
 
 @pytest.mark.parametrize("birth_id", [
@@ -424,9 +430,9 @@ def _wait_absent(pid):
 
 def test_windows_service_stop_uses_stdin_eof_then_job_cleanup(monkeypatch):
     monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
-    job = SimpleNamespace(close=Mock())
+    job = SimpleNamespace(handle=1, close=Mock(), active_processes=lambda: 0)
     channel = Mock()
-    process = SimpleNamespace(pid=1234, stdin=channel, _runtime_job=job,
+    process = SimpleNamespace(pid=1234, args=["service"], stdin=channel, _runtime_job=job,
         poll=Mock(return_value=None),
         wait=Mock(side_effect=[subprocess.TimeoutExpired("service", 1), None]))
     events = []
@@ -604,3 +610,66 @@ def test_windows_tree_drained_preserves_query_errors(monkeypatch):
     with pytest.raises(OSError, match="query failed"):
         platform.tree_drained(SimpleNamespace(_runtime_job=job))
     assert job.handle == 77
+
+
+@pytest.mark.parametrize("expected,actual,result", [
+    ("b38142f7-84c5-487d-95a4-8180cbff3972:42", "b38142f7-84c5-487d-95a4-8180cbff3972:42", None),
+    ("b38142f7-84c5-487d-95a4-8180cbff3972:42", "de2e05aa-6956-451e-9dd9-521955212d27:42", None),
+    ("proc-start-ticks:42;boot:a", "proc-start-ticks:43;boot:a", None),
+    ("proc-start-ticks:1", "proc-start-ticks:1;boot:a;pidns:2", None),
+    ("proc-start-ticks:1", "proc-start-ticks:2;boot:a;pidns:2", None),
+    ("proc-start-ticks:1;boot:a;pidns:2", "proc-start-ticks:1;boot:b;pidns:2", False),
+    ("proc-start-ticks:1;boot:a;pidns:2", "proc-start-ticks:1;boot:a;pidns:3", None),
+    ("proc-start-ticks:1;boot:a;pidns:2", "proc-start-ticks:1", None),
+    ("proc-start-ticks:1;boot:a;pidns:2", "proc-start-ticks:1;pidns:2", None),
+    ("proc-start-ticks:1;boot:a;pidns:2", "proc-start-ticks:1;pidns:3", None),
+    ("proc-start-ticks:1;boot:a;pidns:2", "proc-start-ticks:2", None),
+    ("proc-start-ticks:1;boot:a;pidns:2", "proc-start-ticks:1;boot:a;pidns:2", True),
+])
+def test_process_birth_comparison_handles_reboot_namespace_and_legacy(expected, actual, result):
+    assert platform.process_birth_matches(expected, actual) is result
+
+
+def test_linux_identity_includes_incarnation_scope():
+    if sys.platform != "linux":
+        return  # Linux-specific fields; generic native identity is tested above.
+    identity = platform.process_identity(os.getpid())
+    assert ";boot:" in identity["birth_id"]
+    assert f";pidns:{Path('/proc/self/ns/pid').stat().st_ino}" in identity["birth_id"]
+
+
+@pytest.mark.parametrize("unavailable", ["boot", "namespace", "both"])
+def test_linux_identity_keeps_working_when_optional_scope_is_denied(monkeypatch, unavailable):
+    if sys.platform != "linux":
+        return
+    real_read = Path.read_text
+    real_stat = Path.stat
+
+    def read(path, *args, **kwargs):
+        if path.name == "boot_id" and unavailable in {"boot", "both"}:
+            raise PermissionError("restricted proc mount")
+        return real_read(path, *args, **kwargs)
+
+    def stat(path, *args, **kwargs):
+        if str(path).endswith("/ns/pid") and unavailable in {"namespace", "both"}:
+            raise PermissionError("restricted proc mount")
+        return real_stat(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", read)
+    monkeypatch.setattr(Path, "stat", stat)
+    identity = platform.process_identity(os.getpid())
+    assert identity is not None
+    assert (";boot:" in identity["birth_id"]) is (unavailable == "namespace")
+    assert (";pidns:" in identity["birth_id"]) is (unavailable == "boot")
+
+
+@pytest.mark.parametrize("expected,actual,result", [
+    ("b38142f7-84c5-487d-95a4-8180cbff3972:42", "proc-start-ticks:42;boot:b38142f7-84c5-487d-95a4-8180cbff3972;pidns:7", None),
+    ("b38142f7-84c5-487d-95a4-8180cbff3972:42", "proc-start-ticks:43;boot:b38142f7-84c5-487d-95a4-8180cbff3972;pidns:7", None),
+    ("b38142f7-84c5-487d-95a4-8180cbff3972:42", "proc-start-ticks:42;pidns:7", None),
+    ("proc-start-ticks:42;boot:b38142f7-84c5-487d-95a4-8180cbff3972;pidns:7", "b38142f7-84c5-487d-95a4-8180cbff3972:42", None),
+    ("proc-start-ticks:42;boot:a;pidns:7", "proc-start-ticks:42;boot:a;pidns:8", None),
+    ("proc-start-ticks:bad", "proc-start-ticks:bad", None),
+])
+def test_cross_format_birth_comparison_is_conservative(expected, actual, result):
+    assert platform.process_birth_matches(expected, actual) is result

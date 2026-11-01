@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import json
+import os
 import sqlite3
+import sys
 import threading
+import time
 
 import pytest
 from http_helpers import Api
@@ -10,6 +14,7 @@ from astrid_runtime.runtime_boundary import LocalRuntimeBoundary
 from runtime_protocol.daemon import RuntimeDaemon
 from runtime_protocol.errors import ConflictError, RealmAdmissionError
 from runtime_protocol.lifecycle import inspect_interruption_state, interruption_fence
+from runtime_protocol.services import ServiceConfiguration, ServiceSpec
 from runtime_protocol.store import RealmStore
 
 
@@ -63,7 +68,7 @@ def test_unsettled_attempt_blocks_even_when_expired_or_uncertain(
     report = inspect_interruption_state(root)
     assert report["safe"] is False
     assert report["unreconciled_attempts"][0]["lease_expired"] is expected_expired
-    with pytest.raises(ConflictError, match="active or unreconciled"):
+    with pytest.raises(ConflictError, match="Astrid is busy"):
         with interruption_fence(root):
             pass
 
@@ -107,7 +112,7 @@ def test_interruption_fence_serializes_with_admission_and_claim_writes(tmp_path)
         contender.close()
 
 
-def test_interruption_fence_keeps_http_owner_identity_reachable_during_claim(tmp_path):
+def test_interruption_fence_keeps_http_owner_identity_reachable_during_claim(tmp_path, monkeypatch):
     root = tmp_path / "realm"
     RealmStore.initialize(root).close()
     daemon = RuntimeDaemon(root, support_root=tmp_path / "support").start()
@@ -117,10 +122,19 @@ def test_interruption_fence_keeps_http_owner_identity_reachable_during_claim(tmp
     restricted_token, _ = daemon.credentials.provision("restricted", ["handshake"])
     claim_started = threading.Event()
     claim_done = threading.Event()
+    maintenance_started = threading.Event()
     results, failures = [], []
 
+    reap = service.reap_task_lifetimes
+
+    def observed_reap():
+        maintenance_started.set()
+        return reap()
+
+    monkeypatch.setattr(service, "reap_task_lifetimes", observed_reap)
+
     def trace(statement):
-        if statement == "BEGIN IMMEDIATE":
+        if statement == "BEGIN IMMEDIATE" and threading.current_thread().name == "claim-during-stop":
             claim_started.set()
 
     service.store.conn.set_trace_callback(trace)
@@ -140,8 +154,13 @@ def test_interruption_fence_keeps_http_owner_identity_reachable_during_claim(tmp
     try:
         with interruption_fence(root) as report:
             assert report["safe"] is True
-            worker.start()
-            assert claim_started.wait(2), "claim did not reach the SQLite write fence"
+            with daemon.httpd._maintenance_lock:
+                worker.start()
+                assert claim_started.wait(2), "claim did not reach the SQLite write fence"
+                maintenance_started.clear()
+            # Wait for the serving loop's poll while the claim owns the store
+            # mutex and waits on SQLite. Identity must remain reachable then.
+            assert maintenance_started.wait(2), "periodic maintenance did not start"
             metadata = LocalRuntimeBoundary().endpoint_metadata(
                 endpoint=daemon.endpoint, credential_file=daemon.credential_path,
             )

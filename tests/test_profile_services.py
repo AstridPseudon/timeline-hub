@@ -24,6 +24,7 @@ from runtime_protocol.errors import ValidationError
 from runtime_protocol.logs import RotatingLog
 from runtime_protocol.server import RuntimeHandler
 from runtime_protocol.services import ServiceConfiguration, ServiceSpec, ServiceSupervisor, load_service_configuration, parse_services
+import runtime_protocol.services as services_module
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,7 +37,7 @@ def _document(**fields):
 
 def _supervisor(tmp_path, specs=None, **kwargs):
     support = tmp_path / "support"
-    support.mkdir(exist_ok=True)
+    platform.private_directory(support)
     config = ServiceConfiguration(tuple(specs or parse_services(_document())), sys.executable, tmp_path)
     return ServiceSupervisor(config, support_root=support, realm_root=tmp_path / "realm",
         realm_id="realm", runtime_endpoint="http://127.0.0.1:1234", log_directory=tmp_path / "logs", **kwargs)
@@ -58,6 +59,8 @@ def test_declaration_schema_and_parser_agree_on_portable_example():
     _document(argv=["bad\0argument"]), _document(name="../escape"), _document(name="Example"),
     _document(restart="never"), _document(shell=True), _document(env={"BAD=KEY": "value"}),
     _document(env={"KEY": None}), _document(env={"ASTRID_RUNTIME_JOB_HANDLE": "123"}),
+    _document(env={"ASTRID_RUNTIME_SERVICE_NAME": "pack-host"}),
+    _document(env={"ASTRID_RUNTIME_SERVICE_LAUNCH_ID": "a" * 32}),
     _document(ready={"file": "../chat.json"}), _document(ready={"file": "catalog.json"}),
     _document(ready={"file": "chat.json", "timeout_seconds": 0}),
     _document(ready={"file": "chat.json", "timeout_seconds": float("inf")}),
@@ -87,6 +90,180 @@ def test_unconfigured_services_do_not_read_any_paths_or_spawn(tmp_path, monkeypa
     daemon = RuntimeDaemon(tmp_path / "realm", support_root=tmp_path / "support")
     assert daemon.services is None and daemon.service_status() == []
     spawn.assert_not_called()
+
+
+def test_supervisor_marks_runtime_owned_service_name_after_configured_env(tmp_path, monkeypatch):
+    spec = ServiceSpec("pack-host", (sys.executable,), "always", {"SERVICE_SETTING": "configured"})
+    supervisor = _supervisor(tmp_path, [spec])
+    monkeypatch.setenv("ASTRID_RUNTIME_SERVICE_NAME", "ambient-spoof")
+    env = supervisor._environment(spec)
+    assert env["ASTRID_RUNTIME_SERVICE_NAME"] == "pack-host"
+    assert env["SERVICE_SETTING"] == "configured"
+    assert "ASTRID_RUNTIME_SERVICE_LAUNCH_ID" not in env
+
+
+def test_pack_host_cleanup_receipts_are_bounded_owner_only_and_preserved(tmp_path):
+    supervisor = _supervisor(tmp_path, [ServiceSpec("pack-host", (sys.executable,), "always")])
+    supervisor._record_service_cleanup("pack-host", 321, "windows-creation:10", "a" * 32)
+    supervisor._record_service_cleanup("pack-host", 654, "windows-creation:20", "b" * 32)
+    receipt = supervisor.support / "pack-host-job-cleanup.json"
+    value = json.loads(receipt.read_text(encoding="utf-8"))
+    assert value == {"version": 1, "service_name": "pack-host", "support_root": str(supervisor.support.resolve()),
+        "receipts": [
+            {"pid": 321, "process_birth_id": "windows-creation:10", "runtime_service_launch_id": "a" * 32,
+                "job_drained": True},
+            {"pid": 654, "process_birth_id": "windows-creation:20", "runtime_service_launch_id": "b" * 32,
+                "job_drained": True},
+        ]}
+
+
+def test_service_cleanup_receipt_history_keeps_latest_64_attempts(tmp_path):
+    supervisor = _supervisor(tmp_path, [ServiceSpec("pack-host", (sys.executable,), "always")])
+    for index in range(65):
+        supervisor._record_service_cleanup("pack-host", index + 1, f"birth:{index}", f"{index:032x}")
+    value = json.loads((supervisor.support / "pack-host-job-cleanup.json").read_text(encoding="utf-8"))
+    assert len(value["receipts"]) == 64
+    assert value["receipts"][0]["runtime_service_launch_id"] == f"{1:032x}"
+    assert value["receipts"][-1]["runtime_service_launch_id"] == f"{64:032x}"
+
+
+def test_pack_host_cleanup_receipt_refuses_corrupt_history_without_overwriting(tmp_path):
+    supervisor = _supervisor(tmp_path, [ServiceSpec("pack-host", (sys.executable,), "always")])
+    receipt = supervisor.support / "pack-host-job-cleanup.json"
+    receipt.write_text("{}", encoding="utf-8")
+    platform.owner_only(receipt)
+    with pytest.raises(OSError, match="unsupported schema"):
+        supervisor._record_service_cleanup("pack-host", 321, "windows-creation:10", "a" * 32)
+    assert receipt.read_text(encoding="utf-8") == "{}"
+
+
+def test_shutdown_retry_publishes_pack_host_cleanup_receipt(tmp_path, monkeypatch):
+    supervisor = _supervisor(tmp_path, [ServiceSpec("pack-host", (sys.executable,), "always")])
+    item = supervisor._services[0]
+    item.process = object()
+    item.cleanup_identity = (321, "windows-creation:10", "a" * 32)
+    monkeypatch.setattr(services_module, "sys", SimpleNamespace(platform="win32"))
+    stopped = []
+    monkeypatch.setattr(platform, "stop_tree", lambda process, **kwargs: stopped.append(process))
+
+    supervisor.stop()
+
+    assert len(stopped) == 1
+    value = json.loads((supervisor.support / "pack-host-job-cleanup.json").read_text(encoding="utf-8"))
+    assert value["receipts"] == [{"pid": 321, "process_birth_id": "windows-creation:10",
+        "runtime_service_launch_id": "a" * 32, "job_drained": True}]
+    assert item.process is None and item.cleanup_identity is None
+
+
+def test_cleanup_receipt_write_failure_retains_identity_and_stop_retries(tmp_path, monkeypatch):
+    supervisor = _supervisor(tmp_path, [ServiceSpec("pack-host", (sys.executable,), "always", ready_file="ready.json")])
+    item = supervisor._services[0]
+    monkeypatch.setattr(services_module, "sys", SimpleNamespace(platform="win32"))
+    process = SimpleNamespace(pid=321, stdout=io.BytesIO(b""), returncode=0)
+    monkeypatch.setattr(platform, "spawn_tree", lambda *args, **kwargs: process)
+    monkeypatch.setattr(platform, "process_identity", lambda _pid: {"pid": 321, "birth_id": "windows-creation:10"})
+    ready = supervisor.support / "ready.json"
+    def tree_exited(_process):
+        ready.write_text("ready", encoding="utf-8")
+        return True
+    monkeypatch.setattr(platform, "tree_exited", tree_exited)
+    monkeypatch.setattr(platform, "stop_tree", lambda *_args, **_kwargs: None)
+    writes = []
+    original_record = supervisor._record_service_cleanup
+    def fail_once(*args):
+        writes.append(args)
+        if len(writes) == 1:
+            raise OSError("transient receipt write failure")
+        return original_record(*args)
+    monkeypatch.setattr(supervisor, "_record_service_cleanup", fail_once)
+
+    with RotatingLog(tmp_path / "logs/service-pack-host.log") as log:
+        with pytest.raises(OSError):
+            supervisor._attempt(item, log)
+    assert item.process is None
+    assert item.cleanup_identity is not None
+    assert not ready.exists()
+
+    supervisor.stop()
+    assert writes[-1] == ("pack-host", 321, "windows-creation:10", writes[0][3])
+    assert item.cleanup_identity is None
+
+
+def test_pending_cleanup_blocks_replacement_attempt(tmp_path, monkeypatch):
+    supervisor = _supervisor(tmp_path, [ServiceSpec("pack-host", (sys.executable,), "always")])
+    item = supervisor._services[0]
+    item.cleanup_identity = (321, "windows-creation:10", "a" * 32)
+    item.cleanup_drained = True
+    monkeypatch.setattr(services_module, "sys", SimpleNamespace(platform="win32"))
+    writes, launches = [], []
+    def record(*args):
+        writes.append(args)
+        if len(writes) == 1:
+            raise OSError("receipt unavailable")
+    monkeypatch.setattr(supervisor, "_record_service_cleanup", record)
+    monkeypatch.setattr(supervisor, "_attempt", lambda *_: launches.append("launch") or (0, 1, None))
+    def wait(_delay):
+        supervisor._stop.set()
+        return True
+    monkeypatch.setattr(supervisor._stop, "wait", wait)
+    with RotatingLog(tmp_path / "logs/service-pack-host.log") as log:
+        supervisor._run(item)
+    assert launches == []
+    assert supervisor.snapshot()[0]["reason"] == "cleanup_failed"
+
+
+def test_cleanup_retry_preserves_on_failure_clean_exit_policy(tmp_path, monkeypatch):
+    supervisor = _supervisor(tmp_path, [ServiceSpec("pack-host", (sys.executable,), "on-failure")])
+    item = supervisor._services[0]
+    monkeypatch.setattr(services_module, "sys", SimpleNamespace(platform="win32"))
+    attempts, writes = [], []
+    def attempt(*_args):
+        attempts.append("launch")
+        supervisor._update(item, cleanup_identity=(321, "windows-creation:10", "a" * 32),
+            cleanup_drained=True, last_exit=0, cleanup_result=(0, 0.0, None))
+        raise OSError("receipt write failed")
+    monkeypatch.setattr(supervisor, "_attempt", attempt)
+    def record(*_args):
+        writes.append("receipt")
+        if len(writes) == 1:
+            raise OSError("receipt write failed")
+    monkeypatch.setattr(supervisor, "_record_service_cleanup", record)
+    monkeypatch.setattr(supervisor._stop, "wait", lambda _delay: False)
+
+    with RotatingLog(tmp_path / "logs/service-pack-host.log") as log:
+        supervisor._run(item)
+
+    assert attempts == ["launch"]
+    assert len(writes) == 2
+    assert supervisor.snapshot()[0]["reason"] == "exited"
+
+
+def test_cleanup_retry_preserves_readiness_failure_outcome(tmp_path, monkeypatch):
+    supervisor = _supervisor(tmp_path, [ServiceSpec("pack-host", (sys.executable,), "on-failure")])
+    item = supervisor._services[0]
+    monkeypatch.setattr(services_module, "sys", SimpleNamespace(platform="win32"))
+    attempts, writes = [], []
+    def attempt(*_args):
+        attempts.append("launch")
+        supervisor._update(item, cleanup_identity=(321, "windows-creation:10", "a" * 32),
+            cleanup_drained=True, last_exit=0, cleanup_result=(0, 0.0, "readiness_timeout"))
+        if len(attempts) == 1:
+            raise OSError("receipt write failed")
+        supervisor._stop.set()
+        return 0, 0.0, "stopped"
+    monkeypatch.setattr(supervisor, "_attempt", attempt)
+    def record(*_args):
+        writes.append("receipt")
+        if len(writes) == 1:
+            raise OSError("receipt write failed")
+    monkeypatch.setattr(supervisor, "_record_service_cleanup", record)
+    monkeypatch.setattr(supervisor._stop, "wait", lambda _delay: False)
+
+    with RotatingLog(tmp_path / "logs/service-pack-host.log") as log:
+        supervisor._run(item)
+
+    assert attempts == ["launch", "launch"]
+    assert len(writes) == 2
 
 
 def test_source_profile_selects_one_file_and_preserves_old_profile_digest(tmp_path):
@@ -373,14 +550,16 @@ def test_health_and_typed_operator_status_preserve_service_state(state, code):
     handler = object.__new__(RuntimeHandler)
     handler.path, handler.command = "/v1/health", "GET"
     handler.server = SimpleNamespace(runtime=SimpleNamespace(health=lambda: base),
-        daemon_runtime=SimpleNamespace(instance_id="instance", service_status=lambda: rows))
+        daemon_runtime=SimpleNamespace(startup_identity_instance_id="instance",
+            startup_identity={"release": 0, "managed_by": None}, service_status=lambda: rows))
     handler._send = lambda status, body: (status, body)
     status, value = handler._route()
-    assert status == 200 and value == {**base, "runtime_instance_id": "instance", "services": rows}
+    assert status == 200 and value == {**base, "runtime_instance_id": "instance",
+        "identity": {"release": 0, "managed_by": None}, "services": rows}
     schema = json.loads((ROOT / "contract/schemas/health.json").read_text(encoding="utf-8"))
     Draft202012Validator(schema).validate(value)
     assert operator_cli._json_value(Health.from_json(value))["services"] == rows
-    assert Health.from_json({**base, "runtime_instance_id": "instance"}).services == ()
+    assert Health.from_json({**base, "runtime_instance_id": "instance", "identity": None}).services == ()
 
 
 def test_typed_service_status_accepts_future_response_fields():
@@ -434,8 +613,10 @@ def test_darwin_tree_cleanup_observes_zombie_before_group_kill_and_wait(monkeypa
 
 def test_windows_exit_observation_keeps_job_for_cleanup(monkeypatch):
     monkeypatch.setattr(platform, "sys", SimpleNamespace(platform="win32"))
-    job = SimpleNamespace(close=Mock())
-    child = SimpleNamespace(pid=1234, poll=lambda: 7, _runtime_job=job)
+    job = SimpleNamespace(handle=1, close=Mock(), active_processes=lambda: 0)
+    child = SimpleNamespace(pid=1234, args=["worker"], returncode=7, poll=lambda: 7,
+        wait=Mock(), _runtime_job=job)
+    monkeypatch.setattr(platform, "signal_tree", Mock())
     assert platform.tree_exited(child)
     platform.stop_tree(child)
     job.close.assert_called_once()

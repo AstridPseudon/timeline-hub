@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import codecs
+import errno
 import json
 import math
 import os
@@ -12,6 +13,7 @@ import subprocess
 import sys
 import threading
 import time
+import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -23,7 +25,8 @@ from .logs import RotatingLog
 _NAME = re.compile(r"[a-z][a-z0-9-]{0,63}\Z")
 _ENV = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
 _READY = re.compile(r"[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}\Z")
-_RESERVED_ENV = {"PYTHONPATH", "PYTHONHOME", "ASTRID_RUNTIME_JOB_HANDLE"}
+_RESERVED_ENV = {"PYTHONPATH", "PYTHONHOME", "ASTRID_RUNTIME_JOB_HANDLE", "ASTRID_RUNTIME_SERVICE_NAME",
+    "ASTRID_RUNTIME_SERVICE_LAUNCH_ID"}
 _STARTUP_STABLE_SECONDS = 2.0
 _FAST_FAILURE_LIMIT = 3
 
@@ -89,7 +92,9 @@ def parse_services(value):
             ready_file = ready["file"]
             # Never let a readiness hint remove Runtime-owned authority files.
             if ready_file.casefold() in {"discovery.json", "catalog.json", "instance.lock", "bootstrap.lock",
-                    "runtime.log", "runtime-epoch-floor.json", "replacement.json", "process-control.json"} or ready_file.casefold() in ready_files:
+                    "runtime.log", "runtime-epoch-floor.json", "replacement.json", "process-control.json"} \
+                    or ready_file.casefold().endswith("-job-cleanup.json") \
+                    or ready_file.casefold().endswith("-job-cleanup.lock") or ready_file.casefold() in ready_files:
                 invalid("readiness files must be unique and service-owned")
             ready_files.add(ready_file.casefold())
             timeout = ready.get("timeout_seconds", 30)
@@ -144,6 +149,9 @@ class _Service:
     reason: str | None = None
     process: object = None
     thread: threading.Thread | None = None
+    cleanup_identity: tuple[int | None, str | None, str] | None = None
+    cleanup_drained: bool = False
+    cleanup_result: tuple[int | None, float, str | None] | None = None
 
 
 class ServiceSupervisor:
@@ -197,14 +205,33 @@ class ServiceSupervisor:
             if item.process is not None:
                 platform.stop_tree(item.process, grace=self.grace, stop_channel=True)
                 self._update(item, process=None)
+                if sys.platform == "win32" and item.cleanup_identity is not None:
+                    self._update(item, cleanup_drained=True)
+            if sys.platform == "win32" and item.cleanup_identity is not None and item.cleanup_drained:
+                self._retry_cleanup_receipt(item)
 
-    def _environment(self, spec):
+    def _retry_cleanup_receipt(self, item):
+        identity = item.cleanup_identity
+        if identity is None:
+            return
+        if not item.cleanup_drained:
+            if item.process is None:
+                raise RuntimeError("Service cleanup has no confirmed job drain")
+            platform.stop_tree(item.process, grace=self.grace, stop_channel=True)
+            self._update(item, process=None, last_exit=item.process.returncode, cleanup_drained=True)
+        self._record_service_cleanup(item.spec.name, *identity)
+        self._update(item, cleanup_identity=None, cleanup_drained=False, cleanup_result=None)
+
+    def _environment(self, spec, *, launch_id=None):
         env = {k: v for k, v in os.environ.items() if k.upper() not in _RESERVED_ENV
             and not k.upper().startswith("ASTRID_RUNTIME_CUSTODY_")}
         scripts = str(Path(self.config.python).parent)
         env["PATH"] = scripts + os.pathsep + env.get("PATH", "")
         env["VIRTUAL_ENV"] = str(Path(scripts).parent)
         env.update({k: self.values.get(v, v) for k, v in spec.env.items()})
+        env["ASTRID_RUNTIME_SERVICE_NAME"] = spec.name
+        if sys.platform == "win32" and launch_id is not None:
+            env["ASTRID_RUNTIME_SERVICE_LAUNCH_ID"] = launch_id
         if sys.platform == "win32" and "HOME" not in env and env.get("USERPROFILE"):
             env["HOME"] = env["USERPROFILE"]
         return env
@@ -235,9 +262,23 @@ class ServiceSupervisor:
         if self._stop.is_set():
             return None, 0.0, "stopped"
         argv = [self.values.get(arg, arg) for arg in spec.argv]
-        process = platform.spawn_tree(argv, hidden=True, cwd=self.config.source_checkout, env=self._environment(spec),
+        launch_id = uuid.uuid4().hex if sys.platform == "win32" else None
+        process = platform.spawn_tree(argv, hidden=True, cwd=self.config.source_checkout,
+            env=self._environment(spec, launch_id=launch_id),
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
+        process_identity = None
+        if sys.platform == "win32":
+            try:
+                observed = platform.process_identity(process.pid)
+                if observed and observed.get("pid") == process.pid and isinstance(observed.get("birth_id"), str):
+                    process_identity = (process.pid, observed["birth_id"], launch_id)
+            except OSError:
+                pass
         self._update(item, process=process)
+        if sys.platform == "win32":
+            self._update(item, cleanup_identity=process_identity or (None, None, launch_id))
+        if process_identity is not None:
+            self._update(item, cleanup_identity=process_identity)
         reader = None
         try:
             log_errors = threading.Event()
@@ -263,7 +304,8 @@ class ServiceSupervisor:
         finally:
             ended = time.monotonic()
             platform.stop_tree(process, grace=self.grace, stop_channel=True)
-            self._update(item, process=None, last_exit=process.returncode)
+            self._update(item, process=None, last_exit=process.returncode,
+                cleanup_drained=(sys.platform == "win32" and item.cleanup_identity is not None))
             if reader is not None and reader.ident is not None:
                 reader.join(2.0)
                 if reader.is_alive():
@@ -272,21 +314,115 @@ class ServiceSupervisor:
                 process.stdout.close()
             self._remove_ready(spec)
         stable_for = ended - running_since if running_since is not None else 0.0
+        if sys.platform == "win32" and item.cleanup_identity is not None:
+            outcome = (process.returncode, stable_for, reason)
+            self._update(item, cleanup_result=outcome)
+            self._retry_cleanup_receipt(item)
         return process.returncode, stable_for, reason
+
+    def _record_service_cleanup(self, service_name, pid, process_birth_id, launch_id):
+        """Publish proof only after stop_tree has confirmed the Windows Job drained."""
+        if (not isinstance(service_name, str) or not _NAME.fullmatch(service_name)
+                or ((pid is None) != (process_birth_id is None))
+                or (pid is not None and (type(pid) is not int or pid <= 0 or not isinstance(process_birth_id, str)
+                    or not process_birth_id))
+                or not isinstance(launch_id, str) or not re.fullmatch(r"[0-9a-f]{32}", launch_id)):
+            raise ValueError("invalid service cleanup identity")
+        self.support.mkdir(parents=True, exist_ok=True)
+        support_root = str(self.support.resolve())
+        receipt = self.support / f"{service_name}-job-cleanup.json"
+        lock_path = self.support / f".{service_name}-job-cleanup.lock"
+        if lock_path.is_symlink() or receipt.is_symlink():
+            raise OSError(errno.ELOOP, "service cleanup authority must not be a symlink")
+        descriptor = os.open(lock_path, os.O_CREAT | os.O_RDWR | getattr(os, "O_NOFOLLOW", 0), 0o600)
+        try:
+            platform.owner_only(descriptor)
+            platform.lock_file(descriptor)
+            if receipt.exists():
+                info = receipt.lstat()
+                if not stat.S_ISREG(info.st_mode) or receipt.is_symlink():
+                    raise OSError(errno.EINVAL, "service cleanup receipt must be a regular file")
+                if sys.platform != "win32" and not platform.is_owner_only(info):
+                    raise OSError(errno.EPERM, "service cleanup receipt must be owner-only")
+                raw = platform.read_private_file(receipt)
+                value = json.loads(raw.decode("utf-8"))
+                if (not isinstance(value, dict) or set(value) != {"version", "service_name", "support_root", "receipts"}
+                        or type(value.get("version")) is not int or value.get("version") != 1
+                        or value.get("service_name") != service_name
+                        or value.get("support_root") != support_root or not isinstance(value.get("receipts"), list)):
+                    raise OSError(errno.EINVAL, "pack-host cleanup receipt has an unsupported schema")
+                entries = value["receipts"]
+                for entry in entries:
+                    if (not isinstance(entry, dict) or set(entry) != {"pid", "process_birth_id", "runtime_service_launch_id", "job_drained"}
+                            or ((entry.get("pid") is None) != (entry.get("process_birth_id") is None))
+                            or (entry.get("pid") is not None and (type(entry["pid"]) is not int or entry["pid"] <= 0
+                                or not isinstance(entry.get("process_birth_id"), str)))
+                            or not isinstance(entry.get("runtime_service_launch_id"), str)
+                            or not re.fullmatch(r"[0-9a-f]{32}", entry["runtime_service_launch_id"])
+                            or entry.get("job_drained") is not True):
+                        raise OSError(errno.EINVAL, "service cleanup receipt contains an invalid entry")
+            else:
+                entries = []
+            new_entry = {"pid": pid, "process_birth_id": process_birth_id,
+                "runtime_service_launch_id": launch_id, "job_drained": True}
+            if not any(entry["runtime_service_launch_id"] == launch_id for entry in entries):
+                entries = entries[-63:]
+                entries.append(new_entry)
+            data = json.dumps({"version": 1, "service_name": service_name, "support_root": support_root,
+                "receipts": entries}, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            temp_fd, temp_name = platform.private_temporary(self.support, f".{service_name}-job-cleanup.")
+            temporary = Path(temp_name)
+            try:
+                platform.owner_only(temp_fd)
+                with os.fdopen(temp_fd, "wb") as handle:
+                    handle.write(data)
+                    handle.flush()
+                    os.fsync(handle.fileno())
+                platform.durable_replace(temporary, receipt)
+                platform.owner_only(receipt)
+            finally:
+                temporary.unlink(missing_ok=True)
+        finally:
+            platform.unlock_file(descriptor)
+            os.close(descriptor)
 
     def _run(self, item):
         delay = self.initial_backoff
         fast_failures = 0
+        pending_cleanup_result = None
         try:
             with RotatingLog(self.logs / ("service-" + item.spec.name + ".log")) as log:
                 while not self._stop.is_set():
                     self._update(item, state="starting")
+                    if sys.platform == "win32" and item.cleanup_identity is not None:
+                        if pending_cleanup_result is None:
+                            pending_cleanup_result = item.cleanup_result
+                        try:
+                            self._retry_cleanup_receipt(item)
+                        except OSError:
+                            self._update(item, state="failed", reason="cleanup_failed")
+                            if self._stop.wait(delay):
+                                break
+                            self._update(item, restart_count=item.restart_count + 1)
+                            delay = min(self.max_backoff, delay * 2)
+                            continue
+                        if pending_cleanup_result is not None:
+                            code, stable_for, reason = pending_cleanup_result
+                            pending_cleanup_result = None
+                            if item.spec.restart == "on-failure" and code == 0 and reason is None:
+                                self._update(item, state="failed", reason="exited")
+                                break
                     try:
                         code, stable_for, reason = self._attempt(item, log)
                     except OSError:
-                        if item.process is not None:
+                        if item.cleanup_identity is not None:
+                            code, stable_for, reason = item.last_exit, 0.0, "cleanup_failed"
+                            if item.cleanup_drained and item.cleanup_result is not None:
+                                pending_cleanup_result = item.cleanup_result
+                        elif item.process is not None:
                             raise
-                        code, stable_for, reason = None, 0.0, "launch_failed"
+                        else:
+                            code, stable_for, reason = None, 0.0, "launch_failed"
                     if self._stop.is_set():
                         break
                     if item.spec.restart == "on-failure" and code == 0 and reason is None:
@@ -307,4 +443,5 @@ class ServiceSupervisor:
                     self._update(item, restart_count=item.restart_count + 1)
                     delay = min(self.max_backoff, delay * 2)
         except Exception:
-            self._update(item, state="failed", reason="cleanup_failed" if item.process is not None else "supervisor_failed")
+            self._update(item, state="failed", reason="cleanup_failed" if item.cleanup_identity is not None
+                or item.process is not None else "supervisor_failed")

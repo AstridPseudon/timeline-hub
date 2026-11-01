@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import json
 import multiprocessing
-import os
+import threading
 
 import pytest
 
 from tests.lanes import requires_posix_fork
 
 from runtime_protocol.daemon import RuntimeDaemon
+from runtime_protocol import server
 from runtime_protocol.server import RuntimeHandler, RuntimeHTTPServer
 from runtime_protocol.store import RealmStore
 from runtime_protocol.catalog import RealmCatalog
@@ -19,25 +20,32 @@ def _fresh(root):
     RealmStore.initialize(root).close()
 
 
-def test_verified_candidate_replaces_owner_with_fresh_epoch_credentials_and_quarantine(tmp_path):
+def test_verified_candidate_replaces_owner_with_fresh_epoch_credentials_and_quarantine(tmp_path, monkeypatch):
     active_root = tmp_path / "active"
     support_root = tmp_path / "support"
     _fresh(active_root)
+    monkeypatch.setenv("ASTRID_INSTALL_RELEASE", "10")
+    monkeypatch.setenv("ASTRID_INSTALL_MANAGED_BY", "")
     daemon = RuntimeDaemon(active_root, support_root=support_root).start()
     old_service = daemon.service
     old_epoch = old_service.health()["runtime_epoch"]
     old_token = daemon.token
     old_instance_id = daemon.instance_id
+    assert daemon.startup_identity == {"release": 10, "managed_by": None}
+    assert daemon.startup_identity_instance_id == old_instance_id
     backup = tmp_path / "backup"
     candidate = tmp_path / "candidate"
     try:
         old_service.backup(backup)
         old_service.restore(backup, candidate)
+        monkeypatch.setenv("ASTRID_INSTALL_RELEASE", "11")
         result = daemon.activate_candidate(candidate, retain_superseded=True)
         assert result["state"] == "complete"
         assert result["retained"] is True
         assert result["runtime_epoch"] > old_epoch
         assert result["runtime_instance_id"] != old_instance_id
+        assert daemon.startup_identity == {"release": 11, "managed_by": None}
+        assert daemon.startup_identity_instance_id == result["runtime_instance_id"]
         assert daemon.token != old_token
         assert daemon.service is not old_service
         assert old_service.store.conn is None
@@ -117,6 +125,7 @@ def test_failed_replacement_rolls_back_and_leaves_recoverable_state(tmp_path, mo
         assert candidate.is_dir()
         assert daemon.service is not None
         assert daemon.service.health()["status"] == "ok"
+        assert daemon.startup_identity_instance_id == daemon.instance_id
         assert any(path.name.startswith(".active.superseded-") for path in tmp_path.iterdir()) is False
     finally:
         daemon.stop()
@@ -157,6 +166,46 @@ def test_cleanup_does_not_shutdown_http_server_without_serving_thread():
         assert daemon.thread is None
     finally:
         daemon._shutdown_http()
+
+
+def test_listener_binds_ephemeral_loopback_without_hostname_lookup(monkeypatch):
+    entered = threading.Event()
+    release = threading.Event()
+    done = threading.Event()
+    result = {}
+
+    def blocking_getfqdn(host):
+        entered.set()
+        release.wait()
+        return host
+
+    monkeypatch.setattr(server.socket, "getfqdn", blocking_getfqdn)
+
+    def create_listener():
+        try:
+            result["listener"] = RuntimeHTTPServer(("127.0.0.1", 0), RuntimeHandler)
+        except BaseException as exc:  # pragma: no cover - surfaced by the parent assertion
+            result["error"] = exc
+        finally:
+            done.set()
+
+    worker = threading.Thread(target=create_listener, daemon=True)
+    worker.start()
+    try:
+        assert done.wait(1), "listener creation reached a hostname lookup"
+        assert not entered.is_set()
+        assert "error" not in result
+        listener = result["listener"]
+        assert listener.server_address[0] == "127.0.0.1"
+        assert listener.server_port > 0
+        assert listener.server_port == listener.server_address[1] == listener.socket.getsockname()[1]
+    finally:
+        release.set()
+        worker.join(1)
+        listener = result.get("listener")
+        if listener is not None:
+            listener.server_close()
+        assert not worker.is_alive()
 
 
 def _register_catalog_worker(path, realm_id, ready, release, result):

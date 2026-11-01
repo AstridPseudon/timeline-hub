@@ -264,7 +264,7 @@ requires_posix_process_groups = _declare(
 ).mark()
 requires_windows_job_object = _declare(
     "windows-job-object", "sys_platform != 'win32'",
-    "Windows Job Object integration", ("portability-lifecycle",),
+    "Windows Job Object integration", ("windows-realm-publication",),
 ).mark()
 requires_windows_dirfd_adapter = _declare(
     "windows-dirfd-adapter", "os_name != 'nt'",
