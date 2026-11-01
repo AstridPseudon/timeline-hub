@@ -183,6 +183,15 @@ class _RecordingTimelines:
             "query": {}, "targets": [], "clips": [],
         })
 
+    def open_bundle(self, project, ref, *, revision_id=None):
+        pinned_revision = revision_id or "head-1"
+        return DomainResult.success({
+            "bundle": {"base_parent": {"revision_id": pinned_revision}},
+            "project_id": project,
+            "timeline_id": ref,
+            "revision_id": pinned_revision,
+        })
+
     def visualize(self, project, ref, *, mode="auto", options=None, revision_id=None, out=None):
         return self._owner.invoke_result(
             "rendering.timeline_visualize",
@@ -2106,6 +2115,7 @@ def test_timelines_visualize_routes_public_sdk_and_normalizes_formats(capsys) ->
         "formats": ["png", "md", "md"],
         "timeline_slug": "01TIMELINE",
         "view": "contact",
+        "revision_id": "head-1",
         "resolution": "480x270",
     }
     envelope = json.loads(capsys.readouterr().out)
@@ -2685,6 +2695,7 @@ def test_timelines_visualize_forwards_filmstrip_options(capsys) -> None:
     assert client.calls[0][1]["wait"] is True
     assert client.calls[0][1]['inputs'] == {
         'formats': ['png', 'md'], 'timeline_slug': 'main', 'view': 'filmstrip',
+        'revision_id': 'head-1',
         'sample': 'cuts', 'render_run': '01EXACT', 'every_frames': 12,
         'columns': 4, 'page_size': 40, 'range': '10..20',
     }

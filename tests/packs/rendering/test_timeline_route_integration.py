@@ -26,6 +26,7 @@ class _Client:
         self.timelines = SimpleNamespace(
             create_empty=self.create_empty,
             open_composition=self.open_composition,
+            open_bundle=self.open_bundle,
             visualize=self.visualize,
         )
 
@@ -70,6 +71,14 @@ class _Client:
                 "clips": [clip] if occurrence else [],
             }
         )
+
+    def open_bundle(self, project, ref, *, revision_id=None):  # noqa: ANN001
+        return DomainResult.success({
+            "bundle": {"base_parent": {"revision_id": revision_id or "head-1"}},
+            "project_id": project,
+            "timeline_id": ref,
+            "revision_id": revision_id or "head-1",
+        })
 
     def visualize(self, project, ref, **kwargs):  # noqa: ANN001
         self.visualize_inputs = kwargs["options"]
@@ -221,6 +230,7 @@ def test_show_and_visualize_preserve_one_normalized_occurrence_target(capsys) ->
     assert _cmd_visualize(visualize_args) == 0
     visualized = json.loads(capsys.readouterr().out)["data"]["outputs"]
     assert client.visualize_inputs["occurrence"] == shown["query"]["occurrence"]
+    assert client.visualize_inputs["revision_id"] == "head-1"
     assert "timelines show" in visualized["navigation"]["commands"]["show"]
     assert "--revision-id head-1" in visualized["navigation"]["commands"]["show"]
 
@@ -255,6 +265,7 @@ def test_visualize_show_navigation_projects_frame_and_timestamp_to_ranges(capsys
     )
     assert _cmd_visualize(frame_args) == 0
     frame_outputs = json.loads(capsys.readouterr().out)["data"]["outputs"]
+    assert client.visualize_inputs["revision_id"] == "head-1"
     assert "--range 1/30..1/15" in frame_outputs["navigation"]["commands"]["show"]
 
     at_args = parser.parse_args(
@@ -262,6 +273,7 @@ def test_visualize_show_navigation_projects_frame_and_timestamp_to_ranges(capsys
     )
     assert _cmd_visualize(at_args) == 0
     at_outputs = json.loads(capsys.readouterr().out)["data"]["outputs"]
+    assert client.visualize_inputs["revision_id"] == "head-1"
     assert "--range 3..5" in at_outputs["navigation"]["commands"]["show"]
 
 
@@ -301,6 +313,7 @@ def test_visualize_forwards_admitted_contact_and_motion_options(capsys) -> None:
         "formats": ["png", "md"],
         "timeline_slug": "main",
         "view": "contact",
+        "revision_id": "head-1",
         "resolution": "480x270",  # the overview's review scale
         "cut": "2",
         "layers": ["sync", "curves"],
@@ -330,6 +343,7 @@ def test_visualize_inputs_defaults_to_native_filmstrip_but_explicit_contact_reje
         "formats": ["md"],
         "timeline_slug": "main",
         "view": "filmstrip",
+        "revision_id": "head-1",
     }
 
     args = parser.parse_args([
@@ -339,6 +353,7 @@ def test_visualize_inputs_defaults_to_native_filmstrip_but_explicit_contact_reje
     json.loads(capsys.readouterr().out)
     assert client.visualize_mode == "inputs"
     assert client.visualize_inputs["view"] == "filmstrip"
+    assert client.visualize_inputs["revision_id"] == "head-1"
 
     args = parser.parse_args([
         "visualize", "main", "--project", "demo", "--mode", "inputs", "--view", "contact", "--json",
