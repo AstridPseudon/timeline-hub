@@ -20,7 +20,10 @@ for spec in A:A-zoom:agent:tl/zoom-integration B:B-shotlayer:agent:tl/shotlayer-
   [ $(( $(date +%s) - le )) -gt 3300 ] && go=1
   # 27 Oct 05:15Z: a new main note (STATUS.md changed over a minute after the round ended) also starts the next round
   [ -f $L/$P/STATUS.md ] && [ $(stat -c %Y $L/$P/STATUS.md) -gt $((le + 60)) ] && go=1
+  # 1 Nov 00:45Z (Astra deepcheck): a main note the lead has not seen starts a round, with no mtime blind spot
+  nc=$(grep -cE "^- 20[0-9-]+T[0-9:]+Z main" $L/$P/STATUS.md 2>/dev/null); [ "${nc:-0}" -gt "$(cat $L/$P/.notes-seen 2>/dev/null || echo 0)" ] && go=1
   [ $go = 1 ] || continue
+  echo "${nc:-0}" > $L/$P/.notes-seen
   N=$((last+1)); LM=gpt-5.6-luna; case $X in H|D|P|U|R|T|M) LM=gpt-6-luna;; esac; out=$($O/bin/request lead-$X-r$N --repo $R --base $B --model $LM --effort high --timeout 120 $NETF --brief $L/$P/LEAD-BRIEF.md 2>&1)
   echo "$(date -u +%FT%TZ) lead-roll: $out" | tee -a $L/lead-roll.log
 done
